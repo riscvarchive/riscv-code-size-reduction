@@ -1,7 +1,7 @@
 RISC-V 32-bit Multiply/Add Extension
 ====================================
 
-The 32-bit version instruction is included in the Huawei custom RISCV extension, and is implemented on silicon.
+The 32-bit version of this instruction is included in the Huawei custom RISCV extension, and is implemented on silicon.
 
 Rationale
 ---------
@@ -76,6 +76,36 @@ The 32-bit encoding has an *unsigned* 7-bit immediate.
 
 The primary justification for ``muliadd`` is to efficiently encode the structure references above, however this instruction may 
 also be useful in other areas. 
+
+These are the most common values for the immediate values inferred in the Huawei IoT code compiled with HCC, down to 1% of the total. Note that none of the values are power-of-2 as HCC will have inferred other code sequences for those cases.
+
+=============== =============== ================
+Immediate value Total count     %age of muliadds
+=============== =============== ================
+20	            183	            17.4%
+12	            166	            15.8%
+10              75              7.1%
+36              72              6.9%
+192             58              5.5%
+52              51              4.9%
+112             46              4.4%
+6               41              3.9%
+90              39              3.7%
+100             39              3.7%
+24              35              3.3%
+104             30              2.9%
+28              28              2.7%
+34              21              2.0%
+44              20              1.9%
+40              19              1.8%
+3               17              1.6%
+152             15              1.4%
+120             14              1.3%
+22              13              1.2%
+228             12              1.1%
+208             12              1.1%
+5               11              1.0%
+=============== =============== ================
 
 Opcode Assignment
 -----------------
