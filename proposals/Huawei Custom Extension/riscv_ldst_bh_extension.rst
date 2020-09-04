@@ -21,8 +21,7 @@ Signed byte / half loads give minimal benefit and so are not proposed.
 -  enabled with *-Wa,-enable-c-lhu-sh*
 -  saves 1.57% of Huawei IoT code size
 
-.. note::
-  these are my personal measurements and do not agree with the results in the paper, we need to generate a set of figures which we agree upon 
+*These are my personal measurements and do not agree with the results in the paper, we need to generate a set of figures which we agree upon, across multiple code bases*
 
 https://github.com/carrv/carrv.github.io/blob/master/2020/papers/CARRV2020_paper_12_Perotti.pdf
 
