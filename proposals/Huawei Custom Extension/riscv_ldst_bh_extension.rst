@@ -67,4 +67,4 @@ Assembler Syntax
   c.lhu  s0,10(a1) // load zero extended half-word from address a1+10
   c.sh   s1,12(a1) // store s1[15:0] to address a1+12
 
-Tariq Kurd, Huawei, 2020/9/4
+Tariq Kurd, Huawei
