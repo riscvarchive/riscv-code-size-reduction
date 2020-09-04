@@ -1,7 +1,9 @@
-.. _lli_ext:
-
 RISC-V 48-bit Load Long Immediate Extension
 ===========================================
+
+This instruction is included in the Huawei custom RISCV extension, and is implemented on silicon.
+
+*This proposal needs a lot of updating don't read it yet :-)*
 
 Rationale
 ---------
@@ -15,7 +17,7 @@ The table below summarises the number of bytes of code required to load differen
 =============== =============================== ============================= =================
 Immediate range	Size of signed immediate (bits)	Code sequence                 Code Size (bytes)
 =============== =============================== ============================= =================
-+/-32	        6                               c.li  rd, imm                 2
++/-32	          6                               c.li  rd, imm                 2
 +/-2048         12                              addi  rd, zero, imm	          4
 +/-256K         18                              c.lui rd, imm[17:12]+imm[11]  6
                                                 
