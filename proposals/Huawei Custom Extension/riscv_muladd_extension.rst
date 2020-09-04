@@ -142,7 +142,7 @@ Here is a proposal encoding, and the immediate is now signed to allow negative o
 The immediate value is signed for ``l.muliadd`` and unsigned for ``muladd``. In the NB-IoT code it is rare to need a negative immediate so 
 ``muliadd`` covers the common cases due to the restricted number of immediate bits available.
 
-*Some RISCV instruction also have unsigned immediate in a smaller encoding and signed immediates in a larger encoding, for example ``C.FSD`` and ``FSD``*
+Note that some RISCV instructions also have unsigned immediate in a smaller encoding and signed immediates in a larger encoding, for example ``C.FSD`` and ``FSD``
 
 .. code-block:: text
 
