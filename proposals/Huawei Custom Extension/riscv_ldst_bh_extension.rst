@@ -1,7 +1,7 @@
 RISC-V 16-bit Load/Store Byte/Half Extension Proposal
 =====================================================
 
-These instructions are included in the Huawei custom RISCV extension
+These instructions are included in the Huawei custom RISCV extension, and are implemented on silicon.
 
 Rationale
 ---------
