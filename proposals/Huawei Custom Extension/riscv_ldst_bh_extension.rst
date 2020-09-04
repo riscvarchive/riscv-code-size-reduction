@@ -21,14 +21,13 @@ Signed byte / half loads give minimal benefit and so are not proposed.
 -  enabled with *-Wa,-enable-c-lhu-sh*
 -  saves 1.57% of Huawei IoT code size
 
-** these are my personal measurements and do not agree with the results in the paper, we need to generate a set of figures which we agree upon **
+.. note::
+  these are my personal measurements and do not agree with the results in the paper, we need to generate a set of figures which we agree upon 
 
 https://github.com/carrv/carrv.github.io/blob/master/2020/papers/CARRV2020_paper_12_Perotti.pdf
 
 Opcode Assignment
 -----------------
-
-..table:: encodings for load/store byte/half
 
   +----+----+----+----+----+----+---+---+---+----+----+---+---+---+---+---+-----------------------+
   | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction            |
@@ -45,7 +44,7 @@ Opcode Assignment
 These encodings replace double precision floating point load/stores in the compressed encoding space.
 Other encodings are difficult to find as the immediate is quite long for the instructions to be useful.
 It is acknowledged that cores supporting the D-extension will miss out on the benefit of these instructions.
-I believe that the only way to have versions of these isntructions with an immediate value long enough to be useful and the D-extension at the same time would be to make a new version of the C-extension, but I'm happy to be proved wrong.
+I believe that the only way to have versions of these instructions with an immediate value long enough to be useful and the D-extension at the same time would be to make a new version of the C-extension, but I'm happy to be proved wrong.
 
 .. code-block:: text
 
