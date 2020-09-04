@@ -1,18 +1,18 @@
-.. _lsbh_ext:
+RISC-V 16-bit Load/Store Byte/Half Extension Proposal
+=====================================================
 
-RISC-V 16-bit Load/Store Byte/Half Extension
-============================================
+These instructions are included in the Huawei custom RISCV extension
 
 Rationale
 ---------
 
 The RISC-V C extension supports ``c.lw``, ``c.sw`` but it does not support 16-bit encodings of smaller data types. 
-Analysis has shown that ``c.lbu`` , ``c.sb`` (load byte unsigned, store byte), and ``c.lhu`` , ``c.sh`` give a significant benefit to the code size. 
-In the Hi2120 NB-IoT code base the benefit of the byte instructions is roughly double the benefit of the half-word instructions.
+Analysis has shown that ``c.lbu`` , ``c.sb`` (load byte unsigned, store byte), and ``c.lhu`` , ``c.sh`` give a significant benefit to code size.
+In the Huawei IoT code base the benefit of the byte instructions is roughly double the benefit of the half-word instructions.
 
 Signed byte / half loads give minimal benefit and so are not proposed.
 
-``c.lbu`` , ``c.sb`` are implemented in the RISC-V HCC toolchain
+``c.lbu`` , ``c.sb`` are implemented in the RISC-V HCC toolchain, this is the internal Huawei branch of GCC including the Huawei custom instructions
 
 -  enabled with *–Wa,-enable-c-lbu-sb*
 -  save 1.5% of NB-IoT code size
@@ -21,8 +21,6 @@ Signed byte / half loads give minimal benefit and so are not proposed.
 
 -  enabled with *-Wa,-enable-c-lhu-sh*
 -  save 0.7% of NB-IoT code size
-
-These instructions are already implemented in HiMiDeerSV100 and HiMiDeerV200
 
 Opcode Assignment
 -----------------
@@ -42,6 +40,7 @@ Opcode Assignment
   +----+----+----+----+----+----+---+---+---+----+----+---+---+---+---+---+-----------------+
 
 These encodings replace double precision floating point load/stores in the compressed encoding space.
+Other encodings are difficult to find as the immediate is quite long for the instructions to be useful.
 
 .. code-block:: text
 
@@ -54,8 +53,6 @@ These encodings replace double precision floating point load/stores in the compr
 
 Note that the registers are all in the range x8-x15 (s0-1, a0-5). The compiler should be aware of this restriction and optimise the register allocation 
 to allow for these registers to be selected, so that the 16-bit encodings are selected more often.
-
-Also note that the code size savings above are without fixing the register allocation in the compiler, so greater savings are possible.
 
 Assembler Syntax
 ----------------
