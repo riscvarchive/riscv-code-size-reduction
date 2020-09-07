@@ -13,7 +13,7 @@ associated with the ``–msave-restore`` or run-time library functions) signific
 32-bit instruction to construct the target address.  
 
 This proposal provides support for jumping ±16Mbytes from the current PC which matches the distance that can be achieved with the equivalent 
-M3 instructions. However the benefit is highly dependent on memory map and code structuring and will be small if all code is occupies a single 
+ARMv7-M instructions. However the benefit is highly dependent on memory map and code structuring and will be small if all code is occupies a single 
 memory subsystem or the memory subsystems are so widely spaced that ±16Mbytes is insufficient to jump between them. 
 
 These instructions are expensive in terms of encoding space and we therefore need to be confident that the number of jumps >±1MByte can’t be 
@@ -43,9 +43,10 @@ These instructions are implemented in the RISC-V HCC toolchain, this is the inte
 - enabled with -Wl,--enjal16
 - save 1.05% of Hiawei IoT code size
 
-However, I don't recommend implementing them in the RISC-V extension as 96% of IoT cases are covered by ``JAL8``. The additional range achieved by ``JAL16``
-and the choice of excluding the link with ``J16`` make up the other 4%. ``J8`` takes 1/4 of the encoding space of ``JAL16/J16`` so the cost/benefit is much higher.
-Of course, this is memory map dependant.
+However, I don't recommend implementing them in the RISC-V extension as 96% of IoT cases are covered by ``JAL8`` i.e. the target of the jump is within ±8Mbyte. 
+The additional range achieved by ``JAL16``and the choice of excluding the link with ``J16`` make up the other 4%. 
+``JAL8`` takes 1/4 of the encoding space of ``JAL16/J16`` so the cost/benefit is much higher.
+Of course, the benefit is memory map dependant.
 
 Opcode Assignment
 -----------------
