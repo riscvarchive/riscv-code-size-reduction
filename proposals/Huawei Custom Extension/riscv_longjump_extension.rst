@@ -41,7 +41,7 @@ Which instructions are useful is very SoC specific, as the requirement is caused
 These instructions are implemented in the RISC-V HCC toolchain, this is the internal Huawei branch of GCC including the Huawei custom instructions
 
 - enabled with -Wl,--enjal16
-- save 1.05% of Hiawei IoT code size
+- save 1.05% of Huawei IoT code size
 
 However, I don't recommend implementing them in the RISC-V extension as 96% of IoT cases are covered by ``JAL8`` i.e. the target of the jump is within ±8Mbyte. 
 The additional range achieved by ``JAL16`` and the choice of excluding the link with ``J16`` make up the other 4%. 
