@@ -1,7 +1,7 @@
-.. _immcondbr_ext:
-
 RISC-V 32-bit Conditional Branch Compare Immediate Extension
 ============================================================
+
+These instructions are included in the Huawei custom RISCV extension, and are implemented on silicon.
 
 Rationale
 ---------
@@ -28,7 +28,7 @@ The equivalent RISC-V code is like this:
 
 requiring 6-bytes of instructions.
 
-This sequence occurs thousands of times in the NB-IoT code, so the proposal is to add immediate forms of the 
+This sequence occurs thousands of times in the Huawei IoT code, so the proposal is to add immediate forms of the 
 32-bit condition branch instructions. For example:
 
 ``beqi a4, #2, <offset>``
@@ -48,6 +48,23 @@ conditional branch instructions. There are 15 bits of immediate value available 
 
     b)	Allows branches to PC-512 to PC+510
 
+These instructions are implemented in the RISC-V HCC toolchain, this is the internal Huawei branch of GCC including the Huawei custom instructions
+
+- enabled with -fimm-compare
+- saves 0.89% of Huawei IoT code size
+
+=========== =============
+percentage  instruction
+=========== =============
+42.1%       BNEI
+26.9%       BEQI
+19.4%       BGEUI
+9.5%        BLTUI
+1.4%        BLTI
+0.7%        BEGI
+=========== =============
+
+The full set needed to be implemented to allow HCC to infer the instructions, even though some are clearly of limited value.
 
 Opcode Assignment
 -----------------
@@ -92,7 +109,7 @@ Assembler Syntax
 
 ``bltui	r1, #1, <offset>	// if r1 <u  	zero_ext(cmpimm) branch to PC+offset``
 
-``bgeui	r1, #1, <offset>	// if r1 >=u  	zero_ext(cmpimm) branch to PC+offset``
+``bgeui	r1, #1, <offset>	// if r1 >=u  zero_ext(cmpimm) branch to PC+offset``
 
 
 
