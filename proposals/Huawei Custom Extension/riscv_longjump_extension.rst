@@ -44,7 +44,7 @@ These instructions are implemented in the RISC-V HCC toolchain, this is the inte
 - save 1.05% of Hiawei IoT code size
 
 However, I don't recommend implementing them in the RISC-V extension as 96% of IoT cases are covered by ``JAL8`` i.e. the target of the jump is within ±8Mbyte. 
-The additional range achieved by ``JAL16``and the choice of excluding the link with ``J16`` make up the other 4%. 
+The additional range achieved by ``JAL16`` and the choice of excluding the link with ``J16`` make up the other 4%. 
 ``JAL8`` takes 1/4 of the encoding space of ``JAL16/J16`` so the cost/benefit is much higher.
 Of course, the benefit is memory map dependant.
 
@@ -68,7 +68,7 @@ Supporting these two instructions is expensive in terms of encoding space as the
 
 Assembler Syntax
 ----------------
-The assembler will use the standard syntax and the toolchain will target ``JAL16/J16`` opcodes only when ±1MB limitations of the standard instructions 
+The assembler will use the standard syntax and the toolchain will target ``JAL16/J16`` opcodes only when ±1MByte limitations of the standard instructions 
 is exceeded.
 
 .. code-block:: text
