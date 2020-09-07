@@ -3,16 +3,10 @@ RISC-V 48-bit Load Long Immediate Extension
 
 This instruction is included in the Huawei custom RISCV extension, and is implemented on silicon.
 
-*This proposal needs a lot of updating don't read it yet :-)*
-
 Rationale
 ---------
 
-Comparative analysis has shown that the space-optimized (-Os) code produced by gcc for the RISC-V compressed instruction set (rv32imc)
-is not as dense as other target architectures with support for compressed encodings. One contributor to this is the relative inefficiency 
-of loading long immediates. 
-
-The table below summarises the number of bytes of code required to load different sizes of immediate using the rv32imc instruction set.
+The table below summarises the number of bytes of code required to load different sizes of immediate using the RV32IMC instruction set.
 
 =============== =============================== ============================= =================
 Immediate range	Size of signed immediate (bits)	Code sequence                 Code Size (bytes)
@@ -35,28 +29,53 @@ in the addi instruction.
 In the worst case a 32-bit immediate value can require 8 bytes of code to load. The frequency with which this occurs is highly dependent upon 
 the application code and on the memory layout as the compiler will use these sequences when loading pointer values into registers.
 
-Denser coding could be achieved through the use of pc-relative loads from a constant pool. Constant pools are typically placed so that they are
-accessible using a relatively small immediate offset that can be encoded in a 16-bit instruction. The total cost is therefore the 2-bytes of 
-code plus XLEN/8 bytes of data. Further saving are also possible as the same constant can be loaded at multiple places at an additional cost of 
-2 bytes of code. Although constant pools give good code density savings there are some disadvantages as they are accessed through the d-side of 
-the machine at a cost of increased d-side bandwidth, d-cache utilization and load-use latency.
+ARMv7M code typically uses a 16-bit encoding of a PC relative load to access constant data from a constant pool which is placed at the end of a function.
+Therefore we have seen a case where loading a constant representing a string in the OPUS decoder requires 8-bytes on RISC-V, and only 2-bytes on ARMv7M. Additionally the string was loaded many times so the extra 6-bytes of code was incurred many times.
 
-This extension reduces the cost of encoding these larger immediate values through the use of a 48-bit encoding, the maximum number of bytes 
-needed to encode a 32-bit immediate then becomes 6 bytes.
+This proposal encodes full 32-bit signed immediate data into a 48-bit encoding. The sign extension becomes visible if this instruction is implemented on an RV64 machine.
+We have the instruction an ``l.`` prefix indicating a long encoding. This naming scheme may not scale to longer (64bit+) encodings, so may need to change.
 
+``l.li`` is implemented in the RISC-V HCC toolchain, this is the internal Huawei branch of GCC including the Huawei custom instructions
+
+- enabled with *–femit-lli*
+- saves 0.79% of Huawei IoT code size
+
+Note that the curent compiler implementation is sub-optimal, so I think that the code-size saving could increase a lot.
+
+- ``l.li`` always requires 48-bits for large constants
+- for certain values GCC can often use fewer instruction bytes to form the constant than is currently achieved in HCC
+
+The advantage of encoding the constant in the instruction stream is that a load instruction is not required to read the data, therefore increasing performance and reducing power. The disadvantage is that if the constant value is needed multiple times it must be held in a register, so that the 48-bit instruction is not required to be issued again, whereas ARMv7M only requires an additional 16-bit instruction to load the data again.
+
+Typical usage
+-------------
+
+Analysing the Huawei IoT code output from HCC, we see ~17000 ``l.li`` instructions, and the resulting values are used as follows:
+
+=========== ======================= =========================================
+percentage  l.li usage              comment
+=========== ======================= =========================================
+28.5%       function argument       set a0-a7 before a j or jal call
+12.2%       LW address              load word from distant address
+6.6%        LBU address             load unsigned byte from distant address
+6.0%        SW address              store word to distant address
+5.6%        ADD src/dst             the result is added to a register value
+3.3%        SB address              store byte to distant address
+3.1%        AND src/dst             the result is masked by a register value
+2.4%        ADDSHF src or src/dst   source for fused add/shift, see below
+2.0%        MULIADD src or src/dst  source for fused mul/add, see below
+1.8%        LHU address             load unsigned half from distant address
+1.0%        B* source               result feeds into a conditional branch
+=========== ======================= =========================================
+
+where the ``l.li`` is used as a load address, it is frequently held in a register and reused as a store address. I don't have exact statistics for how often the address is reused (the table above show the first use of the ``l.li`` result only).
+
+``addshf`` is a custom instruction, not yet on github
+
+``muliadd`` is a custom instruction, defined here: https://github.com/riscv/riscv-code-size-reduction/blob/master/proposals/Huawei%20Custom%20Extension/riscv_muladd_extension.rst
 
 Opcode Assignment
 -----------------
-
-The RISC-V Unprivileged ISA specification already defines the opcode prefix required to identify a 48-bit instruction 
-(see Chapter 23 RV32/64G Instruction Set Listings). Bits [1:0] are 11 to indicate a uncompressed instruction 
-(all other values are allocated to the 16-bit opcodes), bits[4:2] are 111 to indicate a long opcode (>32bits), 
-and bits [6:5] are 00 for a 48-bit instruction. Therefore all 48-bit opcodes share the same 7 bit prefix (bits[6:0]) 
-of 00.111.11 (0x1f). In addition the standard RISC-V encoding always uses bits[11:7] to identify the destination register, 
-source operands when present start at bit 15. This leaves bits[14:12] available to specify the function (0 for this). 
-The immediate is placed in the upper 32-bits of the 48-bit opcode, leaving bit 15 spare (set to 0).
-
-Thus the opcode format is:
 
 .. table:: encoding for load long immediate
 
@@ -72,14 +91,9 @@ Assembler Syntax
 The assembler will use the pseudo instruction mnemonic that is already defined for loading immediates (``li``) , but the compiler will only 
 target the use of the 48-bit form when this extension is enabled and the immediate cannot be expressed in a shorter form. 
 
-Note that this is supported in the HCC linker with ``–Wl,--enllui``
-
-
 *Example*
 
 ``li x1, 0x80000024``
-
-``Opcode: 0x80000024009f``
 
 
 
