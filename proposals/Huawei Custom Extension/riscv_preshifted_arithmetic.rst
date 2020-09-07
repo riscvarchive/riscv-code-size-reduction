@@ -22,8 +22,7 @@ RISC-V requires
 
 6-bytes of instructions. These sequences are very common when compiling softfloat with GCC.
 
-The proposal is to allocate additional instructions in the OP-IMM-32 encoding group, which is reserved for 32-bit operations in RV64 configurations but 
-“can also be used for standard and non-standard extensions to RV32 only”. These additional instructions specify a shift type and immediate operand which 
+The proposal is to define instructions which specify a shift type and immediate operand which 
 allows one source register to be shifted prior to performing the operation.
 
 The shift types are:
@@ -35,7 +34,7 @@ The shift types are:
 
 A shift distance of zero is illegal
 
-Including ``ror`` is useful because there is no native rotate instruction in risc-v, unless the B-extension is implemented.
+Including ``ror`` is useful because there is no native rotate instruction in risc-v, it is only present if the B-extension is implemented.
 
 The instructions are:
 
