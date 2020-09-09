@@ -6,3 +6,7 @@ This will be the home for the all of the code size reduction proposals, analysis
 
 Currently I have documented the Huawei Custom Extension for reducing code size, which is already in silicon. I'd like to use this as the basis for a future RISC-V code size reduction extension.
 
+[Huawei Custom Extension](https://github.com/riscv/riscv-code-size-reduction/blob/master/proposals/Huawei%20Custom%20Extension/README.md)
+
+
+
