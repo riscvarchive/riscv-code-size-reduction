@@ -18,4 +18,4 @@ As noted in the documents, the 16-bit push/pop instructions and the 32-bit long 
 
 Also refer to this [paper](https://github.com/riscv/riscv-code-size-reduction/blob/master/CARRV2020_final.pdf) for analysis. Unfortunately the code size results don't agree with the measurements in my proposal documents, so we need to standardise on a code size measurement methodology.
 
-load/store multiple and push/pop execute multiple UOPs (micro-ops), proposed handling for these is documented [here](https://github.com/riscv/riscv-code-size-reduction/blob/master/proposals/Huawei%20Custom%20Extension/riscv_uop_handling.rst)
+Load/store multiple and push/pop execute multiple UOPs (micro-ops), proposed handling for these is documented [here](https://github.com/riscv/riscv-code-size-reduction/blob/master/proposals/Huawei%20Custom%20Extension/riscv_uop_handling.rst)
