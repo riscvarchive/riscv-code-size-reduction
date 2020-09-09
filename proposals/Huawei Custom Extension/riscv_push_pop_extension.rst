@@ -3,6 +3,8 @@ RISC-V 16-bit Push/Pop Extension
 
 These instructions are included in the Huawei custom RISCV extension, and are implemented on silicon.
 
+*Warning: These instructions support RV32 UABI only. I will publish another specification for RV32E, and RV64I/E soon, which will be taken as the reference for the RISC-V proposal*
+
 Rationale
 ---------
 
@@ -58,7 +60,7 @@ The mask to register mapping is summarised below.
 .. table:: Register count mapping for C.PUSH/C.POP/C.POPRET
 
   +--------+-----------------+---------------------------+
-  | rcount | ABI names       |	Register numbers         |
+  | rcount | ABI names       |	Register numbers          |
   +--------+-----------------+---------------------------+
   | 0      | reserved        |  reserved                 |
   +--------+-----------------+---------------------------+
@@ -99,7 +101,7 @@ additional 16-byte blocks to adjust the stack pointer by. The purpose of this fi
 space on the stack for automatic variables without having to perform an additional stack adjustment (and therefore save more code size).
 
 The total number of each instruction in the IoT code is below (to get an idea of how well used they are). The code base has 9529 functions, 
-some are from hand-coded libraries which do not make use of the push/pop instructions, or small leaf functions which do not require 
+some are from hand-coded libraries which do not make use of the ``C.PUSH/C.POP/C.POPRET`` instructions, or small leaf functions which do not require 
 stack maintenance
 
 ============= ===========
@@ -188,7 +190,7 @@ for example, if N=8 it is 0 but if N=1 it is 3.
 
 The selected registers are loaded from contiguous incrementing 4-byte words in the reverse of the order shown in the table above (ra is always loaded last).
 
-Once all loads have completed the stack pointer register (sp/x2) is incremented by 16*(((N+3)/4)+sp16imm), placing it immediately above 
+Once all loads have completed the stack pointer register (sp) is incremented by 16*(((N+3)/4)+sp16imm), placing it immediately above 
 the block of memory read by the ``C.POP`` instruction. 
 
 For ``C.POPRET``, a RET is executed as the final step in the sequence
@@ -231,7 +233,7 @@ Assembler Syntax
 The ``C.PUSH/C.POP/C.POPRET`` instructions are represented in assembler as the mnemonic followed by a braced and comma separated list of registers, 
 followed by the total size of the stack adjustment expressed in bytes. The stack adjustment should include an appropriate sign bit and the space 
 needed to accommodate the registers in the register list. Register ranges are also permitted and indicated using a hyphen (-). The register list 
-may only contain registers supported by C.PUSH/C.POP/C.POPRET instructions but these can be listed in any order and use the ABI or x plus index 
+may only contain registers supported by ``C.PUSH/C.POP/C.POPRET`` instructions but these can be listed in any order and use the ABI or x plus index 
 register representation. 
 
 To use the 16-bit encoding of ``C.PUSH/C.POP/C.POPRET`` then the registers specified in the encoding must match one of the sets of entries in in Table 2 
@@ -240,7 +242,7 @@ in this document as it is not currently implemented.
 
 To be legal the stack adjustment must:
 
-1. Be negative for a ``C.PUSH`` and positive for a ``C.POP/C.POPRET````
+1. Be negative for a ``C.PUSH`` and positive for a ``C.POP/C.POPRET``
 2. Be a multiple of 16
 3. Have a magnitude greater than or equal to 4 times the number of registers in the list
 4. Have an absolute value that meets the constraint 16*(((N+3)/4)+M) where N is the number of registers and 0<=M<32.     
