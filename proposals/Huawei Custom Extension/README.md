@@ -1,7 +1,7 @@
 Huawei Custom Extension
 -----------------------
 
-here are the specifications for instructions to reduce code size, which are currently available on silicon:
+Here are the specifications for instructions to reduce code size, which are currently available on silicon:
 
 # [16-bit push/pop](https://github.com/riscv/riscv-code-size-reduction/blob/master/proposals/Huawei%20Custom%20Extension/riscv_push_pop_extension.rst)
 # [32-bit compare immediate branch](https://github.com/riscv/riscv-code-size-reduction/blob/master/proposals/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst)
