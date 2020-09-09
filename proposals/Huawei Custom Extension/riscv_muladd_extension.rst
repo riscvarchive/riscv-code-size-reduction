@@ -1,5 +1,5 @@
-RISC-V 32-bit Multiply/Add Extension
-====================================
+RISC-V 32-bit Multiply by Immediate and Add Extension
+=====================================================
 
 The 32-bit version of this instruction is included in the Huawei custom RISCV extension, and is implemented on silicon.
 
