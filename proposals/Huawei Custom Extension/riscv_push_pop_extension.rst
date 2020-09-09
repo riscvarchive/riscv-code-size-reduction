@@ -53,9 +53,8 @@ defined in the standard RISC-V ABI (x2) and the registers to be loaded/stored ar
 is the callee save subset of the standard RISC-V UABI, as defined in Chapter 20 *RISC-V Assembly Programmer’s Handbook of the RISC-V Unprivileged ISA* specification 
 (s0-s11), and the caller save registers which are most frequently spilled: the return address (ra) and first function arguments (a0-1).
 
-The mask to register mapping is summarised in :numref:`regcount_table` .
+The mask to register mapping is summarised below.
 
-.. _regcount_table:
 .. table:: Register count mapping for C.PUSH/C.POP/C.POPRET
 
   +--------+-----------------+---------------------------+
@@ -94,12 +93,12 @@ The mask to register mapping is summarised in :numref:`regcount_table` .
   | 15     |ra, s0-s11, a0-a1|x1, x8-x9, x18-x27, x10-x11|
   +--------+-----------------+---------------------------+
 
-The ``opcode`` field (bits [3:2]) indicates whether a ``C.POP`` instruction or a ``C.POPRET`` instruction is to be performed, and whether a ``C.POP ``
+The ``opcode`` field (bits [3:2]) indicates whether a ``C.POP`` instruction or a ``C.POPRET`` instruction is to be performed, and whether a ``C.POP``
 should also include a final ``RET``. The ``sp16imm`` field (bits [12:8]) is an unsigned 5-bit immediate that indicates the number of 
 additional 16-byte blocks to adjust the stack pointer by. The purpose of this field is to allow a function to allocate additional 
 space on the stack for automatic variables without having to perform an additional stack adjustment (and therefore save more code size).
 
-The total number of each instruction inthe IoT code is below (to get an idea of how well used they are). The code base has 9529 functions, 
+The total number of each instruction in the IoT code is below (to get an idea of how well used they are). The code base has 9529 functions, 
 some are from hand-coded libraries which do not make use of the push/pop instructions, or small leaf functions which do not require 
 stack maintenance
 
@@ -174,6 +173,11 @@ that allows up to an additional 496 bytes of stack to be allocated for automatic
 manipulation instructions. Note that the subexpression *((N+3)/4)* is the number of 16 byte blocks needed to hold the spilled registers, 
 1 for values of N up to 4, 2 for values of N in the range 5 to 8 and so on.
 
+.. figure:: push_1to5_regs_170pc_zoom.png
+  
+  push 1 to 5 registers, stores can happen in any order, note 3 register holes in the stack pointer decrement
+
+
 ``C.POP/C.POPRET`` instruction
 ----------------------------
 
@@ -188,6 +192,11 @@ Once all loads have completed the stack pointer register (sp/x2) is incremented 
 the block of memory read by the ``C.POP`` instruction. 
 
 For ``C.POPRET``, a RET is executed as the final step in the sequence
+
+.. figure:: pop_1to5_regs_170pc_zoom.png
+
+  pop 1 to 5 registers, loads can happen in any order, note 3 register holes in the stack pointer increment
+
 
 Exceptions and Interrupts
 -------------------------
