@@ -11,3 +11,5 @@ here are the specifications for instructions to reduce code size, which are curr
 # [48-bit load long immediate](https://github.com/riscv/riscv-code-size-reduction/blob/master/proposals/Huawei%20Custom%20Extension/riscv_LLI_extension.rst)
 
 As noted in the documents, the 16-bit push/pop instructions and the 32-bit long jump instructions may need modification before being used as proposals for the new RISC-V extension.
+
+Also refer to this [paper](https://github.com/riscv/riscv-code-size-reduction/blob/master/CARRV2020_final.pdf) for analysis. Unfortunately the code size results don't agree with the measurements in my proposal documents, so we need to standardise on a code size measurement methodology.
