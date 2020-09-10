@@ -22,7 +22,7 @@ The simplest approach is to treat a sequenced instruction as a single uninterrup
 If there is an interrupt then either complete all of the instruction (every UOP), or none of it.
 This is bad for interrupt latency, and also can cause problems if a UOP is a load or store instruction which causes a 
 load/store access fault or fires a trigger (which either causes entry into debug mode or a handler). 
-In these cases the sequence must be interrupted when the exception fires, so that the handler runs or debug mode is entered. 
+In these cases the sequence *should* be interrupted when the exception fires, so that the handler runs or debug mode is entered at the correct point. 
 The UOP number which caused the exception must also be available (like ``vstart``)  in the handler/debug mode and also for restart.
 
 Given that the sequence can be interrupted by an exception, it makes sense to allow interrupts at any UOP.
@@ -34,11 +34,13 @@ The proposal is to add a field to ``xstatus`` (i.e. ``[msu]status`` ) called ``s
 (or the interrupted instruction was not a sequenced instruction). Why add a field to ``xstatus`` ? It was the most convenient place as it
 already forms part of the context, so requires no software changes.
 
-``xstatus.step`` is only updated by issuing sequenced instructions or software writes to the ``mstatus`` register. If handler or debug mode code
+``xstatus.step`` is only updated by issuing sequenced instructions or software writes to the ``xstatus`` register. If handler or debug mode code
 issue any sequenced instructions then they must save/restore the value of ``xstatus.step`` before returning to the interrupted sequenced instruction.
 
 On debug mode entry, also update ``xstatus.step`` when debug mode is entered from ``x`` mode. This seems a bit strange, as it's not a D register but it avoided the need for a debug mode register
 representing the UOP number. This seems irregular, but simple. Maybe there should be a ``dxxx.step`` field somewhere, TBD.
+
+*In our implementation we only had U and M-mode,and no N-extension, and only added the step field to mstatus*
 
 ``xstatus.step`` says which UOP to execute first when executing the next sequenced instruction. If it is out of range (e.g. ``xstatus.step=5`` and the next sequenced instruction only has 3 UOPs) then take an illegal instruction exception.
 
@@ -72,7 +74,9 @@ An an example for ``C.POPRET`` which issues this sequence, instruction definitio
 Notes
 
 
-  - UOPs 0-5 can be interrupted/debug halted. UOP 6 *can't* because UOP 5 cannot be issued more than once if restart option 1 above is implemented
+  
+  - UOPs 0-5 can be interrupted/debug halted. UOP 6 *can't* because UOP 5 cannot be issued more than once if restart option 1 above is implemented. Any UOP may be 
+    interrupted/debug halted for restart ioptions 2 and 3
   - UOPs 0-4 can cause load alignment faults or watchpoint triggers
   - UOP 0 can cause a PC match trigger
 
