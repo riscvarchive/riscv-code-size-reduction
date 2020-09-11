@@ -2,6 +2,8 @@
 RISC-V Push/Pop Extension
 *************************
 
+Apologies for the broken links in the document I don't know how to fix them :worried:
+
 This document describes 32-bit and 16-bit encodings for ``[C.]PUSH[.E]``, ``[C.]POP[.E]`` and ``[C.]POPRET[.E]`` instructions for RV32 and RV64, architectures, I and E variants.
 
 Rationale
