@@ -63,7 +63,7 @@ Opcode Assignment
   |  100         |  1 |  1 |  rcount        | 1  | 0  |    spimm  | 00    | C.PUSH.E           |
   +----+----+----+----+----+----+---+---+---+----+----+---+---+---+---+---+--------------------+
 
-:ref:`_pushpop16_encoding`
+:ref:`pushpop16_encoding`
 
 Notes
 
