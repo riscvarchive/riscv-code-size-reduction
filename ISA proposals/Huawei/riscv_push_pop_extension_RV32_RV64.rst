@@ -100,7 +100,7 @@ an additional stack adjustment (and therefore save more code size).
 
 
 The encodings contain no explicit register index fields as the memory accesses and pointer increments are all based on the stack pointer register as 
-defined in the standard RISC-V ABIs ``sp`` and the registers to be loaded/stored are specified using the ``rcount`` field (see :numref:`regcount_table1`)
+defined in the standard RISC-V ABIs ``sp`` and the registers to be loaded/stored are specified using the ``rcount`` field (see :ref:`regcount_table1`)
 
 The behaviour of each value of ``rcount``, ``eabi`` and ``spimm`` is shown in :numref:`regcount_table1`. 
 
