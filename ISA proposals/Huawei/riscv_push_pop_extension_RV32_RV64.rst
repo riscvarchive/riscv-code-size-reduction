@@ -1,8 +1,3 @@
-.. toctree::
-   :maxdepth:2
-
-.. _pushpop_ext:
-
 *************************
 RISC-V Push/Pop Extension
 *************************
@@ -75,7 +70,7 @@ Notes
  - [11] is ``eabi`` which distinguishes between the ``C.POP`` (UABI) and ``C.POP.E`` (EABI) versions
  - [15:13] and [1:0] identify the encoding within the 16-bit encoding space.
  - The ``spimm`` field  is an unsigned immediate that indicates the number of additional *n*-byte blocks to adjust the stack 
-   pointer by. See :numref:`spimm` and :numref:`regcount_table1` 
+   pointer by. See :ref:`spimm` and :ref:`regcount_table1` 
  - RV32I, RV64I can use either ABI (UABI or EABI), but it is optional to implement the ``.E`` variants
  - RV32E UABI, RV64E UABI are not supported configurations, these should only use the ``.E`` variants
  - RV64E is not currently in the RISC-V standard, but may be included in the future so it is fully included in this specification
@@ -102,7 +97,7 @@ an additional stack adjustment (and therefore save more code size).
 The encodings contain no explicit register index fields as the memory accesses and pointer increments are all based on the stack pointer register as 
 defined in the standard RISC-V ABIs ``sp`` and the registers to be loaded/stored are specified using the ``rcount`` field (see :ref:`regcount_table1`)
 
-The behaviour of each value of ``rcount``, ``eabi`` and ``spimm`` is shown in :numref:`regcount_table1`. 
+The behaviour of each value of ``rcount``, ``eabi`` and ``spimm`` is shown in :ref:`regcount_table1`. 
 
 .. _regcount_table1:
 .. table:: Register count mapping for ``C.PUSH[.E]/C.POP[.E]/C.POPRET[.E]``
@@ -183,13 +178,13 @@ current stack pointer. The last register in the list stored to the lowest memory
 
   sp-(XLEN/8)*r
 
-where *r* is the number registers to store (the second column from :numref:`regcount_table1`)
+where *r* is the number registers to store (the second column from :ref:`regcount_table1`)
 
 The selected registers are written to contiguous incrementing (XLEN/8)-byte words starting with the register in the reverse of the order 
-shown in :numref:`regcount_table1` above (ra is always stored last).
+shown in :ref:`regcount_table1` above (ra is always stored last).
 
-Once all stores have completed the stack pointer register ``sp`` is decremented by the stack adjustment value from :numref:`spimm` and
-:numref:`regcount_table1`. 
+Once all stores have completed the stack pointer register ``sp`` is decremented by the stack adjustment value from :ref:`spimm` and
+:ref:`regcount_table1`. 
 
 Note that *spimm* 
 allows up to an additional bytes of stack to be allocated for automatic variables without having to issue additional stack manipulation 
@@ -208,7 +203,7 @@ It also is possible to increment the stack pointer afterwards instead, and adjus
 
 In the tables:
 
-  -  ``N`` is the stack pointer adjustment value from :numref:`regcount_table1`. 
+  -  ``N`` is the stack pointer adjustment value from :ref:`regcount_table1`. 
   -  ``M`` is ``XLEN/8`` i.e. 4 for RV32, 8 for RV84
 
 .. table:: UOPs for ``C.PUSH`` if ``rcount<=12``
@@ -290,17 +285,17 @@ In the tables:
 
 A ``C.POP[.E]/C.POPRET[.E]`` instruction loads the set of registers selected by *rcount* from the memory. 
 The loads start at the lowest memory location to be read by the ``C.POP[.E]/C.POPRET[.E]``. To get to that location
-the stack pointer is first incremented by the scaled value of ``spimm`` from :numref:`spimm`, and then incremented
-by the number of holes required to mantain the stack alignment (see :numref:`spimm` and
-:numref:`regcount_table1`).
+the stack pointer is first incremented by the scaled value of ``spimm`` from :ref:`spimm`, and then incremented
+by the number of holes required to mantain the stack alignment (see :ref:`spimm` and
+:ref:`regcount_table1`).
 
-The selected registers are loaded from contiguous incrementing (XLEN/8)-byte words in the reverse of the order shown in :numref:`regcount_table1`
+The selected registers are loaded from contiguous incrementing (XLEN/8)-byte words in the reverse of the order shown in :ref:`regcount_table1`
 above (ra is always loaded last).
 
-See :numref:`spimm` for stack increment calculations for all architectures.
+See :ref:`spimm` for stack increment calculations for all architectures.
 
-Once all loads have completed the stack pointer register ``sp`` is incremented by the stack adjustment value from :numref:`spimm` and
-:numref:`regcount_table1`, placing it immediately above the block of memory read by the ``C.POP[.E]/C.POPRET[.E]`` instruction. 
+Once all loads have completed the stack pointer register ``sp`` is incremented by the stack adjustment value from :ref:`spimm` and
+:ref:`regcount_table1`, placing it immediately above the block of memory read by the ``C.POP[.E]/C.POPRET[.E]`` instruction. 
 
 ``C.POPRET[.E]`` executes a ``RET`` as the final step in the sequence
 
@@ -317,7 +312,7 @@ It is possible to increment the stack pointer afterwards instead, and adjust the
 
 In the tables:
 
-  -  ``N`` is the stack pointer adjustment value from :numref:`regcount_table1`. 
+  -  ``N`` is the stack pointer adjustment value from :ref:`regcount_table1`. 
   -  ``M`` is ``XLEN/8`` i.e. 4 for RV32, 8 for RV84
 
 ``ra`` is loaded early for performance because the value is needed by ``ret``. This may complicate burst reads from memory so may not be a performance advantage.
@@ -409,7 +404,7 @@ If ``eabi`` is zero and ``sp`` is not 16 byte aligned when a ``C.PUSH/C.POP/C.PO
 If ``eabi`` is one and ``sp`` is not 8 byte aligned (RV32) or 16 byte aligned (RV64) when a ``C.PUSH.E/C.POP.E/C.POPRET.E`` instruction 
 is executed a memory alignment exception will be generated (Store Access Fault for ``C.PUSH.E``, Load Access Fault for ``C.POP.E/C.POPRET.E``).
 
-Illegal instructions are taken for illegal ``rcount`` values (see :numref:`regcount_table1`).
+Illegal instructions are taken for illegal ``rcount`` values (see :ref:`regcount_table1`).
 
 If ``eabi`` is zero on an RV32E/RV64E architecture take an illegal instruction exception.
 
@@ -435,9 +430,9 @@ For ``RV32E/RV64E`` the mneumonics ``C.PUSH.E``/``C.POP.E``/``C.POPRET.E`` must 
 To be legal the stack adjustment must:
 
 1. Be negative for a ``C.PUSH[.E]`` and positive for a ``C.POP[.E]``/``C.POPRET[.E]``
-2. Match the value range in :numref:`regcount_table1` for the current architecture and ABI   
+2. Match the value range in :ref:`regcount_table1` for the current architecture and ABI   
 
-To use the 16-bit encoding of ``C.PUSH[.E]/C.POP[.E]/C.POPRET[.E]`` then the registers specified in the encoding must match one of the sets of entries in :numref:`regcount_table1` 
+To use the 16-bit encoding of ``C.PUSH[.E]/C.POP[.E]/C.POPRET[.E]`` then the registers specified in the encoding must match one of the sets of entries in :ref:`regcount_table1` 
 above, and the stack adjustment must be legal. Otherwise the assembler will attempt to use the 32-bit encoding, if it is implemented and is suitable. If not then this will cause an 
 an ``illegal operands`` error from the assembler.
  
@@ -659,7 +654,7 @@ Opcode Assignment
 
 - bit [27] is ``eabi`` which specifies which ABI is in use
 
-The ``x`` registers are specified by :numref:`regcount_table1`, there is no difference in the specification except that ``spimm`` has a larger range.
+The ``x`` registers are specified by :ref:`regcount_table1`, there is no difference in the specification except that ``spimm`` has a larger range.
 The addition field ``frcount`` allows callee save ``f`` registers to be saved/restored as well. The ``f`` registers are always appended to the list 
 of integer registers.
 
@@ -720,7 +715,7 @@ The order of registers load/stored is:
 - if (``frcount`` != 0 && ``frcount`` < 13) fs0-fs ``frcount``
 
 This is the same as the 16-bit encoding, except that the register list may be extended with ``fs0-fs11``.
-The final stack pointer offset is the same as for the 16-bit encoding, but with a larger range see :numref:`regcount_table2_eab_0`
+The final stack pointer offset is the same as for the 16-bit encoding, but with a larger range see :ref:`regcount_table2_eab_0`
 
 Therefore the 16-bit encoding allows up to 13 registers to be saved/restored. The 32-bit encoding also allows up to 12 additional registers
 giving a maximum of 25.
@@ -743,7 +738,7 @@ The order of registers load/stored is:
 - if (``frcount`` == 15) all ``F`` caller save registers
 
 This is the same as the 16-bit encoding with ``rcount=15``, except that the register list may be extended with the ``F`` caller registers.
-The final stack pointer offset is the same as for the 16-bit encoding, but with a larger range see :numref:`regcount_table2_eab_0`
+The final stack pointer offset is the same as for the 16-bit encoding, but with a larger range see :ref:`regcount_table2_eab_0`
 
   - ``PUSH/POP/POPRET``:       the 16-bit encoding allows 16 ``X`` registers to be saved/restored. The 32-bit encoding also allows an additional 20 ``F`` registers giving a maximum of 36.
   - ``PUSH.E/POP.E/POPRET.E``: the 16-bit encoding allows  7 ``X`` registers to be saved/restored. The 32-bit encoding also allows an additional 20 ``F`` registers giving a maximum of 27.
