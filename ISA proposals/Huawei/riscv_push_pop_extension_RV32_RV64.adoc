@@ -97,7 +97,7 @@ specification]
 https://github.com/riscv/riscv-eabi-spec/blob/master/EABI.adoc[proposal]
 
 
-[spimm-table]
+[#spimm-table]
 .`spimm` and register holes for different architectures and ABIs
 [options="header"]
 |=======================================================================
@@ -124,7 +124,7 @@ to be loaded/stored are specified using the `rcount` field (see
 The behaviour of each value of `rcount`, `eabi` and `spimm` is shown in
 <<rcount-table>>.
 
-[rcount-table]
+[#rcount-table]
 .UABI `rcount` values for different architectures
 [options="header"]
 |==================================================================================================
