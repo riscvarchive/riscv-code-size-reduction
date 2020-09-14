@@ -466,10 +466,10 @@ if it is implemented and is suitable. If not then this will cause an an
 === RV32I UABI Examples
 
 .push 1 to 5 registers, loads can happen in any order, note 3 register holes in the stack pointer increment
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/push_1to5_regs_170pc_zoom.png
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/push_1to5_regs_170pc_zoom.png[push example]
 
 .pop 1 to 5 registers, stores can happen in any order, note 3 register holes in the stack pointer decrement
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/pop_1to5_regs_170pc_zoom.png
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/pop_1to5_regs_170pc_zoom.png[pop example]
 
 === RV32I Assembler Examples
 
