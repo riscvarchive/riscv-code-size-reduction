@@ -829,9 +829,9 @@ The other illegal instruction checks are identical to those for the
 |===========================================================================
 
 
-== Assembler Examples
+=== Assembler Examples
 
-=== PUSH RV32I UABI
+==== PUSH RV32I UABI
 
 [source,sourceCode,text]
 ----
@@ -852,7 +852,7 @@ sw  s2, 48(sp); sw  s1, 52(sp);
 sw  s0, 56(sp); sw  ra, 60(sp);
 ----
 
-=== PUSH.E RV32I EABI
+==== PUSH.E RV32I EABI
 
 [source,sourceCode,text]
 ----
@@ -873,7 +873,7 @@ sw  s2, 48(sp); sw  s1, 52(sp);
 sw  s0, 56(sp); sw  ra, 60(sp);
 ----
 
-=== POP RV32I UABI
+==== POP RV32I UABI
 
 [source,sourceCode,text]
 ----
@@ -896,7 +896,7 @@ lw   x9, 244(sp);  lw   x8, 248(sp);
 addi sp, sp, 256
 ----
 
-=== POPRET RV32I UABI
+==== POPRET RV32I UABI
 
 [source,sourceCode,text]
 ----
@@ -916,7 +916,7 @@ lw   x9, 20(sp);  lw   x8, 24(sp);
 addi sp, sp, 32; ret
 ----
 
-=== POPRET RV32I EABI
+==== POPRET RV32I EABI
 
 [source,sourceCode,text]
 ----
