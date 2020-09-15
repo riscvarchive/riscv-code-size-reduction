@@ -3,7 +3,7 @@ RISC-V 16-bit Push/Pop Extension
 
 These instructions are included in the Huawei custom RISCV extension, and are implemented on silicon.
 
-*Warning: These instructions support RV32 UABI only. I will publish another specification for RV32E, and RV64I/E soon, which will be taken as the reference for the RISC-V proposal*
+Warning: These instructions support RV32 UABI only. The updated proposal supporting all configurations is `here <https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc>`_ 
 
 Rationale
 ---------
