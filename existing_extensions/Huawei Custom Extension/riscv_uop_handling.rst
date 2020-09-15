@@ -12,8 +12,8 @@ Therefore UOPs always write results to standard X/F registers. A UOP must not be
 The control logic needs to change to track the UOP number, and not to increment the PC until the final UOP has issued.
 
 It is possible to implement instructions which require more than two register read ports as a sequence of UOPs, 
-providing any intermediate results can be written to standard registers (not special temporary registers) as this
-would prevent the UOP using a standard RISCV encoding.
+providing any intermediate results can be written to standard registers (not special temporary registers as this
+would prevent the UOP using a standard RISCV encoding).
 
 Handling interrupts, exceptions etc.
 ------------------------------------
@@ -34,6 +34,8 @@ The proposal is to add a field to ``xstatus`` (i.e. ``[msu]status`` ) called ``s
 (or the interrupted instruction was not a sequenced instruction). Why add a field to ``xstatus`` ? It was the most convenient place as it
 already forms part of the context, so requires no software changes.
 
+*It would be more regular to add an extra CSR for this, TBD*
+
 ``xstatus.step`` is only updated by issuing sequenced instructions or software writes to the ``xstatus`` register. If handler or debug mode code
 issue any sequenced instructions then they must save/restore the value of ``xstatus.step`` before returning to the interrupted sequenced instruction.
 
@@ -42,7 +44,7 @@ representing the UOP number. This seems irregular, but simple. Maybe there shoul
 
 *In our implementation we only had U and M-mode,and no N-extension, and only added the step field to mstatus*
 
-``xstatus.step`` says which UOP to execute first when executing the next sequenced instruction. If it is out of range (e.g. ``xstatus.step=5`` and the next sequenced instruction only has 3 UOPs) then take an illegal instruction exception.
+``xstatus.step`` says which UOP to execute first when executing the next sequenced instruction. If it is out of range (e.g. ``xstatus.step=5`` and the next sequenced instruction only has 3 UOPs) then take an illegal instruction exception. Therefore writing a value to ``xstatus.step`` does not guarantee that execution will restart from that UOP as the value might not be legal.
 
 Given that any UOP may be interrupted the question is how to restart. 
 
@@ -85,7 +87,7 @@ so that the the load to x19, x18 etc. don't get overwritten. In which case the s
 
   - UOP 0 addi sp, sp, 32; 
   - UOP 1 lw  x19, -20(sp);  
-  - UOP 2 lw  x18, -26(sp);
+  - UOP 2 lw  x18, -16(sp);
   - UOP 3 lw   x9, -12(sp);  
   - UOP 4 lw   x8,  -8(sp);
   - UOP 5 lw   x1,  -4(sp);
