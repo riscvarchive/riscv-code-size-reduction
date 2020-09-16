@@ -216,7 +216,7 @@ afterwards instead, and adjust the store addresses accordingly.
 In the tables:
 
 * `N` is the stack pointer adjustment value from  <<rcount-table>>.
-* `M` is `XLEN/8` i.e. 4 for RV32, 8 for RV84
+* `M` is `XLEN/8` i.e. 4 for RV32, 8 for RV64
 
 .UOPs for ``C.PUSH`` if ``rcount<=12``
 [options="header",width=50%]
@@ -329,7 +329,8 @@ afterwards instead, and adjust the load addresses accordingly.
 
 In the tables:
 * `N` is the stack pointer adjustment value from  <<rcount-table>>.
-* `M` is `XLEN/8` i.e. 4 for RV32, 8 for RV84
+* `M` is `XLEN/8` i.e. 4 for RV32, 8 for RV6
+4
 
 `ra` is loaded early for performance because the value is needed by
 `ret`. This may complicate burst reads from memory so may not be a
