@@ -7,7 +7,7 @@ Documentation of existing ISA extensions
 - [Existing ISA extensions to reduce code size](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/README.md)
 
 ISA extension proposals
-- (none yet)
+- [Push/Pop](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc)
 
 Publicly available benchmarks
 - [Embench](https://github.com/embench/embench-iot)
@@ -17,6 +17,9 @@ Publicly available benchmarks
 Proprietary benchmarks
 - Huawei IoT code
 - others?
+
+Useful papers
+- [Peijie Li's Berkeley paper](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2019/EECS-2019-107.pdf)
 
 Reference Architectures
 -----------------------
