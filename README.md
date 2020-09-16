@@ -27,7 +27,7 @@ Current open issues to discuss in meetings
 - How to report code size, Ofer suggests total size of all read-only sections in the elf file
 - Whether synopsys would be interested in letting us compare against Metaware for ARC v2, or if we should just keep it to open source (ARC v1). In general comparisons should be against open source compilers except where we have specific support, i.e. IAR
 - Review of push/pop proposal and how to handle the EABI cases
-  - different meaning of register lists (different X registers from s2 onwards), and hwo to specify them in the assembler syntax
+  - different meaning of register lists (different X registers from s2 onwards), and how to specify them in the assembler syntax
   - different stack alignment 8 / 16-bytes
   - selecting either ABI in software for I (32-reg) architectures
   
