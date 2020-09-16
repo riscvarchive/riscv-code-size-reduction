@@ -14,6 +14,17 @@ This document describes 32-bit and 16-bit encodings for `[C.]PUSH[.E]`,
 `[C.]POP[.E]` and `[C.]POPRET[.E]` instructions for RV32 and RV64,
 architectures, I and E variants.
 
+== Open issues
+
+it's better to list these first, as they are resolved I'll update the proposal
+
+- `POPRET` with `rcount=15` is not useful so should be illegal. Because these cases are for the interrupt handler entry/exit a different mnemonic would make sense like `PUSHINT/POPINT` for example
+- should `PUSHINT/POPINT` have the option to avoid saving/restoring `ra`? Should this be an option in general? it could be an extra bit in the 32-bit encoding, or maybe allocated some new rcount values to save (for example) `s0,s0-1,s0-2` without `ra`
+- need to review usage of register lists, and make sure the proposal matches load/store multiple requirements
+- UABI/EABI versions take too much encoding space, need to review them carefully to be clearer about what the proposal is trying to achieve
+-- e.g. do we _really_ need to change the stack alignment between the two?
+
+
 == Rationale
 
 `[C.]PUSH[.E]/[C.]POP[.E]/[C.]POPRET[.E]` are designed to replace the
@@ -172,8 +183,6 @@ The behaviour of each value of `rcount`, `eabi` and `spimm` is shown in
 [NOTE]
  `rcount=15` is to save/restore the caller registers for the interrupt handler. 
  
-WARNING: `POPRET` with `rcount=15` is not useful so should be illegal. Because these cases are for the interrupt handler entry/exit a different mnemonic would make sense like `PUSHINT/POPINT` for example
-
 CAUTION: `ra, s0-s1` map to the same X registers in UABi and EABI, but `s2-s4` are different, so the instructions behave differently
 
 A `C.PUSH[.E]` instruction writes the set of registers selected by
