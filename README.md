@@ -21,6 +21,13 @@ Proprietary benchmarks
 Useful papers
 - [Peijie Li's Berkeley paper](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2019/EECS-2019-107.pdf)
 
+Current open issues to discuss in meetings
+------------------------------------------
+
+- How to report code size, Ofer suggests total size of all read-only sections in the elf file
+- Whether synopsys would be interested in letting us compare against Metaware for ARC v2, or if we should just keep it to open source (ARC v1)
+-- in general comparisons should be against open source compilers except where we have specific support, i.e. IAR
+
 Reference Architectures
 -----------------------
 
