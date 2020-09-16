@@ -11,8 +11,12 @@ ISA extension proposals
 
 Publicly available benchmarks
 - [Embench](https://github.com/embench/embench-iot)
-- softfloat, link needed
-- others?
+
+  - antecedents [BEEBS](https://github.com/mageec/beebs), [MiBench](http://vhosts.eecs.umich.edu/mibench/), [Mälardalen WCET benchmarks](https://drops.dagstuhl.de/opus/volltexte/2010/2833/pdf/15.pdf), [Hacker's Delight/A Hacker's Assistant](https://en.wikipedia.org/wiki/Hacker%27s_Delight)
+
+- [TACLe Benchmarks](http://www.tacle.eu/)
+- [softfloat](http://www.jhauser.us/arithmetic/SoftFloat.html) and [testfloat](http://www.jhauser.us/arithmetic/TestFloat.html)
+- [MLPerf](https://mlperf.org/) - specifically for AI/ML applications
 
 Proprietary benchmarks
 - Huawei IoT code
