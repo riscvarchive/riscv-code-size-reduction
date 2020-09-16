@@ -24,10 +24,12 @@ Useful papers
 Reference Architectures
 -----------------------
 
+These are architectures we could compare against. The "official" comparison architectures have not yet been decided, but almost certainly need freely available ISA manuals and GCC+LLVM ports
+
 - ARMv7-M / Cortex-M3 [manual is here](https://developer.arm.com/documentation/ddi0403/ed/)
 - ARCv1 / ARC700 [manual is here](http://me.bios.io/images/d/dd/ARCompactISA_ProgrammersReference.pdf)
-
-ARCv2 would be better but is proprietary (ISA and toolchain)
+  ARCv2 would be better but is proprietary (ISA and toolchain)
+- NanoMIPs [manual is here](https://s3-eu-west-1.amazonaws.com/downloads-mips/I7200/I7200+product+launch/MIPS_nanomips32_ISA_TRM_01_01_MD01247.pdf)
 
 Reference Toolchains
 --------------------
