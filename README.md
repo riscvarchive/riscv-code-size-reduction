@@ -30,6 +30,8 @@ These are architectures we could compare against. The "official" comparison arch
 - ARCv1 / ARC700 [manual is here](http://me.bios.io/images/d/dd/ARCompactISA_ProgrammersReference.pdf) _ARCv2 would be better but is proprietary (ISA and toolchain)_
 - NanoMIPs [manual is here](https://s3-eu-west-1.amazonaws.com/downloads-mips/I7200/I7200+product+launch/MIPS_nanomips32_ISA_TRM_01_01_MD01247.pdf)
 - AVR32 [manual is here](http://ww1.microchip.com/downloads/en/DeviceDoc/doc32000.pdf)
+- J-core [manual is here](https://j-core.org/) a reimplementation of Hitachi SH2 
+- SuperH [instruction reference is here](http://www.shared-ptr.com/sh_insns.html)
 
 Reference Toolchains
 --------------------
