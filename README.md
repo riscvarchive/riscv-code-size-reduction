@@ -31,7 +31,6 @@ Current open issues to discuss in meetings
   - different stack alignment 8 / 16-bytes
   - selecting either ABI in software for I (32-reg) architectures
   
-
 Reference Architectures
 -----------------------
 
@@ -61,12 +60,43 @@ Need a lot more detail for these, they're just placeholders at the moment
 - smaller instruction sequences to jump to distant addresses
 - smaller instruction sequences to load/store to distant addresses
 - smaller instruction sequences to load 32-bit constants
-- many more I'm sure......
+
+From Anders Lindgren:
+
+- Better support for 8 and 16 bit data
+	
+  - Today, most RISC-V instructions work on the full registers. This makes the generated code more efficient to handle 32 bit data than 8 and 16 bit data. Effectively, the compiler must ensure that 8 and 16 bit data are properly extended before it can perform things like compares on them. To make things worse, RISC-V doesn't provide instructions to perform extensions so typically two instructions are needed to perform extensions (with the exception of 8 bit zero extension which can be done using "ANDI Rd, Rs, 0xFF"). Instructions to perform sign and zero extend (preferably with compact variants) are obvious candidates. In addition, we could consider 8 and 16 bit variants (and for RV64 32 bit variants) for various instructions like compare, right shift, division, and modulo. One thing that makes the situation worse is that the ABI requires arguments and return values to be correctly extended. Hence a small function like "short f(short x, short y) { return x + y; }" require 4 instructions (add, shift left, signed shift right, ret). I would like to see if the overall code size would shrink if the ABI didn't require this, and, if so, recommend that the EABI (which isn't ratified) is changed to that fewer extension instructions are needed.
+
+- Insert and extract parts of registers
+
+  - If it would be easier to insert and extract parts of registers, we could avoid storing things on the stack. Concretely, a RV32 processor register could be used to store four bytes or two halfwords.
+
+- Improved compare with constants
+
+  - Today, when comparing a value against a non-zero constant, at least two instructions are needed. Instructions that compare a register against commonly used constants (imm5?) could reduce code size. We need to see which constants and which comparisons are most effective.
+   - See this proposal https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst
+
+- Address calculations with scaling
+
+  - In C, when doing address calculations, the index value is scaled with the object size to produce the end address. Today, this is done using an explicit shift (when the size of the object is a power of two) or a multiplication. We should look into loads, stores, and load-effective-address with this scaling builtin. Since most arrays use elements of size 2, 4, and 8 we could restrict ourselves to this.
 
 Experiments
 -----------
 
 - enable B-extension, maybe a subset could become part of a future code-size reduction ISA extension
+
+Outputs from the group
+----------------------
+
+- Improved open source compiler technology (GCC and LLVM)
+  - code size optimised compilers with and without `Zce` (see below)
+  - for example function prologue/epilogue should be smaller than _-msave-restore_ is now in GCC. 
+- One code size reduction extension, maybe called `Zce` which is likely to be broken into sections
+  - Zce_base - all 32-bit, non-multiple step code size reduction instructions possibly including some of the B-extension
+  - Zce_48 - 48-bit encodings - we shouldn't force people to implement these (and still need to justify them)
+  - Zce_16 - 16-bit encodings - because if you don't specify C these must be excluded
+  - Zce_multistep - encodings which require multiple steps (UOPs) e.g. push/pop, not everyone will want to implement these
+
 
 
 
