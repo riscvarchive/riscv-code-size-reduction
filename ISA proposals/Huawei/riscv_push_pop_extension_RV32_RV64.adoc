@@ -170,7 +170,10 @@ The behaviour of each value of `rcount`, `eabi` and `spimm` is shown in
 |==================================================================================================
 
 [NOTE]
- `rcount=15` is to save/restore the caller registers for the interrupt handler
+ `rcount=15` is to save/restore the caller registers for the interrupt handler. `POPRET` with `rcount=15` is not useful so should be illegal
+
+[NOTE] 
+  `ra, s0-s1` map to the same X registers in UABi and EABI, but `s2-s4` are different, so the instructions behave differently
 
 A `C.PUSH[.E]` instruction writes the set of registers selected by
 _rcount_ to memory, the registers are written to the memory immediately
