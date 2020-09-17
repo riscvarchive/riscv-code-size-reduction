@@ -99,6 +99,7 @@ Outputs from the group
   - Zce_base - all 32-bit, non-multiple step code size reduction instructions possibly including some of the B-extension
   - Zce_48 - 48-bit encodings - we shouldn't force people to implement these (and still need to justify them)
   - Zce_16 - 16-bit encodings - because if you don't specify C these must be excluded
+    - maybe this is not neccessary as (e.g.) the F extension includes 16-bit encodings which are only available if C is enabled, and Zce will follow suit
   - Zce_multistep - encodings which require multiple steps (UOPs) e.g. push/pop, not everyone will want to implement these
 
 
