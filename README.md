@@ -88,11 +88,24 @@ From Anders Lindgren:
 - Improved compare with constants
 
   - Today, when comparing a value against a non-zero constant, at least two instructions are needed. Instructions that compare a register against commonly used constants (imm5?) could reduce code size. We need to see which constants and which comparisons are most effective.
-   - See this proposal https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst
+   - See (this proposal for combined compare-immediate-branch)[https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst]
 
 - Address calculations with scaling
 
   - In C, when doing address calculations, the index value is scaled with the object size to produce the end address. Today, this is done using an explicit shift (when the size of the object is a power of two) or a multiplication. We should look into loads, stores, and load-effective-address with this scaling builtin. Since most arrays use elements of size 2, 4, and 8 we could restrict ourselves to this.
+
+48-bit encodings
+----------------
+
+The Huawei custom extension includes one 48-bit encoding to load a 32-bit constant, the propposal is [here](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_LLI_extension.rst)
+
+nanoMIPs includes 48-bit encodings for
+- load immediate from 32-bit constant `LI48`
+- add 32-bit constant to register `ADDIU48, ADDIUGP48, ADDIUPC48`
+- add 32-bit constant to the PC `ADDIUPC48`
+- load/store word PC relative with 32-bit offset `LWPC48/SWPC48`
+
+
 
 Experiments
 -----------
