@@ -67,6 +67,13 @@ Need a lot more detail for these, they're just placeholders at the moment
 - load/store multiple
   - specified as a register list, or as base register and register count?
   - what's best for the compiler? base + count could probably fit in a 16-bit encoding
+- additional 16-bit encodings representing common 32-bit instructions, for example
+  - load/store byte/half
+  - sign/zero extend byte/half (as suggested by Anders below)
+  - not (XOR rs, -1), neg (SUB rs, x0, rs) (suggested by B-extension).
+  - mul, and shift-then-or (rd|=ra<<n) with shift distances of 8/16/24 (useful for Huawei IoT code)
+  - store byte/half of zero to the stack pointer
+  - store byte/half/word of zero
 
 From Anders Lindgren:
 
