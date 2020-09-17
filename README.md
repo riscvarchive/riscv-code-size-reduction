@@ -64,6 +64,9 @@ Need a lot more detail for these, they're just placeholders at the moment
 - smaller instruction sequences to jump to distant addresses
 - smaller instruction sequences to load/store to distant addresses
 - smaller instruction sequences to load 32-bit constants
+- load/store multiple
+  - specified as a register list, or as base register and register count?
+  - what's best for the compiler? base + count could probably fit in a 16-bit encoding
 
 From Anders Lindgren:
 
