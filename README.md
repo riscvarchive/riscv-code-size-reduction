@@ -88,7 +88,7 @@ From Anders Lindgren:
 - Improved compare with constants
 
   - Today, when comparing a value against a non-zero constant, at least two instructions are needed. Instructions that compare a register against commonly used constants (imm5?) could reduce code size. We need to see which constants and which comparisons are most effective.
-   - See (this proposal for combined compare-immediate-branch)[https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst]
+   - See [this proposal for combined compare-immediate-branch](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst)
 
 - Address calculations with scaling
 
