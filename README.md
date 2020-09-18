@@ -97,13 +97,13 @@ From Anders Lindgren:
 48-bit encodings
 ----------------
 
-The Huawei custom extension includes one 48-bit encoding to load a 32-bit constant, the propposal is [here](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_LLI_extension.rst)
+The Huawei custom extension includes one 48-bit encoding to load a 32-bit constant, the proposal is [here](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_LLI_extension.rst)
 
 nanoMIPs includes 48-bit encodings for
 - load immediate from 32-bit constant `LI48`
-- add 32-bit constant to register `ADDIU48, ADDIUGP48, ADDIUPC48`
+- add 32-bit constant to register `ADDIU48, ADDIUGP48`
 - add 32-bit constant to the PC `ADDIUPC48`
-- load/store word PC relative with 32-bit offset `LWPC48/SWPC48`
+- load/store word PC relative with 32-bit offset `LWPC48, SWPC48`
 
 
 
