@@ -74,6 +74,11 @@ Need a lot more detail for these, they're just placeholders at the moment
   - mul, and shift-then-or (rd|=ra<<n) with shift distances of 8/16/24 (useful for Huawei IoT code)
   - store byte/half of zero to the stack pointer
   - store byte/half/word of zero
+- ADD instruction(s) with a carry out for chaining into longer ADDs (Matteo)
+  - add sl, xl, yl              -> implicitly save the carry bit     
+  - addH sh, xh, yh        <- implicitly add the carry bit
+  - But I don't know if outside the soft-float FP functions we would have significant gains.
+
 
 From Anders Lindgren:
 
