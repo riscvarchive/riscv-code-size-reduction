@@ -43,8 +43,8 @@ Maybe try this as an encoding scheme:
 5+|POPRET with rcount>9 is *reserved*
 |10    |PUSHINT/POPINT |t0-t6,a0-a7                         | 16-byte         | UABI smaller IRQ handler entry/exit
 |11    |PUSHINT/POPINT |ra,t0-t6,a0-a7,mcause,mtval,mepc    | 16-byte         | UABI large IRQ handler entry/exit
-|10    |PUSHINT.E/POPINT.E |t0-t1,a0-a3                     | 8-byte          | EABI smaller IRQ handler entry/exit
-|11    |PUSHINT.E/POPINT.E |ra,t0-t1,a0-a3,mcause,mtval,mepc| 8-byte          | EABI large IRQ handler entry/exit
+|12    |PUSHINT.E/POPINT.E |t0-t1,a0-a3                     | 8-byte          | EABI smaller IRQ handler entry/exit
+|13    |PUSHINT.E/POPINT.E |ra,t0-t1,a0-a3,mcause,mtval,mepc| 8-byte          | EABI large IRQ handler entry/exit
 |14    |_reserved_ | | |
 |15    |_reserved_ | | |
 |=======================================================================================================
