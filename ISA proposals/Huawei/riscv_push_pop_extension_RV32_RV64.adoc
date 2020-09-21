@@ -278,7 +278,6 @@ In the tables:
 [options="header",width=50%]
 |===============================================================================
 | C.PUSH UOP                                |Execute if
-| addi x2, x2,  -N                          |1 
 | sw x27,  (-13*M+N)(x2)                    |rcount==12
 | sw x26,  (-12*M+N)(x2)                    |rcount<=12 && rcount>=11
 | sw x25,  (-11*M+N)(x2)                    |rcount<=12 && rcount>=10
@@ -292,13 +291,13 @@ In the tables:
 | sw x9,   ( -3*M+N)(x2)                    |rcount<=12 && rcount>=2
 | sw x8,   ( -2*M+N)(x2)                    |rcount<=12 && rcount>=1
 | sw x1,   ( -1*M+N)(x2)                    |1 
+| addi x2, x2,  -N                          |1 
 |===============================================================================
 
 .UOPs for ``C.PUSH`` if ``rcount==15``
 [options="header",width=50%]
 |===============================================================================
 | C.PUSH UOP                                |Execute if
-| addi x2, x2,  -N                          |1
 | sw x31,  (-16*M+N)(x2)                    |rcount==15
 | sw x30,  (-15*M+N)(x2)                    |rcount==15
 | sw x29,  (-14*M+N)(x2)                    |rcount==15
@@ -315,26 +314,26 @@ In the tables:
 | sw x6,   ( -3*M+N)(x2)                    |rcount==15
 | sw x5,   ( -2*M+N)(x2)                    |rcount==15
 | sw x1,   ( -1*M+N)(x2)                    |1
+| addi x2, x2,  -N                          |1
 |===============================================================================
 
 .UOPs for ``C.PUSH.E`` if ``rcount<=5``
 [options="header",width=50%]
 |===============================================================================
 |C.PUSH.E UOP                             |Execute if
-|addi x2, x2,  -N                         |1
 |sw x7,   (-6*M+N)(x2)                    |rcount==5
 |sw x6,   (-5*M+N)(x2)                    |rcount<=5 && rcount>=4
 |sw x14,  (-4*M+N)(x2)                    |rcount<=5 && rcount>=3
 |sw x9,   (-3*M+N)(x2)                    |rcount<=5 && rcount>=2
 |sw x8,   (-2*M+N)(x2)                    |rcount<=5 && rcount>=1
 |sw x1,   (-1*M+N)(x2)                    |1
+|addi x2, x2,  -N                         |1
 |===============================================================================
 
 .UOPs for ``C.PUSH.E`` if ``rcount==15``
 [options="header",width=50%]
 |===============================================================================
 | C.PUSH.E UOP                            | Execute if
-| addi x2, x2,  -N                        | 1
 | sw x15,  (-7*M+N)(x2)                   | rcount==15
 | sw x13,  (-6*M+N)(x2)                   | rcount==15
 | sw x12,  (-5*M+N)(x2)                   | rcount==15
@@ -342,6 +341,7 @@ In the tables:
 | sw x10,  (-3*M+N)(x2)                   | rcount==15
 | sw x5,   (-2*M+N)(x2)                   | rcount==15
 | sw x1,   (-1*M+N)(x2)                   | 1
+| addi x2, x2,  -N                        | 1
 |===============================================================================
 
 
