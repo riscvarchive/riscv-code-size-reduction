@@ -30,9 +30,9 @@ Maybe try this as an encoding scheme:
 [options="header",width=100%,cols="5%,5%,5%,5%,80%",]
 |=======================================================================================================
 |rcount|PUSH/POP/POPRET| ABI names | spimm alignment | comment
-|0     |PUSH/POP/POPRET|ra         | 8-byte          | Use for either ABI (UABI should set spimm[0]=0)
-|1     |PUSH/POP/POPRET|ra, s0     | 8-byte          | Use for either ABI (UABI should set spimm[0]=0)
-|2     |PUSH/POP/POPRET|ra, s0-s1  | 8-byte          | Use for either ABI (UABI should set spimm[0]=0)
+|0     |PUSH/POP/POPRET|ra         | 8-byte          | Use for either ABI (UABI should set spimm[0]=1 to round up to 16-byte blocks)
+|1     |PUSH/POP/POPRET|ra, s0     | 8-byte          | Use for either ABI (UABI should set spimm[0]=1 to round up to 16-byte blocks)
+|2     |PUSH/POP/POPRET|ra, s0-s1  | 8-byte          | Use for either ABI (UABI should set spimm[0]=0 as 3 registers already round up to 16-byte blocks)
 |3     |PUSH/POP/POPRET|ra, s0-s2  | 16-byte         | UABI only, illegal for EABI (not sure about s2 yet....)
 |4     |PUSH/POP/POPRET|ra, s0-s3  | 16-byte         | 
 |5     |PUSH/POP/POPRET|ra, s0-s4  | 16-byte         |
