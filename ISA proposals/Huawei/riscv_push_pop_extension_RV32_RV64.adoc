@@ -18,14 +18,13 @@ architectures, I and E variants.
 
 it's better to list these first, as they are resolved I'll update the proposal
 
-- `POPRET` with `rcount=15` is not useful so should be illegal. Because these cases are for the interrupt handler entry/exit a different mnemonic would make sense like `PUSHINT/POPINT` for example
-- should `PUSHINT/POPINT` have the option to avoid saving/restoring `ra`? Should this be an option in general? it could be an extra bit in the 32-bit encoding, or maybe allocated some new rcount values to save (for example) `s0,s0-1,s0-2` without `ra`
-- shoudl `PUSHINT/POPINT` also save/restore some CSRs e.g. `MCAUSE/MEPC/MTVAL` to save more code size, and so allow uarch tricks to save cycles?
+- should `PUSHINT/POPINT` have the option to avoid saving/restoring `ra`? Should this be an option in general? it could be an extra bit in the 32-bit encoding
+- should `PUSHINT/POPINT` also save/restore some CSRs e.g. `MCAUSE/MEPC/MTVAL` to save more code size, and so allow uarch tricks to save cycles?
+`PUSHINT/POPINT` will become 32-bit encoding _only_ s0 16-bit rcount becomes 3-bit, that means we can add more options as necessary
 - need to review usage of register lists, and make sure the proposal matches load/store multiple requirements
-- UABI/EABI versions take too much encoding space, need to review them carefully to be clearer about what the proposal is trying to achieve
--- e.g. do we _really_ need to change the stack alignment between the two? Can we use a CSR bit to distinguish and save a bit in the encoding? CSR state is cheaper.
+- spimm could means larger blocks in the 16-bit encodings for larger values of rcount
 
-Maybe try this as an encoding scheme:
+Try this as an encoding scheme for 16-bit encodings
 
 [options="header",width=100%,cols="5%,5%,5%,5%,80%",]
 |=======================================================================================================
@@ -33,20 +32,11 @@ Maybe try this as an encoding scheme:
 |0     |PUSH/POP/POPRET|ra         | 8-byte          | Use for either ABI (UABI should set spimm[0]=1 to round up to 16-byte blocks)
 |1     |PUSH/POP/POPRET|ra, s0     | 8-byte          | Use for either ABI (UABI should set spimm[0]=1 to round up to 16-byte blocks)
 |2     |PUSH/POP/POPRET|ra, s0-s1  | 8-byte          | Use for either ABI (UABI should set spimm[0]=0 as 3 registers already round up to 16-byte blocks)
-|3     |PUSH/POP/POPRET|ra, s0-s2  | 16-byte         | UABI only, illegal for EABI (not sure about s2 yet....)
+|3     |PUSH/POP/POPRET|ra, s0-s2  | 16-byte         | UABI only, s2 maps to different X reg in EABI
 |4     |PUSH/POP/POPRET|ra, s0-s3  | 16-byte         | 
-|5     |PUSH/POP/POPRET|ra, s0-s4  | 16-byte         |
-|6     |PUSH/POP/POPRET|ra, s0-s5  | 16-byte         |
-|7     |PUSH/POP/POPRET|ra, s0-s6  | 16-byte         |
-|8     |PUSH/POP/POPRET|ra, s0-s8  | 16-byte         | Use this for ra,s0-s7/s8
-|9     |PUSH/POP/POPRET|ra, s0-s11 | 16-byte         | use this for ra,s0-s9/10/11
-5+|POPRET with rcount>9 is *reserved*
-|10    |PUSHINT/POPINT |t0-t6,a0-a7                         | 16-byte         | UABI smaller IRQ handler entry/exit
-|11    |PUSHINT/POPINT |ra,t0-t6,a0-a7,mcause,mtval,mepc    | 16-byte         | UABI large IRQ handler entry/exit
-|12    |PUSHINT.E/POPINT.E |t0-t1,a0-a3                     | 8-byte          | EABI smaller IRQ handler entry/exit
-|13    |PUSHINT.E/POPINT.E |ra,t0-t1,a0-a3,mcause,mtval,mepc| 8-byte          | EABI large IRQ handler entry/exit
-|14    |_reserved_ | | |
-|15    |_reserved_ | | |
+|5     |PUSH/POP/POPRET|ra, s0-s5  | 16-byte         | Use this for ra,s0-s4/s5
+|6     |PUSH/POP/POPRET|ra, s0-s8  | 16-byte         | Use this for ra,s0-s6/s7/s8
+|7     |PUSH/POP/POPRET|ra, s0-s11 | 16-byte         | use this for ra,s0-s9/s10/s11
 |=======================================================================================================
 
 
