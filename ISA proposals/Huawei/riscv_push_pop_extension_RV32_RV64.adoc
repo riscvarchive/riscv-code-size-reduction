@@ -18,12 +18,11 @@ architectures, I and E variants.
 
 it's better to list these first, as they are resolved I'll update the proposal
 
-- `POPRET` with `rcount=15` is not useful so should be illegal. Because these cases are for the interrupt handler entry/exit a different mnemonic would make sense like `PUSHINT/POPINT` for example
 - should `PUSHINT/POPINT` have the option to avoid saving/restoring `ra`? Should this be an option in general? it could be an extra bit in the 32-bit encoding, or maybe allocated some new rcount values to save (for example) `s0,s0-1,s0-2` without `ra`
 - should `PUSHINT/POPINT` also save/restore some CSRs e.g. `MCAUSE/MEPC/MTVAL` to save more code size, and so allow uarch tricks to save cycles?
 - need to review usage of register lists, and make sure the proposal matches load/store multiple requirements
 
-We _may_ find that a 4-bit `rcount` field is enough for the 32-bit encoding, or we may think of more functionlity to add.
+We _may_ find that a 4-bit `rcount` field is enough for the 32-bit encoding, or we may think of more functionality to add.
 
 == Rationale
 
@@ -123,8 +122,8 @@ The behaviour of each value of `rcount` and `spimm` is shown in
 <<rcount-table>>, where:
 
 * x = `spimm`
-* y = `spimm`, but the encoding should have spimm[0]=1 for legal stack alignment for the UABI
-* z = `spimm`, but the encoding should have spimm[0]=0 for legal stack alignment for the UABI
+* y = `spimm`, but the encoding should have `spimm[0]=1` for legal stack alignment for the UABI
+* z = `spimm`, but the encoding should have `spimm[0]=0` for legal stack alignment for the UABI
 
 [#rcount-table]
 .`rcount` values for different architectures
@@ -151,17 +150,15 @@ The behaviour of each value of `rcount` and `spimm` is shown in
 
 === `C.PUSH` Operation
 
-A `C.PUSH` instruction writes the set of registers selected by
-_rcount_ to memory, the registers are written to the memory immediately
-below the current stack pointer. The last register in the list is stored to
-the lowest memory location to be written by the `C.PUSH`
+A `C.PUSH` instruction writes the set of registers selected by `rcount` to memory, the registers are written to the memory immediately
+below the current stack pointer. The last register in the list is stored to the lowest memory location to be written by the `C.PUSH`
 
 [source,sourceCode,text]
 ----
 sp-(XLEN/8)*r
 ----
 
-where _r_ is the number registers to store
+where `r` is the number registers to store
 
 The selected registers are written to contiguous incrementing
 (XLEN/8)-byte words starting with the register in the reverse of the
@@ -171,47 +168,45 @@ Once all stores have completed the stack pointer register `sp` is
 decremented by the stack adjustment value from <<spimm-table>> and
 <<rcount-table>>.
 
-Note that 'spimm' allows up to an additional bytes of stack to be
+Note that `spimm` allows up to an additional bytes of stack to be
 allocated for automatic variables without having to issue additional
 stack manipulation instructions.
 
+.push 1 to 5 registers
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/push_1to5_regs_170pc_zoom.png[push example]
+
 === `C.POP/C.POPRET` Operation
 
-A `C.POP/C.POPRET` instruction loads the set of registers
-selected by _rcount_ from the memory. The loads start at the lowest
-memory location to be read by the `C.POP/C.POPRET`. To get to
-that location the stack pointer is first incremented by the scaled value
-of `spimm` from <<spimm-table>>, and then incremented by the number of holes
-required to mantain the stack alignment (see <<spimm-table>> and  <<rcount-table>>).
+A `C.POP/C.POPRET` instruction loads the set of registers selected by `rcount` from the memory. The loads start with the last register in the list from <<rcount-table>>
+at the lowest memory location to be read by the `C.POP/C.POPRET`, which is at the current stack pointer incremented by the number of holes, also from <<rcount-table>>.
 
-The selected registers are loaded from contiguous incrementing
-(XLEN/8)-byte words in the reverse of the order shown in  <<rcount-table>>
+The selected registers are loaded from contiguous incrementing (XLEN/8)-byte words in the reverse of the order shown in  <<rcount-table>>
 above (ra is always loaded last).
 
-See <<spimm-table>> for stack increment calculations for all architectures.
-
-Once all loads have completed the stack pointer register `sp` is
-incremented by the stack adjustment value from <<spimm-table>> and
- <<rcount-table>>, placing it immediately above the block of memory read
-by the `C.POP/C.POPRET` instruction.
+Once all loads have completed the stack pointer register `sp` is incremented by the stack adjustment value from <<spimm-table>> and
+<<rcount-table>>, placing it immediately above the block of memory read by the `C.POP/C.POPRET` instruction.
 
 `C.POPRET` executes a `RET` as the final step in the sequence
 
+.pop 1 to 5 registers
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/pop_1to5_regs_170pc_zoom.png[pop example]
+
+[#instruction-sequences]
 === Instruction sequences
 
 The behaviour of these instructions is specified using instruction sequences.
 
-All loads and stores in the sequences can be executed multiple times, and in any order, including being merged into wider loads or stores.
+All loads and stores in the sequences can be executed multiple times, and in any order. They can be merged into wider loads or stores, or broken down into smaller loads and stores.
 
-The `ADDI` (`ADDI, RET` for `C.POPRET`) only execute if all other steps have completed without causing an exception (load or store access fault, load or stage page fault, breakpoint), 
-taking an interrupt or entering into debug mode (breakpoint or external debug halt). It is possible to interrupt the sequence between the final load or store and the `ADDI` instruction.
-It is _not_ possible to interrupt `C.POPRET` between the `ADDI` and the `RET`.
+The `ADDI` at the end of the sequences (`ADDI, RET` for `C.POPRET`) only execute if all other steps have completed without causing an exception (load or store access fault, 
+load or store page fault, breakpoint), taking an interrupt or entering into debug mode (breakpoint or external debug halt). It is possible to interrupt the sequence between 
+the final load or store and the `ADDI` instruction. It is _not_ possible to interrupt `C.POPRET` between the `ADDI` and the `RET`.
 
-When execution resumes any number of the loads or stores may be re-executed.
+When execution resumes any number of the loads or stores in the sequences may be re-executed.
 
 In the tables:
 
-* `N` is the stack pointer adjustment value from  <<rcount-table>>.
+* `N` is the stack pointer adjustment value from <<rcount-table>>.
 * `M` is `XLEN/8` i.e. 4 for RV32, 8 for RV64
 
 [#cpush_sequence]
@@ -256,114 +251,47 @@ In the tables:
 | ret                                      |C.POPRET
 |===============================================================================
 
-
-
-=== Suggested C.POP/C.POPRET UOP sequences
-
-The exact implementation will vary, this is one possible set of
-sequences of UOPs (micro-ops) which can be used to implement
-`C.POP/C.POPRET`
-
-The `sp` adjustment is made last to deallocate space after loading from
-memory, so that if the sequence is interrupted/resumed then the stack
-memory is still reserved so that the interrupt handler is able to
-allocate stack space and write to the stack without affecting the
-interrupted instruction. It is possible to increment the stack pointer
-afterwards instead, and adjust the load addresses accordingly.
-
-In the tables:
-* `N` is the stack pointer adjustment value from  <<rcount-table>>.
-* `M` is `XLEN/8` i.e. 4 for RV32, 8 for RV6
-4
-
-`ra` is loaded early for performance because the value is needed by
-`ret`. This may complicate burst reads from memory so may not be a
-performance advantage.
-
-
-.UOPs for ``C.POP.E/C.POPRET.E`` if ``rcount<=5``
-[options="header",width=50%]
-|===============================================================================
-| C.POP.E/C.POPRET.E UOP                   |Execute if
-| lw x1,   (-1*M+N)(x2)                    |1
-| lw x7,   (-6*M+N)(x2)                    |rcount==5
-| lw x6,   (-5*M+N)(x2)                    |rcount<=5 && rcount>=4
-| lw x14,  (-4*M+N)(x2)                    |rcount<=5 && rcount>=3
-| lw x9,   (-3*M+N)(x2)                    |rcount<=5 && rcount>=2
-| lw x8,   (-2*M+N)(x2)                    |rcount<=5 && rcount>=1
-| addi x2, x2,  N                          |1
-| ret                                      |C.POPRET.E
-|===============================================================================
-
-.UOPs for ``C.POP.E/C.POPRET.E`` if ``rcount==15``
-[options="header",width=50%]
-|===============================================================================
-| C.POP.E/C.POPRET.E RV32 UOP              |Execute if
-| lw x1,   (-1*M+N)(x2)                    |1
-| lw x15,  (-7*M+N)(x2)                    |rcount==15
-| lw x13,  (-6*M+N)(x2)                    |rcount==15
-| lw x12,  (-5*M+N)(x2)                    |rcount==15
-| lw x11,  (-4*M+N)(x2)                    |rcount==15
-| lw x10,  (-3*M+N)(x2)                    |rcount==15
-| lw x5,   (-2*M+N)(x2)                    |rcount==15
-| addi x2, x2,  N                          |1
-| ret                                      |C.POPRET.E
-|===============================================================================
-
-
 === Exceptions
 
-If `eabi` is zero and `sp` is not 16 byte aligned when a
-`C.PUSH/C.POP/C.POPRET` instruction is executed a memory alignment
-exception will be generated (Store Access Fault for `C.PUSH`, Load
-Access Fault for `C.POP/C.POPRET`).
+==== Stack pointer misalignment
 
-If `eabi` is one and `sp` is not 8 byte aligned (RV32) or 16 byte
-aligned (RV64) when a `C.PUSH.E/C.POP.E/C.POPRET.E` instruction is
-executed a memory alignment exception will be generated (Store Access
-Fault for `C.PUSH.E`, Load Access Fault for `C.POP.E/C.POPRET.E`).
+Stack pointer misalignment causes a Store Access Fault for `C.PUSH` or a Load Access Fault for `C.POP/C.POPRET`.
 
-Illegal instructions are taken for illegal `rcount` values (see
- <<rcount-table>>).
+Take an exception if:
 
-If `eabi` is zero on an RV32E/RV64E architecture take an illegal
-instruction exception.
+* The stack pointer is not 16-byte aligned and `rcount > 2`
+* The stack pointer is not 16-byte aligned and `rcount < 3` and RV64
+* The stack pointer is not 8-byte aligned and `rcount < 3` and RV32
+
+==== Illegal instructions
+
+RV32E and RV64E take an illegal instruction if `rcount > 2`
+
+==== Load/store exceptions
+
+The instructions require loads or stores to be issued, as shown in <<instruction-sequences>>.
+Therefore any exceptional behaviour caused by issuing the loads or stores from the sequences can be caused by using these instructions.
 
 === Assembler Syntax
 
-The `C.PUSH/C.POP/C.POPRET` instructions are represented in
-assembler as the mnemonic followed by a braced and comma separated list
-of registers, followed by the total size of the stack adjustment
-expressed in bytes. The stack adjustment should include an appropriate
-sign bit and the space needed to accommodate the registers in the
-register list. Register ranges are also permitted and indicated using a
-hyphen (-). The register list may only contain registers supported by
-`C.PUSH/C.POP/C.POPRET` instructions but these can be listed
+The `C.PUSH/C.POP/C.POPRET` instructions are represented in assembler as the mnemonic followed by a braced and comma separated list
+of registers, followed by the total size of the stack adjustment expressed in bytes. The stack adjustment should include an appropriate
+sign bit and the space needed to accommodate the registers in the register list. Register ranges are also permitted and indicated using a
+hyphen (-). The register list may only contain registers supported by `C.PUSH/C.POP/C.POPRET` instructions but these can be listed
 in any order and use the ABI or "x plus index register" representation.
 
 To be legal the stack adjustment must:
 
 1.  Be negative for a `C.PUSH` and positive for a `C.POP`/`C.POPRET`
-2.  Match the value range in  <<rcount-table>> for the current architecture and ABI
+2.  Match the value range in <<rcount-table>> for the current architecture
 
-To use the 16-bit encoding of `C.PUSH/C.POP/C.POPRET` then
-the registers specified in the encoding must match one of the sets of
-entries in  <<rcount-table>> above, and the stack adjustment must be
-legal. Otherwise the assembler will attempt to use the 32-bit encoding,
-if it is implemented and is suitable. If not then this will cause an
-`illegal operands` error from the assembler.
+To use the 16-bit encoding of `C.PUSH/C.POP/C.POPRET` then the registers specified in the encoding must match one of the sets of
+entries in  <<rcount-table>> above, and the stack adjustment must be legal. Otherwise the assembler will attempt to use the 32-bit encoding,
+if it is suitable. If not then this will cause an `illegal operands` error from the assembler.
 
-=== RV32I Examples
+=== RV32 Assembler Examples
 
-.push 1 to 5 registers, loads can happen in any order, note 3 register holes in the stack pointer increment
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/push_1to5_regs_170pc_zoom.png[push example]
-
-.pop 1 to 5 registers, stores can happen in any order, note 3 register holes in the stack pointer decrement
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/pop_1to5_regs_170pc_zoom.png[pop example]
-
-=== RV32I Assembler Examples
-
-==== C.PUSH RV32I
+==== C.PUSH RV32 UABI
 
 [source,sourceCode,text]
 ----
@@ -372,7 +300,7 @@ c.push  {ra, s0-s5}, -64
 
 Encoding: rcount=5, spimm=2
 
-Micro operation sequence:
+Equivalent sequence:
 
 [source,sourceCode,text]
 ----
@@ -383,83 +311,82 @@ sw  s0,  -8(sp); sw  ra, -4(sp);
 addi sp, sp, -64;
 ----
 
-==== C.PUSH.E RV32I EABI
+==== C.PUSH RV32I EABI (8-byte aligned stack)
 
 [source,sourceCode,text]
 ----
-c.push.e {ra, s0-s4}, -64
+c.push {ra, s0-s1}, -24
 ----
 
-Encoding: rcount=5, spimm=5
+Encoding: rcount=2, spimm=1
 
-Micro operation sequence:
+Equivalent sequence:
 
 [source,sourceCode,text]
 ----
-addi sp, sp, -64;
-sw  s4, 40(sp); sw  s3, 44(sp);
-sw  s2, 48(sp); sw  s1, 52(sp);
-sw  s0, 56(sp); sw  ra, 60(sp);
+sw  s1, -12(sp);
+sw  s0,  -8(sp); 
+sw  ra,  -4(sp);
+addi sp, sp, -24;
 ----
 
-==== C.POP RV32I UABI
+==== C.PUSH RV32I UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
-c.pop   {x1, x8-x9, x18-x25}, 160
+c.push {ra, s0-s1}, -32
 ----
 
-Encoding: rcount=10, spimm=7 
+Encoding: rcount=2, spimm=2
 
-Micro operation sequence:
+Equivalent sequence:
 
 [source,sourceCode,text]
 ----
-lw   x1, 156(sp);
-lw  x25, 116(sp);  lw  x24, 120(sp);
-lw  x23, 124(sp);  lw  x22, 128(sp)
-lw  x21, 132(sp);  lw  x20, 136(sp);
-lw  x19, 140(sp);  lw  x18, 144(sp)
-lw   x9, 148(sp);  lw   x8, 152(sp);
+sw  s1, -12(sp);
+sw  s0,  -8(sp); 
+sw  ra,  -4(sp);
+addi sp, sp, -32;
+----
+
+==== C.POP RV32I UABI (16-byte aligned stack)
+
+[source,sourceCode,text]
+----
+c.pop   {x1, x8-x9, x18-x24}, 160
+----
+
+Encoding: rcount=6, spimm=7 
+
+Equivalent sequence:
+
+[source,sourceCode,text]
+----
+lw  x24, 120(sp);  lw  x23, 124(sp);  
+lw  x22, 128(sp);  lw  x21, 132(sp);  
+lw  x20, 136(sp);  lw  x19, 140(sp);  
+lw  x18, 144(sp);  lw   x9, 148(sp);  
+lw   x8, 152(sp);  lw   x1, 156(sp);
 addi sp, sp, 160
 ----
 
-==== C.POPRET RV32I UABI
+==== C.POPRET RV32I EABI (8-byte aligned stack)
 
 [source,sourceCode,text]
 ----
-c.popret   {x1, x8-x9, x18-x19}, 32
+c.popret   {x1, x8}, 48
 ----
 
-Encoding: rcount=4, spimm=0 
+Encoding: rcount=1, spimm=5 
 
-Micro operation sequence:
+Equivalent sequence:
 
 [source,sourceCode,text]
 ----
-lw   x1, 28(sp);
-lw  x19, 12(sp);  lw  x18, 16(sp);
-lw   x9, 20(sp);  lw   x8, 24(sp);
-addi sp, sp, 32; ret
-----
-
-==== C.POPRET.E RV32I EABI
-
-[source,sourceCode,text]
-----
-c.popret.e  {x1, x8-x9, x14, x6}, 32
-----
-
-Encoding: rcount=4, spimm=1
-
-Micro operation sequence:
-
-[source,sourceCode,text]
-----
-lw   x1, 28(sp);
-lw   x6, 12(sp);  lw  x14, 16(sp);
-lw   x9, 20(sp);  lw   x8, 24(sp);
-addi sp, sp, 32; ret
+lw   x8, 40(sp);
+lw   x1, 44(sp);
+addi sp, sp, 48; 
+ret
 ----
 
 ==== Varargs Support
@@ -496,7 +423,7 @@ This can be optimised to be:
 ----
 
 saving 3x16-bit encodings, but the stack pointer adjustments are awkward
-because `SWM` doesn't have an immediate offset
+assuming that `SWM` doesn't have an immediate offset
 
 HCC produces this epilogue
 
