@@ -12,17 +12,19 @@ Version 0.1
 
 This document describes 32-bit and 16-bit encodings for `[C.]PUSH`,
 `[C.]POP` and `[C.]POPRET` instructions for RV32 and RV64,
-architectures, I and E variants.
+architectures, I and E variants. 
+
+`PUSHINT/POPINT` are included for fast interrupt handler context save/restore.
+
+32-bit or 64-bit `f` registers may also be saved/restored.
 
 == Open issues
 
 it's better to list these first, as they are resolved I'll update the proposal
 
-- should `PUSHINT/POPINT` have the option to avoid saving/restoring `ra`? Should this be an option in general? it could be an extra bit in the 32-bit encoding, or maybe allocated some new rcount values to save (for example) `s0,s0-1,s0-2` without `ra`
-- should `PUSHINT/POPINT` also save/restore some CSRs e.g. `MCAUSE/MEPC/MTVAL` to save more code size, and so allow uarch tricks to save cycles?
 - need to review usage of register lists, and make sure the proposal matches load/store multiple requirements
+- it would be simpler to specificy the number of registers to save/restore, but if load/store multiple allows arbitrary registers then we need to support a list
 
-We _may_ find that a 4-bit `rcount` field is enough for the 32-bit encoding, or we may think of more functionality to add.
 
 == Rationale
 
@@ -469,12 +471,10 @@ These instructions will _not_ cover all possible push/pop scenarios,
 they are designed to cover the common cases without using excessive
 encoding space.
 
-This specification does not include the case in RV32D where an odd
-number of `X` registers are stored followed by one or more `F`
-registers. This _may_ require an adjustment in address between the `X`
-and `F` registers to maintain the stack alignment, and the tables
-showing the overall stack adjustment _may not_ be correct as every `F`
-register is twice as wide as the `X` registers
+[NOTE]
+  This specification includes cases where the `x` and `f` registers are different widths.
+  Presumably the `f` registers need to remain aligned, so will require padding within the stack frame.
+  This padding is not currently included.
 
 A C-function using varargs will also spill the argument registers to the
 stack. They can be achieved by a store-multiple command after the `PUSH`
@@ -558,12 +558,12 @@ list of `x` registers.
 | 12     | 12  |PUSH/POP/POPRET|fs0-fs11                 
 | 13-14  | N/A |N/A            |*reserved*               
 4+|caller save registers to save on interrupt handler entry/exit for all architectures, if `rcount > 13`
-| 15     | 20  |PUSHINT/POPINT     |ft0-11, fa0-7
+| 15     | 20  |PUSHINT/POPINT |ft0-11, fa0-7
 |====================================
 
 The `spimm` field decodes as either a multiple of 8-bytes or 16-bytes depending upon the value of `rcount` and the architecture. 
 
-* RV32: If `rcount < 3` `spimm` is a multiple of 8-bytes otherwise 16-bytes
+* RV32: If `rcount < 3` or `rcount == 15` then `spimm` is a multiple of 8-bytes otherwise 16-bytes
 * RV64: `spimm` is always a multiple of 16-bytes
 
 This is the same scheme as for the 16-bit encoding as shown in <<rcount-table>>.
@@ -576,11 +576,11 @@ This is the same scheme as for the 16-bit encoding as shown in <<rcount-table>>.
 For the EABI `rcount` values of < 3 are valid. For RV32I/RV64I, higher `rcount` values can be used as the selection of an ABI is a software choice.
 For RV32E/RV64E the EABI must be used, so the encodings are reserved if `rcount > 2` for `PUSH/POP/POPRET`
 
-If `rcount < 3` and the UABI is in use, then `spimm` represents 8-byte alignment, therefore the values of `spimm` should be chosen so that the stack pointer remains 16-byte aligned. 
+If `rcount < 3` and the UABI is in use and `spimm` represents 8-byte alignment. Therefore the values of `spimm` should be chosen so that the stack pointer remains 16-byte aligned. 
 Examples of this are shown in <<rcount-table>> for the 16-bit encoding.
 
 [#32bit-8byte-rcount]
-.Register count mapping for `PUSH/POP/POPRET` for RV32 if `rcount < 3` (8-byte alignment for the EABI)
+.Register count mapping for `PUSH/POP/POPRET` for RV32 if `rcount < 3` or `rcount == 15` (8-byte alignment for the EABI)
 [options="header",width="50%"]
 |==============================================
 |total  2+|SP adjustment   2+|reg holes  
@@ -606,7 +606,7 @@ Examples of this are shown in <<rcount-table>> for the 16-bit encoding.
 |==============================================
 
 [#32bit-16byte-rcount]
-.Register count mapping for `PUSH/POP/POPRET` if `rcount >2` or for RV64 (16-byte alignment)
+.Register count mapping for `PUSH/POP/POPRET` if `rcount > 2` and `rcount < 15` or for RV64 (16-byte alignment)
 [options="header",width="50%"]
 |==============================================
   |total  2+|SP adjustment     2+|reg holes  
@@ -641,9 +641,9 @@ Examples of this are shown in <<rcount-table>> for the 16-bit encoding.
   |25       |16(7+x)  |16(13+x)  | 3   | 1   
 |==============================================
 
-== Register lists and assembly syntax
+=== Register lists and assembly syntax
 
-=== `PUSH/POP/POPRET`
+==== `PUSH/POP/POPRET`
 
 The register list is a concatenation of the values from <<32bit-ra>>, <<32bit-rcount>>, <<32bit-frcount>>.
 In all cases the head of the list must be one of
@@ -651,7 +651,6 @@ In all cases the head of the list must be one of
 * `ra`
 * `s0`
 * `fs0`
-* `t0`
 
 If no registers are specified (`ra, rcount, frcount` are all zero) then take an illegal instruction exception.
 
@@ -669,9 +668,9 @@ if (frcount>0) {
 }
 ----
 
-`PUSH/POP/POPRET` have identical assembly syntax to the 16-bit encodings. The assembly will automatically schoose the 16-bit encoding if possible, if not then the 32-bit encoding.
+`PUSH/POP/POPRET` have identical assembly syntax to the 16-bit encodings. The assembler will automatically choose the 16-bit encoding if possible, if not then the 32-bit encoding.
 
-=== `PUSHINT/POPINT`
+==== `PUSHINT/POPINT`
 
 This pseudo-code is only valid for `PUSHINT/POPINT`
 
@@ -683,37 +682,70 @@ if (rcount==14) reglist += {t0-t6,a0-a7,mcause,mtval,mepc};
 if (rcount==15) reglist += {t0-t1,a0-a3,mcause,mtval,mepc};  
 if (frcount==15) reglist += {ft0-11, fa0-7};
 ----
-=== Assembly syntax
+==== Assembly syntax
 
 `PUSHINT/POPINT` take a comma separated list of arguments in braces, representing the list of registers to save/restore in a simplified form and a total stack adjustment value.
 The requirements of the stack adjustment value are the same as for `PUSH/POP/POPRET` and must be enough to include the total number of registers which are saved/restored.
 
 * optional: `ra` - whether to save/restore `ra`
 * required: `x|e` - whether to save/restore the UABI X registers `x` or the EABI X registers `e`
-* required: `m` - whether to save/restore mcause etc. (could be optional in future?)
-* optional: `f` - whether to save/restore the F registers
+* required: `m` - whether to save/restore `mcause/mtval/mepc` (not currently optional, not must always be listed)
+* optional: `f` - whether to save/restore the `f` registers, the width can be 32/64-bit depending on whether D is implemented in addition to F
+
+For example
+
+[source,sourceCode,text]
+----
+pushint {ra,e,m}, -160
+popint  {ra,e,m},  160
+----
 
 .`PUSHINT/POPINT` register list mapping for all legal argument lists
 [options="header"]
-|============================================================================================================================================
-|syntax                     |register list                                          | total registers 2+| minimum stack adjustment
-|                           |                                                       |                   | RV32 | RV64
-|`PUSHINT/POPINT {ra,x,m,f}`|ra, t0-t2,a0-a7,t3-t6, mcause,mtval,mepc, ft0-11,fa0-7 | 39                | 160  | 320
-|`PUSHINT/POPINT {ra,x,m}`  |ra, t0-t2,a0-a7,t3-t6, mcause,mtval,mepc               | 19                |  80  | 160
-|`PUSHINT/POPINT {x,m,f}`   |    t0-t2,a0-a7,t3-t6, mcause,mtval,mepc, ft0-11,fa0-7 | 38                | 160  | 304
-|`PUSHINT/POPINT {x,m}`     |    t0-t2,a0-a7,t3-t6, mcause,mtval,mepc               | 18                |  80  | 144 
-|`PUSHINT/POPINT {ra,e,m,f}`|ra, t0,a0-a3,t1,       mcause,mtval,mepc, ft0-11,fa0-7 | 30                | 120  | 240
-|`PUSHINT/POPINT {ra,e,m}`  |ra, t0,a0-a3,t1,       mcause,mtval,mepc               | 10                |  40  |  80
-|`PUSHINT/POPINT {e,m,f}`   |    t0,a0-a3,t1,       mcause,mtval,mepc, ft0-11,fa0-7 | 29                | 120  | 240
-|`PUSHINT/POPINT {e,m}`     |    t0,a0-a3,t1,       mcause,mtval,mepc               |  9                |  40  |  80
-|=============================================================================================================================================
+|======================================================================================
+| syntax                      | register list                                          
+|                             |                                                        
+4+|UABI `x` register mapping
+| `PUSHINT/POPINT {ra,x,m,f}` | ra, t0-t2,a0-a7,t3-t6, mcause,mtval,mepc, ft0-11,fa0-7 
+| `PUSHINT/POPINT {ra,x,m}`   | ra, t0-t2,a0-a7,t3-t6, mcause,mtval,mepc               
+| `PUSHINT/POPINT {x,m,f}`    |     t0-t2,a0-a7,t3-t6, mcause,mtval,mepc, ft0-11,fa0-7 
+| `PUSHINT/POPINT {x,m}`      |     t0-t2,a0-a7,t3-t6, mcause,mtval,mepc               
+4+|EABI `x` register mapping 
+| `PUSHINT/POPINT {ra,e,m,f}` | ra, t0,a0-a3,t1,       mcause,mtval,mepc, ft0-11,fa0-7 
+| `PUSHINT/POPINT {ra,e,m}`   | ra, t0,a0-a3,t1,       mcause,mtval,mepc               
+| `PUSHINT/POPINT {e,m,f}`    |     t0,a0-a3,t1,       mcause,mtval,mepc, ft0-11,fa0-7 
+| `PUSHINT/POPINT {e,m}`      |     t0,a0-a3,t1,       mcause,mtval,mepc               
+|======================================================================================
+
+.`PUSHINT/POPINT` register counts for all legal argument lists
+[options="header"]
+|============================================================================================
+| syntax                      | total registers 2+| total bytes  2+| minimum stack adjustment
+|                             |                   | RV32 | RV64    | RV32 | RV64
+6+|16-byte stack alignment - D implemented            
+| `PUSHINT/POPINT {ra,x,m,f}` | 39                | 236  | 312     | 240  | 320
+| `PUSHINT/POPINT {x,m,f}`    | 38                | 232  | 304     | 240  | 304
+| `PUSHINT/POPINT {ra,e,m,f}` | 30                | 200  | 240     | 200  | 240
+| `PUSHINT/POPINT {e,m,f}`    | 29                | 196  | 232     | 200  | 240
+6+|16-byte stack alignment - F implemented            
+| `PUSHINT/POPINT {ra,x,m,f}` | 39                | 156  | 232     | 160  | 240
+| `PUSHINT/POPINT {ra,e,m,f}` | 30                | 120  | 160     | 120  | 160
+| `PUSHINT/POPINT {x,m,f}`    | 38                | 152  | 224     | 160  | 224
+| `PUSHINT/POPINT {e,m,f}`    | 29                | 116  | 152     | 120  | 160
+6+|16-byte stack alignment       
+| `PUSHINT/POPINT {ra,x,m}`   | 19                |  76  | 152     |  80  | 160
+| `PUSHINT/POPINT {x,m}`      | 18                |  72  | 144     |  80  | 144 
+6+|8-byte stack alignment for RV32, 16-byte for RV64
+| `PUSHINT/POPINT {ra,e,m}`   | 10                |  40  |  80     |  40  |  80
+| `PUSHINT/POPINT {e,m}`      |  9                |  36  |  72     |  40  |  80
+|============================================================================================
 
 
 === Exceptions
 
 ==== Legal decoding
 
-The instructions decode as shown in <<32bit_decode_pushpop>> and <<32bit_decode_popret>>. The tables are prioritised from top to bottom, like a `case` statement.
+The instructions decode as shown below. The tables are prioritised from top to bottom, like a `case` statement.
 
 [#32bit_decode_pushpop_I]
 .32-bit instruction decoding for `PUSH/POP` for RV32I/RV64I
@@ -761,7 +793,7 @@ The instructions decode as shown in <<32bit_decode_pushpop>> and <<32bit_decode_
 
 If `frcount > 0` then the `F` extension must be implemented without `Zfinx` for legal decoding.
 
-=== Stack Pointer Misalignment
+==== Stack Pointer Misalignment
 
 The rules are the same as for the 16-bit encodings - see <<sp-misalign>>.
 
@@ -776,23 +808,26 @@ In the tables:
 
 === `PUSH/POP/POPRET` sequences
 
+The tables assume the `f` registers are 32-bit. If they are wider then different instructions will be used to access them (`DLW/DSW` or `QLW/QSW`) and the offsets will scale accordingly.
+
 [#cpush_sequence]
 .`C.PUSH` sequence
 [options="header",width=50%]
 |===============================================================================
 | C.PUSH step                               |Execute if
-| sw f27,  (-(ra+rcount+11)*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f26,  (-(ra+rcount+10)*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f25,  (-(ra+rcount+9 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f24,  (-(ra+rcount+8 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f23,  (-(ra+rcount+7 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f22,  (-(ra+rcount+6 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f21,  (-(ra+rcount+5 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f20,  (-(ra+rcount+4 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f19,  (-(ra+rcount+3 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f18,  (-(ra+rcount+2 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f9,   (-(ra+rcount+1 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
-| sw f8,   (-(ra+rcount   )*M)(x2)          |frcount>=1 && frcount<13 && rcount<13
+| fsw f27, (-(ra+rcount+11)*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f26, (-(ra+rcount+10)*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f25, (-(ra+rcount+9 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f24, (-(ra+rcount+8 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f23, (-(ra+rcount+7 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f22, (-(ra+rcount+6 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f21, (-(ra+rcount+5 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f20, (-(ra+rcount+4 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f19, (-(ra+rcount+3 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f18, (-(ra+rcount+2 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f9,  (-(ra+rcount+1 )*M)(x2)          |frcount>=2 && frcount<13 && rcount<13
+| fsw f8,  (-(ra+rcount   )*M)(x2)          |frcount>=1 && frcount<13 && rcount<13
+2+|RV32D may require 4-byte padding at this point if `ra+rcount` is odd, so the `f` registers are aligned, TBD
 | sw x27,  (-(ra+12)*M)(x2)                 |rcount>=12 && rcount<13
 | sw x26,  (-(ra+11)*M)(x2)                 |rcount>=11 && rcount<13
 | sw x25,  (-(ra+10)*M)(x2)                 |rcount>=10 && rcount<13
@@ -813,18 +848,19 @@ In the tables:
 [options="header",width=50%]
 |===============================================================================
 | C.POP/C.POPRET step                      |Execute if
-| sw f27,  (-(ra+rcount+11)*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f26,  (-(ra+rcount+10)*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f25,  (-(ra+rcount+9 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f24,  (-(ra+rcount+8 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f23,  (-(ra+rcount+7 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f22,  (-(ra+rcount+6 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f21,  (-(ra+rcount+5 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f20,  (-(ra+rcount+4 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f19,  (-(ra+rcount+3 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f18,  (-(ra+rcount+2 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f9,   (-(ra+rcount+1 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
-| sw f8,   (-(ra+rcount   )*M+N)(x2)       |frcount>=1 && frcount<13 && rcount<13
+| fsw f27, (-(ra+rcount+11)*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f26, (-(ra+rcount+10)*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f25, (-(ra+rcount+9 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f24, (-(ra+rcount+8 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f23, (-(ra+rcount+7 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f22, (-(ra+rcount+6 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f21, (-(ra+rcount+5 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f20, (-(ra+rcount+4 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f19, (-(ra+rcount+3 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f18, (-(ra+rcount+2 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f9,  (-(ra+rcount+1 )*M+N)(x2)       |frcount>=2 && frcount<13 && rcount<13
+| fsw f8,  (-(ra+rcount   )*M+N)(x2)       |frcount>=1 && frcount<13 && rcount<13
+2+|*RV32D may require 4-byte padding at this point if `ra+rcount` is odd, so the `f` registers are aligned, TBD*
 | sw x27,  (-(ra+12)*M+N)(x2)              |rcount>=12 && rcount<13
 | sw x26,  (-(ra+11)*M+N)(x2)              |rcount>=11 && rcount<13
 | sw x25,  (-(ra+10)*M+N)(x2)              |rcount>=10 && rcount<13
@@ -842,27 +878,29 @@ In the tables:
 | ret                                      |C.POPRET
 |===============================================================================
 
-=== `PUSHINT/POPINT` sequences
+=== `PUSHINT/POPINT` example sequences
 
-The use of `x15` in the sequences is arbitrary, any register could be used other than `x0`, or the implementation need not use an actual `x` register.
+The use of `x15` in the sequences is arbitrary, any register could be used other than `x0`. 
 The `PUSHINT` instruction does not trash any register state, so the value of `x15` is always restored in the sequences.
+The handling of the CSR data is implementation defined, an `x` register does not need to be used.
 
 .`PUSHINT` sequence for `rcount==14` (UABI)
 [options="header",width=50%]
 |===============================================================================
 | PUSHINT STEP                                |Execute if
-| sw f27,  (-(ra+30)*M)(x2)                   |frcount==15 && rcount==14
-| sw f26,  (-(ra+29)*M)(x2)                   |frcount==15 && rcount==14
-| sw f25,  (-(ra+28)*M)(x2)                   |frcount==15 && rcount==14
-| sw f24,  (-(ra+27)*M)(x2)                   |frcount==15 && rcount==14
-| sw f23,  (-(ra+26)*M)(x2)                   |frcount==15 && rcount==14
-| sw f22,  (-(ra+25)*M)(x2)                   |frcount==15 && rcount==14
-| sw f21,  (-(ra+24)*M)(x2)                   |frcount==15 && rcount==14
-| sw f20,  (-(ra+23)*M)(x2)                   |frcount==15 && rcount==14
-| sw f19,  (-(ra+22)*M)(x2)                   |frcount==15 && rcount==14
-| sw f18,  (-(ra+21)*M)(x2)                   |frcount==15 && rcount==14
-| sw f9,   (-(ra+20)*M)(x2)                   |frcount==15 && rcount==14
-| sw f8,   (-(ra+19)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f27, (-(ra+30)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f26, (-(ra+29)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f25, (-(ra+28)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f24, (-(ra+27)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f23, (-(ra+26)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f22, (-(ra+25)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f21, (-(ra+24)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f20, (-(ra+23)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f19, (-(ra+22)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f18, (-(ra+21)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f9,  (-(ra+20)*M)(x2)                   |frcount==15 && rcount==14
+| fsw f8,  (-(ra+19)*M)(x2)                   |frcount==15 && rcount==14
+2+|*RV32D may require 4-byte padding at this point if `ra+rcount+3` is odd, so the `f` registers are aligned, TBD*
 | sw x15,  (-(ra+ 9)*M)(x2)                   |rcount==14
 | csrr x15, mepc;   sw x15,  (-(ra+18)*M)(x2) |rcount==14
 | csrr x15, mtval;  sw x15,  (-(ra+17)*M)(x2) |rcount==14
@@ -891,19 +929,20 @@ The `PUSHINT` instruction does not trash any register state, so the value of `x1
 [options="header",width=50%]
 |===============================================================================
 | PUSHINT STEP                               |Execute if
-| sw f27,  (-(ra+21)*M)(x2)                  |frcount==15 && rcount==15
-| sw f26,  (-(ra+20)*M)(x2)                  |frcount==15 && rcount==15
-| sw f25,  (-(ra+19)*M)(x2)                  |frcount==15 && rcount==15
-| sw f24,  (-(ra+18)*M)(x2)                  |frcount==15 && rcount==15
-| sw f23,  (-(ra+17)*M)(x2)                  |frcount==15 && rcount==15
-| sw f22,  (-(ra+16)*M)(x2)                  |frcount==15 && rcount==15
-| sw f21,  (-(ra+15)*M)(x2)                  |frcount==15 && rcount==15
-| sw f20,  (-(ra+14)*M)(x2)                  |frcount==15 && rcount==15
-| sw f19,  (-(ra+13)*M)(x2)                  |frcount==15 && rcount==15
-| sw f18,  (-(ra+12)*M)(x2)                  |frcount==15 && rcount==15
-| sw f9,   (-(ra+11)*M)(x2)                  |frcount==15 && rcount==15
-| sw f8,   (-(ra+10)*M)(x2)                  |frcount==15 && rcount==15
-| sw x15,  (-(ra+ 6)*M)(x2)                  |rcount==15
+| fsw f27, (-(ra+21)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f26, (-(ra+20)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f25, (-(ra+19)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f24, (-(ra+18)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f23, (-(ra+17)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f22, (-(ra+16)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f21, (-(ra+15)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f20, (-(ra+14)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f19, (-(ra+13)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f18, (-(ra+12)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f9,  (-(ra+11)*M)(x2)                  |frcount==15 && rcount==15
+| fsw f8,  (-(ra+10)*M)(x2)                  |frcount==15 && rcount==15
+2+|*RV32D may require 4-byte padding at this point if `ra+rcount+3` is odd, so the `f` registers are aligned, TBD*
+| sw x15,  (-(ra+ 6)*M)(x2)                   |rcount==15
 | csrr x15, mepc;   sw x15,  (-(ra+9)*M)(x2) |rcount==15
 | csrr x15, mtval;  sw x15,  (-(ra+8)*M)(x2) |rcount==15
 | csrr x15, mcause; sw x15,  (-(ra+7)*M)(x2) |rcount==15
@@ -922,18 +961,19 @@ The `PUSHINT` instruction does not trash any register state, so the value of `x1
 [options="header",width=50%]
 |===============================================================================
 | POPINT STEP                                   |Execute if
-| lw f27,  (-(ra+30)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f26,  (-(ra+29)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f25,  (-(ra+28)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f24,  (-(ra+27)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f23,  (-(ra+26)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f22,  (-(ra+25)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f21,  (-(ra+24)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f20,  (-(ra+23)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f19,  (-(ra+22)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f18,  (-(ra+21)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f9,   (-(ra+20)*M+N)(x2)                   |frcount==15 && rcount==15
-| lw f8,   (-(ra+19)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f27, (-(ra+30)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f26, (-(ra+29)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f25, (-(ra+28)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f24, (-(ra+27)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f23, (-(ra+26)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f22, (-(ra+25)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f21, (-(ra+24)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f20, (-(ra+23)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f19, (-(ra+22)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f18, (-(ra+21)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f9,  (-(ra+20)*M+N)(x2)                   |frcount==15 && rcount==15
+| flw f8,  (-(ra+19)*M+N)(x2)                   |frcount==15 && rcount==15
+2+|*RV32D may require 4-byte padding at this point if `ra+rcount+3` is odd, so the `f` registers are aligned, TBD*
 | lw x15,  (-(ra+18)*M+N)(x2); csrw mepc,   x15 |rcount==15
 | lw x15,  (-(ra+17)*M+N)(x2); csrw mtval,  x15 |rcount==15
 | lw x15,  (-(ra+16)*M+N)(x2); csrw mcause, x15 |rcount==15
@@ -959,30 +999,31 @@ The `PUSHINT` instruction does not trash any register state, so the value of `x1
 .`POPINT` sequence for `rcount==15` (EABI)
 [options="header",width=50%]
 |===============================================================================
-| POPINT STEP                                   |Execute if
-| lw f27,  (-(ra+21)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f26,  (-(ra+20)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f25,  (-(ra+19)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f24,  (-(ra+18)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f23,  (-(ra+17)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f22,  (-(ra+16)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f21,  (-(ra+15)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f20,  (-(ra+14)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f19,  (-(ra+13)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f18,  (-(ra+12)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f9,   (-(ra+11)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw f8,   (-(ra+10)*M+N)(x2)                   |frcount==15 && rcount>13
-| lw x15,  (-(ra+ 9)*M+N)(x2); csrw mepc,   x15 |rcount==15
-| lw x15,  (-(ra+ 8)*M+N)(x2); csrw mtval,  x15 |rcount==15
-| lw x15,  (-(ra+ 7)*M+N)(x2); csrw mcause, x15 |rcount==15
-| lw x15,  (-(ra+ 6)*M+N)(x2)                   |rcount==15
-| lw x13,  (-(ra+ 5)*M+N)(x2)                   |rcount==15
-| lw x12,  (-(ra+ 4)*M+N)(x2)                   |rcount==15
-| lw x11,  (-(ra+ 3)*M+N)(x2)                   |rcount==15
-| lw x10,  (-(ra+ 2)*M+N)(x2)                   |rcount==15
-| lw x5,   (-(ra+ 1)*M+N)(x2)                   |rcount==15
-| lw x1,   (-1*M) (x2)                          |ra==1 
-| addi x2, x2,  -N                              |1
+| POPINT STEP                                    |Execute if
+| flw f27,  (-(ra+21)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f26,  (-(ra+20)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f25,  (-(ra+19)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f24,  (-(ra+18)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f23,  (-(ra+17)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f22,  (-(ra+16)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f21,  (-(ra+15)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f20,  (-(ra+14)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f19,  (-(ra+13)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f18,  (-(ra+12)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f9,   (-(ra+11)*M+N)(x2)                   |frcount==15 && rcount>13
+| flw f8,   (-(ra+10)*M+N)(x2)                   |frcount==15 && rcount>13
+2+|*RV32D may require 4-byte padding at this point if `ra+rcount+3` is odd, so the `f` registers are aligned, TBD*
+| lw x15,   (-(ra+ 9)*M+N)(x2); csrw mepc,   x15 |rcount==15
+| lw x15,   (-(ra+ 8)*M+N)(x2); csrw mtval,  x15 |rcount==15
+| lw x15,   (-(ra+ 7)*M+N)(x2); csrw mcause, x15 |rcount==15
+| lw x15,   (-(ra+ 6)*M+N)(x2)                   |rcount==15
+| lw x13,   (-(ra+ 5)*M+N)(x2)                   |rcount==15
+| lw x12,   (-(ra+ 4)*M+N)(x2)                   |rcount==15
+| lw x11,   (-(ra+ 3)*M+N)(x2)                   |rcount==15
+| lw x10,   (-(ra+ 2)*M+N)(x2)                   |rcount==15
+| lw x5,    (-(ra+ 1)*M+N)(x2)                   |rcount==15
+| lw x1,    (-1*M) (x2)                          |ra==1 
+| addi x2, x2,  -N                               |1
 |===============================================================================
 
 
@@ -1072,6 +1113,34 @@ fsw  fs1, -16(sp); fsw  fs0,  -8(sp);
 addi sp, sp, -128;
 ----
 
+==== PUSHINT RV32
+
+[source,sourceCode,text]
+----
+pushint  {ra,x,m}, -160
+----
+
+Encoding: rcount=14, frcount=0, spimm=2 (16-byte aligned as x is specified)
+
+Micro operation sequence:
+
+[source,sourceCode,text]
+----
+sw  x15, -40(sp);
+csrr x15, mepc;   sw x15, -76(sp)
+csrr x15, mtval;  sw x15, -72(sp)
+csrr x15, mcause; sw x15, -68(sp)
+sw  x31, -64(sp); sw  x30, -60(sp);
+sw  x29, -56(sp); sw  x28, -52(sp);
+sw  x17, -48(sp); sw  x16, -44(sp);
+lw  x15, -40(sp); sw  x14, -36(sp);
+sw  x13, -32(sp); sw  x12, -28(sp);
+sw  x11, -24(sp); sw  x10, -20(sp);
+sw   x7, -16(sp); sw   x6, -12(sp);
+sw   x5,  -8(sp); sw   x1,  -4(sp);
+addi sp, sp, -64;
+----
+
 ==== POP RV32I UABI
 
 [source,sourceCode,text]
@@ -1079,19 +1148,18 @@ addi sp, sp, -128;
 pop   {x1, x8-x9, x18-x25}, 256
 ----
 
-Encoding: rcount=10, frcount=0, spimm=13 eabi=0 (16-byte aligned, spimm
-out of range for C.POP)
+Encoding: ra=1, rcount=10, frcount=0, spimm=13 (16-byte aligned)
 
 Micro operation sequence:
 
 [source,sourceCode,text]
 ----
-lw   x1, 252(sp);
 lw  x25, 212(sp);  lw  x24, 216(sp);
 lw  x23, 220(sp);  lw  x22, 224(sp)
 lw  x21, 228(sp);  lw  x20, 232(sp);
 lw  x19, 236(sp);  lw  x18, 240(sp)
 lw   x9, 244(sp);  lw   x8, 248(sp);
+lw   x1, 252(sp);
 addi sp, sp, 256
 ----
 
@@ -1102,16 +1170,16 @@ addi sp, sp, 256
 popret   {x1, x8-x9, x18-x19, f8-f9}, 32
 ----
 
-Encoding: rcount=4, frcount=2, spimm=0, eabi=0 (16-byte aligned)
+Encoding: ra=1, rcount=4, frcount=2, spimm=0 (16-byte aligned)
 
 Micro operation sequence:
 
 [source,sourceCode,text]
 ----
-lw   x1, 28(sp);
 flw  f9,  4(s0);  flw  f8,  8(sp);
 lw  x19, 12(sp);  lw  x18, 16(sp);
 lw   x9, 20(sp);  lw   x8, 24(sp);
+lw   x1, 28(sp);
 addi sp, sp, 32; ret
 ----
 
@@ -1119,18 +1187,17 @@ addi sp, sp, 32; ret
 
 [source,sourceCode,text]
 ----
-popret.e  {x1, x8-x9, x14, x6, f8-f9}, 32
+popret  {x1, x8-x9, f8-f9}, 32
 ----
 
-Encoding: rcount=4, frcount=2, spimm=0 eabi=1 (8-byte aligned)
+Encoding: rcount=2, frcount=2, spimm=1 (8-byte aligned)
 
 Micro operation sequence:
 
 [source,sourceCode,text]
 ----
-lw   x1, 28(sp);
-flw  f9,  4(s0);  flw  f8,  8(sp);
-lw   x6, 12(sp);  lw  x14, 16(sp);
+flw  f9, 12(s0);  flw  f8, 16(sp);
 lw   x9, 20(sp);  lw   x8, 24(sp);
+lw   x1, 28(sp);
 addi sp, sp, 32; ret
 ----
