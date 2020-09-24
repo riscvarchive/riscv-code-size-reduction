@@ -262,9 +262,8 @@ Stack pointer misalignment causes a Store Access Fault for `C.PUSH` or a Load Ac
 
 Take an exception if:
 
-* The stack pointer is not 16-byte aligned and `rcount > 2`
-* RV64: The stack pointer is not 16-byte aligned and `rcount < 3`
-* RV32: The stack pointer is not 8-byte aligned and `rcount < 3`
+* RV64: The stack pointer is not 16-byte aligned
+* RV32: The stack pointer is not 8-byte aligned and `rcount < 3`, otherwise if the stack pointer is not 16-byte aligned
 
 ==== Illegal instructions
 
@@ -808,7 +807,7 @@ In the tables:
 
 === `PUSH/POP/POPRET` sequences
 
-The tables assume the `f` registers are 32-bit. If they are wider then different instructions will be used to access them (`DLW/DSW` or `QLW/QSW`) and the offsets will scale accordingly.
+The tables assume the `f` registers are 32-bit. If they are wider then different instructions will be used to access them (`DLW/DSW`) and the offsets will scale accordingly.
 
 [#cpush_sequence]
 .`C.PUSH` sequence
@@ -882,7 +881,8 @@ The tables assume the `f` registers are 32-bit. If they are wider then different
 
 The use of `x15` in the sequences is arbitrary, any register could be used other than `x0`. 
 The `PUSHINT` instruction does not trash any register state, so the value of `x15` is always restored in the sequences.
-The handling of the CSR data is implementation defined, an `x` register does not need to be used.
+The handling of the CSR data is implementation defined, an `x` register does not need to be used, the point of the sequences 
+is to show how existing RISC-V instructions can be used to execute the proposed instructions.
 
 .`PUSHINT` sequence for `rcount==14` (UABI)
 [options="header",width=50%]
