@@ -8,6 +8,7 @@ Documentation of existing ISA extensions
 
 ISA extension proposals
 - [Push/Pop](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc)
+- [Preshifted arithmetic](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/preshifted_arithmetic.adoc)
 
 Publicly available benchmarks
 - [Embench](https://github.com/embench/embench-iot)
