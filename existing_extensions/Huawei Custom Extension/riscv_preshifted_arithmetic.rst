@@ -83,7 +83,6 @@ Percentage      Shift range
 2.5%            25-31
 =============== ================  
 
-
 Therefore a limited shift distance of 1-16 would cover the majority of cases, but more code bases need to be analysed.
 
 These instructions are implemented in the RISC-V HCC toolchain, this is the internal Huawei branch of GCC including the Huawei custom instructions
@@ -91,6 +90,7 @@ These instructions are implemented in the RISC-V HCC toolchain, this is the inte
 - enabled with -fmerge-immshf
 - save 0.3% of Huawei IoT code size but also give performance improvement
 
+More details of the instruction usage is in this `spreadsheet <https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/Huawei%20IoT%20preshifted%20arithmetic%20usage.xlsx>`_
 
 Opcode Assignment
 -----------------
