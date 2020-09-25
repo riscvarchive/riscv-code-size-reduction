@@ -1,0 +1,34 @@
+
+
+Pre-shifted Arithmetic Proposal
+===============================
+
+This proposal is based upon https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_preshifted_arithmetic.rst[this one]
+which should be read first.
+
+Viewing this https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/Huawei%20IoT%20preshifted%20arithmetic%20usage.xlsx[spreadsheet] 
+we see that the following ISA additions gain most of the benefit of the previous extension, whilst taking up much less encoding space.
+
+
+[options="header"]
+|===============================================================================
+|Instruction         | Semantics            | Description
+3+|new instructions
+|SH8OR rd, rs1, rs2  | rd = rs1 + (rs2<<8)  | shift rs2 left 8  places and add to rs1
+|SH16OR rd, rs1, rs2 | rd = rs1 + (rs2<<16) | shift rs2 left 16 places and add to rs1
+|SH24OR rd, rs1, rs2 | rd = rs1 + (rs2<<24) | shift rs2 left 24 places and add to rs1
+|C.RORI rd, shamt    | rd = ror(rd, shamt)  | rotate rd right shamt places, encoding not checked to see if rd is 5 bits or 3
+3+|B-extension instructions
+|SH1ADD rd, rs1, rs2 | rd = rs1 + (rs2<<1)  | shift rs2 left 1 place and add to rs1
+|SH2ADD rd, rs1, rs2 | rd = rs1 + (rs2<<2)  | shift rs2 left 2 places and add to rs1
+|SH3ADD rd, rs1, rs2 | rd = rs1 + (rs2<<3)  | shift rs2 left 3 places and add to rs1
+|===============================================================================
+
+The reason to add `C.ROR` is so that it is possible to construct all the 32-bit encodings from the previous proposal using 2 x 16-bit encodings, 
+with restricted register usage and overwriting `rs2` compared to the 32-bit encodings.
+
+`C.SLLI/C.SRLI/C.SRAI/C.ROR` followed by `C.ADD/C.SUB/C.OR/C.XOR/C.AND`
+
+Therefore the most common instructions are added above so that full 32-bit encodings are available allowing unrestricted register usage, and also preserving the value of `rs2`.
+
+
