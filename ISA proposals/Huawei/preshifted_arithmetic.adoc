@@ -31,4 +31,5 @@ with restricted register usage and overwriting `rs2` compared to the 32-bit enco
 
 Therefore the most common instructions are added above so that full 32-bit encodings are available allowing unrestricted register usage, and also preserving the value of `rs2`.
 
-
+[NOTE]
+  `C.ROR` has low benefit for the Huawei IoT code (see the spreadsheet), it may be useful for other applications. TBD.
