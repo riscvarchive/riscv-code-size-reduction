@@ -74,11 +74,11 @@ a `C.POP+RET` or a jump to a restore co-routine.
 |=======================================================================
 |15 |14 |13 |12 |11 |10 |9 |8 |7 |6 |5 |4 |3 |2 |1 |0 |instruction
 
-17+|*These replace reserved encodings, PUSH/POP with support for UABI and EABI*
+17+|*These replace reserved encodings, use the .E suffix for EABI
 
-3+|100|1|0 4+|rcount|0|0 3+|spimm 2+|00|C.POP
-3+|100|1|0 4+|rcount|0|1 3+|spimm 2+|00|C.POPRET
-3+|100|1|0 4+|rcount|1|0 3+|spimm 2+|00|C.PUSH
+3+|100|1|0 4+|rcount|0|0 3+|spimm 2+|00|C.POP[.E]
+3+|100|1|0 4+|rcount|0|1 3+|spimm 2+|00|C.POPRET[.E]
+3+|100|1|0 4+|rcount|1|0 3+|spimm 2+|00|C.PUSH[.E]
 |=======================================================================
 
 Notes
@@ -86,7 +86,7 @@ Notes
 * The `spimm` field is an unsigned immediate that indicates the number
 of additional _n_-byte blocks to adjust the stack pointer by. See <<spimm-table>>
 and <<rcount-table>>
-* the instructions are designed to support the UABI and EABI for RV32 and for RV64
+* the instructions are designed to support the UABI and EABI (`.E` suffix) for RV32 and for RV64
 * RV64E is not currently in the RISC-V standard, but may be included in
 the future so it is fully included in this specification
 * For UABI documentation see Chapter 20 of
@@ -139,13 +139,13 @@ The behaviour of each value of `rcount` and `spimm` is shown in
 |0     |ra                      | 8(1+*y*) | 8(1+x)   |16(1+x)   |16(1+x)     | 8(1+x)   |16(1+x)| 3        | 1        | 1   2+| 1  
 |1     |ra, s0                  | 8(1+*y*) | 8(1+x)   |16(1+x)   |16(1+x)     | 8(1+x)   |16(1+x)| 2        | 0        | 0   2+| 0  
 |2     |ra, s0-s1               | 8(2+*z*) | 8(2+x)   |16(2+x)   |16(2+x)     | 8(2+x)   |16(2+x)| 1        | 1        | 1   2+| 1  
-13+| `rcount` 3-7 are UABI only, these encodings should not be used for RV32I/RV64I EABI. Opcodes are `C.PUSH/C.POP/C.POPRET`
+13+| `rcount` 3-7 are UABI only. Mnemonics are `C.PUSH/C.POP/C.POPRET`
 |3     |ra, s0-s2               |16(1+x)   |N/A       |16(2+x)   |N/A       2+|*reserved*        | 0        | N/A      | 0   2+|*reserved*    
 |4     |ra, s0-s3               |16(2+x)   |N/A       |16(3+x)   |N/A       2+|*reserved*        | 3        | N/A      | 1   2+|*reserved*    
 |5     |ra, s0-s5               |16(2+x)   |N/A       |16(4+x)   |N/A       2+|*reserved*        | 1        | N/A      | 0   2+|*reserved*    
 |6     |ra, s0-s8               |16(3+x)   |N/A       |16(5+x)   |N/A       2+|*reserved*        | 2        | N/A      | 1   2+|*reserved*    
 |7     |ra, s0-s11              |16(4+x)   |N/A       |16(7+x)   |N/A       2+|*reserved*        | 3        | N/A      | 0   2+|*reserved*    
-13+| `rcount` 8-10 are EABI only, these encodings should not be used for RV32I/RV64I UABI. Opcodes are `C.PUSH.E/C.POP.E/C.POPRET.E`
+13+| `rcount` 8-10 are EABI only. Mnemonics are `C.PUSH.E/C.POP.E/C.POPRET.E`
 |8     |ra, s0-s2               |8(2+x)    |N/A       |16(2+x)   |N/A        2+|*reserved*       | N/A      | 0        | N/A 2+| 0
 |9     |ra, s0-s3               |8(3+x)    |N/A       |16(3+x)   |N/A        2+|*reserved*       | N/A      | 1        | N/A 2+| 1
 |10    |ra, s0-s4               |8(3+x)    |N/A       |16(4+x)   |N/A        2+|*reserved*       | N/A      | 0        | N/A 2+| 0
@@ -153,7 +153,7 @@ The behaviour of each value of `rcount` and `spimm` is shown in
 |===================================================================================================================================
 
 [NOTE]
-  Because the UABI and EABI define different regisgers for `s2-s5` different encodings are needed, so `C.PUSH` is used for the UABI and `C.PUSH.E` for the EABI.
+  Because the UABI and EABI define different registers for `s2-s5` different encodings are needed, so `C.PUSH` is used for the UABI and `C.PUSH.E` for the EABI.
 
 === `C.PUSH[.E]` Operation
 
@@ -221,18 +221,18 @@ In the tables:
 [options="header",width=50%]
 |===============================================================================
 | `C.PUSH` step                             |Execute if
-| sw x27,  (-13*M)(x2)                      |rcount==7 && rcount<8
-| sw x26,  (-12*M)(x2)                      |rcount==7 && rcount<8
-| sw x25,  (-11*M)(x2)                      |rcount==7 && rcount<8
-| sw x24,  (-10*M)(x2)                      |rcount>=6 && rcount<8
-| sw x23,  ( -9*M)(x2)                      |rcount>=6 && rcount<8
-| sw x22,  ( -8*M)(x2)                      |rcount>=6 && rcount<8
-| sw x21,  ( -7*M)(x2)                      |rcount>=5 && rcount<8
-| sw x20,  ( -6*M)(x2)                      |rcount>=5 && rcount<8
-| sw x19,  ( -5*M)(x2)                      |rcount>=4 && rcount<8
-| sw x18,  ( -4*M)(x2)                      |rcount>=3 && rcount<8
-| sw x9,   ( -3*M)(x2)                      |rcount>=2 && rcount<8
-| sw x8,   ( -2*M)(x2)                      |rcount>=1 && rcount<8
+| sw x27,  (-13*M)(x2)                      |rcount==7
+| sw x26,  (-12*M)(x2)                      |rcount==7
+| sw x25,  (-11*M)(x2)                      |rcount==7
+| sw x24,  (-10*M)(x2)                      |rcount>5 && rcount<8
+| sw x23,  ( -9*M)(x2)                      |rcount>5 && rcount<8
+| sw x22,  ( -8*M)(x2)                      |rcount>5 && rcount<8
+| sw x21,  ( -7*M)(x2)                      |rcount>4 && rcount<8
+| sw x20,  ( -6*M)(x2)                      |rcount>4 && rcount<8
+| sw x19,  ( -5*M)(x2)                      |rcount>3 && rcount<8
+| sw x18,  ( -4*M)(x2)                      |rcount>2 && rcount<8
+| sw x9,   ( -3*M)(x2)                      |rcount>1 && rcount<8
+| sw x8,   ( -2*M)(x2)                      |rcount>0 && rcount<8
 | sw x1,   ( -1*M)(x2)                      |1 
 | addi x2, x2,  -N                          |1 
 |===============================================================================
@@ -242,11 +242,11 @@ In the tables:
 [options="header",width=50%]
 |===============================================================================
 | `C.PUSH.E` step                           |Execute if
-| sw x7,   ( -5*M)(x2)                      |rcount>=10
-| sw x6,   ( -4*M)(x2)                      |rcount>=9
-| sw x14,  ( -3*M)(x2)                      |rcount>=8
-| sw x9,   ( -2*M)(x2)                      |(rcount==2) || (rcount>=8 && rcount<=10)
-| sw x8,   ( -2*M)(x2)                      |(rcount==1 && rcount==2) || (rcount>=8 && rcount<=10)
+| sw x7,   ( -5*M)(x2)                      |rcount>9
+| sw x6,   ( -4*M)(x2)                      |rcount>8
+| sw x14,  ( -3*M)(x2)                      |rcount>7
+| sw x9,   ( -2*M)(x2)                      |(rcount==2) {vbar}{vbar} (rcount>=8 && rcount<11)
+| sw x8,   ( -2*M)(x2)                      |(rcount==1 && rcount==2) {vbar}{vbar} (rcount>7 && rcount<11)
 | sw x1,   ( -1*M)(x2)                      |1 
 | addi x2, x2,  -N                          |1 
 |===============================================================================
@@ -258,15 +258,15 @@ In the tables:
 | lw x27,  (-13*M+N)(x2)                   |rcount==7
 | lw x26,  (-12*M+N)(x2)                   |rcount==7
 | lw x25,  (-11*M+N)(x2)                   |rcount==7
-| lw x24,  (-10*M+N)(x2)                   |rcount>=6
-| lw x23,  (-9*M+N)(x2)                    |rcount>=6
-| lw x22,  (-8*M+N)(x2)                    |rcount>=6
-| lw x21,  (-7*M+N)(x2)                    |rcount>=5
-| lw x20,  (-6*M+N)(x2)                    |rcount>=5
-| lw x19,  (-5*M+N)(x2)                    |rcount>=4
-| lw x18,  (-4*M+N)(x2)                    |rcount>=3
-| lw x9,   (-3*M+N)(x2)                    |rcount>=2
-| lw x8,   (-2*M+N)(x2)                    |rcount>=1
+| lw x24,  (-10*M+N)(x2)                   |rcount>5
+| lw x23,  (-9*M+N)(x2)                    |rcount>5 && rcount<8
+| lw x22,  (-8*M+N)(x2)                    |rcount>5 && rcount<8
+| lw x21,  (-7*M+N)(x2)                    |rcount>4 && rcount<8
+| lw x20,  (-6*M+N)(x2)                    |rcount>4 && rcount<8
+| lw x19,  (-5*M+N)(x2)                    |rcount>3 && rcount<8
+| lw x18,  (-4*M+N)(x2)                    |rcount>2 && rcount<8
+| lw x9,   (-3*M+N)(x2)                    |rcount>1 && rcount<8
+| lw x8,   (-2*M+N)(x2)                    |rcount>0 && rcount<8
 | lw x1,   (-1*M+N)(x2)                    |1
 | addi x2, x2,  N                          |1
 | ret                                      |C.POPRET
@@ -276,11 +276,11 @@ In the tables:
 [options="header",width=50%]
 |===============================================================================
 | `C.POP.E/C.POPRET.E` step                |Execute if
-| lw x7,   (-5*M+N)(x2)                    |rcount>=10
-| lw x6,   (-4*M+N)(x2)                    |rcount>=9
-| lw x14,  (-3*M+N)(x2)                    |rcount>=8
-| lw x9,   (-2*M+N)(x2)                    |(rcount==2) || (rcount>=8 && rcount<=10)
-| lw x8,   (-2*M+N)(x2)                    |(rcount==1 && rcount==2) || (rcount>=8 && rcount<=10)
+| lw x7,   (-5*M+N)(x2)                    |rcount>9
+| lw x6,   (-4*M+N)(x2)                    |rcount>8
+| lw x14,  (-3*M+N)(x2)                    |rcount>7
+| lw x9,   (-2*M+N)(x2)                    |(rcount==2) {vbar}{vbar} (rcount>7 && rcount<11)
+| lw x8,   (-2*M+N)(x2)                    |(rcount==1 && rcount==2) {vbar}{vbar} (rcount>7 && rcount<11)
 | lw x1,   (-1*M+N)(x2)                    |1 
 | addi x2, x2,  N                          |1 
 | ret                                      |C.POPRET.E
@@ -300,7 +300,8 @@ Take an exception if:
 
 ==== Illegal instructions
 
-RV32E and RV64E take an illegal instruction if `rcount > 1 && rcount < 8`
+RV32E and RV64E take an illegal instruction exception if `rcount > 1 && rcount < 8`.
+All architectures take an illegal instruction exception if `rcount > 10`.
 
 ==== Load/store exceptions
 
@@ -495,7 +496,7 @@ always be accessed in the same order by the instruction.
 The 32-bit encodings also allow
 a larger range of `spimm` values. Otherwise the semantics are identical
 to the 16-bit versions and so the specification is not repeated here.
-The instructions are called `PUSH/POP/POPRET`.
+The instructions are called `PUSH[.E]/POP[.E]/POPRET[.E]`.
 
 `PUSHINT/POPINT` are also specified which allow for context save/restore for interrupt handlers.
 
@@ -569,10 +570,10 @@ list of `x` registers.
 
 [#32bit-rcount]
 .`rcount` field values for the 32-bit encodings
-[options="header",width="50%"]
+[options="header"]
 |================================================================
 |rcount  |#regs|instruction    | ABI names | `x` register numbers       
-4+|`eabi`=0
+5+|`eabi`=0
 | 0      | 0   |PUSH/POP/POPRET|none       | none               
 | 1      | 1   |PUSH/POP/POPRET|s0         | x8         
 | 2      | 2   |PUSH/POP/POPRET|s0-s1      | x8-x9             
@@ -586,24 +587,24 @@ list of `x` registers.
 | 10     | 10  |PUSH/POP/POPRET|s0-s9      | x8-x9,x18-x25             
 | 11     | 11  |PUSH/POP/POPRET|s0-s10     | x8-x9,x18-x26             
 | 12     | 12  |PUSH/POP/POPRET|s0-s11     | x8-x9,x18-x27             
-| 13   3+| *reserved*               
-4+|UABI caller save registers and CSRs to save/restore on interrupt handler entry/exit
+| 13   4+| *reserved*               
+5+|UABI caller save registers and CSRs to save/restore on interrupt handler entry/exit
 | 15     | 18  |PUSHINT/POPINT |t0-t6,a0-a7,mcause,mtval,mepc |x5-x7,x28-x31,x10-x17,mcause,mtval,mepc
-4+|`eabi`=1
+5+|`eabi`=1
 | 0      | 0   |PUSH.E/POP.E/POPRET.E|none       | none              
 | 1      | 1   |PUSH.E/POP.E/POPRET.E|s0         | x8            
 | 2      | 2   |PUSH.E/POP.E/POPRET.E|s0-s1      | x8-x9            
 | 3      | 3   |PUSH.E/POP.E/POPRET.E|s0-s2      | x8-x9,x14            
 | 4      | 4   |PUSH.E/POP.E/POPRET.E|s0-s3      | x8-x9,x14,x6            
 | 5      | 5   |PUSH.E/POP.E/POPRET.E|s0-s4      | x8-x9,x14,x6-x7            
-| 6-13 3+| *reserved*
-4+|EABI caller save registers and CSRs to save/restore on interrupt handler entry/exit
+| 6-13 4+| *reserved*
+5+|EABI caller save registers and CSRs to save/restore on interrupt handler entry/exit
 | 15     | 18  |PUSHINT.E/POPINT.E   |t0-t1,a0-a3,mcause,mtval,mepc |x5,x15,x10-x13,mcause,mtval,mepc
 |================================================================
 
 [#32bit-frcount]
 .`frcount` values for the 32-bit encodings
-[options="header",width="50%"]
+[options="header"]
 |====================================
 |frcount |#regs|instruction    | ABI names               
 | 0      | 0   |PUSH/POP/POPRET|none                     
@@ -641,10 +642,10 @@ Examples of this are shown in <<rcount-table>> for the 16-bit encoding.
 .Register count mapping for `PUSH/POP/POPRET` for RV32 if `eabi == 1` (8-byte alignment)
 [options="header",width="50%"]
 |==============================================
-|total    |SP adjustment   2+|reg holes  
-|# regs   |x=spimm,        2+|to skip    
-|         |-for PUSH,      2+|           
-|         |+for POP/POPRET 2+|           
+|total    |SP adjustment     |reg holes  
+|# regs   |x=spimm,          |to skip    
+|         |-for PUSH,        |           
+|         |+for POP/POPRET   |           
 |         |RV32              |RV32  
 |1        | 8(1+x)           | 1    
 |2        | 8(1+x)           | 0    
