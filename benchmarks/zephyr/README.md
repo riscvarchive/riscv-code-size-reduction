@@ -37,4 +37,4 @@ FLAGS (ARMv8-M) = `-mcpu=cortex-m33+nodsp -mthumb -mabi=aapcs`
 | BLE central    | 147kB ROM / 17kB RAM              | 107kB (73.2%) / 18kB (106.2%) | 111kB (75.6%) / 18kB (105.7%) |
 | BLE sensor     | 168kB ROM / 20kB RAM              | 124kB (73.8%) / 21kB (105.3%) | 126kB (75.4%) / 21kB (104.5%) |
 
-For more details, see spreadsheet: *[Zephyr_size_comparison.ods](benchmarks/zephyr/Zephyr_size_comparison.ods)*
+For more details, see spreadsheet: *[Zephyr_size_comparison.ods](Zephyr_size_comparison.ods)*
