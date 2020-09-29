@@ -9,6 +9,14 @@ Documentation of existing ISA extensions
 ISA extension proposals
 - [Push/Pop](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc)
 - [Preshifted arithmetic](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/preshifted_arithmetic.adoc)
+- Andy Glew: MEMZERO/MEMCOPY
+- PC relative loads, allowing local constant pools shared by different functions
+- C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H for the ABI as values must be sign/zero extended
+- Anders: Load/stores with scaled offsets
+
+Toolchain optimisation suggestions
+- Anders: Second GP (thread pointer - requires ABI change) to allow more data to be in easy reach without building long addresses
+- Jeremy: Recognising similar/same constants in the linker and simplifying them
 
 Publicly available benchmarks
 - [Embench](https://github.com/embench/embench-iot)
@@ -18,6 +26,10 @@ Publicly available benchmarks
 - [TACLe Benchmarks](http://www.tacle.eu/)
 - [softfloat](http://www.jhauser.us/arithmetic/SoftFloat.html) and [testfloat](http://www.jhauser.us/arithmetic/TestFloat.html)
 - [MLPerf](https://mlperf.org/) - specifically for AI/ML applications
+- [BDTI](https://www.bdti.com/services/bdti-dsp-kernel-benchmarks)
+- Zephr includes BLE (bluetooth)
+- Need to find more device drivers....
+- LLVM test suite
 
 Proprietary benchmarks
 - Huawei IoT code
