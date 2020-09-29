@@ -34,8 +34,8 @@ Therefore the most common instructions are added above so that full 32-bit encod
 [NOTE]
   `C.ROR` has low benefit for the Huawei IoT code (see the spreadsheet), it may be useful for other applications. TBD.
 
-`C.SH8OR/C.SH18OR/C.SH24OR` could also be useful. In the IoT code 87% of uses rd==rs1, although in only 67% of cases registgers are allocated into the 8-register set.
-If the registers can be allocated successfully these 16-bit encodings would be very useful. The isntructions seem to be used for packing bytes into words, e.g.
+`C.SH8OR/C.SH18OR/C.SH24OR` could also be useful. In the IoT code 87% of uses rd==rs1, although in only 67% of cases registers are allocated into the 8-register set.
+If the registers can be allocated successfully these 16-bit encodings would be very useful. The instructions seem to be used for packing bytes into words, e.g.
 
 (from HCC)
 [source,sourceCode,text]
