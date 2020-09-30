@@ -17,6 +17,7 @@ ISA extension proposals
 Toolchain optimisation suggestions
 - Anders: Second GP (thread pointer - requires ABI change) to allow more data to be in easy reach without building long addresses
 - Jeremy: Recognising similar/same constants in the linker and simplifying them
+- Jim Wilson: fix -mno-strict-align
 
 Publicly available benchmarks
 - [Embench](https://github.com/embench/embench-iot)
