@@ -203,13 +203,27 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_e
 
 The behaviour of these instructions is specified using instruction sequences.
 
-All loads and stores in the sequences can be executed multiple times, and in any order. They can be merged into wider loads or stores, or broken down into smaller loads and stores.
+All loads and stores in the sequences can be executed multiple times, and in any order. They can be merged into wider loads or stores, 
+or broken down into smaller loads and stores.
 
-The `ADDI` at the end of the sequences (`ADDI, RET` for `C.POPRET[.E]`) only execute if all other steps have completed without causing an exception (such as load or store access fault, 
-load or store page fault, breakpoint), taking an interrupt or entering into debug mode (breakpoint or external debug halt). It is possible to interrupt the sequence between 
-the final load or store and the `ADDI` instruction. It is _not_ possible to interrupt `C.POPRET[.E]` between the `ADDI` and the `RET`.
+The `ADDI` at the end of the sequences (`ADDI, RET` for `C.POPRET[.E]`) only executes if all other steps have completed without causing an exception 
+(such as load or store access fault, load or store page fault, breakpoint), taking an interrupt or entering into debug mode (breakpoint or external 
+debug halt). It is possible to interrupt the sequence between the final load or store and the `ADDI` instruction. It is _not_ possible to interrupt 
+`C.POPRET[.E]` between the `ADDI` and the `RET`.
 
-When execution resumes any number of the loads or stores in the sequences may be re-executed, including partial loads or stores if they have been broken down into smaller memory accesses.
+When execution resumes any number of the loads or stores in the sequences may be re-executed, including partial loads or stores if they have been broken 
+down into smaller memory accesses.
+
+It is implementation defined whether to detect cases such as page faults, PMP faults and watchpoint triggers before the sequences
+start executing, or on a step-by-step basis. For exceptions, `mepc` will always be the PC of the `PUSH/POP/POPRET` and `mtval` will 
+always have the address of the load/store which caused the fault, regardless of whether any of the steps of the sequence have 
+actually been issued.
+
+The same argument is true for watchpoint triggers causing entry into debug mode, these can be detected before issuing the sequence or part way through the sequence.
+If the same instruction causes more than one watchpoint trigger, then the one triggered by the lowest numbered step is taken.
+
+Additionally, it is implementation defined whether to take interrupts or external debug halts at all during the sequence. An implementation may choose
+to only take them before or after the sequence executes.
 
 In the tables:
 
