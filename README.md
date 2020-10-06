@@ -9,16 +9,21 @@ Documentation of existing ISA extensions
 ISA extension proposals
 - [Push/Pop](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc)
 - [Preshifted arithmetic](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/preshifted_arithmetic.adoc)
-- Andy Glew: MEMZERO/MEMCOPY
+- Andy Glew: MEMZERO/MEMCOPY or maybe PUSHZERO - auto-zero the allocated stack frame
 - PC relative loads, allowing local constant pools shared by different functions
 - C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H for the ABI as values must be sign/zero extended
 - Anders: Load/stores with scaled offsets
+- GP relative load/stores with a bigger offset
 
 Toolchain optimisation suggestions
 - Anders: Second GP (thread pointer - requires ABI change) to allow more data to be in easy reach without building long addresses
 - Jeremy: Recognising similar/same constants in the linker and simplifying them
 - Jim Wilson: fix -mno-strict-align
 - Reported by Matteo: https://github.com/riscv/riscv-gcc/issues/193
+
+Code size analysis suggestions
+- Build a histogram of instruction distribution
+- find common pairs of instructions to see if they can be combined
 
 Publicly available benchmarks
 - [Embench](https://github.com/embench/embench-iot)
