@@ -1,6 +1,8 @@
 Welcome to the RISC-V Code Size Reduction Group
 ------------------------------------------------
 
+_If you can't measure it you can't improve it_
+
 This will be the home for the all of the code size reduction proposals, analysis, results etc.
 
 Documentation of existing ISA extensions
