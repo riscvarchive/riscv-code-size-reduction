@@ -81,13 +81,13 @@ Reference Toolchains
 - [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) / LLVM? Version / download link?
 - [ARC](https://github.com/foss-for-synopsys-dwc-arc-processors/toolchain/releases)
 
-Benchmark problems
+Benchmark issues
 -------------------------
 
 - Embench:
- - The programs are maybe too small to be representative.
- - Cubic benchmark uses _long double_ type, which is interpreted as 128-bit by RISC-V and 64-bit by Arm. This brings to possibly unfair comparisons both with and without libraries. In the former case, the linker links FP-functions to deal with quad-precision FP numbers, which are way heavier than the ones for double-precision; however, even without considering the libraries, the RISC-V code size is bloated because the quad-precision FP numbers should be passed by reference, with a higher memory usage.
- - Not representative for FP intensive computation, need for FP-intensive benchmarks.
+ * Add bigger programs to be more representative.
+ * Add FP intensive benchmarks.
+ * Cubic benchmark uses _long double_ type, which is interpreted as 128-bit by RISC-V and 64-bit by Arm. This brings to possibly unfair comparisons both with and without libraries. In the former case, the linker links FP-functions to deal with quad-precision FP numbers, which are way heavier than the ones for double-precision; however, even without considering the libraries, the RISC-V code size is bloated because the quad-precision FP numbers should be passed by reference, with higher memory usage.
 
 RISC-V Known Compiler Inefficiencies
 -------------------------
@@ -97,12 +97,12 @@ RISC-V Known Compiler Inefficiencies
 Linker script and Global Pointer optimization
 -------------------------
 
-The position of the Global Pointer (GP) is fundamental for the code size problem, since memory operations exploit it as a base register for the addressing without the need to pre-load an immediate (the base for the addressing) in a register. Given the 12-bit signed-immediate encoding of the memory operations, the GP is effective when the memory address falls within the interval [GP-2KiB, GP+2KiB), so frequently accessed data should be placed in this range to maximize the code-size/performance benefit. This operation can be done inside the linker script.
+The position of the Global Pointer (GP) is fundamental for the code size problem since memory operations exploit it as a base register for the addressing without the need to pre-load an immediate (the base for the addressing) in a register. Given the 12-bit signed-immediate encoding of the memory operations, the GP is effective when the memory address falls within the interval [GP-2KiB, GP+2KiB), so frequently accessed data should be placed in this range to maximize the code-size/performance benefit. This operation can be done inside the linker script.
 
 ABI modification proposal
 -------------------------
 
-A second GP would be beneficial especially for applications with scattered memory maps, in which some important data can be put far away from the GP. A possible approach can be a modification of the ABI to free-up the Thread Pointer (TP) register, which is often unused in many applications. This special register cannot be allocated by the compiler, and making it general-purpose or modifying its actual role (e.g. a second GP) could benefit both code-size and performance of the embedded applications. As already mentioned, the TP can also be used as a general purpose register. This would be important also for the RV32E extension, as the TP is one of the 16 available registers (x4).
+A second GP would be especially beneficial for applications with scattered memory maps, in which some important data can be put far away from the GP. A possible approach can be a modification of the ABI to free-up the Thread Pointer (TP) register, which is often unused in many applications. This special register cannot be allocated by the compiler, and making it general-purpose or modifying its actual role (e.g., a second GP) could benefit both code-size and performance of the embedded applications. As already mentioned, the TP can also be used as a general-purpose register. This would be important also for the RV32E extension, as the TP is one of the 16 available registers (x4).
 
 Library support
 -------------------------
