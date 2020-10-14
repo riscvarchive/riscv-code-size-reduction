@@ -62,7 +62,7 @@ Current open issues to discuss in meetings
   - different meaning of register lists (different X registers from s2 onwards), and how to specify them in the assembler syntax
   - different stack alignment 8 / 16-bytes
   - selecting either ABI in software for I (32-reg) architectures
-  
+
 Reference Architectures
 -----------------------
 
@@ -72,14 +72,51 @@ These are architectures we could compare against. The "official" comparison arch
 - ARCv1 / ARC700 [manual is here](http://me.bios.io/images/d/dd/ARCompactISA_ProgrammersReference.pdf) _ARCv2 would be better but is proprietary (ISA and toolchain)_
 - NanoMIPs [manual is here](https://s3-eu-west-1.amazonaws.com/downloads-mips/I7200/I7200+product+launch/MIPS_nanomips32_ISA_TRM_01_01_MD01247.pdf) see "save" instruction on page 163 and "restore/restore.js" instructions on page 155
 - AVR32 [manual is here](http://ww1.microchip.com/downloads/en/DeviceDoc/doc32000.pdf)
-- J-core [manual is here](https://j-core.org/) a reimplementation of Hitachi SH2 
+- J-core [manual is here](https://j-core.org/) a reimplementation of Hitachi SH2
 - SuperH [instruction reference is here](http://www.shared-ptr.com/sh_insns.html)
 
 Reference Toolchains
 --------------------
 
-- ARM GCC / LLVM? Version / download link?
+- [GNU Arm Embedded Toolchain](https://developer.arm.com/tools-and-software/open-source-software/developer-tools/gnu-toolchain/gnu-rm/downloads) / LLVM? Version / download link?
 - [ARC](https://github.com/foss-for-synopsys-dwc-arc-processors/toolchain/releases)
+
+Benchmark problems
+-------------------------
+
+- Embench:
+ - The programs are maybe too small to be representative.
+ - Cubic benchmark uses _long double_ type, which is interpreted as 128-bit by RISC-V and 64-bit by Arm. This brings to possibly unfair comparisons both with and without libraries. In the former case, the linker links FP-functions to deal with quad-precision FP numbers, which are way heavier than the ones for double-precision; however, even without considering the libraries, the RISC-V code size is bloated because the quad-precision FP numbers should be passed by reference, with a higher memory usage.
+ - Not representative for FP intensive computation, need for FP-intensive benchmarks.
+
+RISC-V Known Compiler Inefficiencies
+-------------------------
+
+- Frame pointer allocation inefficiency for > 4KiB data on the stack: https://github.com/riscv/riscv-gcc/issues/193
+
+Linker script and Global Pointer optimization
+-------------------------
+
+The position of the Global Pointer (GP) is fundamental for the code size problem, since memory operations exploit it as a base register for the addressing without the need to pre-load an immediate (the base for the addressing) in a register. Given the 12-bit signed-immediate encoding of the memory operations, the GP is effective when the memory address falls within the interval [GP-2KiB, GP+2KiB), so frequently accessed data should be placed in this range to maximize the code-size/performance benefit. This operation can be done inside the linker script.
+
+ABI modification proposal
+-------------------------
+
+A second GP would be beneficial especially for applications with scattered memory maps, in which some important data can be put far away from the GP. A possible approach can be a modification of the ABI to free-up the Thread Pointer (TP) register, which is often unused in many applications. This special register cannot be allocated by the compiler, and making it general-purpose or modifying its actual role (e.g. a second GP) could benefit both code-size and performance of the embedded applications. As already mentioned, the TP can also be used as a general purpose register. This would be important also for the RV32E extension, as the TP is one of the 16 available registers (x4).
+
+Library support
+-------------------------
+
+Optimized library functions can make the difference for two reasons:
+ - Code tailored for embedded application
+ - Smaller + Faster code, assembly-optimized in the critical parts
+ - No intricate inter-dependencies, which call a lot of different functions even if they are not fundamental
+
+Different libraries to optimize:
+ - Low-level runtime library (e.g. libgcc)
+  - Optimize the FP functions, which bloat the code especially when linked to small programs
+ - Other _external_ libraries, like newlib
+  - picolibc by Keith Packard (https://keithp.com/blogs/picolibc/, https://github.com/picolibc/picolibc) is the evolution of newlib-nano, a shrunk version of newlib. Citing the GitHub description: _"Picolibc is library offering standard C library APIs that targets small embedded systems with limited RAM. Picolibc was formed by blending code from Newlib and AVR Libc."_
 
 Code size reduction ideas
 -------------------------
@@ -103,7 +140,7 @@ Need a lot more detail for these, they're just placeholders at the moment
   - store byte/half of zero to the stack pointer
   - store byte/half/word of zero
 - ADD instruction(s) with a carry out for chaining into longer ADDs (Matteo)
-  - add sl, xl, yl              -> implicitly save the carry bit     
+  - add sl, xl, yl              -> implicitly save the carry bit
   - addH sh, xh, yh        <- implicitly add the carry bit
   - But I don't know if outside the soft-float FP functions we would have significant gains.
 
@@ -111,7 +148,7 @@ Need a lot more detail for these, they're just placeholders at the moment
 From Anders Lindgren:
 
 - Better support for 8 and 16 bit data
-	
+
   - Today, most RISC-V instructions work on the full registers. This makes the generated code more efficient to handle 32 bit data than 8 and 16 bit data. Effectively, the compiler must ensure that 8 and 16 bit data are properly extended before it can perform things like compares on them. To make things worse, RISC-V doesn't provide instructions to perform extensions so typically two instructions are needed to perform extensions (with the exception of 8 bit zero extension which can be done using "ANDI Rd, Rs, 0xFF"). Instructions to perform sign and zero extend (preferably with compact variants) are obvious candidates. In addition, we could consider 8 and 16 bit variants (and for RV64 32 bit variants) for various instructions like compare, right shift, division, and modulo. One thing that makes the situation worse is that the ABI requires arguments and return values to be correctly extended. Hence a small function like "short f(short x, short y) { return x + y; }" require 4 instructions (add, shift left, signed shift right, ret). I would like to see if the overall code size would shrink if the ABI didn't require this, and, if so, recommend that the EABI (which isn't ratified) is changed to that fewer extension instructions are needed.
 
 - Insert and extract parts of registers
@@ -139,7 +176,6 @@ nanoMIPs includes 48-bit encodings for
 - load/store word PC relative with 32-bit offset `LWPC48, SWPC48`
 
 
-
 Experiments
 -----------
 
@@ -150,7 +186,7 @@ Outputs from the group
 
 - Improved open source compiler technology (GCC and LLVM)
   - code size optimised compilers with and without `Zce` (see below)
-  - for example function prologue/epilogue should be smaller than _-msave-restore_ is now in GCC. 
+  - for example function prologue/epilogue should be smaller than _-msave-restore_ is now in GCC.
 - One code size reduction extension, maybe called `Zce` which is likely to be broken into sections
   - Zce_base - all 32-bit, non-multiple step code size reduction instructions possibly including some of the B-extension
   - Zce_48 - 48-bit encodings - we shouldn't force people to implement these (and still need to justify them)
