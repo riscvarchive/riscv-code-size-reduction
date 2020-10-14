@@ -85,9 +85,9 @@ Benchmark issues
 -------------------------
 
 - Embench:
- * Add bigger programs to be more representative.
- * Add FP intensive benchmarks.
- * Cubic benchmark uses _long double_ type, which is interpreted as 128-bit by RISC-V and 64-bit by Arm. This brings to possibly unfair comparisons both with and without libraries. In the former case, the linker links FP-functions to deal with quad-precision FP numbers, which are way heavier than the ones for double-precision; however, even without considering the libraries, the RISC-V code size is bloated because the quad-precision FP numbers should be passed by reference, with higher memory usage.
+    - Add bigger programs to be more representative.
+    - Add FP intensive benchmarks.
+    - Cubic benchmark uses _long double_ type, which is interpreted as 128-bit by RISC-V and 64-bit by Arm. This brings to possibly unfair comparisons both with and without libraries. In the former case, the linker links FP-functions to deal with quad-precision FP numbers, which are way heavier than the ones for double-precision; however, even without considering the libraries, the RISC-V code size is bloated because the quad-precision FP numbers should be passed by reference, with higher memory usage.
 
 RISC-V Known Compiler Inefficiencies
 -------------------------
