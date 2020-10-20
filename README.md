@@ -22,6 +22,7 @@ Toolchain optimisation suggestions
 - Jeremy: Recognising similar/same constants in the linker and simplifying them
 - Jim Wilson: fix -mno-strict-align
 - Reported by Matteo: https://github.com/riscv/riscv-gcc/issues/193
+- Use C.SWSP instead of SB/SH when zeroing stack variables, so can use 16-bit encodings and if possible group variables together to allow fewer stores to cover them all
 
 Code size analysis suggestions
 - Build a histogram of instruction distribution
