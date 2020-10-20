@@ -11,7 +11,7 @@ Documentation of existing ISA extensions
 ISA extension proposals
 - [Push/Pop](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc)
 - [Preshifted arithmetic](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/preshifted_arithmetic.adoc)
-- Andy Glew: MEMZERO/MEMCOPY or maybe PUSHZERO - auto-zero the allocated stack frame
+- Andy Glew: MEMZERO/MEMCOPY or maybe PUSHZERO - auto-zero the allocated stack frame, or 16-bit store zero with any address reg (not just SP)
 - PC relative loads, allowing local constant pools shared by different functions
 - C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H for the ABI as values must be sign/zero extended
 - Anders: Load/stores with scaled offsets
