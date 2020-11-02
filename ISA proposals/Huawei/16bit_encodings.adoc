@@ -14,6 +14,8 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 
 == Rational
 
+16-bit instructions are highly valuable for code-size reduction
+
 === Opcode Assignment
 
 [#proposed-16bit-encodings]
@@ -46,6 +48,8 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 5+|       shamt       2+| 00  | C.RORI (0-31 places)
 3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 2+| 00    3+| imm     2+| 00  | C.XORI (-4 to +3)
 3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 2+| > 1   3+| imm     2+| 00  | *reserved*
+17+|PC relative load, only available for RV32 as this encoding is C.SLLI with an out of range shift
+3+|  000       | 0  2+| uimm[6:7] 3+| rd' 5+| uimm[5:0]         2+| 10  | C.LWPC
 |=============================================================================================
 
 [#semantics]
@@ -67,11 +71,17 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 | C.ORSLL24     | rd' = rs1' \| (rs2'<<24)
 | C.RORI        | rd' = rotate_right(rs1', shamt)
 | C.XORI        | rd' = rs1' ^ sign_ext(imm)
+| C.LWPC        | rd' = zero_ext((Memory[PC + sign_ext(imm<<2)])[31:0])
 |=======================================================================
 
 `C.ORSLL[8|16|24]` are for loads where the alignment cannot be guaranteed, so the compiler must load one byte at a time and assemble
 the result into words. They should not be necessary in this case when `-m-nostrict-align` is specified to GCC. 32-bit encodings are required
 as currently no 32-bit version exists.
+
+Also no 32-bit version exists of `C.LWPC`. The idea of `C.LWPC` is to load constant values from the end of the current function, which is 
+why the immediate is unsigned.
+
+=== B-extension
 
 Note that the B-extension is required for 32-bit versions of the following instructions:
 
@@ -80,7 +90,7 @@ Note that the B-extension is required for 32-bit versions of the following instr
 * `C.SEXT.H`
 * `C.RORI`
 
-For reference the B-extension is proposing the following 16-bit encodings
+For reference the B-extension is proposing the following 16-bit encodings.
 Personally I wouldn't allocate 16-bit encodings specifically to RV64, and even less so to RV128
 
 [#b-extension 16-bit encodings]
@@ -111,4 +121,6 @@ orsll16 a5, a5, a6;     # a5 = a5 | (a6<<16), for 16-bit encoding rd==rs1 and al
 orsll24 a5, a5, a6;     # a5 = a5 | (a6<<24), for 16-bit encoding rd==rs1 and all registers are x8-x15      
 
 rori a5, a5, 2;         # a5 = rotate_right(a5, 2), for 16-bit encoding rd==rs1, rd=x8-x15      
-xori a5, a5, 2;         # a5 = a5 ^ sign-ext(2),    for 16-bit encoding rd==rs1, rd=x8-x15, imm is in the range -4 to +3     
+xori a5, a5, 2;         # a5 = a5 ^ sign-ext(2),    for 16-bit encoding rd==rs1, rd=x8-x15, imm is in the range -4 to +3
+
+lw   a5, 16(pc);        # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encoding offset must be in range and rd=x8-x15
