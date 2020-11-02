@@ -1,0 +1,114 @@
+= RISC-V 16-bit code-size reduction extension proposal
+Version 0.1
+:doctype: book
+:encoding: utf-8
+:lang: en
+:toc: left
+:toclevels: 4
+:numbered:
+:xrefstyle: short
+:le: &#8804;
+:rarr: &#8658;
+
+This document describes 16-bit instructions proposed to help reduce code-size.
+
+== Rational
+
+=== Opcode Assignment
+
+[#proposed-16bit-encodings]
+.proposed 16-bit encodings 
+[width="100%",options=header]
+
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|PUSH/POP/POPRET specifications are mature
+17+|`rcount` must be in the range 0 to 10 to decode as these instructions
+3+|  100       | 1  | 1  4+|rcount (0,10) | 0  | 0  3+| spimm   2+| 00  | C.POP[.E]
+3+|  100       | 1  | 1  4+|rcount (0,10) | 0  | 1  3+| spimm   2+| 00  | C.POPRET[.E]
+3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 0  3+| spimm   2+| 00  | C.PUSH[.E]
+17+|PUSHZERO spec is less mature than PUSH/POP/POPRET and the benefit is lower
+3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | C.PUSHZERO[.E]             
+3+|  100       | 1  | 1  4+| 1011       5+|                     2+| 00  | *reserved*
+3+|  100       | 1  | 1  2+| 11 7+|                             2+| 00  | *reserved*
+17+|Single source/dest with room for 4 more encodings
+3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 0  | 0  3+| 000     2+| 00  | C.ZEXT.B
+3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 0  | 1  3+| 001     2+| 00  | C.ZEXT.H
+3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 1  | 0  3+| 010     2+| 00  | C.ZEXT.B
+3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 1  | 1  3+| 011     2+| 00  | C.ZEXT.H
+3+|  100       | 1  | 0  | 0 3+|          | 1  | 1    | 1 2+|   2+| 00  | *reserved*
+17+|source/dest with one other source operand
+3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| rs2'    2+| 00  | C.MUL
+3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 0  | 1  3+| rs2'    2+| 00  | C.ORSLL8
+3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 1  | 0  3+| rs2'    2+| 00  | C.ORSLL16
+3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 1  | 1  3+| rs2'    2+| 00  | C.ORSLL24
+17+|To be useful C.RORI needs a 5-bit immediate, so it may be too expensive to encode, TBD
+3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 5+|       shamt       2+| 00  | C.RORI (0-31 places)
+3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 2+| 00    3+| imm     2+| 00  | C.XORI (-4 to +3)
+3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 2+| > 1   3+| imm     2+| 00  | *reserved*
+|=============================================================================================
+
+[#semantics]
+.semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.POP[.E]     | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers]
+| C.POPRET[.E]  | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers and return]
+| C.PUSH[.E]    | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers]
+| C.PUSHZERO[.E]    | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers and ZERO the allocated memory]
+| C.ZEXT.B      | rd' = zero_ext(rs1'[ 7:0])
+| C.ZEXT.H      | rd' = zero_ext(rs1'[15:0])
+| C.SEXT.B      | rd' = sign_ext(rs1'[ 7:0])
+| C.SEXT.H      | rd' = sign_ext(rs1'[15:0])
+| C.MUL         | rd' = rs1' * rs2'
+| C.ORSLL8      | rd' = rs1' \| (rs2'<<8)
+| C.ORSLL16     | rd' = rs1' \| (rs2'<<16)
+| C.ORSLL24     | rd' = rs1' \| (rs2'<<24)
+| C.RORI        | rd' = rotate_right(rs1', shamt)
+| C.XORI        | rd' = rs1' ^ sign_ext(imm)
+|=======================================================================
+
+`C.ORSLL[8|16|24]` are for loads where the alignment cannot be guaranteed, so the compiler must load one byte at a time and assemble
+the result into words. They should not be necessary in this case when `-m-nostrict-align` is specified to GCC. 32-bit encodings are required
+as currently no 32-bit version exists.
+
+Note that the B-extension is required for 32-bit versions of the following instructions:
+
+* `C.ZEXT.H`
+* `C.SEXT.B`
+* `C.SEXT.H`
+* `C.RORI`
+
+For reference the B-extension is proposing the following 16-bit encodings
+Personally I wouldn't allocate 16-bit encodings specifically to RV64, and even less so to RV128
+
+[#b-extension 16-bit encodings]
+.b-extension proposed 16-bit encodings
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|These are taken fromthe B-extension draft specification and are subject to change
+3+|  011       |0 2+|00     3+| rs1'/rd'  5+| 00000             2+| 00  | C.NOT
+3+|  011       |0 2+|01     3+| rs1'/rd'  5+| 00000             2+| 00  | C.NEG
+3+|  011       |0 2+|10     3+| rs1'/rd'  5+| 00000             2+| 00  | C.ZEXT.W (RV64+)
+3+|  011       |0 2+|11     3+| rs1'/rd'  5+| 00000             2+| 00  | C.ZEXT.D (RV128)
+|=============================================================================================
+
+==== Assembly Examples
+
+[source,sourceCode,text]
+----
+zext.b a5;              # a5 = zero_ext(a5[7:0])
+zext.h a5;              # a5 = zero_ext(a5[15:0])
+sext.b a5;              # a5 = sign_ext(a5[7:0])
+sext.h a5;              # a5 = sign_ext(a5[15:0])
+
+mul a5, a5, a6;         # a5 = a5 * a6, for 16-bit encoding rd==rs1 and all registers are x8-x15      
+
+orsll8 a5, a5, a6;      # a5 = a5 | (a6<< 8), for 16-bit encoding rd==rs1 and all registers are x8-x15      
+orsll16 a5, a5, a6;     # a5 = a5 | (a6<<16), for 16-bit encoding rd==rs1 and all registers are x8-x15      
+orsll24 a5, a5, a6;     # a5 = a5 | (a6<<24), for 16-bit encoding rd==rs1 and all registers are x8-x15      
+
+rori a5, a5, 2;         # a5 = rotate_right(a5, 2), for 16-bit encoding rd==rs1, rd=x8-x15      
+xori a5, a5, 2;         # a5 = a5 ^ sign-ext(2),    for 16-bit encoding rd==rs1, rd=x8-x15, imm is in the range -4 to +3     
