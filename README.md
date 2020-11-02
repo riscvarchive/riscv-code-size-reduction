@@ -16,9 +16,7 @@ ISA extension proposals
 - C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H for the ABI as values must be sign/zero extended
 - Anders: Load/stores with scaled offsets
 - GP relative load/stores with a bigger offset - don't overlap with existing - so the immediate extends further
-- 48-bit L.LI - load 32-bit immediate value
-- 48-bit L.LW, L.SW with ~ 28-bit offset
-- 48-bit L.ADDI, L.ANDI with ~ 32-bit constant
+- [48-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/48bit_encodings.adoc) which have longer immediates than 32-bit encodings
 - JAL with a bigger range
 
 Toolchain optimisation suggestions
