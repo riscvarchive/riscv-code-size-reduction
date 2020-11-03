@@ -14,7 +14,7 @@ This document describes 48-bit instructions proposed to help reduce code-size.
 
 == Rationale
 
-The RISC-V architectures allows 48-bit, and longer encodings to be specified.
+The RISC-V architecture allows 48-bit, and longer encodings to be specified.
 The idea behind this 48-bit proposal is to allow much larger immediate values
 than are permitted by the standard encodings.
 
@@ -27,8 +27,8 @@ version of the code-size reduction ISA extension mainly depends on
 They will only be included if they can show a sufficient benefit over 32/16-bit encodings, but note that
 they allow more encoding space to be allocated than is otherwise possible.
 
-Load 32-bit immediate (``L.LI``) showed high benefit in the absence of the other proposed instructions - it's possible that with
-the other instructions implemented ``L.LI`` is not required. TBD.
+Load-32-bit-immediate (`L.LI`) showed high benefit in the absence of the other proposed instructions - it's possible that with
+the other instructions implemented `L.LI` is not required. TBD.
 
 Also the length of the immediate values needs to be balanced against the available encoding space. Shorter immediates means that more opcodes can be encoded, but of course may reduce the usefulness of the longer encoding. 
 It's important that bits [47:32] only contain immediate data - not encoding information, so that the instruction
@@ -51,6 +51,7 @@ decoder still operates on bits [31:0] only. This simplifies the microarchitectur
 |47:32|31:30|29:25     |24:20 |19:15|14:12|11:7    |6:0    |instruction
 |imm[25:10]     |00  2+|imm[9:0]      |rs1     |001  |rd      |0011111| L.ADDI
 |imm[25:10]     |01  2+|imm[9:0]      |rs1     |001  |rd      |0011111| L.ANDI
+|imm[25:10]     |10  2+|imm[9:0]      |rs1     |001  |rd      |0011111| L.JAL
   
 |imm[25:10]     |00  2+|imm[9:0]      |rs1     |000  |rd      |1011111| L.LBU
 |imm[25:10]     |01  2+|imm[9:0]      |rs1     |000  |rd      |1011111| L.LHU
@@ -71,6 +72,7 @@ decoder still operates on bits [31:0] only. This simplifies the microarchitectur
 | L.LI       | rd = sign_ext(imm)
 | L.ADDI     | rd = rs1 + sign_ext(imm)
 | L.ANDI     | rd = rs1 & sign_ext(imm)
+| L.JAL      | jump to PC+sign_ext(imm), link to ra
 | L.LBU      | rd = zero_ext((Memory[rs1 + sign_ext(imm)])[7:0])
 | L.LHU      | rd = zero_ext((Memory[rs1 + sign_ext(imm)])[15:0])
 | L.LW       | rd = sign_ext((Memory[rs1 + sign_ext(imm)])[31:0])
@@ -95,11 +97,9 @@ l.andi a5,a6,0xf00100;  # a5 = a6 & 0xf00100
 l.lbu  a5,0xf00100(a6); # load bottom byte of a5 from address a6+0xf00100, zero extend
 l.lhu  a5,0xf00100(a6); # load bottom half of a5 from address a6+0xf00100, zero extend
 l.lw   a5,0xf00100(a6); # load bottom word from a5 from address a6+0xf00100, sign extend for RV64+
-l.ld   a5,0xf00100(a6); # load bottom double word from a5 from address a6+0xf00100, RV64+ only, sign extend for RV128
+l.ld   a5,0xf00100(a6); # load double word from a5 from address a6+0xf00100, RV64+ only, sign extend for RV128
 
 l.sbu  a5,0xf00100(a6); # store bottom byte of a5 to address a6+0xf00100
 l.shu  a5,0xf00100(a6); # store bottom half of a5 to address a6+0xf00100
 l.sw   a5,0xf00100(a6); # store bottom word of a5 to address a6+0xf00100
 l.sd   a5,0xf00100(a6); # store bottom double word of a5 to address a6+0xf00100, RV64+ only
-
----
