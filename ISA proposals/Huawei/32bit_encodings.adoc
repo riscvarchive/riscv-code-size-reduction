@@ -1,0 +1,159 @@
+= RISC-V 32-bit code-size reduction extension proposal
+Version 0.1
+:doctype: book
+:encoding: utf-8
+:lang: en
+:toc: left
+:toclevels: 4
+:numbered:
+:xrefstyle: short
+:le: &#8804;
+:rarr: &#8658;
+
+This document describes 32-bit instructions proposed to help reduce code-size.
+Currently all are encoded in the CUSTOM encodings, as it's unclear to me which 32-bit encodings are available for allocation.
+Some of the encodings are 32-bit versions of proposed 16-bit encodings, and others are new.
+
+== Rational
+
+=== Opcode Assignment
+
+[#proposed-32bit-encodings]
+.proposed 32-bit encodings 
+[width="100%",options=header]
+
+|=========================================================================================================================
+| 31 | 30:29   |28|27| 26:25   |24  |23:20            | 19:16 |15 | 14:12        | 11:9        | 8 | 7 | 6 : 0 | instruction
+15+| *custom-0 encoding group (all architectures), PUSH/POP and friends*
+2+|000         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011|POP[.E]/POPINT[.E]
+2+|001         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011|POPRET[.E]
+2+|010         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011|PUSH[.E]/PUSHINT[.E]
+2+|011         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011|PUSHZERO[.E]
+15+| *custom-0 encoding group (all architectures), compare-immediate-branch*
+6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 001        3+| offset[5:1]         |0001011| BEQI
+6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 010        3+| offset[5:1]         |0001011| BLTI
+6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 011        3+| offset[5:1]         |0001011| BGEI
+6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 100        3+| offset[5:1]         |0001011| BLTUI
+6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 101        3+| offset[5:1]         |0001011| BGEUI
+15+| *custom-0 encoding group (all architectures), load/store multiple, .U means update address after spec to follow*
+|set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 0 | 0 |0001011| LWM
+|set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 0 | 1 |0001011| LWM.U
+|set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 1 | 0 |0001011| SWM
+|set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 1 | 1 |0001011| SW.MU
+15+| *custom-0 encoding group (all architectures), load/store arbitrary pair of registers*
+2+|000       3+| imm[5:2]    2+|   rd2              2+| rs1      | 111        3+|  rd                 |0001011| LWP
+2+|001       3+| imm[5:2]    2+|   rs2              2+| rs1      | 111        3+|  rs3                |0001011| SWP
+15+| *custom-0 encoding group (all architectures), pre-index loads with address writeback*
+2+|010       5+| imm[8:0]                           2+| rs1      | 111        3+|  rd                 |0001011| LBU.U
+2+|011       5+| imm[8:0]                           2+| rs1      | 111        3+|  rd                 |0001011| LHU.U
+2+|100       5+| imm[8:0]                           2+| rs1      | 111        3+|  rd                 |0001011| LW.U
+2+|101       3+| imm[8:5]    2+| rs2                2+| rs1      | 111        3+| imm[4:0]            |0001011| SB.U 
+2+|110       3+| imm[8:5]    2+| rs2                2+| rs1      | 111        3+| imm[4:0]            |0001011| SH.U 
+2+|111       3+| imm[8:5]    2+| rs2                2+| rs1      | 111        3+| imm[4:0]            |0001011| SW.U 
+15+| *custom-0 encoding group (all architectures), PC relative load*
+2+|000       5+| imm[8:1, 9]                        2+| rs1      | 000        3+|  rd                 |0101011| LWPC
+15+| *custom-0 encoding group (all architectures), post-index loads with address writeback*
+2+|010       5+| imm[8:0]                           2+| rs1      | 000        3+|  rd                 |1011011| LBU.PU
+2+|011       5+| imm[8:0]                           2+| rs1      | 000        3+|  rd                 |1011011| LHU.PU
+2+|100       5+| imm[8:0]                           2+| rs1      | 000        3+|  rd                 |1011011| LW.PU
+2+|101       3+| imm[8:5]    2+| rs2                2+| rs1      | 000        3+| imm[4:0]            |1011011| SB.PU 
+2+|110       3+| imm[8:5]    2+| rs2                2+| rs1      | 000        3+| imm[4:0]            |1011011| SH.PU 
+2+|111       3+| imm[8:5]    2+| rs2                2+| rs1      | 000        3+| imm[4:0]            |1011011| SW.PU
+15+| *custom-0 encoding group (all architectures), GP relative load/store, allowing X3 (tp=0) and X4 (tp=1) as GPs*
+ 7+|imm[11:0]                                       2+| rs1      | 001        2+| imm[15:12]     | tp |1011011| LBUGP
+ 7+|imm[11:0]                                       2+| rs1      | 010        2+| imm[15:12]     | tp |1011011| LHUGP
+ 7+|imm[11:0]                                       2+| rs1      | 011        2+| imm[15:12]     | tp |1011011| LWGP
+ 5+|imm[11:5]                2+| rs2               |imm[15:12]|gp| 100        3+| imm[4:0]            |1011011| SBGP
+ 5+|imm[11:5]                2+| rs2               |imm[15:12]|gp| 101        3+| imm[4:0]            |1011011| SHGP
+ 5+|imm[11:5]                2+| rs2               |imm[15:12]|gp| 110        3+| imm[4:0]            |1011011| SWGP
+
+15+| *custom-1 encoding group (all architectures), array of structure indexing*
+5+| uimm[7:1]                2+| rs2                2+| rs1      | 111        3+|  rd                 |0101011| MULIADD
+|=========================================================================================================================
+
+`JAL8M` would also be useful (JAL with 24-bit immediate) is required for the Huawei IoT code, but I'm not sure there's encoding space
+for such a long immediate, so 48-bit `L.JAL` may be required instead TBD to replace 64-bit `LUI / JAL` or `AUIPC / JAL` sequences with `L.JAL`
+
+*Anders requested load/stores with scaled offsets - not added yet*
+
+
+[#semantics]
+.semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction           | definition
+| POP[.E]/POPINT[.E]   | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers]
+| POPRET[.E]           | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers and return]
+| PUSH[.E]/PUSHINT[.E] | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers]
+| PUSHZERO[.E]         | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers and ZERO the allocated memory]
+| BEQI                 | if (rs1==sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BLTI                 | if (rs1< sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BGEI                 | if (rs1>=sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BLTUI                | if (rs1< zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BGEUI                | if (rs1>=zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| LWM[.U]              | spec to follow
+| SWM[.U]              | spec to follow
+| LWP                  | rd=sign_ext(Memory[rs1+sign_ext(imm)][31:0]); rd2=sign_ext(Memory[rs1+sign_ext(imm)+4][31:0]);
+| SWP                  | Memory[rs1+sign_ext(imm)][31:0]=rs2; Memory[rs1+sign_ext(imm)+4][31:0]=rs3;
+| LBU.U                | rd=zero_ext(Memory[rs1+sign_ext(imm)][ 7:0]); rs1=rs1+1;
+| LHU.U                | rd=zero_ext(Memory[rs1+sign_ext(imm)][15:0]); rs1=rs1+2;
+| LW.U                 | rd=zero_ext(Memory[rs1+sign_ext(imm)][31:0]); rs1=rs1+4;
+| SB.U                 | Memory[rs1+sign_ext(imm)][ 7:0]=rs2[ 7:0]; rs1=rs1+1;
+| SH.U                 | Memory[rs1+sign_ext(imm)][15:0]=rs2[15:0]; rs1=rs1+2;
+| SW.U                 | Memory[rs1+sign_ext(imm)][31:0]=rs2[31:0]; rs1=rs1+4;
+| LWPC                 | rd=Memory[PC+sign_ext(imm)]
+| LBU.PU               | rd=zero_ext(Memory[rs1][ 7:0]); rs1=rs1+1;
+| LHU.PU               | rd=zero_ext(Memory[rs1][15:0]); rs1=rs1+2;
+| LW.PU                | rd=zero_ext(Memory[rs1][31:0]); rs1=rs1+4;
+| SB.PU                | Memory[rs1][ 7:0]=rs2[ 7:0]; rs1=rs1+1;
+| SH.PU                | Memory[rs1][15:0]=rs2[15:0]; rs1=rs1+2;
+| SW.PU                | Memory[rs1][31:0]=rs2[31:0]; rs1=rs1+4;
+| LBUGP                | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][ 7:0]);
+| LHUGP                | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][15:0]);
+| LWGP                 | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][31:0]);
+| SBUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][ 7:0])=rs2[ 7:0];
+| SHUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][15:0])=rs2[15:0];
+| SWGP                 | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][31:0])=rs2[31:0];
+| MULIADD              | https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[Array of structure indexing]
+|======================================================================
+
+==== Assembly Examples
+
+[source,sourceCode,text]
+----
+beqi	a5,1,e005e2     # if (a5== 1) branch_target=0xe005e2; else branch_target=PC+4; //signed comparison
+blti	a5,4,e06222     # if (a5<  4) branch_target=0xe06222; else branch_target=PC+4; //signed comparison
+bgei	a2,3,e088f6     # if (a2>= 3) branch_target=0xe088f6; else branch_target=PC+4; //signed comparison
+bltui	a4,13,e08878    # if (a4< 13) branch_target=0xe08878; else branch_target=PC+4; //unsigned comparison
+bgeui	a3,32,e095cc    # if (a3>=32) branch_target=0xe095cc; else branch_target=PC+4; //unsigned comparison
+
+lwp a5, s0, 32(t0)      # load  a5 from t0+32, s0 from t0+36
+swp a5, s0, 32(t0)      # store a5 to   t0+32, s0 to   t0+36
+
+lbu a1, 4(t0)!          # load unsigned byte from t0+4 into a1, t0=t0+1
+lhu a1, 4(t0)!          # load unsigned half from t0+4 into a1, t0=t0+2
+lw  a1, 4(t0)!          # load word          from t0+4 into a1, t0=t0+4
+
+lbu a1, (t0)4!          # load unsigned byte from t0 into a1, t0=t0+1
+lhu a1, (t0)4!          # load unsigned half from t0 into a1, t0=t0+2
+lw  a1, (t0)4!          # load word          from t0 into a1, t0=t0+4
+
+sb  a1, 4(t0)!          # store byte to t0+4, t0=t0+1
+sh  a1, 4(t0)!          # store half to t0+4, t0=t0+2
+sw  a1, 4(t0)!          # store word to t0+4, t0=t0+4
+
+sb  a1, (t0)4!          # store byte to t0, t0=t0+1
+sh  a1, (t0)4!          # store half to t0, t0=t0+2
+sw  a1, (t0)4!          # store word to t0, t0=t0+4
+
+lbu a1,0xfffff(gp)      # will use LBUGP if immediate is out of range for LBU
+lhu a1,0xfffff(gp)      # will use LHUGP if immediate is out of range for LHU
+lw  a1,0xfffff(gp)      # will use LWGP  if immediate is out of range for LW
+
+sb  a1,0xfffff(gp)      # will use SBGP if immediate is out of range for SB
+sh  a1,0xfffff(gp)      # will use SHGP if immediate is out of range for SH
+sw  a1,0xfffff(gp)      # will use SWGP if immediate is out of range for SW
+
+
+
+
