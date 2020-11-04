@@ -95,14 +95,14 @@ decoder still operates on bits [31:0] only. This simplifies the microarchitectur
 | L.SH       | Memory[rs1 + sign_ext(imm)][15:0] = rs2
 | L.SW       | Memory[rs1 + sign_ext(imm)][31:0] = rs2
 | L.SD       | Memory[rs1 + sign_ext(imm)][63:0] = rs2
-| L.LBU.U    | rd = zero_ext((Memory[sign_ext(imm)])[7:0]);  rs1=sign_ext(imm);
-| L.LHU.U    | rd = zero_ext((Memory[sign_ext(imm)])[15:0]); rs1=sign_ext(imm);
-| L.LW.U     | rd = sign_ext((Memory[sign_ext(imm)])[31:0]); rs1=sign_ext(imm);
-| L.LD.U     | rd = sign_ext((Memory[sign_ext(imm)])[63:0]); rs1=sign_ext(imm);
-| L.SB.U     | Memory[sign_ext(imm)][7:0]  = rs2; rs1=sign_ext(imm);
-| L.SH.U     | Memory[sign_ext(imm)][15:0] = rs2; rs1=sign_ext(imm);
-| L.SW.U     | Memory[sign_ext(imm)][31:0] = rs2; rs1=sign_ext(imm);
-| L.SD.U     | Memory[sign_ext(imm)][63:0] = rs2; rs1=sign_ext(imm);
+| L.LBU.U    | rd = zero_ext((Memory[rs1 + sign_ext(imm)])[7:0]);  rs1+=sign_ext(imm);
+| L.LHU.U    | rd = zero_ext((Memory[rs1 + sign_ext(imm)])[15:0]); rs1+=sign_ext(imm);
+| L.LW.U     | rd = sign_ext((Memory[rs1 + sign_ext(imm)])[31:0]); rs1+=sign_ext(imm);
+| L.LD.U     | rd = sign_ext((Memory[rs1 + sign_ext(imm)])[63:0]); rs1+=sign_ext(imm);
+| L.SB.U     | Memory[rs1 + sign_ext(imm)][7:0]  = rs2; rs1+=sign_ext(imm);
+| L.SH.U     | Memory[rs1 + sign_ext(imm)][15:0] = rs2; rs1+=sign_ext(imm);
+| L.SW.U     | Memory[rs1 + sign_ext(imm)][31:0] = rs2; rs1+=sign_ext(imm);
+| L.SD.U     | Memory[rs1 + sign_ext(imm)][63:0] = rs2; rs1+=sign_ext(imm);
 |=======================================================================
 
 * should there also be load/store quad?
