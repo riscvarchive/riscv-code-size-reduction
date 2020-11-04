@@ -65,17 +65,17 @@ decoder still operates on bits [31:0] only. This simplifies the microarchitectur
 |imm[25:10]     |10    |imm[9:5]   |rs2 |rs1   |001  |imm[4:0]|1011111| L.SW
 |imm[25:10]     |11    |imm[9:5]   |rs2 |rs1   |001  |imm[4:0]|1011111| L.SD (RV64+)
 
-9+|Load/store from absolute address, and update address register
+9+|Preindexed Load/store, and update address register
 
-|imm[25:10]     |00  2+|imm[9:0]      |rs1     |010  |rd      |1011111| L.LBUABS.U
-|imm[25:10]     |01  2+|imm[9:0]      |rs1     |010  |rd      |1011111| L.LHUABS.U
-|imm[25:10]     |10  2+|imm[9:0]      |rs1     |010  |rd      |1011111| L.LWABS.U
-|imm[25:10]     |11  2+|imm[9:0]      |rs1     |010  |rd      |1011111| L.LDABS.U (RV64+)
+|imm[25:10]     |00  2+|imm[9:0]      |rs1     |010  |rd      |1011111| L.LBU.U
+|imm[25:10]     |01  2+|imm[9:0]      |rs1     |010  |rd      |1011111| L.LHU.U
+|imm[25:10]     |10  2+|imm[9:0]      |rs1     |010  |rd      |1011111| L.LW.U
+|imm[25:10]     |11  2+|imm[9:0]      |rs1     |010  |rd      |1011111| L.LD.U (RV64+)
 
-|imm[25:10]     |00    |imm[9:5]   |rs2 |rs1   |011  |imm[4:0]|1011111| L.SBABS.U
-|imm[25:10]     |01    |imm[9:5]   |rs2 |rs1   |011  |imm[4:0]|1011111| L.SHABS.U
-|imm[25:10]     |10    |imm[9:5]   |rs2 |rs1   |011  |imm[4:0]|1011111| L.SWABS.U
-|imm[25:10]     |11    |imm[9:5]   |rs2 |rs1   |011  |imm[4:0]|1011111| L.SDABS.U (RV64+)
+|imm[25:10]     |00    |imm[9:5]   |rs2 |rs1   |011  |imm[4:0]|1011111| L.SB.U
+|imm[25:10]     |01    |imm[9:5]   |rs2 |rs1   |011  |imm[4:0]|1011111| L.SH.U
+|imm[25:10]     |10    |imm[9:5]   |rs2 |rs1   |011  |imm[4:0]|1011111| L.SW.U
+|imm[25:10]     |11    |imm[9:5]   |rs2 |rs1   |011  |imm[4:0]|1011111| L.SD.U (RV64+)
 |=======================================================================
 
 [#semantics]
@@ -95,14 +95,14 @@ decoder still operates on bits [31:0] only. This simplifies the microarchitectur
 | L.SH       | Memory[rs1 + sign_ext(imm)][15:0] = rs2
 | L.SW       | Memory[rs1 + sign_ext(imm)][31:0] = rs2
 | L.SD       | Memory[rs1 + sign_ext(imm)][63:0] = rs2
-| L.LBUABS.U | rd = zero_ext((Memory[sign_ext(imm)])[7:0]);  rs1=sign_ext(imm);
-| L.LHUABS.U | rd = zero_ext((Memory[sign_ext(imm)])[15:0]); rs1=sign_ext(imm);
-| L.LWABS.U  | rd = sign_ext((Memory[sign_ext(imm)])[31:0]); rs1=sign_ext(imm);
-| L.LDABS.U  | rd = sign_ext((Memory[sign_ext(imm)])[63:0]); rs1=sign_ext(imm);
-| L.SBABS.U  | Memory[sign_ext(imm)][7:0]  = rs2; rs1=sign_ext(imm);
-| L.SHABS.U  | Memory[sign_ext(imm)][15:0] = rs2; rs1=sign_ext(imm);
-| L.SWABS.U  | Memory[sign_ext(imm)][31:0] = rs2; rs1=sign_ext(imm);
-| L.SDABS.U  | Memory[sign_ext(imm)][63:0] = rs2; rs1=sign_ext(imm);
+| L.LBU.U    | rd = zero_ext((Memory[sign_ext(imm)])[7:0]);  rs1=sign_ext(imm);
+| L.LHU.U    | rd = zero_ext((Memory[sign_ext(imm)])[15:0]); rs1=sign_ext(imm);
+| L.LW.U     | rd = sign_ext((Memory[sign_ext(imm)])[31:0]); rs1=sign_ext(imm);
+| L.LD.U     | rd = sign_ext((Memory[sign_ext(imm)])[63:0]); rs1=sign_ext(imm);
+| L.SB.U     | Memory[sign_ext(imm)][7:0]  = rs2; rs1=sign_ext(imm);
+| L.SH.U     | Memory[sign_ext(imm)][15:0] = rs2; rs1=sign_ext(imm);
+| L.SW.U     | Memory[sign_ext(imm)][31:0] = rs2; rs1=sign_ext(imm);
+| L.SD.U     | Memory[sign_ext(imm)][63:0] = rs2; rs1=sign_ext(imm);
 |=======================================================================
 
 * should there also be load/store quad?
@@ -126,12 +126,12 @@ l.shu       a5,0xf00100(a6); # store bottom half of a5 to address a6+0xf00100
 l.sw        a5,0xf00100(a6); # store bottom word of a5 to address a6+0xf00100
 l.sd        a5,0xf00100(a6); # store bottom double word of a5 to address a6+0xf00100, RV64+ only
 
-l.lbuabs.u  a5,0xf00100(a6); # load bottom byte of a5 from address 0xf00100, zero extend. Set a6 = 0xf00100
-l.lhuabs.u  a5,0xf00100(a6); # load bottom half of a5 from address 0xf00100, zero extend. Set a6 = 0xf00100
-l.lwabs.u   a5,0xf00100(a6); # load bottom word from a5 from address 0xf00100, sign extend for RV64+. Set a6 = 0xf00100
-l.ldabs.u   a5,0xf00100(a6); # load double word from a5 from address 0xf00100, RV64+ only, sign extend for RV128. Set a6 = 0xf00100
+l.lbu.u     a5,0xf00100(a6); # load bottom byte of a5 from address 0xf00100, zero extend. Set a6 = 0xf00100
+l.lhu.u     a5,0xf00100(a6); # load bottom half of a5 from address 0xf00100, zero extend. Set a6 = 0xf00100
+l.lw.u      a5,0xf00100(a6); # load bottom word from a5 from address 0xf00100, sign extend for RV64+. Set a6 = 0xf00100
+l.ld.u      a5,0xf00100(a6); # load double word from a5 from address 0xf00100, RV64+ only, sign extend for RV128. Set a6 = 0xf00100
 
-l.sbuabs.u  a5,0xf00100(a6); # store bottom byte of a5 to address 0xf00100. Set a6 = 0xf00100
-l.shuabs.u  a5,0xf00100(a6); # store bottom half of a5 to address 0xf00100. Set a6 = 0xf00100
-l.swabs.u   a5,0xf00100(a6); # store bottom word of a5 to address 0xf00100. Set a6 = 0xf00100
-l.sdabs.u   a5,0xf00100(a6); # store bottom double word of a5 to address 0xf00100, RV64+ only. Set a6 = 0xf00100
+l.sbu.u     a5,0xf00100(a6); # store bottom byte of a5 to address 0xf00100. Set a6 = 0xf00100
+l.shu.u     a5,0xf00100(a6); # store bottom half of a5 to address 0xf00100. Set a6 = 0xf00100
+l.sw.u      a5,0xf00100(a6); # store bottom word of a5 to address 0xf00100. Set a6 = 0xf00100
+l.sd.u      a5,0xf00100(a6); # store bottom double word of a5 to address 0xf00100, RV64+ only. Set a6 = 0xf00100
