@@ -16,7 +16,7 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 
 16-bit instructions are highly valuable for code-size reduction
 
-=== Opcode Assignment
+== Opcode Assignment
 
 [#proposed-16bit-encodings-1]
 .proposed 16-bit encodings-1 
@@ -120,7 +120,7 @@ A 32-bit version exists of `C.LWPC` is needed. The idea of `C.LWPC` is to load c
 `C.LWPCJAL` was suggested by Guo Ren from Alibaba - it's similar to LOADPC on ARM - PC relative load and then `JAL ra` to the loaded value. It may take any load related exception (PMP fault, page fault etc.) although
 alignment faults are not possible as the result of `pc_offset()` is always word aligned.
 
-=== B-extension
+== B-extension
 
 Note that the B-extension is required for 32-bit versions of the following instructions:
 
@@ -151,7 +151,7 @@ Personally I wouldn't allocate 16-bit encodings specifically to RV64, and even l
 | C.NEG         | rd' = -rs1'
 |=======================================================================
 
-=== Zfinx
+== Zfinx
 
 If Zfinx allows floating point encodings to be reused then we can add these instructions
 
@@ -182,7 +182,7 @@ If Zfinx allows floating point encodings to be reused then we can add these inst
 |=======================================================================
 
 
-=== Assembly Examples
+== Assembly Examples
 
 [source,sourceCode,text]
 ----
@@ -232,7 +232,7 @@ sh  a5,20(a4)           # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encodin
 |=======================================================================================================
 
 
-=== Rejected instructions
+== Rejected instructions
 
 Jim Wilson pointed at that we should fix `-mno-strict-align` and mandate that cores which need `C.ORSLL[8|16|24]` support unaligned load/store, so that we don't need to assemble bytes into words
 
