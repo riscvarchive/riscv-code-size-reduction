@@ -211,7 +211,7 @@ sh  a5,20(a4)           # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encodin
 
 ----
 
-=== Benchmarking results on Huawei IoT code
+== Benchmarking results on Huawei IoT code
 
 [width="100%",options=header]
 |=======================================================================================================
