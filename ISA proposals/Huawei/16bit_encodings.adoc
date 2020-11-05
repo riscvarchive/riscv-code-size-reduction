@@ -18,10 +18,9 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 
 === Opcode Assignment
 
-[#proposed-16bit-encodings]
-.proposed 16-bit encodings 
+[#proposed-16bit-encodings-1]
+.proposed 16-bit encodings-1 
 [width="100%",options=header]
-
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 17+|PUSH/POP/POPRET specifications are mature
@@ -33,23 +32,45 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | C.PUSHZERO[.E]             
 3+|  100       | 1  | 1  4+| 1011       5+|                     2+| 00  | *reserved*
 3+|  100       | 1  | 1  2+| 11 7+|                             2+| 00  | *reserved*
+|=============================================================================================
+
+[#proposed-16bit-encodings-2]
+.proposed 16-bit encodings-2 
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 17+|Single source/dest with room for 4 more encodings
 3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 0  | 0  3+| 000     2+| 00  | C.ZEXT.B
 3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 0  | 1  3+| 001     2+| 00  | C.ZEXT.H
 3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 1  | 0  3+| 010     2+| 00  | C.SEXT.B
 3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 1  | 1  3+| 011     2+| 00  | C.SEXT.H
 3+|  100       | 1  | 0  | 0 3+|          | 1  | 1    | 1 2+|   2+| 00  | *reserved*
-17+|source/dest with one other source operand
 3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| rs2'    2+| 00  | C.MUL
-3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 0  | 1  3+| rs2'    2+| 00  | C.ORSLL8
-3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 1  | 0  3+| rs2'    2+| 00  | C.ORSLL16
-3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 1  | 1  3+| rs2'    2+| 00  | C.ORSLL24
-17+|To be useful C.RORI needs a 5-bit immediate, so it may be too expensive to encode, TBD
-3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 5+|       shamt       2+| 00  | C.RORI (0-31 places)
-3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 2+| 00    3+| imm     2+| 00  | C.XORI (-4 to +3)
-3+|  100       | 0  | 0  | 0 3+| rs1'/rd' 2+| > 1   3+| imm     2+| 00  | *reserved*
+3+|  100       | 1  | 0  | 1 3+|        2+| not 00  3+|         2+| 00  | *reserved*
+|=============================================================================================
+
+[#proposed-16bit-encodings-3]
+.proposed 16-bit encodings-3 
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|source/dest with one other source operand
+3+|  100       | 0  | 0  |uimm[3] 3+|     rd' 3+|uimm[2:0]    2+|00 2+|00 | C.LBUSP
+3+|  100       | 0  | 0  |uimm[3] 3+|     rd' 3+|uimm[2:1，4] 2+|01 2+|00 | C.LHUSP
+3+|  100       | 0  | 0  |uimm[3] 3+|    rs2' 3+|uimm[2:0]    2+|10 2+|00 | C.SBSP
+3+|  100       | 0  | 0  |uimm[3] 3+|    rs2' 3+|uimm[2:1，4] 2+|11 2+|00 | C.SHSP
+17+|two-step execution, load PC relative value and then jump to the loaded value
+3+|  100       | 0  | 1 2+| 00     7+| uimm[8:2]                    2+|00 | C.LWPCJAL
+3+|  100       | 0  | 1 2+| not 00 7+|                              2+|00 | *reserved*
+|=============================================================================================
+
+[#proposed-16bit-encodings-4]
+.proposed 16-bit encodings-4 
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 17+|PC relative load, only available for RV32 as this encoding is C.SLLI with an out of range shift
-3+|  000       | 1  2+| uimm[6:7] 3+| rd' 5+| uimm[5:0]         2+| 10  | C.LWPC
+3+|  000       | 1  2+| uimm[8:7] 3+| rd' 5+| uimm[6:2]         2+| 10  | C.LWPC
 17+|This encoding space is also available for RV32 only
 3+|  100       | 1  | 0  9+|                                    2+| 01  | *reserved*
 |=============================================================================================
@@ -68,23 +89,36 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 | C.SEXT.B      | rd' = sign_ext(rs1'[ 7:0])
 | C.SEXT.H      | rd' = sign_ext(rs1'[15:0])
 | C.MUL         | rd' = rs1' * rs2'
-| C.ORSLL8      | rd' = rs1' \| (rs2'<<8)
-| C.ORSLL16     | rd' = rs1' \| (rs2'<<16)
-| C.ORSLL24     | rd' = rs1' \| (rs2'<<24)
-| C.RORI        | rd' = rotate_right(rs1', shamt)
-| C.XORI        | rd' = rs1' ^ sign_ext(imm)
-| C.LWPC        | rd' = zero_ext((Memory[PC + sign_ext(imm<<2)])[31:0])
+| C.LBUSP       | rd' = sign_ext(Memory[sp + zero_ext(uimm)][ 7:0])
+| C.LHUSP       | rd' = sign_ext(Memory[sp + zero_ext(uimm)][15:0])
+| C.SBSP        | Memory[sp + zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
+| C.SHSP        | Memory[sp + zero_ext(uimm)][15:0] = rs2'[15:0]
+| C.LWPCJAL     | ra=PC+2; jump_to(zero_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0]));
+| C.LWPC        | rd' = zero_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0])
 |=======================================================================
 
-`C.ORSLL[8|16|24]` are for loads where the alignment cannot be guaranteed, so the compiler must load one byte at a time and assemble
-the result into words. They should not be necessary in this case when `-m-nostrict-align` is specified to GCC. 32-bit encodings are required
-as currently no 32-bit version exists.
+The `pc_offset` function is defined to always allow a word offset to be encoded without encoding bit 1
+of the immediate. Therefore if the result is a 16-bit aligned PC offset, increment by 2 to point to the next
+word aligned address. This means that the final address is *always* word aligned.
+[source,sourceCode,text]
+----
 
-*Jim Wilson pointed at that we should fix `-mno-strict-align` and mandate that cores which need `C.ORSLL[8|16|24]` support unaligned load/store so that we don't need the instructions.*
+//PC=0x18, offset=0x4, pc_offset=0x24 - non-word aligned PC adds uimm+2
+//PC=0x20, offset=0x4, pc_offset=0x24 - word aligned PC adds uimm
+//PC=0x22, offset=0x4, pc_offset=0x28 - non-word aligned PC adds uimm+2
+//PC=0x24, offset=0x4, pc_offset=0x28 - word aligned PC adds uimm
+
+int pc_offset(int PC,  int uimm){
+        pc_offset = (PC + uimm + 2) & sign_ext(0xc)
+}
+
+----
 
 
-Also no 32-bit version exists of `C.LWPC`. The idea of `C.LWPC` is to load constant values from the end of the current function, which is 
-why the immediate is unsigned.
+A 32-bit version exists of `C.LWPC` isneeded. The idea of `C.LWPC` is to load constant values from the end of the current function, which is why the immediate is unsigned. This may cause cache fragmentation (I-side code loaded into D-cache) so we may decide not to allow this type of instruction.
+
+`C.LWPCJAL` was suggested by Guo Ren from Alibaba - it's similar to LOADPC on ARM - PC relative load and then `JAL ra` to the loaded value. It may take any load related exception (PMP fault, page fault etc.) although
+alignment faults are not possible as the result of `pc_offset()` is always word aligned.
 
 === B-extension
 
@@ -93,10 +127,10 @@ Note that the B-extension is required for 32-bit versions of the following instr
 * `C.ZEXT.H`
 * `C.SEXT.B`
 * `C.SEXT.H`
-* `C.RORI`
 
 For reference the B-extension is proposing the following 16-bit encodings.
-Personally I wouldn't allocate 16-bit encodings specifically to RV64, and even less so to RV128
+Personally I wouldn't allocate 16-bit encodings specifically to RV64, and even less so to RV128.
+`C.NOT` and `C.NEG` seem useful, and will be analysed. Currently there is no plan to benchmark RV128 code.
 
 [#b-extension 16-bit encodings]
 .b-extension proposed 16-bit encodings
@@ -110,6 +144,44 @@ Personally I wouldn't allocate 16-bit encodings specifically to RV64, and even l
 3+|  011       |0 2+|11     3+| rs1'/rd'  5+| 00000             2+| 00  | C.ZEXT.D (RV128)
 |=============================================================================================
 
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.NOT         | rd' = ~rs1'
+| C.NEG         | rd' = -rs1'
+|=======================================================================
+
+=== Zfinx
+
+If Zfinx allows floating point encodings to be reused then we can add these instructions
+
+[#Zfinx-extension 16-bit encodings]
+.Zfinx-extension proposed 16-bit encodings
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|D-extension load/stores
+3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.SB  (behind C.FSD)
+3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.LBU (behind C.FLD)
+3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.SH  (behind C.FSDSP)
+3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.LHU (behind C.FLDSP)
+17+|F-extension load/stores, not yet allocated
+3+|  111    11+|                                                2+| 00  | *reserved* (behind C.FSW)
+3+|  011    11+|                                                2+| 00  | *reserved* (behind C.FLW)
+3+|  111    11+|                                                2+| 10  | *reserved* (behind C.FSWSP)
+3+|  011    11+|                                                2+| 10  | *reserved* (behind C.FLWSP)
+|=============================================================================================
+
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.SB          | rd' = Memory[rs1'+zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
+| C.SH          | rd' = Memory[rs1'+zero_ext(uimm)][15:0] = rs2'[15:0]
+| C.LBU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][ 7:0])
+| C.LHU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][15:0])
+|=======================================================================
+
+
 ==== Assembly Examples
 
 [source,sourceCode,text]
@@ -119,13 +191,50 @@ zext.h a5;              # a5 = zero_ext(a5[15:0])
 sext.b a5;              # a5 = sign_ext(a5[7:0])
 sext.h a5;              # a5 = sign_ext(a5[15:0])
 
+lbu a5,20(sp)           # a5 = zero_ext(Memory(sp+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lhu a5,20(sp)           # a5 = zero_ext(Memory(sp+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sb  a5,20(sp)           # Memory(sp+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sh  a5,20(sp)           # Memory(sp+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+
 mul a5, a5, a6;         # a5 = a5 * a6, for 16-bit encoding rd==rs1 and all registers are x8-x15      
 
-orsll8 a5, a5, a6;      # a5 = a5 | (a6<< 8), for 16-bit encoding rd==rs1 and all registers are x8-x15      
-orsll16 a5, a5, a6;     # a5 = a5 | (a6<<16), for 16-bit encoding rd==rs1 and all registers are x8-x15      
-orsll24 a5, a5, a6;     # a5 = a5 | (a6<<24), for 16-bit encoding rd==rs1 and all registers are x8-x15      
+lw  a5, 16(pc);         # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encoding offset must be in range and rd=x8-x15
+jal ra, 16(pc);         # jump to Memory(pc_16), ra=PC+2, for 16-bit encoding offset must be in range, the link register must be ra
 
-rori a5, a5, 2;         # a5 = rotate_right(a5, 2), for 16-bit encoding rd==rs1, rd=x8-x15      
-xori a5, a5, 2;         # a5 = a5 ^ sign-ext(2),    for 16-bit encoding rd==rs1, rd=x8-x15, imm is in the range -4 to +3
+not a5                  # a5 = ~a5 bitwise inversion
+neg a5                  # a5 = -a5 two's complement inversion
 
-lw   a5, 16(pc);        # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encoding offset must be in range and rd=x8-x15
+lbu a5,20(a4)           # a5 = zero_ext(Memory(a4+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lhu a5,20(a4)           # a5 = zero_ext(Memory(a4+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sb  a5,20(a4)           # Memory(a4+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sh  a5,20(a4)           # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+
+----
+
+=== Benchmarking results on Huawei IoT code
+
+[width="100%",options=header]
+|=======================================================================================================
+| Instruction             | saving | status 
+| C.SB, C.LBU, C.SH, C.LHU| 3.68%  | implemented in HCC and measured
+| C.PUSH, C.POP, C.POPRET | 3.46%  | implemented in HCC and measured
+| C.ZEXT.B, C.ZEXT.H      | 0.34%  | implemented in HCC and measured
+| C.PUSHZERO              | 0.2%   | estimated - see email dated 2020/10/12 PUSHZERO
+| C.LBUSP, C.SBSP         | 0.25%  | estimated
+| C.LHUSP, C.SHSP         | 0.23%  | estimated
+| C.MUL                   | 0.03%  | estimated - could be useful for other workloads?
+| C.NOT                   | 0.02%  | estimated by finding "XORI -1" intheout- could be useful for other workloads?
+| C.SEXT.B, C.SEXT.H      | -      | no estimate
+| C.LWPC                  | -      | no estimate
+| C.LWPCJAL               | -      | no estimate
+| C.NEG                   | -      | no estimate
+| C.ZEXT.W, C.ZEXT.D      | -      | no estimate
+|=======================================================================================================
+
+
+=== Rejected instructions
+
+Jim Wilson pointed at that we should fix `-mno-strict-align` and mandate that cores which need `C.ORSLL[8|16|24]` support unaligned load/store, so that we don't need to assemble bytes into words
+
+`C.RORI` is only useful under limited circumstances
+
