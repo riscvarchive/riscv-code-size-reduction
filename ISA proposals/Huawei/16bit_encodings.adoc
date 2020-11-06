@@ -89,8 +89,8 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 | C.SEXT.B      | rd' = sign_ext(rs1'[ 7:0])
 | C.SEXT.H      | rd' = sign_ext(rs1'[15:0])
 | C.MUL         | rd' = rs1' * rs2'
-| C.LBUSP       | rd' = sign_ext(Memory[sp + zero_ext(uimm)][ 7:0])
-| C.LHUSP       | rd' = sign_ext(Memory[sp + zero_ext(uimm)][15:0])
+| C.LBUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][ 7:0])
+| C.LHUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][15:0])
 | C.SBSP        | Memory[sp + zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
 | C.SHSP        | Memory[sp + zero_ext(uimm)][15:0] = rs2'[15:0]
 | C.LWPCJAL     | ra=PC+2; jump_to(zero_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0]));
@@ -144,6 +144,8 @@ Personally I wouldn't allocate 16-bit encodings specifically to RV64, and even l
 3+|  011       |0 2+|11     3+| rs1'/rd'  5+| 00000             2+| 00  | C.ZEXT.D (RV128)
 |=============================================================================================
 
+[#b-extension-semantics]
+.semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
@@ -172,6 +174,8 @@ If Zfinx allows floating point encodings to be reused then we can add these inst
 3+|  011    11+|                                                2+| 10  | *reserved* (behind C.FLWSP)
 |=============================================================================================
 
+[#zfinx-semantics]
+.Zfinx encodings semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
@@ -186,33 +190,35 @@ If Zfinx allows floating point encodings to be reused then we can add these inst
 
 [source,sourceCode,text]
 ----
-zext.b a5;              # a5 = zero_ext(a5[7:0])
-zext.h a5;              # a5 = zero_ext(a5[15:0])
-sext.b a5;              # a5 = sign_ext(a5[7:0])
-sext.h a5;              # a5 = sign_ext(a5[15:0])
+zext.b a5;      # a5 = zero_ext(a5[7:0])
+zext.h a5;      # a5 = zero_ext(a5[15:0])
+sext.b a5;      # a5 = sign_ext(a5[7:0])
+sext.h a5;      # a5 = sign_ext(a5[15:0])
 
-lbu a5,20(sp)           # a5 = zero_ext(Memory(sp+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-lhu a5,20(sp)           # a5 = zero_ext(Memory(sp+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sb  a5,20(sp)           # Memory(sp+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sh  a5,20(sp)           # Memory(sp+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lbu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lhu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sb  a5,20(sp)   # Memory(sp+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
 
-mul a5, a5, a6;         # a5 = a5 * a6, for 16-bit encoding rd==rs1 and all registers are x8-x15      
+mul a5, a5, a6; # a5 = a5 * a6, for 16-bit encoding rd==rs1 and all registers are x8-x15      
 
-lw  a5, 16(pc);         # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encoding offset must be in range and rd=x8-x15
-jal ra, 16(pc);         # jump to Memory(pc_16), ra=PC+2, for 16-bit encoding offset must be in range, the link register must be ra
+lw  a5, 16(pc); # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encoding offset must be in range and rd=x8-x15
+jal ra, 16(pc); # jump to Memory(pc_16), ra=PC+2, for 16-bit encoding offset must be in range, the link register must be ra
 
-not a5                  # a5 = ~a5 bitwise inversion
-neg a5                  # a5 = -a5 two's complement inversion
+not a5          # a5 = ~a5 bitwise inversion
+neg a5          # a5 = -a5 two's complement inversion
 
-lbu a5,20(a4)           # a5 = zero_ext(Memory(a4+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-lhu a5,20(a4)           # a5 = zero_ext(Memory(a4+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sb  a5,20(a4)           # Memory(a4+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sh  a5,20(a4)           # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
 
 ----
 
 == Benchmarking results on Huawei IoT code
 
+[#analysis_results]
+.Analysis results
 [width="100%",options=header]
 |=======================================================================================================
 | Instruction             | saving | status 
