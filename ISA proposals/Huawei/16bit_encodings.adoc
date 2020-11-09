@@ -89,7 +89,7 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 | C.ZEXT.H      | rd' = zero_ext(rs1'[15:0])
 | C.SEXT.B      | rd' = sign_ext(rs1'[ 7:0])
 | C.SEXT.H      | rd' = sign_ext(rs1'[15:0])
-| C.LSBNOT      | rd' = {rs1'[XLEN-1:1], !rs1'[0]}
+| C.LSBNOT      | rd' = rs1' XOR 1
 | C.MUL         | rd' = rs1' * rs2'
 | C.LBUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][ 7:0])
 | C.LHUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][15:0])
