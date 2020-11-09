@@ -232,7 +232,7 @@ sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immedi
 | C.LHUSP, C.SHSP         | 0.23%  | estimated
 | C.MUL                   | 0.03%  | estimated - could be useful for other workloads?
 | C.LSBNOT                | 0.02%  | estimated by finding "XORI 1" in the dump file - could be useful for other workloads?
-| C.NOT                   | 0.02%  | no estimate
+| C.NOT                   | -      | no estimate
 | C.SEXT.B, C.SEXT.H      | -      | no estimate
 | C.LWPC                  | -      | no estimate
 | C.LWPCJAL               | -      | no estimate
