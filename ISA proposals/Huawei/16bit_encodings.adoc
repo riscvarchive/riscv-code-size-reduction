@@ -39,12 +39,13 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|Single source/dest with room for 4 more encodings
+17+|Single source/dest with room for 3 more encodings
 3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 0  | 0  3+| 000     2+| 00  | C.ZEXT.B
 3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 0  | 1  3+| 001     2+| 00  | C.ZEXT.H
 3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 1  | 0  3+| 010     2+| 00  | C.SEXT.B
 3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 1  | 1  3+| 011     2+| 00  | C.SEXT.H
-3+|  100       | 1  | 0  | 0 3+|          | 1  | 1    | 1 2+|   2+| 00  | *reserved*
+3+|  100       | 1  | 0  | 0 3+| rs1'/rd' | 1  | 1  3+| 100     2+| 00  | C.LSBNOT
+3+|  100       | 1  | 0  | 0 3+|          | 1  | 1  3+| >=101   2+| 00  | *reserved*
 3+|  100       | 1  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| rs2'    2+| 00  | C.MUL
 3+|  100       | 1  | 0  | 1 3+|        2+| not 00  3+|         2+| 00  | *reserved*
 |=============================================================================================
@@ -88,6 +89,7 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 | C.ZEXT.H      | rd' = zero_ext(rs1'[15:0])
 | C.SEXT.B      | rd' = sign_ext(rs1'[ 7:0])
 | C.SEXT.H      | rd' = sign_ext(rs1'[15:0])
+| C.LSBNOT      | rd' = {rs1'[XLEN-1:1], !rs1'[0]}
 | C.MUL         | rd' = rs1' * rs2'
 | C.LBUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][ 7:0])
 | C.LHUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][15:0])
@@ -229,7 +231,8 @@ sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immedi
 | C.LBUSP, C.SBSP         | 0.25%  | estimated
 | C.LHUSP, C.SHSP         | 0.23%  | estimated
 | C.MUL                   | 0.03%  | estimated - could be useful for other workloads?
-| C.NOT                   | 0.02%  | estimated by finding "XORI -1" in the dump file - could be useful for other workloads?
+| C.LSBNOT                | 0.02%  | estimated by finding "XORI 1" in the dump file - could be useful for other workloads?
+| C.NOT                   | 0.02%  | no estimate
 | C.SEXT.B, C.SEXT.H      | -      | no estimate
 | C.LWPC                  | -      | no estimate
 | C.LWPCJAL               | -      | no estimate
