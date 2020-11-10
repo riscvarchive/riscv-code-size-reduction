@@ -55,7 +55,7 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|source/dest with one other source operand
+17+|source/dest with one other source operand, stack pointer relative
 3+|  100       | 0  | 0  |uimm[3] 3+|     rd' 3+|uimm[2:0]    2+|00 2+|00 | C.LBUSP
 3+|  100       | 0  | 0  |uimm[3] 3+|     rd' 3+|uimm[2:1，4] 2+|01 2+|00 | C.LHUSP
 3+|  100       | 0  | 0  |uimm[3] 3+|    rs2' 3+|uimm[2:0]    2+|10 2+|00 | C.SBSP
@@ -168,9 +168,9 @@ If Zfinx allows floating point encodings to be reused then we can add these inst
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 17+|D-extension load/stores
 3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.SB  (behind C.FSD)
-3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.LBU (behind C.FLD)
-3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.SH  (behind C.FSDSP)
-3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.LHU (behind C.FLDSP)
+3+|  001     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 00  | C.LBU (behind C.FLD)
+3+|  101     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 10  | C.SH  (behind C.FSDSP)
+3+|  001     3+|uimm[0,4:3] 3+| rs1'      2+| uimm[2:1] 3+|rs2' 2+| 10  | C.LHU (behind C.FLDSP)
 17+|F-extension load/stores, not yet allocated
 3+|  111    11+|                                                2+| 00  | *reserved* (behind C.FSW)
 3+|  011    11+|                                                2+| 00  | *reserved* (behind C.FLW)
