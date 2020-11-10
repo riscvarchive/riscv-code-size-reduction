@@ -12,6 +12,12 @@ Version 0.1
 
 This document describes 16-bit instructions proposed to help reduce code-size.
 
+== Issues
+
+. rename C.LWPCJAL to C.PCRELCALL or C.CALL? Or something similar
+. Need to resolve whether to have C.LWPC or L.LI / C.LWPCJAL or L.JAL
+. Maybe add table index instruction - table index offset into a jump table specified by a CSR similar to MTVEC
+
 == Rational
 
 16-bit instructions are highly valuable for code-size reduction
