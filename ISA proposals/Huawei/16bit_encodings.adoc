@@ -122,6 +122,8 @@ A 32-bit version exists of `C.LWPC` is needed. The idea of `C.LWPC` is to load c
 `C.LWPCJAL` was suggested by Guo Ren from Alibaba - it's similar to LOADPC on ARM - PC relative load and then `JAL ra` to the loaded value. It may take any load related exception (PMP fault, page fault etc.) although
 alignment faults are not possible as the result of `pc_offset()` is always word aligned. Note that this is very similar to the proposed 48-bit encoding for `L.JAL`, which encodes the destination PC within the instruction, which has simpler semantics.
 
+Both `C.LWPC` and `C.LWPCJAL` require the instruction memory to have PMP read permission as well as execute permission, which allows searching for ROP gadgets. Therefore I think we should implement the 48-bit encodings instead (`L.LI` and `L.JAL`) for better security, less chance of cache fragmentation (loading instruction memory into the D-cache) and saving 16-bit encoding space.
+
 == B-extension
 
 Note that the B-extension is required for 32-bit versions of the following instructions:
