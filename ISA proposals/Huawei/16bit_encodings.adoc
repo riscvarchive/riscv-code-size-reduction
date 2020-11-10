@@ -95,8 +95,8 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 | C.LHUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][15:0])
 | C.SBSP        | Memory[sp + zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
 | C.SHSP        | Memory[sp + zero_ext(uimm)][15:0] = rs2'[15:0]
-| C.LWPCJAL     | ra=PC+2; jump_to(zero_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0]));
-| C.LWPC        | rd' = zero_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0])
+| C.LWPCJAL     | ra=PC+2; jump_to(sign_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0]));
+| C.LWPC        | rd' = sign_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0])
 |=======================================================================
 
 The `pc_offset` function is defined to always allow a word offset to be encoded without encoding bit 1
@@ -117,12 +117,12 @@ int pc_offset(int PC,  int uimm){
 ----
 
 
-A 32-bit version exists of `C.LWPC` is needed. The idea of `C.LWPC` is to load constant values from the end of the current function, which is why the immediate is unsigned. This may cause cache fragmentation (I-side code loaded into D-cache) so we may decide not to allow this type of instruction.
+The idea of `C.LWPC` is to load constant values from the end of the current function, which is why the immediate is unsigned. 
 
 `C.LWPCJAL` was suggested by Guo Ren from Alibaba - it's similar to LOADPC on ARM - PC relative load and then `JAL ra` to the loaded value. It may take any load related exception (PMP fault, page fault etc.) although
-alignment faults are not possible as the result of `pc_offset()` is always word aligned. Note that this is very similar to the proposed 48-bit encoding for `L.JAL`, which encodes the destination PC within the instruction, which has simpler semantics.
+alignment faults are not possible as the result of `pc_offset()` is always word aligned. 
 
-Both `C.LWPC` and `C.LWPCJAL` require the instruction memory to have PMP read permission as well as execute permission, which allows searching for ROP gadgets. Therefore I think we should implement the 48-bit encodings instead (`L.LI` and `L.JAL`) for better security, less chance of cache fragmentation (loading instruction memory into the D-cache) and saving 16-bit encoding space.
+_Both `C.LWPC` and `C.LWPCJAL` require the instruction memory to have PMP read permission as well as execute permission, which allows searching for ROP gadgets. Therefore I think we should implement the 48-bit encodings instead (`L.LI` and `L.JAL`) for better security, less chance of cache fragmentation (loading instruction memory into the D-cache) and saving 16-bit encoding space._
 
 == B-extension
 
