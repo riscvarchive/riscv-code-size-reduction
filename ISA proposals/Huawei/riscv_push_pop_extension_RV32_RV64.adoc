@@ -149,9 +149,9 @@ The behaviour of each value of `rcount` and `spimm` is shown in
 |6     |ra, s0-s8               |16(3+x)   |N/A       |16(5+x)   |N/A       2+|*reserved*        | 2        | N/A      | 1   2+|*reserved*    
 |7     |ra, s0-s11              |16(4+x)   |N/A       |16(7+x)   |N/A       2+|*reserved*        | 3        | N/A      | 0   2+|*reserved*    
 13+| `rcount` 8-10 are EABI only. Mnemonics are `C.PUSH.E/C.POP.E/C.POPRET.E`
-|8     |ra, s0-s2               |8(2+x)    |N/A       |16(2+x)   |N/A        2+|*reserved*       | N/A      | 0        | N/A 2+| 0
-|9     |ra, s0-s3               |8(3+x)    |N/A       |16(3+x)   |N/A        2+|*reserved*       | N/A      | 1        | N/A 2+| 1
-|10    |ra, s0-s4               |8(3+x)    |N/A       |16(4+x)   |N/A        2+|*reserved*       | N/A      | 0        | N/A 2+| 0
+|8     |ra, s0-s2               |N/A       |8(2+x)    |N/A       |16(2+x)     |8(2+x) |16(2+x)   | 0        | N/A      | 0   2+| 0
+|9     |ra, s0-s3               |N/A       |8(3+x)    |N/A       |16(3+x)     |8(3+x) |16(3+x)   | 1        | N/A      | 1   2+| 1
+|10    |ra, s0-s4               |N/A       |8(3+x)    |N/A       |16(4+x)     |8(3+x) |16(4+x)   | 0        | N/A      | 0   2+| 0
 |11-15 12+|*reserved*
 |===================================================================================================================================
 
