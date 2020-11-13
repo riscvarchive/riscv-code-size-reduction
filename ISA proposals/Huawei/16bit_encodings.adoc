@@ -14,7 +14,7 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 
 == Issues for v1.0
 
-. currently none
+. there are probably too many instructions listed, so we need to reduce the list
 
 == Issues for v2.0
 
@@ -27,7 +27,7 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 . v1.0 to be ratified in 2021
 . v2.0 to be ratified later
 
-The most useful instructions will be ratified in v1.0, whilst also limited the complexity to adding multi-step instructions.
+The most useful instructions will be ratified in v1.0, whilst also limiting the complexity to adding multi-step instructions.
 
 == Opcode Assignment
 
@@ -95,7 +95,7 @@ Discussion should be mainly focussed on the proposals for v1.0
 |=============================================================================================
 
 [#b-extension 16-bit encodings]
-.b-extension proposed 16-bit encodings
+.B-extension proposed 16-bit encodings
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
