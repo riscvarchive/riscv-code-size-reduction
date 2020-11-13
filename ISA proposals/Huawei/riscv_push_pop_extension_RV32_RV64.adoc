@@ -317,7 +317,7 @@ Take an exception if:
 
 ==== Illegal instructions
 
-RV32E and RV64E take an illegal instruction exception if `rcount > 1 && rcount < 8`.
+RV32E and RV64E take an illegal instruction exception if `rcount > 2 && rcount < 8`.
 All architectures take an illegal instruction exception if `rcount > 10`.
 
 ==== Load/store exceptions
