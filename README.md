@@ -15,10 +15,9 @@ ISA extension proposals
 - PC relative loads, allowing local constant pools shared by different functions
 - Anders: Load/stores with scaled offsets
 - GP relative load/stores with a bigger offset - don't overlap with existing - so the immediate extends further
-- [16-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc), currently excluding LBU/LHU/SB/SH as it's not clear if we can encode them
+- [16-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc)
 - [32-bit encodings](https://github.com/riscv/riscv-code-size-reduction/tree/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
 - [48-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/48bit_encodings.adoc) which have longer immediates than 32-bit encodings
-- JAL with a bigger range
 
 Toolchain optimisation suggestions
 - Anders: Second GP (thread pointer - requires ABI change) to allow more data to be in easy reach without building long addresses
