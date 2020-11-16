@@ -184,7 +184,7 @@ Note that the B-extension is required for 32-bit versions of the following instr
 * `C.SEXT.B`
 * `C.SEXT.H`
 
-== v1.0 Benchmarking results on the Huawei IoT code
+=== v1.0 Benchmarking results on the Huawei IoT code
 
 [#analysis_results]
 .Analysis results
