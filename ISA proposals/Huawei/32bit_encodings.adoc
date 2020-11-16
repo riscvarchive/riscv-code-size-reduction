@@ -28,7 +28,11 @@ All instructions in _italics_ are for v2.0
 Some 32-bit encodings (e.g. `PUSH/POP/POPRET`) are 32-bit versions of 16-bit encodings. Some add new functionality.
 
 == v1.0 proposal
-=== Opcode Assignment and semantics
+
+The v1.0 proposed instructions will tentatively be included in the first version of the code-size reduction extension.
+This should not be taken as a final set at this stage. Any instruction may be rejected or postponed to v2.0.
+
+=== v1.0 Opcode Assignment and semantics
 
 [#v1.0 proposed-32bit-encodings]
 .proposed 32-bit encodings for v1.0
@@ -104,9 +108,13 @@ lw  a1,0xfffff(gp)      # will use LWGP  if immediate is out of range for LW
 sb  a1,0xfffff(gp)      # will use SBGP if immediate is out of range for SB
 sh  a1,0xfffff(gp)      # will use SHGP if immediate is out of range for SH
 sw  a1,0xfffff(gp)      # will use SWGP if immediate is out of range for SW
+----
 
 == v2.0 proposal
-=== Opcode Assignment and semantics
+
+These instructions may be included in a later revision of the code-size reduction ISA extension.
+
+=== v2.0 Opcode Assignment and semantics
 
 [#v2.0 proposed-32bit-encodings]
 .proposed 32-bit encodings for v2.0
@@ -185,6 +193,7 @@ sw  a1, 4(t0)!          # store word to t0+4, t0=t0+4
 sb  a1, (t0)4!          # store byte to t0, t0=t0+1
 sh  a1, (t0)4!          # store half to t0, t0=t0+2
 sw  a1, (t0)4!          # store word to t0, t0=t0+4
+----
 
 
 == Rejected instructions
