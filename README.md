@@ -5,19 +5,17 @@ _If you can't measure it you can't improve it_
 
 This will be the home for the all of the code size reduction proposals, analysis, results etc.
 
+The code-size reduction will analyse the benefit of instrucitons from v1.0 of the following ISA extension proposal documents (still very tentative at this stage)
+- [v1.0 16-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc)
+- [v1.0 32-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
+
+In the future we may extend the ISA extension to include instructions from v2.0 of the ISA extension proposal
+- [v2.0 16-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc)
+- [v2.0 32-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
+- [48-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/48bit_encodings.adoc) which have longer immediates than 32-bit encodings
+
 Documentation of existing ISA extensions
 - [Existing ISA extensions to reduce code size](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/README.md)
-
-ISA extension proposals
-- [Push/Pop](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc)
-- [Preshifted arithmetic](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/preshifted_arithmetic.adoc)
-- Andy Glew: MEMZERO/MEMCOPY or maybe PUSHZERO - auto-zero the allocated stack frame, or 16-bit store zero with any address reg (not just SP)
-- PC relative loads, allowing local constant pools shared by different functions
-- Anders: Load/stores with scaled offsets
-- GP relative load/stores with a bigger offset - don't overlap with existing - so the immediate extends further
-- [16-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc)
-- [32-bit encodings](https://github.com/riscv/riscv-code-size-reduction/tree/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
-- [48-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/48bit_encodings.adoc) which have longer immediates than 32-bit encodings
 
 Toolchain optimisation suggestions
 - Anders: Second GP (thread pointer - requires ABI change) to allow more data to be in easy reach without building long addresses
@@ -55,16 +53,6 @@ Proprietary benchmarks
 
 Useful papers
 - [Peijie Li's Berkeley paper](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2019/EECS-2019-107.pdf)
-
-Current open issues to discuss in meetings
-------------------------------------------
-
-- How to report code size, Ofer suggests total size of all read-only sections in the elf file
-- Whether synopsys would be interested in letting us compare against Metaware for ARC v2, or if we should just keep it to open source (ARC v1). In general comparisons should be against open source compilers except where we have specific support, i.e. IAR
-- Review of push/pop proposal and how to handle the EABI cases
-  - different meaning of register lists (different X registers from s2 onwards), and how to specify them in the assembler syntax
-  - different stack alignment 8 / 16-bytes
-  - selecting either ABI in software for I (32-reg) architectures
 
 Reference Architectures
 -----------------------
@@ -167,18 +155,6 @@ From Anders Lindgren:
 
   - In C, when doing address calculations, the index value is scaled with the object size to produce the end address. Today, this is done using an explicit shift (when the size of the object is a power of two) or a multiplication. We should look into loads, stores, and load-effective-address with this scaling builtin. Since most arrays use elements of size 2, 4, and 8 we could restrict ourselves to this.
 
-48-bit encodings
-----------------
-
-The Huawei custom extension includes one 48-bit encoding to load a 32-bit constant, the proposal is [here](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_LLI_extension.rst)
-
-nanoMIPs includes 48-bit encodings for
-- load immediate from 32-bit constant `LI48`
-- add 32-bit constant to register `ADDIU48, ADDIUGP48`
-- add 32-bit constant to the PC `ADDIUPC48`
-- load/store word PC relative with 32-bit offset `LWPC48, SWPC48`
-
-
 Experiments
 -----------
 
@@ -190,12 +166,7 @@ Outputs from the group
 - Improved open source compiler technology (GCC and LLVM)
   - code size optimised compilers with and without `Zce` (see below)
   - for example function prologue/epilogue should be smaller than _-msave-restore_ is now in GCC.
-- One code size reduction extension, maybe called `Zce` which is likely to be broken into sections
-  - Zce_base - all 32-bit, non-multiple step code size reduction instructions possibly including some of the B-extension
-  - Zce_48 - 48-bit encodings - we shouldn't force people to implement these (and still need to justify them)
-  - Zce_16 - 16-bit encodings - because if you don't specify C these must be excluded
-    - maybe this is not neccessary as (e.g.) the F extension includes 16-bit encodings which are only available if C is enabled, and Zce will follow suit
-  - Zce_multistep - encodings which require multiple steps (UOPs) e.g. push/pop, not everyone will want to implement these
+- Code size reduction ISA extensions
 
 
 
