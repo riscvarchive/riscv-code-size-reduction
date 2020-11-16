@@ -166,9 +166,6 @@ sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0],     for 16-bit encoding immedi
 
 mul a5, a5, a6; # a5 = a5 * a6, for 16-bit encoding rd==rs1 and all registers are x8-x15      
 
-lw  a5, 16(pc); # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encoding offset must be in range and rd=x8-x15
-jal ra, 16(pc); # jump to Memory(pc_16), ra=PC+2, for 16-bit encoding offset must be in range, the link register must be ra
-
 not a5          # a5 = ~a5 bitwise inversion
 neg a5          # a5 = -a5 two's complement inversion
 
@@ -176,6 +173,7 @@ lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0]), for 16-bit encoding immedi
 lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
 sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
 sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+----
 
 === 32-bit encodings for v1.0
 
