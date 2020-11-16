@@ -11,26 +11,22 @@ Version 0.1
 :rarr: &#8658;
 
 This document describes 32-bit instructions proposed to help reduce code-size.
-They are split into v1.0 and v2.0 instructions. for the time being we will only analyse v1.0 instructions and push to ratify a subset of those in 2021. 
-v2.0 instructions will be considered in the future.
+They are split into v1.0 and `future` instructions. For the time being we will only analyse v1.0 instructions and push to ratify a subset of those in 2021. 
+New proposals will be added into the `future` instructions category.
 
 Currently all are encoded in the CUSTOM encodings, after a set of instructions is chosen for v1.0, encodings will be allocated. 
 Some of the encodings are 32-bit versions of proposed 16-bit encodings, and others are new.
 
-All instructions in _italics_ are for v2.0
+All instructions in _italics_ are for the `future`
 
 == Issues
 
-1. Anders requested load/stores with scaled offsets, whcih have not yet been considered
-
-== Rational
-
-Some 32-bit encodings (e.g. `PUSH/POP/POPRET`) are 32-bit versions of 16-bit encodings. Some add new functionality.
+1. Anders requested load/stores with scaled offsets, which have not yet been considered
 
 == v1.0 proposal
 
 The v1.0 proposed instructions will tentatively be included in the first version of the code-size reduction extension.
-This should not be taken as a final set at this stage. Any instruction may be rejected or postponed to v2.0.
+This should not be taken as a final set at this stage. Any instruction may be rejected or postponed to `future`.
 
 === v1.0 Opcode Assignment and semantics
 
@@ -102,14 +98,14 @@ sh  a1,0xfffff(gp)      # will use SHGP if immediate is out of range for SH
 sw  a1,0xfffff(gp)      # will use SWGP if immediate is out of range for SW
 ----
 
-== v2.0 proposal
+== `Future` Proposals
 
 These instructions may be included in a later revision of the code-size reduction ISA extension.
 
-=== v2.0 Opcode Assignment and semantics
+=== `Future` Opcode Assignment and semantics
 
-[#v2.0 proposed-32bit-encodings]
-.proposed 32-bit encodings for v2.0
+[#`Future` proposed-32bit-encodings]
+.proposed 32-bit encodings for the `future`
 [width="100%",options=header]
 
 |=========================================================================================================================
@@ -144,8 +140,8 @@ These instructions may be included in a later revision of the code-size reductio
 2+|111       3+| imm[8:5]    2+| rs2                2+| rs1      | 000        3+| imm[4:0]            |1011011| _SW.PU_
 |=========================================================================================================================
 
-[#v2.0semantics]
-.v2.0 semantics
+[#futuresemantics]
+.`Future` semantics
 [width="100%",options=header]
 |=====================================================================================================================================================================================================
 |instruction           | definition
@@ -171,7 +167,7 @@ These instructions may be included in a later revision of the code-size reductio
 | _SW.PU_              | Memory[rs1][31:0]=rs2[31:0]; rs1=rs1+4;
 |=====================================================================================================================================================================================================
 
-=== v2.0 Assembly Examples
+=== `Future` Assembly Examples
 
 [source,sourceCode,text]
 ----
