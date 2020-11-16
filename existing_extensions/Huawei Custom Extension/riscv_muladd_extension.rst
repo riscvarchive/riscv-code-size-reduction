@@ -54,58 +54,24 @@ Therefore we can save 6 bytes on this sequence using the proposed custom instruc
   lw        a0,12(a0)           #lw unchanged           (16-bit encoding)
   ret                           #ret unchanged          (16-bit encoding)
 
-The range of the immediate supported by the ``muliadd`` instruction is important and has a significant impact upon its usefulness. Processing the assembly 
-output from all of the Huawei IoT code and looking for sequences of multiply by constant, we get these results of how many immediate values can be encoded 
-for different ranges of values:
+The range of the immediate supported by the ``muliadd`` instruction is important and has a significant impact upon its usefulness. 
+The 32-bit encoding has an *unsigned* 7-bit immediate representing bits [7:1].
+The value of different lengths of the immediate are shown in the table:
 
-=============== ============
-Immediate range	Success rate
-=============== ============
-0 to 31	        0%
-0 to 63	        34%
-0 to 127	      52%
-0 to 255	      83%
-0 to 511	      87%
-0 to 1023    	  93%
-0 to 2047	      99.7%
-=============== ============
-
-*Note that the remaining 0.3% of offsets are negative.*
-
-The 32-bit encoding has an *unsigned* 7-bit immediate.
+================ =================
+immediate range  code-size saving
+================ =================
+uimm[7:1]        0.32%
+uimm[6:1]        0.29%
+uimm[5:1]        0.23%
+uimm[4:1]        0.18%
+uimm[3:1]        0.10%
+uimm[2:1]        0.02%
+uimm[1]          0.01%
+================ =================
 
 The primary justification for ``muliadd`` is to efficiently encode the structure references above, however this instruction may 
 also be useful in other areas. 
-
-These are the most common values for the immediate values inferred in the Huawei IoT code compiled with HCC, down to 1% of the total. Note that none of the values are power-of-2 as HCC will have inferred other code sequences for those cases.
-
-=============== =============== ================
-Immediate value Total count     %age of muliadds
-=============== =============== ================
-20	            183	            17.4%
-12	            166	            15.8%
-10              75              7.1%
-36              72              6.9%
-192             58              5.5%
-52              51              4.9%
-112             46              4.4%
-6               41              3.9%
-90              39              3.7%
-100             39              3.7%
-24              35              3.3%
-104             30              2.9%
-28              28              2.7%
-34              21              2.0%
-44              20              1.9%
-40              19              1.8%
-3               17              1.6%
-152             15              1.4%
-120             14              1.3%
-22              13              1.2%
-228             12              1.1%
-208             12              1.1%
-5               11              1.0%
-=============== =============== ================
 
 Opcode Assignment
 -----------------
