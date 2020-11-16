@@ -17,7 +17,7 @@ For efficient indexing into array structures in C-code, such as this example fro
 ``muliadd`` is implemented in the RISC-V HCC toolchain, this is the internal Huawei branch of GCC including the Huawei custom instructions
 
 - enabled with *–femit-muliadd*
-- saves 0.32% of Huawei IoT code size
+- saves 0.32% of Huawei IoT code size (the code-size saving does no depend on the `l.li` instruction which is measured separately)
 
 To compiler the ``get_element`` function the compiler needs to:
 
@@ -45,7 +45,9 @@ The function uses 20 bytes of code:
 1.	``lui/addi`` can be combined into ``l.li`` saving 2 bytes: see the `load long immediate proposal <https://github.com/riscv/riscv-code-size-reduction/blob/master/proposals/Huawei%20Custom%20Extension/riscv_LLI_extension.rst>`_
 2.	``l.li, mul, add`` can be converted to ``muliadd`` saving 4 bytes.	``muliadd`` multiplies a register value by a constant, and then adds a register value
 
-Therefore we can save 6 bytes on this sequence using the proposed custom instructions ``muliadd`` and ``l.li``. The optimised code sequence is:
+Therefore we can save 6 bytes on this sequence using the proposed custom instructions ``muliadd`` and ``l.li``. ``muliadd`` is still useful without ``l.li`` but in this example the symbol is loaded using ``l.li`` . This does not affect the ``muliadd`` generation
+
+The optimised code sequence is:
 
 .. code-block:: text
 
