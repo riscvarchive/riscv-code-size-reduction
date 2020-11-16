@@ -92,37 +92,3 @@ Assembler Syntax
 .. code-block:: text
 
   muliadd   x4, x1, x2, #<imm>	// x4 = x1 + (x2 * zero_ext(imm))
-
-48-bit encoding proposal
-------------------------
-
-It's possible that a version of ``muliadd`` with a longer immediate would be useful, although it's not beneficial for the IoT code.
-Here is a proposal encoding, and the immediate is now signed to allow negative offsets. This instruction has *not* been implemented in the Huawei custom extension.
-
-  +-----+-----+-----+-------+-----+-----+--+--+-------+----+----+---+---+------------------------+
-  |47:32            | 31:25 |24:20|19:17|16|15| 14:12 | 11 :7   | 6 : 0 | instruction            |
-  +-----+-----+-----+-------+-----+-----+--+--+-------+----+----+---+---+------------------------+
-  |imm[15:0]        |00...00|rs2  | rs1       | 001   | rd      |0011111| L.MULIADD              |
-  +-----+-----+-----+-------+-----+-----+--+--+-------+----+----+---+---+------------------------+
-
-The immediate value is signed for ``l.muliadd`` and unsigned for ``muladd``. In the NB-IoT code it is rare to need a negative immediate so 
-``muliadd`` covers the common cases due to the restricted number of immediate bits available.
-
-Note that some RISCV instructions also have unsigned immediate in a smaller encoding and signed immediates in a larger encoding, for example ``C.FSD`` and ``FSD``
-
-.. code-block:: text
-
-  l.muliadd rd = rs1 + rs2 * sign_ext(imm)
-
-Assembler Syntax
-----------------
-
-.. code-block:: text
-
-  //the assembler will choose the 32-bit or 48-bit encoding depending on the immediate value only
-  muliadd   x4, x1, x2, #<imm>	// x4 = x1 + (x2 * imm)
-
-
-
-
-
