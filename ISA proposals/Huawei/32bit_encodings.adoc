@@ -50,9 +50,6 @@ This should not be taken as a final set at this stage. Any instruction may be re
 6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 011        3+| offset[5:1]         |0001011| BGEI
 6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 100        3+| offset[5:1]         |0001011| BLTUI
 6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 101        3+| offset[5:1]         |0001011| BGEUI
-15+| *custom-0 encoding group (all architectures), load/store arbitrary pair of registers*
-2+|000       3+| imm[5:2]    2+|   rd2              2+| rs1      | 111        3+|  rd                 |0001011| LWP
-2+|001       3+| imm[5:2]    2+|   rs2              2+| rs1      | 111        3+|  rs3                |0001011| SWP
 15+| *custom-0 encoding group (all architectures), GP relative load/store, allowing X3 (tp=0) and X4 (tp=1) as GPs*
  7+|imm[11:0]                                       2+| rs1      | 001        2+| imm[15:12]     | tp |1011011| LBUGP
  7+|imm[11:0]                                       2+| rs1      | 010        2+| imm[15:12]     | tp |1011011| LHUGP
@@ -77,8 +74,6 @@ This should not be taken as a final set at this stage. Any instruction may be re
 | BGEI                 | if (rs1>=sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 | BLTUI                | if (rs1< zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 | BGEUI                | if (rs1>=zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
-| LWP                  | rd=sign_ext(Memory[rs1+sign_ext(imm)][31:0]); rd2=sign_ext(Memory[rs1+sign_ext(imm)+4][31:0]);
-| SWP                  | Memory[rs1+sign_ext(imm)][31:0]=rs2; Memory[rs1+sign_ext(imm)+4][31:0]=rs3;
 | LBUGP                | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][ 7:0]);
 | LHUGP                | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][15:0]);
 | LWGP                 | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][31:0]);
@@ -97,9 +92,6 @@ blti	a5,4,e06222     # if (a5<  4) branch_target=0xe06222; else branch_target=PC
 bgei	a2,3,e088f6     # if (a2>= 3) branch_target=0xe088f6; else branch_target=PC+4; //signed comparison
 bltui	a4,13,e08878    # if (a4< 13) branch_target=0xe08878; else branch_target=PC+4; //unsigned comparison
 bgeui	a3,32,e095cc    # if (a3>=32) branch_target=0xe095cc; else branch_target=PC+4; //unsigned comparison
-
-lwp a5, s0, 32(t0)      # load  a5 from t0+32, s0 from t0+36
-swp a5, s0, 32(t0)      # store a5 to   t0+32, s0 to   t0+36
 
 lbu a1,0xfffff(gp)      # will use LBUGP if immediate is out of range for LBU
 lhu a1,0xfffff(gp)      # will use LHUGP if immediate is out of range for LHU
@@ -131,6 +123,9 @@ These instructions may be included in a later revision of the code-size reductio
 |set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 0 | 1 |0001011| _LWM.U_
 |set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 1 | 0 |0001011| _SWM_
 |set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 1 | 1 |0001011| _SW.MU_
+15+| *custom-0 encoding group (all architectures), load/store arbitrary pair of registers*
+2+|000       3+| imm[5:2]    2+|   rd2              2+| rs1      | 111        3+|  rd                 |0001011| _LWP_
+2+|001       3+| imm[5:2]    2+|   rs2              2+| rs1      | 111        3+|  rs3                |0001011| _SWP_
 15+| *custom-0 encoding group (all architectures), pre-index loads with address writeback*
 2+|010       5+| imm[8:0]                           2+| rs1      | 111        3+|  rd                 |0001011| _LBU.U_
 2+|011       5+| imm[8:0]                           2+| rs1      | 111        3+|  rd                 |0001011| _LHU.U_
@@ -166,6 +161,8 @@ These instructions may be included in a later revision of the code-size reductio
 | _SH.U_               | Memory[rs1+sign_ext(imm)][15:0]=rs2[15:0]; rs1=rs1+2;
 | _SW.U_               | Memory[rs1+sign_ext(imm)][31:0]=rs2[31:0]; rs1=rs1+4;
 | _LWPC_               | rd=Memory[PC+sign_ext(imm)]
+| _LWP_                | rd=sign_ext(Memory[rs1+sign_ext(imm)][31:0]); rd2=sign_ext(Memory[rs1+sign_ext(imm)+4][31:0]);
+| _SWP_                | Memory[rs1+sign_ext(imm)][31:0]=rs2; Memory[rs1+sign_ext(imm)+4][31:0]=rs3;
 | _LBU.PU_             | rd=zero_ext(Memory[rs1][ 7:0]); rs1=rs1+1;
 | _LHU.PU_             | rd=zero_ext(Memory[rs1][15:0]); rs1=rs1+2;
 | _LW.PU_              | rd=zero_ext(Memory[rs1][31:0]); rs1=rs1+4;
@@ -185,6 +182,9 @@ lw  a1, 4(t0)!          # load word          from t0+4 into a1, t0=t0+4
 lbu a1, (t0)4!          # load unsigned byte from t0 into a1, t0=t0+1
 lhu a1, (t0)4!          # load unsigned half from t0 into a1, t0=t0+2
 lw  a1, (t0)4!          # load word          from t0 into a1, t0=t0+4
+
+lwp a5, s0, 32(t0)      # load  a5 from t0+32, s0 from t0+36
+swp a5, s0, 32(t0)      # store a5 to   t0+32, s0 to   t0+36
 
 sb  a1, 4(t0)!          # store byte to t0+4, t0=t0+1
 sh  a1, 4(t0)!          # store half to t0+4, t0=t0+2
