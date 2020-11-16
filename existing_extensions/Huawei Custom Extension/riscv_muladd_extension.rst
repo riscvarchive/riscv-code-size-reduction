@@ -91,4 +91,4 @@ Assembler Syntax
 
 .. code-block:: text
 
-  muliadd   x4, x1, x2, #<imm>	// x4 = x1 + (x2 * zero_ext(imm))
+  muliadd   x4, x1, x2, #<uimm>	// x4 = x1 + (x2 * zero_ext(uimm))
