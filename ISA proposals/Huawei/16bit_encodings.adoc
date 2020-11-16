@@ -194,7 +194,6 @@ Note that the B-extension is required for 32-bit versions of the following instr
 | C.SB, C.LBU, C.SH, C.LHU| 3.68%  | implemented in HCC and measured
 | C.PUSH, C.POP, C.POPRET | 3.46%  | implemented in HCC and measured
 | C.ZEXT.B, C.ZEXT.H      | 0.34%  | implemented in HCC and measured
-| C.PUSHZERO              | 0.2%   | estimated - see email dated 2020/10/12 PUSHZERO
 | C.LBUSP, C.SBSP         | 0.25%  | estimated
 | C.LHUSP, C.SHSP         | 0.23%  | estimated
 | C.MUL                   | 0.03%  | estimated - could be useful for other workloads?
