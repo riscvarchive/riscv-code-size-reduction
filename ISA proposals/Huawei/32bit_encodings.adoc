@@ -25,10 +25,10 @@ All instructions in _italics_ are for v2.0
 
 == Rational
 
-Some 32-bit encodings (e.g. `PUSH/POP/POPRET`) are 32-bit versions of 16-bit encodings. Soem add new functionality.
+Some 32-bit encodings (e.g. `PUSH/POP/POPRET`) are 32-bit versions of 16-bit encodings. Some add new functionality.
 
-
-=== Opcode Assignment
+== v1.0 proposal
+=== Opcode Assignment and semantics
 
 [#v1.0 proposed-32bit-encodings]
 .proposed 32-bit encodings for v1.0
@@ -56,15 +56,14 @@ Some 32-bit encodings (e.g. `PUSH/POP/POPRET`) are 32-bit versions of 16-bit enc
  5+|imm[11:5]                2+| rs2               |imm[15:12]|gp| 100        3+| imm[4:0]            |1011011| SBGP
  5+|imm[11:5]                2+| rs2               |imm[15:12]|gp| 101        3+| imm[4:0]            |1011011| SHGP
  5+|imm[11:5]                2+| rs2               |imm[15:12]|gp| 110        3+| imm[4:0]            |1011011| SWGP
-
 15+| *custom-1 encoding group (all architectures), array of structure indexing, maybe inputs in B-extension at it's arithmetic?*
 5+| uimm[7:1]                2+| rs2                2+| rs1      | 111        3+|  rd                 |0101011| MULIADD
 |=========================================================================================================================
 
-[#v2.0semantics]
-.v2.0 semantics
+[#v1.0semantics]
+.v1.0 semantics
 [width="100%",options=header]
-|=======================================================================
+|==============================================================================================================================================================================================
 |instruction           | definition
 | POP[.E]              | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers]
 | POPRET[.E]           | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers and return]
@@ -83,9 +82,9 @@ Some 32-bit encodings (e.g. `PUSH/POP/POPRET`) are 32-bit versions of 16-bit enc
 | SHUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][15:0])=rs2[15:0];
 | SWGP                 | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][31:0])=rs2[31:0];
 | MULIADD              | https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[Array of structure indexing]
-|======================================================================
+|==============================================================================================================================================================================================
 
-==== v1.0 Assembly Examples
+=== v1.0 Assembly Examples
 
 [source,sourceCode,text]
 ----
@@ -105,6 +104,9 @@ lw  a1,0xfffff(gp)      # will use LWGP  if immediate is out of range for LW
 sb  a1,0xfffff(gp)      # will use SBGP if immediate is out of range for SB
 sh  a1,0xfffff(gp)      # will use SHGP if immediate is out of range for SH
 sw  a1,0xfffff(gp)      # will use SWGP if immediate is out of range for SW
+
+== v2.0 proposal
+=== Opcode Assignment and semantics
 
 [#v2.0 proposed-32bit-encodings]
 .proposed 32-bit encodings for v2.0
@@ -142,7 +144,7 @@ sw  a1,0xfffff(gp)      # will use SWGP if immediate is out of range for SW
 [#v2.0semantics]
 .v2.0 semantics
 [width="100%",options=header]
-|=======================================================================
+|=====================================================================================================================================================================================================
 |instruction           | definition
 | _POPINT[.E]_         | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[spec needs updating following the email thread]
 | _PUSHINT[.E]_        | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[spec needs updating following the email thread]
@@ -162,9 +164,9 @@ sw  a1,0xfffff(gp)      # will use SWGP if immediate is out of range for SW
 | _SB.PU_              | Memory[rs1][ 7:0]=rs2[ 7:0]; rs1=rs1+1;
 | _SH.PU_              | Memory[rs1][15:0]=rs2[15:0]; rs1=rs1+2;
 | _SW.PU_              | Memory[rs1][31:0]=rs2[31:0]; rs1=rs1+4;
-|======================================================================
+|=====================================================================================================================================================================================================
 
-==== v2.0 Assembly Examples
+=== v2.0 Assembly Examples
 
 [source,sourceCode,text]
 ----
