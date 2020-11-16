@@ -12,27 +12,29 @@ Version 0.1
 
 This document describes 16-bit instructions proposed to help reduce code-size.
 
+. Instructions proposed for v1.0 are in normal text
+. Instructions proposed for the `future` are in _italics_
+
 == Issues for v1.0
 
 . there are probably too many instructions listed, so we need to reduce the list
 
-== Issues for v2.0
+== Issues for the `future` proposals
 
 . Need to resolve whether to have C.LWPC or L.LI / C.CALL or L.JAL
 . Maybe add table index instruction - table index offset into a jump table specified by a CSR similar to MTVEC instead of C.CALL
 
-== Rational
+== Rationale
 
 16-bit instructions are highly valuable for code-size reduction. The proposal is split into two phases
 . v1.0 to be ratified in 2021
-. v2.0 to be ratified later
+. `future` to be ratified later
 
 The most useful instructions will be ratified in v1.0, whilst also limiting the complexity to adding multi-step instructions.
 
-== Opcode Assignment
+== v1.0 proposal
 
-. Instructions proposed for v1.0 are in normal text
-. Instructions proposed for v2.0 are in _italics_
+=== v1.0 Opcode Assignment and Semantics
 
 Discussion should be mainly focussed on the proposals for v1.0 
 
@@ -79,8 +81,7 @@ Discussion should be mainly focussed on the proposals for v1.0
 3+|  100       | 0  | 0  |uimm[3] 3+|    rs2' 3+|uimm[2:0]    2+|10 2+|00 | C.SBSP
 3+|  100       | 0  | 0  |uimm[3] 3+|    rs2' 3+|uimm[2:1，4] 2+|11 2+|00 | C.SHSP
 17+|two-step execution, load PC relative value and then jump to the loaded value
-3+|  100       | 0  | 1 2+| 00     7+| uimm[8:2]                    2+|00 | _C.CALL_
-3+|  100       | 0  | 1 2+| not 00 7+|                              2+|00 | *reserved*
+3+|  100       | 0  | 1 2+| 00     7+| uimm[8:2]                    2+|00 | *reserved*
 |=============================================================================================
 
 [#proposed-16bit-encodings-4]
@@ -88,8 +89,8 @@ Discussion should be mainly focussed on the proposals for v1.0
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|PC relative load, only available for RV32 as this encoding is C.SLLI with an out of range shift
-3+|  000       | 1  2+| uimm[8:7] 3+| rd' 5+| uimm[6:2]         2+| 10  | _C.LWPC_
+17+|This encoding space is also available for RV32 only
+3+|  000       | 1  2+| uimm[8:7] 3+| rd' 5+| uimm[6:2]         2+| 10  | *reserved**
 17+|This encoding space is also available for RV32 only
 3+|  100       | 1  | 0  9+|                                    2+| 01  | *reserved*
 |=============================================================================================
@@ -102,8 +103,8 @@ Discussion should be mainly focussed on the proposals for v1.0
 17+|These are taken fromthe B-extension draft specification and are subject to change
 3+|  011       |0 2+|00     3+| rs1'/rd'  5+| 00000             2+| 00  | C.NOT
 3+|  011       |0 2+|01     3+| rs1'/rd'  5+| 00000             2+| 00  | C.NEG
-3+|  011       |0 2+|10     3+| rs1'/rd'  5+| 00000             2+| 00  | _C.ZEXT.W (RV64+)_
-3+|  011       |0 2+|11     3+| rs1'/rd'  5+| 00000             2+| 00  | _C.ZEXT.D (RV128)_
+3+|  011       |0 2+|10     3+| rs1'/rd'  5+| 00000             2+| 00  | *reserved*
+3+|  011       |0 2+|11     3+| rs1'/rd'  5+| 00000             2+| 00  | *reserved*
 |=============================================================================================
 
 [#doubleprecisionreuse]
@@ -149,8 +150,84 @@ Discussion should be mainly focussed on the proposals for v1.0
 | C.LHU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][15:0])
 |=======================================================================
 
-[#v2.0semantics]
-.v2.0 semantics
+=== v1.0 Assembly Examples
+
+[source,sourceCode,text]
+----
+zext.b a5;      # a5 = zero_ext(a5[7:0])
+zext.h a5;      # a5 = zero_ext(a5[15:0])
+sext.b a5;      # a5 = sign_ext(a5[7:0])
+sext.h a5;      # a5 = sign_ext(a5[15:0])
+
+lbu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lhu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sb  a5,20(sp)   # Memory(sp+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+
+mul a5, a5, a6; # a5 = a5 * a6, for 16-bit encoding rd==rs1 and all registers are x8-x15      
+
+lw  a5, 16(pc); # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encoding offset must be in range and rd=x8-x15
+jal ra, 16(pc); # jump to Memory(pc_16), ra=PC+2, for 16-bit encoding offset must be in range, the link register must be ra
+
+not a5          # a5 = ~a5 bitwise inversion
+neg a5          # a5 = -a5 two's complement inversion
+
+lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+
+=== 32-bit encodings for v1.0
+
+Note that the B-extension is required for 32-bit versions of the following instructions:
+
+* `C.ZEXT.H`
+* `C.SEXT.B`
+* `C.SEXT.H`
+
+== v1.0 Benchmarking results for v1.0 instructions on Huawei IoT code
+
+[#analysis_results]
+.Analysis results
+[width="100%",options=header]
+|=======================================================================================================
+| Instruction             | saving | status 
+| C.SB, C.LBU, C.SH, C.LHU| 3.68%  | implemented in HCC and measured
+| C.PUSH, C.POP, C.POPRET | 3.46%  | implemented in HCC and measured
+| C.ZEXT.B, C.ZEXT.H      | 0.34%  | implemented in HCC and measured
+| C.PUSHZERO              | 0.2%   | estimated - see email dated 2020/10/12 PUSHZERO
+| C.LBUSP, C.SBSP         | 0.25%  | estimated
+| C.LHUSP, C.SHSP         | 0.23%  | estimated
+| C.MUL                   | 0.03%  | estimated - could be useful for other workloads?
+| C.LSBNOT                | 0.02%  | estimated by finding "XORI 1" in the dump file - could be useful for other workloads?
+| C.NOT                   | -      | no estimate
+| C.SEXT.B, C.SEXT.H      | -      | no estimate
+| C.NEG                   | -      | no estimate
+|=======================================================================================================
+
+
+== `Future` Proposals
+
+=== `Future` Opcode Assignment and Semantics
+
+[#future-proposed-16bit-encodings]
+.`Future 16-bit encodings 
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|PUSHZERO spec is less mature than PUSH/POP/POPRET and the benefit is lower
+3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | _C.PUSHZERO[.E]_
+17+|two-step execution, load PC relative value and then jump to the loaded value
+3+|  100       | 0  | 1 2+| 00     7+| uimm[8:2]                2+| 00  | _C.CALL_
+17+|PC relative load, only available for RV32 as this encoding is C.SLLI with an out of range shift
+3+|  000       | 1  2+| uimm[8:7] 3+| rd' 5+| uimm[6:2]         2+| 10  | _C.LWPC_
+17+|From the B-extension
+3+|  011       |0 2+|10     3+| rs1'/rd'  5+| 00000             2+| 00  | _C.ZEXT.W (RV64+)_
+3+|  011       |0 2+|11     3+| rs1'/rd'  5+| 00000             2+| 00  | _C.ZEXT.D (RV128)_
+|=============================================================================================
+
+[#futuresemantics]
+.`Future` semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
@@ -185,62 +262,14 @@ alignment faults are not possible as the result of `pc_offset()` is always word 
 
 _Both `C.LWPC` and `C.CALL` require the instruction memory to have PMP read permission as well as execute permission, which allows searching for ROP gadgets. Therefore I think we should implement the 48-bit encodings instead (`L.LI` and `L.JAL`) for better security, less chance of cache fragmentation (loading instruction memory into the D-cache) and saving 16-bit encoding space._
 
-== 32-bit encodings for v1.0
-
-Note that the B-extension is required for 32-bit versions of the following instructions:
-
-* `C.ZEXT.H`
-* `C.SEXT.B`
-* `C.SEXT.H`
-
-== Assembly Examples
+=== `Future` Assembly Examples
 
 [source,sourceCode,text]
 ----
-zext.b a5;      # a5 = zero_ext(a5[7:0])
-zext.h a5;      # a5 = zero_ext(a5[15:0])
-sext.b a5;      # a5 = sign_ext(a5[7:0])
-sext.h a5;      # a5 = sign_ext(a5[15:0])
-
-lbu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-lhu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sb  a5,20(sp)   # Memory(sp+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
-
-mul a5, a5, a6; # a5 = a5 * a6, for 16-bit encoding rd==rs1 and all registers are x8-x15      
 
 lw  a5, 16(pc); # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encoding offset must be in range and rd=x8-x15
 jal ra, 16(pc); # jump to Memory(pc_16), ra=PC+2, for 16-bit encoding offset must be in range, the link register must be ra
-
-not a5          # a5 = ~a5 bitwise inversion
-neg a5          # a5 = -a5 two's complement inversion
-
-lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
-
 ----
-
-== Benchmarking results for v1.0 instructions on Huawei IoT code
-
-[#analysis_results]
-.Analysis results
-[width="100%",options=header]
-|=======================================================================================================
-| Instruction             | saving | status 
-| C.SB, C.LBU, C.SH, C.LHU| 3.68%  | implemented in HCC and measured
-| C.PUSH, C.POP, C.POPRET | 3.46%  | implemented in HCC and measured
-| C.ZEXT.B, C.ZEXT.H      | 0.34%  | implemented in HCC and measured
-| C.PUSHZERO              | 0.2%   | estimated - see email dated 2020/10/12 PUSHZERO
-| C.LBUSP, C.SBSP         | 0.25%  | estimated
-| C.LHUSP, C.SHSP         | 0.23%  | estimated
-| C.MUL                   | 0.03%  | estimated - could be useful for other workloads?
-| C.LSBNOT                | 0.02%  | estimated by finding "XORI 1" in the dump file - could be useful for other workloads?
-| C.NOT                   | -      | no estimate
-| C.SEXT.B, C.SEXT.H      | -      | no estimate
-| C.NEG                   | -      | no estimate
-|=======================================================================================================
 
 
 == Rejected instructions
