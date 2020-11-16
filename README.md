@@ -10,8 +10,8 @@ The code-size reduction will analyse the benefit of instrucitons from v1.0 of th
 - [v1.0 32-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
 
 In the future we may extend the ISA extension to include instructions from v2.0 of the ISA extension proposal
-- [v2.0 16-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc)
-- [v2.0 32-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
+- [`Future` 16-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc)
+- [`Future` 32-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
 - [48-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/48bit_encodings.adoc) which have longer immediates than 32-bit encodings
 
 Documentation of existing ISA extensions
