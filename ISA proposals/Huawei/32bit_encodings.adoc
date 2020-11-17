@@ -22,6 +22,9 @@ All instructions in _italics_ are for the `future`
 == Issues
 
 1. Anders requested load/stores with scaled offsets, which have not yet been considered
+2. `muliadd` could share one source operand with the destination, to reduce the required encoding space
+3. Which extension should take `muliadd`? Possibly B or P? Discussions ongoing.
+4. Optimising the immediate field of `muliadd`
 
 == v1.0 proposal
 
