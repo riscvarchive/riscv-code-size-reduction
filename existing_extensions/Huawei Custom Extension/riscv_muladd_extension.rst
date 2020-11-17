@@ -72,6 +72,8 @@ uimm[2:1]        0.02%
 uimm[1]          0.01%
 ================ =================
 
+See the full breakdown of immediate values for the Huawei IoT code `here <https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muliadd_immediate_values.xlsx>`_
+
 The primary justification for ``muliadd`` is to efficiently encode the structure references above, however this instruction may 
 also be useful in other areas. 
 
