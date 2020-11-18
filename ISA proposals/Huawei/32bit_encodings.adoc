@@ -25,6 +25,8 @@ All instructions in _italics_ are for the `future`
 2. `muliadd` could share one source operand with the destination, to reduce the required encoding space
 3. Which extension should take `muliadd`? Possibly B or P? Discussions ongoing.
 4. Optimising the immediate field of `muliadd`
+5. Andes Performance Extension has `beqc/bnec` which are similar to `beqi` but the constant ranges are different (`cmpimm[6:0]` and `offset[10:1]`). Do we need `bnec`? And do we need the other instructions `blti` etc? At the time the compiler team requested a full set of comparisons, which is why we added them all.  TBD.
+
 
 == v1.0 proposal
 
