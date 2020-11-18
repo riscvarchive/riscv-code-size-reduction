@@ -59,7 +59,8 @@ This should not be taken as a final set at this stage. Any instruction may be re
  5+|imm[11:5]                2+| rs2               |imm[15:12]|gp| 101        3+| imm[4:0]            |1011011| SHGP
  5+|imm[11:5]                2+| rs2               |imm[15:12]|gp| 110        3+| imm[4:0]            |1011011| SWGP
 15+| *custom-1 encoding group (all architectures), array of structure indexing, maybe inputs in B-extension at it's arithmetic?*
-5+| uimm[7:1]                2+| rs2                2+| rs1      | 111        3+|  rd                 |0101011| MULIADD
+4+|00000 | uimm[7:6]         2+| rs2                2+| uimm[5:1]| 111        3+|  rd                 |0101011| MULIADDA
+4+|00001 3+| uimm[7:1]                              2+| rs1      | 111        3+|  rd                 |0101011| MULIADDB
 |=========================================================================================================================
 
 [#v1.0semantics]
@@ -81,18 +82,21 @@ This should not be taken as a final set at this stage. Any instruction may be re
 | SBUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][ 7:0])=rs2[ 7:0];
 | SHUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][15:0])=rs2[15:0];
 | SWGP                 | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][31:0])=rs2[31:0];
-| MULIADD              | https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[Array of structure indexing]
+| MULIADDA             | rd = rd  + rs2 * zero_ext(uimm)
+| MULIADDB             | rd = rs1 + rd  * zero_ext(uimm)
 |==============================================================================================================================================================================================
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[See this document for `muliadda/muliaddb`] which is for the existing ISA extension available on silicon which only has a single encoding `muliadd`.
 
 === v1.0 Assembly Examples
 
 [source,sourceCode,text]
 ----
-beqi	a5,1,e005e2     # if (a5== 1) branch_target=0xe005e2; else branch_target=PC+4; //signed comparison
-blti	a5,4,e06222     # if (a5<  4) branch_target=0xe06222; else branch_target=PC+4; //signed comparison
-bgei	a2,3,e088f6     # if (a2>= 3) branch_target=0xe088f6; else branch_target=PC+4; //signed comparison
-bltui	a4,13,e08878    # if (a4< 13) branch_target=0xe08878; else branch_target=PC+4; //unsigned comparison
-bgeui	a3,32,e095cc    # if (a3>=32) branch_target=0xe095cc; else branch_target=PC+4; //unsigned comparison
+beqi  a5,1,e005e2       # if (a5== 1) branch_target=0xe005e2; else branch_target=PC+4; //signed comparison
+blti  a5,4,e06222       # if (a5<  4) branch_target=0xe06222; else branch_target=PC+4; //signed comparison
+bgei  a2,3,e088f6       # if (a2>= 3) branch_target=0xe088f6; else branch_target=PC+4; //signed comparison
+bltui	a4,13,e08878      # if (a4< 13) branch_target=0xe08878; else branch_target=PC+4; //unsigned comparison
+bgeui	a3,32,e095cc      # if (a3>=32) branch_target=0xe095cc; else branch_target=PC+4; //unsigned comparison
 
 lbu a1,0xfffff(gp)      # will use LBUGP if immediate is out of range for LBU
 lhu a1,0xfffff(gp)      # will use LHUGP if immediate is out of range for LHU
@@ -101,6 +105,10 @@ lw  a1,0xfffff(gp)      # will use LWGP  if immediate is out of range for LW
 sb  a1,0xfffff(gp)      # will use SBGP if immediate is out of range for SB
 sh  a1,0xfffff(gp)      # will use SHGP if immediate is out of range for SH
 sw  a1,0xfffff(gp)      # will use SWGP if immediate is out of range for SW
+
+muliadd  a1, a1, a2,20  # a1 = a1 + (a2 * 20) ; overwrite base pointer - muliadda
+muliadd  a2, a1, a2,20  # a1 = a2 + (a2 * 20) ; overwrite array index  - muliaddb
+
 ----
 
 == `Future` Proposals
