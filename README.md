@@ -36,6 +36,7 @@ Publicly available benchmarks
 - [Code size benchmarks](http://szeged.github.io/csibe/)
 - [Opus codec](https://github.com/xiph/opus)
 - [TACLe Benchmarks](http://www.tacle.eu/)
+-- I didn't see any code here, just details of a committee...... Tariq
 - [softfloat](http://www.jhauser.us/arithmetic/SoftFloat.html) and [testfloat](http://www.jhauser.us/arithmetic/TestFloat.html)
 - [MLPerf](https://mlperf.org/) - specifically for AI/ML applications
 - [BDTI](https://www.bdti.com/services/bdti-dsp-kernel-benchmarks)
