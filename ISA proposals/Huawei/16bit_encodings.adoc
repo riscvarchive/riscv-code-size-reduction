@@ -20,6 +20,7 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 . we can probably squeeze `pop` into unused `rcount` values of `popret` as it's only used ~ 1/4 of the time and has fewer common argument lists
 . there are probably too many instructions listed, so we need to reduce the list
 . confirm immediate bits for `c.sb, c.lbu, c.sh, c.lhu`
+. whether we need signed byte/half load versions
 
 == Issues for the `future` proposals
 
