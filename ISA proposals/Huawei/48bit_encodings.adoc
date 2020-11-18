@@ -37,11 +37,12 @@ decoder still operates on bits [31:0] only. This simplifies the microarchitectur
 === Opcode Assignment
 
 [#LLI_encoding]
-.proposed L.LI encoding
+.proposed L.LI/L.JAL encoding
 [width="100%",options=header]
 |=======================================================================
-|47:32|31:16|15:12|11:7    |6:0    |instruction
+|47:32|31:16|15:12|11:7     |6:0     |instruction
 2+|imm[31:0]                |  0000  |rd      |0011111| L.LI
+2+|imm[31:0]                |  0001  |rd      |0011111| L.LJAL
 |=======================================================================
 
 [#other_encodings]
@@ -49,9 +50,8 @@ decoder still operates on bits [31:0] only. This simplifies the microarchitectur
 [width="100%",options=header]
 |=======================================================================
 |47:32|31:30|29:25     |24:20 |19:15|14:12|11:7    |6:0    |instruction
-|imm[25:10]     |00  2+|imm[9:0]      |rs1     |001  |rd      |0011111| L.ADDI
-|imm[25:10]     |01  2+|imm[9:0]      |rs1     |001  |rd      |0011111| L.ANDI
-|imm[25:10]     |10  2+|imm[9:0]      |rs1     |001  |rd      |0011111| L.JAL
+|imm[25:10]     |00  2+|imm[9:0]      |rs1     |010  |rd      |0011111| L.ADDI
+|imm[25:10]     |01  2+|imm[9:0]      |rs1     |010  |rd      |0011111| L.ANDI
   
 9+|Load/store with longer immediate offset
 
