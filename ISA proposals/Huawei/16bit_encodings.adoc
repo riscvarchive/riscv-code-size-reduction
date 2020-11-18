@@ -25,6 +25,10 @@ This document describes 16-bit instructions proposed to help reduce code-size.
 . Need to resolve whether to have C.LWPC or L.LI / C.CALL or L.JAL
 . Maybe add table index instruction - table index offset into a jump table specified by a CSR similar to MTVEC instead of C.CALL
 
+== C-extension subsets
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/C-extension%20subsets.xlsx[This spreadsheet has a proposal for how to divide the C-extension into subsets, and how to select code-size reduction instructons for all relevant base architectures and extensions]
+
 == Rationale
 
 16-bit instructions are highly valuable for code-size reduction. The proposal is split into two phases
