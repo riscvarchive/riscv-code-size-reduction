@@ -25,7 +25,7 @@ All instructions in _italics_ are for the `future`
 2. `muliadd` could share one source operand with the destination, to reduce the required encoding space
 3. Which extension should take `muliadd`? Possibly B or P? Discussions ongoing.
 4. Optimising the immediate field of `muliadd`
-5. Andes Performance Extension has `beqc/bnec` which are similar to `beqi` but the constant ranges are different (`cmpimm[6:0]` and `offset[10:1]`). Do we need `bnec`? And do we need the other instructions `blti` etc? At the time the compiler team requested a full set of comparisons, which is why we added them all.  TBD.
+5. Andes Performance Extension has `beqc/bnec` which are similar to `beqi` but the constant ranges are different (`cmpimm[6:0]` and `offset[10:1]`). Do we need `bnec`? And do we need the other instructions `blti` etc? At the time the compiler team requested a full set of comparisons, which is why we added them all.  It would be better to remove `blti`, `bgei` if we can (need compiler expert input) as they're not so useful.
 6. Whether `lbgp`, `lhgp` are required, and even `ldgp`?
 
 == v1.0 proposal
@@ -110,6 +110,23 @@ muliadd  a1, a1, a2,20  # a1 = a1 + (a2 * 20) ; overwrite base pointer - muliadd
 muliadd  a2, a1, a2,20  # a1 = a2 + (a2 * 20) ; overwrite array index  - muliaddb
 
 ----
+
+=== v1.0 Benchmarking results on the Huawei IoT code
+
+[#analysis_results]
+.Analysis results
+[width="100%",options=header]
+|=========================================================================================================================================================================================================================================================================================================
+| Instruction             | saving | status 
+| BEQI                    | 0.41%  | implemented in HCC and measured
+| BLTI                    | 0.02%  | implemented in HCC and measured
+| BGEI                    | 0.01%  | implemented in HCC and measured
+| BLTUI                   | 0.15%  | implemented in HCC and measured
+| BGEUI                   | 0.30%  | implemented in HCC and measured
+| L*GP, S*GP              | no estimate | need to analyse load/store addresses and set gp/tp and check with load/store addresses are in range. L.LI is useful for the analysis as it always has the full label addresses. Are signed loads useful?
+| MULIADD                 | 0.32%  | implemented in HCC and measured, need to check how many uses are MULIADDA or MULIADDB, or neither 
+|=========================================================================================================================================================================================================================================================================================================
+
 
 == `Future` Proposals
 
