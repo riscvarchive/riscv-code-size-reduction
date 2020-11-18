@@ -200,13 +200,13 @@ Note that the B-extension is required for 32-bit versions of the following instr
 | C.SB, C.LBU, C.SH, C.LHU| 3.68%  | implemented in HCC and measured
 | C.PUSH, C.POP, C.POPRET | 3.46%  | implemented in HCC and measured
 | C.ZEXT.B, C.ZEXT.H      | 0.34%  | implemented in HCC and measured
-| C.LBUSP, C.SBSP         | 0.25%  | estimated
-| C.LHUSP, C.SHSP         | 0.23%  | estimated
-| C.MUL                   | 0.03%  | estimated - could be useful for other workloads?
-| C.LSBNOT                | 0.02%  | estimated by finding "XORI 1" in the dump file - could be useful for other workloads?
-| C.NOT                   | -      | no estimate
-| C.SEXT.B, C.SEXT.H      | -      | no estimate
-| C.NEG                   | -      | no estimate
+| C.LBUSP, C.SBSP         | 0.25%  | estimated based on 32-bit encoding
+| C.LHUSP, C.SHSP         | 0.23%  | estimated based on 32-bit encoding
+| C.MUL                   | 0.03%  | estimated based on 32-bit encoding
+| C.LSBNOT                | 0.02%  | estimated based on 32-bit encoding "XORI 1"
+| C.NOT                   | -      | no estimate - should search for "XORI -1"
+| C.SEXT.B, C.SEXT.H      | -      | no estimate - should search for shift left/shift right?
+| C.NEG                   | -      | no estimate - should search for 0-A?
 |=======================================================================================================
 
 
