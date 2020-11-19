@@ -139,56 +139,94 @@ Discussion should be mainly focussed on the proposals for v1.0
 | C.POP[.E]     | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers]
 | C.POPRET[.E]  | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers and return]
 | C.PUSH[.E]    | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers]
-| C.ZEXT.B      | rd' = zero_ext(rs1'[ 7:0])
-| C.ZEXT.H      | rd' = zero_ext(rs1'[15:0])
-| C.SEXT.B      | rd' = sign_ext(rs1'[ 7:0])
-| C.SEXT.H      | rd' = sign_ext(rs1'[15:0])
-| C.LSBNOT      | rd' = rs1' XOR 1
-| C.MUL         | rd' = rs1' * rs2'
+| C.ZEXT.B      | rd' = zero_ext(rd'[ 7:0])
+| C.ZEXT.H      | rd' = zero_ext(rd'[15:0])
+| C.SEXT.B      | rd' = sign_ext(rd'[ 7:0])
+| C.SEXT.H      | rd' = sign_ext(rd'[15:0])
+| C.LSBNOT      | rd' = rd' XOR 1
+| C.MUL         | rd' = rd' * rs2'
 | C.LBUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][ 7:0])
 | C.LHUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][15:0])
 | C.SBSP        | Memory[sp + zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
 | C.SHSP        | Memory[sp + zero_ext(uimm)][15:0] = rs2'[15:0]
-| C.NOT         | rd' = ~rs1'
-| C.NEG         | rd' = -rs1'
+| C.NOT         | rd' = ~rd'
+| C.NEG         | rd' = -rd'
 | C.SB          | rd' = Memory[rs1'+zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
 | C.SH          | rd' = Memory[rs1'+zero_ext(uimm)][15:0] = rs2'[15:0]
 | C.LBU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][ 7:0])
 | C.LHU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][15:0])
 |=======================================================================
 
+[#v1.0-32bit]
+.v1.0 32-bit equivalent instructions with a direct equivalent
+[width="100%",options=header]
+|======================================================================================================
+|instruction | assembly syntax       | requirements for 16-bit encoding       | 32-bit extension
+|C.POP[.E]   | pop[.e]    {reg_list} | reg_list maps to a 16-bit encoding     | code-size reduction
+|C.POPRET[.E]| popret[.e] {reg_list} | reg_list maps to a 16-bit encoding     | code-size reduction
+|C.PUSH[.E]  | push[.e]   {reg_list} | reg_list maps to a 16-bit encoding     | code-size reduction
+|C.SEXT.B    | sext.b rd, rs1        | all registers x8-x15, rd==rs1          | B-extension
+|C.SEXT.H    | sext.h rd, rs1        | all registers x8-x15, rd==rs1          | B-extension
+|C.MUL       | mul    rd, rs1, rs2   | all registers x8-x15, rd==rs1          | I-extension
+|C.LBU       | lbu    rd, imm(sp)    | all registers x8-x15, rd==rs1          | I-extension
+|C.LHUSP     | lhu    rd, imm(sp)    | all registers x8-x15, rd==rs1          | I-extension
+|C.SBSP      | sb     rd, imm(sp)    | all registers x8-x15, rd==rs1          | I-extension
+|C.SHSP      | sh     rd, imm(sp)    | all registers x8-x15, rd==rs1          | I-extension
+|C.SB        | sb     rd, imm(rs1)   | all registers x8-x15, rd==rs1          | I-extension
+|C.SH        | sh     rd, imm(rs1)   | all registers x8-x15, rd==rs1          | I-extension
+|C.LBU       | lbu    rd, imm(rs1)   | all registers x8-x15, rd==rs1          | I-extension
+|C.LHU       | lhu    rd, imm(rs1)   | all registers x8-x15, rd==rs1          | I-extension
+|======================================================================================================
+
+[#v1.0-32bit]
+.v1.0 32-bit equivalent pseudo-instructions
+[width="100%",options=header]
+|=================================================================================================================================
+|instruction | assembly syntax        |real 32-bit insn  | requirements for 16-bit encoding       | extension for 32-bit encoding
+|C.ZEXT.B    | zext.b rd, rs1         |andi rd, rs1, 255 | all registers x8-x15, rd==rs1          | I-extension
+|C.ZEXT.H    | zext.h rd, rs1         |pack rd, rs1, zero| all registers x8-x15, rd==rs1          | B-extension
+|C.LSBNOT    | lsbnot rd, rs1         |xori rd, rs1, 1   | all registers x8-x15, rd==rs1          | I-extension
+|C.NOT       | not    rd, rs1         |xori rd, rs1, -1  | all registers x8-x15, rd==rs1          | I-extension
+|C.NEG       | neg    rd, rs1         |sub  rd, zero, rs1| all registers x8-x15, rd==rs1          | I-extension
+|=================================================================================================================================
+
+The B-extension adds the following pseudo-instructions
+
+. `zext.b`
+. `zext.h`
+
+Therefore the code-size reduction extension will add the additional pseudo-instructions
+
+. `lsbnot`
+. `not`
+
+The pseudo-instructions give the same assembly syntax between all 32-bit and 16-bit encodings.
+
+
 === v1.0 Assembly Examples
 
 [source,sourceCode,text]
 ----
-zext.b a5;      # a5 = zero_ext(a5[7:0])
-zext.h a5;      # a5 = zero_ext(a5[15:0])
-sext.b a5;      # a5 = sign_ext(a5[7:0])
-sext.h a5;      # a5 = sign_ext(a5[15:0])
+zext.b a5, a5;  # a5 = zero_ext(a5[7:0])
+zext.h a5, a5;  # a5 = zero_ext(a5[15:0])
+sext.b a5, a5;  # a5 = sign_ext(a5[7:0])
+sext.h a5, a5;  # a5 = sign_ext(a5[15:0])
 
-lbu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-lhu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sb  a5,20(sp)   # Memory(sp+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lbu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[ 7:0])
+lhu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[15:0])
+sb  a5,20(sp)   # Memory(sp+20)[ 7:0] = a5[ 7:0]   
+sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0]   
 
-mul a5, a5, a6; # a5 = a5 * a6, for 16-bit encoding rd==rs1 and all registers are x8-x15      
+mul a5, a5, a6; # a5 = a5 * a6
 
 not a5          # a5 = ~a5 bitwise inversion
 neg a5          # a5 = -a5 two's complement inversion
 
-lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0]), for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
-sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0],     for 16-bit encoding immediate must be in range, the registers must be x8-x15
+lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0])
+lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0])
+sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0]
+sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
 ----
-
-=== 32-bit encodings for v1.0
-
-Note that the B-extension is required for 32-bit versions of the following instructions:
-
-* `C.ZEXT.H`
-* `C.SEXT.B`
-* `C.SEXT.H`
 
 === v1.0 Benchmarking results on the Huawei IoT code
 
@@ -215,7 +253,7 @@ Note that the B-extension is required for 32-bit versions of the following instr
 === `Future` Opcode Assignment and Semantics
 
 [#future-proposed-16bit-encodings]
-.`Future 16-bit encodings 
+.`Future` 16-bit encodings 
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
