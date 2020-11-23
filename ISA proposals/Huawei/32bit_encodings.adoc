@@ -25,6 +25,8 @@ All instructions in _italics_ are for the `future`
 2. `muliadd` could share one source operand with the destination, to reduce the required encoding space
 3. Which extension should take `muliadd`? Possibly B or P? Discussions ongoing.
 4. Optimising the immediate field of `muliadd`
+5. Clare Wolf suggest `addiadd` as well! Not analysed yet by us but shoulds very sensible `a = b + c + imm`
+6. I'mm worred that `c.slli + c.add` is not the right solution for compiling softfloat as it overwrites the shifted operand compared to 32-bit encoding for `addshf`, I think we may need `addshf/orshf` TBD
 5. Andes Performance Extension has `beqc/bnec` which are similar to `beqi` but the constant ranges are different (`cmpimm[6:0]` and `offset[10:1]`). Do we need `bnec`? And do we need the other instructions `blti` etc? At the time the compiler team requested a full set of comparisons, which is why we added them all.  It would be better to remove `blti`, `bgei` if we can (need compiler expert input) as they're not so useful.
 6. Whether `lbgp`, `lhgp` are required, and even `ldgp`?
 
