@@ -22,9 +22,11 @@ architectures, I and E variants.
 
 it's better to list these first, as they are resolved I'll update the proposal
 
+* should these instructions check alignment? if you use -msave-restore there's no alignment check, and if the compiler produces the prologue/epilogue directly there's no alignment check, so is it worth it?
 * whether to support PUSHZERO which also zeroes the additional stack memory, need a 16-bit encoding for good code size saving 
   but latency could be long so what about restart after interrupts?
 ** estimate additional 0.2% code size saving for IoT: 0.1% for sw zero, offset(sp) and 0.05% for sh, sb
+** current thinking is to delay to `future`
 * need to review usage of register lists, and make sure the proposal matches load/store multiple requirements
 * it would be simpler to specify the number of registers to save/restore, but if load/store multiple allows arbitrary registers then we need to support a list
 * RV128 support for PUSH/POP/POPRET will not be specified yet, but the encodings are reserved
