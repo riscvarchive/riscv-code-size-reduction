@@ -42,27 +42,28 @@ This should not be taken as a final set at this stage. Any instruction may be re
 [width="100%",options=header]
 
 |=========================================================================================================================
-| 31 | 30:29   |28|27| 26:25   |24  |23:20            | 19:16 |15 | 14:12        | 11:9        | 8 | 7 | 6 : 0 | instruction
-15+| *custom-0 encoding group (all architectures), PUSH/POP and friends*
-2+|000         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| POP[.E]
-2+|001         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| POPRET[.E]
-2+|010         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| PUSH[.E]
-15+| *custom-0 encoding group (all architectures), compare-immediate-branch*
-6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 001        3+| offset[5:1]         |0001011| BEQI
-6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 010        3+| offset[5:1]         |0001011| BLTI
-6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 011        3+| offset[5:1]         |0001011| BGEI
-6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 100        3+| offset[5:1]         |0001011| BLTUI
-6+| cmpimm[7:0]                     |  offset[9:6]  2+| rs1      | 101        3+| offset[5:1]         |0001011| BGEUI
-15+| *custom-0 encoding group (all architectures), GP relative load/store, allowing X3 (tp=0) and X4 (tp=1) as GPs*
- 7+|imm[11:0]                                       2+| rs1      | 001        2+| imm[15:12]     | tp |1011011| LBUGP
- 7+|imm[11:0]                                       2+| rs1      | 010        2+| imm[15:12]     | tp |1011011| LHUGP
- 7+|imm[11:0]                                       2+| rs1      | 011        2+| imm[15:12]     | tp |1011011| LWGP
- 5+|imm[11:5]                2+| rs2               |imm[15:12]|tp| 100        3+| imm[4:0]            |1011011| SBGP
- 5+|imm[11:5]                2+| rs2               |imm[15:12]|tp| 101        3+| imm[4:0]            |1011011| SHGP
- 5+|imm[11:5]                2+| rs2               |imm[15:12]|tp| 110        3+| imm[4:0]            |1011011| SWGP
-15+| *custom-1 encoding group (all architectures), array of structure indexing, maybe put it in B/P-extension at it's arithmetic?*
-4+|00000 | uimm[7:6]         2+| rs2                2+| uimm[5:1]| 111        3+|  rd                 |0101011| MULIADDA
-4+|00001 3+| uimm[7:1]                              2+| rs1      | 111        3+|  rd                 |0101011| MULIADDB
+| 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
+18+| *custom-0 encoding group (all architectures), PUSH/POP and friends*
+2+|000         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| POP[.E]
+2+|001         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| POPRET[.E]
+2+|010         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| PUSH[.E]
+18+| *custom-0 encoding group (all architectures), compare-immediate-branch*
+6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 001   4+| offset[5:1]       |0001011| BEQI
+6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 010   4+| offset[5:1]       |0001011| BLTI
+6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 011   4+| offset[5:1]       |0001011| BGEI
+6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 100   4+| offset[5:1]       |0001011| BLTUI
+6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 101   4+| offset[5:1]       |0001011| BGEUI
+18+| *custom-0 encoding group (all architectures), GP relative load/store, allowing X3 (tp=0) and X4 (tp=1) as GPs*
+ 8+|imm[11:0]                                       3+| rs1           | 001   3+| imm[15:12]    | tp|1011011| LBUGP
+ 8+|imm[11:0]                                       3+| rs1           | 010   3+| imm[15:12]    | tp|1011011| LHUGP
+ 8+|imm[11:0]                                       3+| rs1           | 011   3+| imm[15:12]    | tp|1011011| LWGP
+ 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 100   4+| imm[4:0]          |1011011| SBGP
+ 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 101   4+| imm[4:0]          |1011011| SHGP
+ 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 110   4+| imm[4:0]          |1011011| SWGP
+18+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from B-extension]*
+8+|imm[11:0]                                          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULI
+7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULIADD
+7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11101         3+| rd'       |0011011| ADDIADD
 |=========================================================================================================================
 
 [#v1.0semantics]
@@ -84,11 +85,12 @@ This should not be taken as a final set at this stage. Any instruction may be re
 | SBUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][ 7:0])=rs2[ 7:0];
 | SHUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][15:0])=rs2[15:0];
 | SWGP                 | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][31:0])=rs2[31:0];
-| MULIADDA             | rd = rd  + rs2 * zero_ext(uimm)
-| MULIADDB             | rd = rs1 + rd  * zero_ext(uimm)
+| MULI                 | rd' = rs1' * sign_ext(imm)
+| MULIADD              | rd' = rs1' + rs2' * sign_ext(imm)
+| ADDIADD              | rd' = rs1' + rs2' + sign_ext(imm)
 |==============================================================================================================================================================================================
 
-https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[See this document for `muliadda/muliaddb`] which is for the existing ISA extension available on silicon which only has a single encoding `muliadd`.
+https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[See this document for `muliadda/muliaddb`] which is for the existing ISA extension available on silicon which  has different encoding for `muliadd`.
 
 === v1.0 Assembly Examples
 
@@ -126,7 +128,9 @@ muliadd  a2, a1, a2,20  # a1 = a2 + (a2 * 20) ; overwrite array index  - muliadd
 | BLTUI                   | 0.15%  | implemented in HCC and measured
 | BGEUI                   | 0.30%  | implemented in HCC and measured
 | L*GP, S*GP              | no estimate | need to analyse load/store addresses and set gp/tp and check with load/store addresses are in range. L.LI is useful for the analysis as it always has the full label addresses. Are signed loads useful?
-| MULIADD                 | 0.32%  | implemented in HCC and measured, need to check how many uses are MULIADDA or MULIADDB, or neither 
+| MULIADD                 | 0.32%  | implemented in HCC and measured
+| MULI                    | no estimate  | to be done
+| ADDIADD                 | no estimate  | to be done
 |=========================================================================================================================================================================================================================================================================================================
 
 
