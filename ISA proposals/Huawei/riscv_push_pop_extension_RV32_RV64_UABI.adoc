@@ -38,13 +38,15 @@ popret {<reg_list>},  <stack_adjustment>
 
 32-bit and 16-bit forms are available, the assembler will choose the 16-bit if the parameters permit.
 
-The registers in `reg_list` may be:
+The registers in `reg_list` are in a comma separated list, and may include up to three components:
 
 . `ra`
 . `s0-sN` where `N` is in the range [0, 11]
+.. If `N=0` the correct syntax is `s0`
 . `fs0-fsM` where `M` is in the range [0, 11]
+.. If `M=0` the correct syntax is `fs0`
 
-Any combination of these three components may be present, and the range must not be empty.
+Any combination of these three may be present, and the range must not be empty.
 
 For the 16-bit encoding
 
@@ -60,9 +62,9 @@ For the 32-bit encoding
 
 For example
 
-. `push {ra,s0-s2}, -64` will use a 16-bit encoding
-. `push {ra,s0-s2,fs0}, -64` will use a 32-bit encoding as `fs0` is in the register list
-. `push {ra,s0-s2}, -256` will use a 32-bit encoding as the `stack_adjustment` is out of range
+. `push {ra,s0-s2}, -64` can use a 16-bit encoding
+. `push {ra,s0-s2,fs0}, -64` must use a 32-bit encoding as `fs0` is in the register list
+. `push {ra,s0-s2}, -256` must use a 32-bit encoding as the `stack_adjustment` is out of range
 
 [NOTE]
  Should we allow the x-register syntax? It breaks up the ranges which is annoying as s1 and s2  do not map to consecutive registers
@@ -75,16 +77,22 @@ To be a legal encoding:
 
 == PUSH Operation
 
-. A `PUSH` instruction stores the set of registers from `reg_list` to memory. 
-. Register `r` in the list is stored to address `sp-(XLEN/8)*r`.
+A `PUSH` instruction stores the set of registers from `reg_list` to memory, and decrements the stack pointer.
+
+. Register `r` in `reg_list`` is stored to address `sp-(XLEN/8)*r`.
 . `sp` is decremented by the `stack_adjustment` value.
+
+An implementation may choose to adjust the stack pointer before or after the stores.
 
 == POP[RET] Operation
 
-. A `POP` instruction loads the set of registers from `reg_list` from memory. 
+A `POP` instruction loads the set of registers from `reg_list` from memory, and then increments the stack pointer.
+
 . Register `r` in the list is loaded from address `sp+stack_adjustment-(XLEN/8)*r`.
 . `sp` is incremented by the `stack_adjustment` value.
 . `POPRET` executes a `RET` as the final step
+
+An implementation may choose to adjust the stack pointer before or after the load.
 
 == Opcode Assignment
 
