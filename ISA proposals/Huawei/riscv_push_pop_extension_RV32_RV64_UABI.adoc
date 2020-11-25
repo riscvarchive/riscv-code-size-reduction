@@ -13,37 +13,36 @@ Version 0.1
 This document describes 32-bit and 16-bit encodings for `[C.]PUSH`,
 `[C.]POP` and `[C.]POPRET` instructions for RV32 and RV64 architectures I variants only, using the UABI.
 
-These isntructions are to reduce the code-size of funciton prologues and epilogues by using a single encoding to replace a sequence of instructions.
+These instructions are to reduce the code-size of funciton prologues and epilogues by using a single encoding to replace a sequence of instructions.
 
 == Open issues
 
 it's better to list these first, as they are resolved I'll update the proposal
 
-* should these instructions check alignment? if you use -msave-restore there's no alignment check, and if the compiler produces the prologue/epilogue directly there's no alignment check, so is it worth it?
+* should these instructions check alignment? if you use gcc -msave-restore there's no alignment check, and if the compiler produces the prologue/epilogue directly there's no alignment check, so is it worth it?
 * whether to share an encoding with `POP[RET]` and so maybe have fewer `POP` rcount values to save encoding space.
+* we could squeeze `rcount` and `frcount` into 1 bit fewer for the 32-bit encodings if we reduce the available options
 
 == Assembler Syntax
 
 [source,sourceCode,text]
 ----
 push   {<reg_list>}, -<stack_adjustment>
-pop    {<reg_list>},  <tstack_adjustment>
+pop    {<reg_list>},  <stack_adjustment>
 popret {<reg_list>},  <stack_adjustment>
 ----
 
-.`PUSH` pushes the registers in the list to the stack, and then adjusts the stack pointer by the `total_stack_adjustment`.
-.`POP` pops the registers in the from the stack, and then adjusts the stack pointer by the `total_stack_adjustment`.
-.`POPRET` hsa the same behaviour as `POP` followed by `RET`.
+. `PUSH` pushes the registers in `reg_list` to the stack, and then adjusts the stack pointer by the `stack_adjustment`.
+. `POP` pops the registers in `reg_list` from the stack, and then adjusts the stack pointer by the `stack_adjustment`.
+. `POPRET` has the same behaviour as `POP`, followed by `RET`.
 
 32-bit and 16-bit forms are available, the assembler will choose the 16-bit if the parameters permit.
 
-The `C.PUSH/C.POP[RET]` instructions are represented in the assembler as the mnemonic (excluding `C.`) followed by a register list in braces and then the size of the stack adjustment in bytes. 
-
 The registers in `reg_list` may be:
 
-.`ra`
-.`s0-sN` where N is i the range [0, 11]
-.`fs0-fsM` where M is i the range [0, 11]
+. `ra`
+. `s0-sN` where `N` is in the range [0, 11]
+. `fs0-fsM` where `M` is in the range [0, 11]
 
 Any combination of these three components may be present, and the range must not be empty.
 
@@ -52,12 +51,18 @@ For the 16-bit encoding
 . `ra` must be included
 . `s0-sN` may be included, valid values of `N` are 0,1,2,3,5,8,11
 . `fs0-fsM` may not be included
-. the `total_stack_adjustment` must fit within the 16-bit encoding *this is a bit tricky to define, hmmm*
+. the `stack_adjustment` must be no more than the total memory required for `reg_list` + 7*16-bytes.
+
+For the 32-bit encoding
+
+. the register list must not be empty
+. the `stack_adjustment` must be no more than the total memory required for `reg_list` + 15*16-bytes.
 
 For example
 
 . `push {ra,s0-s2}, -64` will use a 16-bit encoding
 . `push {ra,s0-s2,fs0}, -64` will use a 32-bit encoding as `fs0` is in the register list
+. `push {ra,s0-s2}, -256` will use a 32-bit encoding as the `stack_adjustment` is out of range
 
 [NOTE]
  Should we allow the x-register syntax? It breaks up the ranges which is annoying as s1 and s2  do not map to consecutive registers
@@ -65,7 +70,7 @@ For example
 To be a legal encoding:
 
 1.  The stack adjustment must be negative for a `PUSH` and positive for a `POP[RET]`
-2.  The stack adjustment must be in range
+2.  The stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register list must be valid (see above)
 
 == PUSH Operation
@@ -78,8 +83,8 @@ To be a legal encoding:
 
 . A `POP` instruction loads the set of registers from `reg_list` from memory. 
 . Register `r` in the list is loaded from address `sp+stack_adjustment-(XLEN/8)*r`.
-. `sp` is incremented by the `total_stack_adjustment` value.
-. `POPRET` executes an `MRET` as the final step
+. `sp` is incremented by the `stack_adjustment` value.
+. `POPRET` executes a `RET` as the final step
 
 == Opcode Assignment
 
@@ -96,22 +101,26 @@ To be a legal encoding:
 [options="header",width="100%"]
 |=======================================================================
 |15 |14 |13 |12 |11 |10 |9 |8 |7 |6 |5 |4 |3 |2 |1 |0 |instruction
-3+|100|1|00 3+|rcount|0|0 3+|spimm 2+|00|C.POP
-3+|100|1|00 3+|rcount|0|1 3+|spimm 2+|00|C.POPRET
-3+|100|1|00 3+|rcount|1|0 3+|spimm 2+|00|C.PUSH
+3+|100|1|0|0 3+|rcount|0|0 3+|spimm 2+|00|C.POP
+3+|100|1|0|0 3+|rcount|0|1 3+|spimm 2+|00|C.POPRET
+3+|100|1|0|0 3+|rcount|1|0 3+|spimm 2+|00|C.PUSH
 |=======================================================================
 
+[#spimm]
 === `spimm` encoding field
 
-The stack pointer adjustment in the assembly syntax comprises of two components:
+The `stack_adjustment` field in the assembly syntax comprises of two components:
 
-. the memory required for the registers in the list, rounded up to 16-bytes
+. the memory required for the registers in the list, rounded up to 16-bytes (using the `Align16` function below)
 . additional stack space allocated for local variables, encoded in the `spimm` field
 
 The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has 3-bits), and the 32-bit encoding allows up to 15.
 
-`total_register_bytes = number_of_registers_in_reg_list * XLEN / 8`
-`stack_adjustment = Align16(total_register_bytes) + 16*spimm` 
+[source,sourceCode,text]
+----
+total_register_bytes = number_of_registers_in_reg_list * XLEN / 8
+stack_adjustment = Align16(total_register_bytes) + 16*spimm
+----
 
 === `ra, frcount, rcount` for the 32-bit encodings
 
