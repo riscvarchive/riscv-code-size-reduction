@@ -36,7 +36,7 @@ popret {<reg_list>},  <stack_adjustment>
 . `POP` pops the registers in `reg_list` from the stack, and then adjusts the stack pointer by the `stack_adjustment`.
 . `POPRET` has the same behaviour as `POP`, followed by `RET`.
 
-32-bit and 16-bit forms are available, the assembler will choose the 16-bit if the parameters permit.
+32-bit and 16-bit forms are available, the assembler should choose the 16-bit form if the parameters permit and the C extension is implemented.
 
 The registers in `reg_list` are in a comma separated list, and may include up to three components:
 
@@ -46,7 +46,7 @@ The registers in `reg_list` are in a comma separated list, and may include up to
 . `fs0-fsM` where `M` is in the range [0, 11]
 .. If `M=0` the correct syntax is `fs0`
 
-Any combination of these three may be present, and the range must not be empty.
+Any combination of these three may be present, and `reg_list` must not be empty.
 
 For the 16-bit encoding
 
@@ -92,7 +92,7 @@ A `POP` instruction loads the set of registers from `reg_list` from memory, and 
 . `sp` is incremented by the `stack_adjustment` value.
 . `POPRET` executes a `RET` as the final step
 
-An implementation may choose to adjust the stack pointer before or after the load.
+An implementation may choose to adjust the stack pointer before or after the loads.
 
 == Opcode Assignment
 
