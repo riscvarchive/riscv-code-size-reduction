@@ -21,10 +21,15 @@ All instructions in _italics_ are for the `future`
 
 == Issues
 
-1. Anders requested load/stores with scaled offsets, which have not yet been considered
-2. I'm worried that `c.slli + c.add` is not the right solution for compiling softfloat as it overwrites the shifted operand compared to 32-bit encoding for `addshf`, I think we may need `addshf/orshf` TBD
-3. Andes Performance Extension has `beqc/bnec` which are similar to `beqi` but the constant ranges are different (`cmpimm[6:0]` and `offset[10:1]`). Do we need `bnec`? And do we need the other instructions `blti` etc? At the time the compiler team requested a full set of comparisons, which is why we added them all.  It would be better to remove `blti`, `bgei` if we can (need compiler expert input) as they're not so useful.
-4. Whether `lbgp`, `lhgp` are required, and even `ldgp`?
+. Anders requested load/stores with scaled offsets, which have not yet been considered
+. Andy Glew also suggested this for accessing variables in arrays using a loop counter - so that the loop variable can be used directly
+.. eg load rd := M[rs1+rs2<<scaleImm] so rs2 is the unmodified loop counter
+. Andy Glew suggested incblz rd,target
+.. `rd += 1; if( rd < 0 ) goto target` 
+.. this requires no immediate value for comparison, so requires the loop counter to start negative and count up, so gives a bigger branch offset range
+. I'm worried that `c.slli + c.add` is not the right solution for compiling softfloat as it overwrites the shifted operand compared to 32-bit encoding for `addshf`, I think we may need `addshf/orshf` TBD
+. Andes Performance Extension has `beqc/bnec` which are similar to `beqi` but the constant ranges are different (`cmpimm[6:0]` and `offset[10:1]`). Do we need `bnec`? And do we need the other instructions `blti` etc? At the time the compiler team requested a full set of comparisons, which is why we added them all.  It would be better to remove `blti`, `bgei` if we can (need compiler expert input) as they're not so useful.
+. Whether `lbgp`, `lhgp` are required, and even `ldgp`?
 
 == v1.0 proposal
 
