@@ -1,0 +1,39 @@
+= Meeting Minutes for Code-size Reduction 2020/11/24
+
+== PLCT Zfinx GCC update
+
+Qemu and Spike update started, they can't simulate the GCC result until Qemu or Spike is ready
+Some instructions are not supported yet
+
+There's a problem with riscv-opc.c, Jeremy's team at Embecosm will help fix the problem
+
+PLCT need to add tests to gnu assembler test suite: gas/testsuite for every instruction, don't need simulator for this. The existing FP tests should cover it, may need modification
+
+they should have workable Spike or Qemu in the next week which they can use for GCC regression tests.
+
+Report again on 15th December (the final meeting of 2020)
+
+== PUSH/POP review
+
+PUSH/POP and .E versions are annoying, and spec is hard to read as it supports too many options
+
+. because the registers change order, you can't just save a block of registers consistently between the versions
+. sequential register writing would be easier for the hardware ignoring the ABI
+. Anders to think of EABI mapping which makes the difference simpler
+.. hopefully have an internal discussion with Anders Berg who is on the EABI TG
+
+What about the additional stack adjustment?
+
+. in a leaf function there's no need to allocate additional stack memory, apparently according to Dave Horner, will send details
+. risc-v doesn't trample on the user stack
+. can dwarf understand a stack on both sides of the stack pointer?
+
+Assembler syntax
+
+. Anders suggests removing {}'s
+. Ed from Embecosm is happy with them for LLVM
+. so let's keep them
+
+Tariq will separate out RV32/RVRV64 for PUSH/POP and remove the EABI versions for now so we can review and agree those.
+
+For reference: https://github.com/riscv/riscv-eabi-spec/blob/master/EABI.adoc
