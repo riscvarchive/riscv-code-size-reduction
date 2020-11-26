@@ -13,7 +13,7 @@ Version 0.1
 This document describes 32-bit and 16-bit encodings for `[C.]PUSH`,
 `[C.]POP` and `[C.]POPRET` instructions for RV32 and RV64 architectures I variants only, using the UABI.
 
-These instructions are to reduce the code-size of funciton prologues and epilogues by using a single encoding to replace a sequence of instructions.
+These instructions are to reduce the code-size of function prologues and epilogues by using a single encoding to replace a sequence of instructions.
 
 == Open issues
 
@@ -22,6 +22,7 @@ it's better to list these first, as they are resolved I'll update the proposal
 * should these instructions check alignment? if you use gcc -msave-restore there's no alignment check, and if the compiler produces the prologue/epilogue directly there's no alignment check, so is it worth it?
 * whether to share an encoding with `POP[RET]` and so maybe have fewer `POP` rcount values to save encoding space.
 * we could squeeze `rcount` and `frcount` into 1 bit fewer for the 32-bit encodings if we reduce the available options
+* how to handle `f` registers - should the data width be in the encoding? Can't just look at MISA to determine the width as the bits are writable, so MISA.F=0 MISA.D=0 then what do we do!!!
 
 == Assembler Syntax
 
@@ -77,19 +78,36 @@ To be a legal encoding:
 
 == PUSH Operation
 
-A `PUSH` instruction stores the set of registers from `reg_list` to memory, and decrements the stack pointer.
+A `PUSH` instruction stores the set of registers from `reg_list` to memory, and decrements the stack pointer. These two sequences both achieve the correct functionality.
 
+[NOTE]
+  `stack_adjustment` is negative.
+
+=== PUSH sequence 1
 . Register `r` in `reg_list`` is stored to address `sp-(XLEN/8)*r`.
-. `sp` is decremented by the `stack_adjustment` value.
+. `sp+=stack_adjustment` (decrement)
+
+=== PUSH sequence 2
+. `sp+=stack_adjustment` (decrement)
+. Register `r` in `reg_list`` is stored to address `sp-stack_adjustment-(XLEN/8)*r`.
 
 An implementation may choose to adjust the stack pointer before or after the stores.
 
 == POP[RET] Operation
 
-A `POP` instruction loads the set of registers from `reg_list` from memory, and then increments the stack pointer.
+A `POP` instruction loads the set of registers from `reg_list` from memory, and then increments the stack pointer. These two sequences both achieve the correct functionality.
 
+[NOTE]
+  `stack_adjustment` is positive.
+
+=== POP[RET] sequence 1
 . Register `r` in the list is loaded from address `sp+stack_adjustment-(XLEN/8)*r`.
-. `sp` is incremented by the `stack_adjustment` value.
+. `sp+=stack_adjustment` (increment)
+. `POPRET` executes a `RET` as the final step
+
+=== POP[RET] sequence 2
+. `sp+=stack_adjustment` (increment)
+. Register `r` in the list is loaded from address `sp-(XLEN/8)*r`.
 . `POPRET` executes a `RET` as the final step
 
 An implementation may choose to adjust the stack pointer before or after the loads.
