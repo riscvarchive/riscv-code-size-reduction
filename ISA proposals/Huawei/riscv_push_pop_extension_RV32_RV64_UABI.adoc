@@ -76,41 +76,41 @@ To be a legal encoding:
 2.  The stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register list must be valid (see above)
 
-== PUSH Operation
+== Implementation of sequenced instructions
 
-A `PUSH` instruction stores the set of registers from `reg_list` to memory, and decrements the stack pointer. These two sequences both achieve the correct functionality.
+The sequences below show the required architectural state updates only, the hardware implementation is not specified here. 
+
+Note that each step of the example sequence can be executed as a standard RISC-V 32-bit encoding, so that it is possible to convert the sequences into a sequence of standard instructions. 
+
+Because the sequences include load and store operations, they may take any exception caused by executing loads or stores such as page faults, PMP faults, debug triggers. 
+
+Additionally interrupts and debug halts may be received during execution. 
+
+Handling of these cases is implementation defined but it is recommended that the standard interrupt/exception/debug handlers can be used without modification.
+
+=== PUSH Operation
+
+A `PUSH` instruction stores the set of registers from `reg_list` to memory, and decrements the stack pointer.
 
 [NOTE]
   `stack_adjustment` is negative.
 
-=== PUSH sequence 1
-. Register `r` in `reg_list`` is stored to address `sp-(XLEN/8)*r`.
-. `sp+=stack_adjustment` (decrement)
-
-=== PUSH sequence 2
 . `sp+=stack_adjustment` (decrement)
 . Register `r` in `reg_list`` is stored to address `sp-stack_adjustment-(XLEN/8)*r`.
 
-An implementation may choose to adjust the stack pointer before or after the stores.
 
-== POP[RET] Operation
+=== POP[RET] Operation
 
-A `POP` instruction loads the set of registers from `reg_list` from memory, and then increments the stack pointer. These two sequences both achieve the correct functionality.
+A `POP` instruction loads the set of registers from `reg_list` from memory, and then increments the stack pointer. 
 
 [NOTE]
   `stack_adjustment` is positive.
 
-=== POP[RET] sequence 1
 . Register `r` in the list is loaded from address `sp+stack_adjustment-(XLEN/8)*r`.
 . `sp+=stack_adjustment` (increment)
 . `POPRET` executes a `RET` as the final step
 
-=== POP[RET] sequence 2
-. `sp+=stack_adjustment` (increment)
-. Register `r` in the list is loaded from address `sp-(XLEN/8)*r`.
-. `POPRET` executes a `RET` as the final step
 
-An implementation may choose to adjust the stack pointer before or after the loads.
 
 == Opcode Assignment
 
@@ -251,11 +251,11 @@ Equivalent sequence:
 
 [source,sourceCode,text]
 ----
-sw  s5, -28(sp);
-sw  s4, -24(sp); sw  s3, -20(sp);
-sw  s2, -16(sp); sw  s1, -12(sp);
-sw  s0,  -8(sp); sw  ra, -4(sp);
 addi sp, sp, -64;
+sw  s5, 36(sp);
+sw  s4, 40(sp); sw  s3, 44(sp);
+sw  s2, 48(sp); sw  s1, 52(sp);
+sw  s0, 56(sp); sw  ra, 60(sp);
 ----
 
 === C.PUSH RV32I UABI (16-byte aligned stack)
@@ -271,10 +271,10 @@ Equivalent sequence:
 
 [source,sourceCode,text]
 ----
-sw  s1, -12(sp);
-sw  s0,  -8(sp); 
-sw  ra,  -4(sp);
 addi sp, sp, -32;
+sw  s1, 20(sp);
+sw  s0, 24(sp); 
+sw  ra, 28(sp);
 ----
 
 === C.POP RV32I UABI (16-byte aligned stack)
@@ -311,11 +311,11 @@ Micro operation sequence:
 
 [source,sourceCode,text]
 ----
+addi sp, sp, -64;
 fsw fs0,-28(sp)
 sw  s4, -24(sp); sw  s3, -20(sp);
 sw  s2, -16(sp); sw  s1, -12(sp);
 sw  s0,  -8(sp); sw  ra,  -4(sp);
-addi sp, sp, -64;
 ----
 
 === PUSH RV64 UABI (16-byte aligned stack)
@@ -331,11 +331,11 @@ Micro operation sequence:
 
 [source,sourceCode,text]
 ----
-fsw fs0,-56(sp)
-sw  s4, -48(sp); sw  s3, -40(sp);
-sw  s2, -32(sp); sw  s1, -24(sp);
-sw  s0, -16(sp); sw  ra,  -8(sp);
 addi sp, sp, -64;
+fsw fs0, 8(sp)
+sw  s4,  16(sp); sw  s3,  24(sp);
+sw  s2,  32(sp); sw  s1,  40(sp);
+sw  s0,  48(sp); sw  ra,  56(sp);
 ----
 
 === PUSH RV64 UABI (16-byte aligned stack)
@@ -351,13 +351,13 @@ Micro operation sequence:
 
 [source,sourceCode,text]
 ----
-fsw  fs11,-96(sp); fsw  fs10,-88(sp);
-fsw  fs9, -80(sp); fsw  fs8, -72(sp);
-fsw  fs7, -64(sp); fsw  fs6, -56(sp);
-fsw  fs5, -48(sp); fsw  fs4, -40(sp);
-fsw  fs3, -32(sp); fsw  fs2, -24(sp);
-fsw  fs1, -16(sp); fsw  fs0,  -8(sp);
-addi sp, sp, -128;
+addi sp, sp, -128; 
+fsw  fs11, 32(sp); fsw  fs10, 40(sp);
+fsw  fs9,  48(sp); fsw  fs8,  56(sp);
+fsw  fs7,  64(sp); fsw  fs6,  72(sp);
+fsw  fs5,  80(sp); fsw  fs4,  88(sp);
+fsw  fs3,  96(sp); fsw  fs2, 108(sp);
+fsw  fs1, 116(sp); fsw  fs0, 128(sp);
 ----
 
 === POP RV32I UABI (16-byte aligned stack)
