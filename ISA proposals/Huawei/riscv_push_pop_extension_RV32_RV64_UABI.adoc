@@ -15,7 +15,12 @@ This document describes：
 * 32-bit encodings for `PUSH/PUSH.F/PUSH.D, POP/POP.F/POP.D and `POPRET/POPRET.F/POPRET.D`
 * 16-bit encodings for `C.PUSH, C.POP` and `C.POPRET` instructions 
 
-The instructions are defined for RV32 and RV64 architectures I variants only, using the UABI. The E variant and EABI will be covered by a future revision.
+The instructions are defined for RV32 and RV64 architectures I variants only, using the UABI. 
+
+Future revisions may include:
+
+* The E variant and EABI.
+* RV128[FDQ]
 
 These instructions are to reduce the code-size of function prologues and epilogues by using a single encoding to replace a sequence of instructions. 
 They are designed to replace common function prologue/epilogue sequences, but will not replace all possible cases. 
