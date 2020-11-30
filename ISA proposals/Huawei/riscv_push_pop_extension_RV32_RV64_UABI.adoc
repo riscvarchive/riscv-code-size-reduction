@@ -185,25 +185,23 @@ if (opcode == "POPRET*) {
 [options="header",width="100%"]
 |============================================================================
 |31:28  | 28 |27|26:24   |23:20  |19:15 |14:12 |11:7  |6:0     |name
-|xxxxxx | ra |0 |000     |rcount |spimm |xxx   |xxxxx |xxxxxxx |PUSH
-|xxxxxx | ra |0 |000     |rcount |spimm |xxx   |xxxxx |xxxxxxx |POP
-|xxxxxx | ra |0 |000     |rcount |spimm |xxx   |xxxxx |xxxxxxx |POPRET
+|xxxxxx | ra |0 |000     |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
+|xxxxxx | ra |0 |000     |rcount |spimm |001   |xxxxx |xxxxxxx |POP
+|xxxxxx | ra |0 |000     |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
 
-|xxxxxx | ra |0 |>0      |rcount |spimm |xxx   |xxxxx |xxxxxxx |PUSH.F
-|xxxxxx | ra |0 |>0      |rcount |spimm |xxx   |xxxxx |xxxxxxx |POP.F
-|xxxxxx | ra |0 |>0      |rcount |spimm |xxx   |xxxxx |xxxxxxx |POPRET.F
+|xxxxxx | ra |0 |>0      |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.F
+|xxxxxx | ra |0 |>0      |rcount |spimm |001   |xxxxx |xxxxxxx |POP.F
+|xxxxxx | ra |0 |>0      |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.F
 
-|xxxxxx | ra |1 |>0      |rcount |spimm |xxx   |xxxxx |xxxxxxx |PUSH.D
-|xxxxxx | ra |1 |>0      |rcount |spimm |xxx   |xxxxx |xxxxxxx |POP.D
-|xxxxxx | ra |1 |>0      |rcount |spimm |xxx   |xxxxx |xxxxxxx |POPRET.D
-10+|reserved cases
-|xxxxxx | ra |1 |000     |rcount |spimm |xxx   |xxxxx |xxxxxxx |*reserved*
-|xxxxxx | ra |1 |000     |rcount |spimm |xxx   |xxxxx |xxxxxxx |*reserved*
-|xxxxxx | ra |1 |000     |rcount |spimm |xxx   |xxxxx |xxxxxxx |*reserved*
-
-|xxxxxx | x  |x |000     |000    |spimm |xxx   |xxxxx |xxxxxxx |*reserved*
-|xxxxxx | x  |x |000     |000    |spimm |xxx   |xxxxx |xxxxxxx |*reserved*
-|xxxxxx | x  |x |000     |000    |spimm |xxx   |xxxxx |xxxxxxx |*reserved*
+|xxxxxx | ra |1 |>0      |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.D
+|xxxxxx | ra |1 |>0      |rcount |spimm |001   |xxxxx |xxxxxxx |POP.D
+|xxxxxx | ra |1 |>0      |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.D
+10+|*reserved as [27]=1 means .D but no F-registers specified*
+|xxxxxx | x  |1 |000     |rcount |spimm |<3    |xxxxx |xxxxxxx |*reserved*
+10+|*reserved as `rcount` is out of range*
+|xxxxxx | x  |x |x       |>12    |spimm |<3    |xxxxx |xxxxxxx |*reserved*
+10+|*reserved as no registers are specified*
+|xxxxxx | x  |0 |000     |000    |spimm |<3    |xxxxx |xxxxxxx |*reserved*
 |============================================================================
 
 [NOTE]
