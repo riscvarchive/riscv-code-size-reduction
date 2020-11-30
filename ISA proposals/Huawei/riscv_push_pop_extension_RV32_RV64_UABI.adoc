@@ -110,9 +110,10 @@ Additionally interrupts and debug halts may be received during execution.
 
 Handling of these cases is implementation defined but it is recommended that the standard interrupt/exception/debug handlers can be used without modification.
 
-=== PUSH Operation
+=== PUSH Pseudo-code
 
 All variants of the `PUSH` instruction store the set of registers from `reg_list` to consecutive memory locations, and decrement the stack pointer.
+The pseudo-code uses assembly inserts so that it can use `fsw/fsd`.
 
 [NOTE]
   `stack_adjustment` is negative.
@@ -146,9 +147,10 @@ for(i in freg_list)  {
 }
 ----
 
-=== POP[RET] Operation
+=== POP[RET] Pseudo-code
 
 A `POP` instruction loads the set of registers from `reg_list` from consecutive memory locations, and then increments the stack pointer. 
+The pseudo-code uses assembly inserts so that it can use `flw/fld/ret`.
 
 [NOTE]
   `stack_adjustment` is positive.
@@ -180,7 +182,7 @@ for(i in freg_list)  {
 }
 sp+=stack_adjustment; //increment
 if (opcode == "POPRET*) { 
-   ret
+   asm("ret");
 }
 ----
 
