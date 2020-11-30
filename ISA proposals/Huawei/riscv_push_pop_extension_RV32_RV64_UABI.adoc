@@ -119,15 +119,15 @@ sp+=stack_adjustment; //decrement
 if (ra) {
   addr-=XLEN/4;
   switch(XLEN) {
-    32:  sw ra, 0(addr);
-    64:  sd ra, 0(addr);
+    32:  asm("sw ra, 0(addr)");
+    64:  asm("sd ra, 0(addr)");
   }
 }
 for(i in xreg_list)  {
   addr-=XLEN/4;
   switch(XLEN) {
-    32:  sw s[i], 0(addr);
-    64:  sd s[i], 0(addr);
+    32:  asm("sw s[i], 0(addr)");
+    64:  asm("sd s[i], 0(addr)");
   }
 }
 if (freg_list AND opcode==PUSH.D AND XLEN==32 AND (addr%8)>0) { 
@@ -135,8 +135,8 @@ if (freg_list AND opcode==PUSH.D AND XLEN==32 AND (addr%8)>0) {
 }
 for(i in freg_list)  {
   switch(opcode) { 
-    "PUSH.F": {addr-= 4; fsw fs[i], 0(addr);}
-    "PUSH.D": {addr-= 8; fsd fs[i], 0(addr);}
+    "PUSH.F": {addr-= 4; asm("fsw fs[i], 0(addr)");}
+    "PUSH.D": {addr-= 8; asm("fsd fs[i], 0(addr)");}
   }
 }
 ----
@@ -150,19 +150,19 @@ A `POP` instruction loads the set of registers from `reg_list` from consecutive 
 
 [source,sourceCode,text]
 ----
-addr=sp;
+addr=sp+stack_adjustment;
 if (ra) {
   addr-=XLEN/4;
   switch(XLEN) {
-    32:  lw ra, 0(addr);
-    64:  ld ra, 0(addr);
+    32:  asm("lw ra, 0(addr)");
+    64:  asm("ld ra, 0(addr)");
   }
 }
 for(i in xreg_list)  {
   addr-=XLEN/4;
   switch(XLEN) {
-    32:  lw s[i], 0(addr);
-    64:  ld s[i], 0(addr);
+    32:  asm("lw s[i], 0(addr)");
+    64:  asm("ld s[i], 0(addr)");
   }
 }
 if (freg_list AND opcode==PUSH.D AND XLEN==32 AND (addr%8)>0) { 
@@ -170,8 +170,8 @@ if (freg_list AND opcode==PUSH.D AND XLEN==32 AND (addr%8)>0) {
 }
 for(i in freg_list)  {
   switch(opcode) { 
-    "PUSH.F": {addr-= 4; flw fs[i], 0(addr);}
-    "PUSH.D": {addr-= 8; fld fs[i], 0(addr);}
+    "PUSH.F": {addr-= 4; asm("flw fs[i], 0(addr)");}
+    "PUSH.D": {addr-= 8; asm("fld fs[i], 0(addr)");}
 }
 sp+=stack_adjustment; //increment
 if (opcode == "POPRET*) { 
@@ -321,13 +321,13 @@ Equivalent sequence:
 [source,sourceCode,text]
 ----
 addi sp, sp, -64;
-sw  s5, 36(sp);
-sw  s4, 40(sp); 
-sw  s3, 44(sp);
-sw  s2, 48(sp); 
-sw  s1, 52(sp);
-sw  s0, 56(sp); 
 sw  ra, 60(sp);
+sw  s0, 56(sp); 
+sw  s1, 52(sp);
+sw  s2, 48(sp); 
+sw  s3, 44(sp);
+sw  s4, 40(sp); 
+sw  s5, 36(sp);
 ----
 
 === C.PUSH RV32I UABI (16-byte aligned stack)
@@ -344,9 +344,9 @@ Equivalent sequence:
 [source,sourceCode,text]
 ----
 addi sp, sp, -32;
-sw  s1, 20(sp);
-sw  s0, 24(sp); 
 sw  ra, 28(sp);
+sw  s0, 24(sp); 
+sw  s1, 20(sp);
 ----
 
 === C.POP RV32I UABI (16-byte aligned stack)
@@ -458,17 +458,17 @@ Micro operation sequence:
 
 [source,sourceCode,text]
 ----
-lw   s9, 212(sp);  
-lw   s8, 216(sp);
-lw   s7, 220(sp);  
-lw   s6, 224(sp)
-lw   s5, 228(sp);  
-lw   s4, 232(sp);
-lw   s3, 236(sp);  
-lw   s2, 240(sp)
-lw   s1, 244(sp);  
-lw   s0, 248(sp);
 lw   ra, 252(sp);
+lw   s0, 248(sp);
+lw   s1, 244(sp);  
+lw   s2, 240(sp)
+lw   s3, 236(sp);  
+lw   s4, 232(sp);
+lw   s5, 228(sp);  
+lw   s6, 224(sp)
+lw   s7, 220(sp);  
+lw   s8, 216(sp);
+lw   s9, 212(sp);  
 addi sp, sp, 256
 ----
 
@@ -485,13 +485,13 @@ Micro operation sequence:
 
 [source,sourceCode,text]
 ----
-flw  fs1, 4(s0);  
-flw  fs0, 8(sp);
-lw   s3, 12(sp);  
-lw   s2, 16(sp);
-lw   s1, 20(sp);  
-lw   s0, 24(sp);
 lw   ra, 28(sp);
+lw   s0, 24(sp);
+lw   s1, 20(sp);  
+lw   s2, 16(sp);
+lw   s3, 12(sp);  
+flw  fs0, 8(sp);
+flw  fs1, 4(s0);  
 addi sp, sp, 32; 
 ret
 ----
