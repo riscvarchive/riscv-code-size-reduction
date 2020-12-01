@@ -52,9 +52,9 @@ Discussion should be mainly focussed on the proposals for v1.0
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 17+|PUSH/POP/POPRET specifications are mature
 17+|`rcount` must be in the range 0 to 10 to decode as these instructions
-3+|  100       | 1  | 1  4+|rcount (0,10) | 0  | 0  3+| spimm   2+| 00  | C.POP[.E]
-3+|  100       | 1  | 1  4+|rcount (0,10) | 0  | 1  3+| spimm   2+| 00  | C.POPRET[.E]
-3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 0  3+| spimm   2+| 00  | C.PUSH[.E]
+3+|  100       | 1  | 1  4+|rcount (0,10) | 0  | 0  3+| spimm   2+| 00  | C.POP
+3+|  100       | 1  | 1  4+|rcount (0,10) | 0  | 1  3+| spimm   2+| 00  | C.POPRET
+3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 0  3+| spimm   2+| 00  | C.PUSH
 17+|PUSHZERO spec is less mature than PUSH/POP/POPRET and the benefit is lower
 3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | *reserved*
 3+|  100       | 1  | 1  4+| 1011       5+|                     2+| 00  | *reserved*
@@ -136,9 +136,9 @@ Discussion should be mainly focussed on the proposals for v1.0
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| C.POP[.E]     | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers]
-| C.POPRET[.E]  | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers and return]
-| C.PUSH[.E]    | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers]
+| C.POP         | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers]
+| C.POPRET      | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers and return]
+| C.PUSH        | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH registers]
 | C.ZEXT.B      | rd' = zero_ext(rd'[ 7:0])
 | C.ZEXT.H      | rd' = zero_ext(rd'[15:0])
 | C.SEXT.B      | rd' = sign_ext(rd'[ 7:0])
@@ -162,9 +162,9 @@ Discussion should be mainly focussed on the proposals for v1.0
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembly syntax       | requirements for 16-bit encoding       | 32-bit extension
-|C.POP[.E]   | pop[.e]    {reg_list} | reg_list maps to a 16-bit encoding     | code-size reduction
-|C.POPRET[.E]| popret[.e] {reg_list} | reg_list maps to a 16-bit encoding     | code-size reduction
-|C.PUSH[.E]  | push[.e]   {reg_list} | reg_list maps to a 16-bit encoding     | code-size reduction
+|C.POP       | pop    {reg_list}     | reg_list maps to a 16-bit encoding     | code-size reduction
+|C.POPRET    | popret {reg_list}     | reg_list maps to a 16-bit encoding     | code-size reduction
+|C.PUSH      | push   {reg_list}     | reg_list maps to a 16-bit encoding     | code-size reduction
 |C.SEXT.B    | sext.b rd, rs1        | all registers x8-x15, rd==rs1          | B-extension
 |C.SEXT.H    | sext.h rd, rs1        | all registers x8-x15, rd==rs1          | B-extension
 |C.MUL       | mul    rd, rs1, rs2   | all registers x8-x15, rd==rs1          | I-extension
@@ -258,7 +258,7 @@ sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 17+|PUSHZERO spec is less mature than PUSH/POP/POPRET and the benefit is lower
-3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | _C.PUSHZERO[.E]_
+3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | _C.PUSHZERO_
 17+|two-step execution, load PC relative value and then jump to the loaded value
 3+|  100       | 0  | 1 2+| 00     7+| uimm[8:2]                2+| 00  | _C.CALL_
 17+|PC relative load, only available for RV32 as this encoding is C.SLLI with an out of range shift
@@ -273,7 +273,7 @@ sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| _C.PUSHZERO[.E]_| https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers and ZERO the allocated memory]
+| _C.PUSHZERO_| https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers and ZERO the allocated memory]
 | _C.LSBNOT_      | rd' = rs1' XOR 1
 | _C.CALL_        | ra  = sign_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0])); JAL(ra);
 | _C.LWPC_        | rd' = sign_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0])
