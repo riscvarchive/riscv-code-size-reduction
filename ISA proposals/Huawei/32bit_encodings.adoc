@@ -45,9 +45,9 @@ This should not be taken as a final set at this stage. Any instruction may be re
 |=========================================================================================================================
 | 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
 18+| *custom-0 encoding group (all architectures), PUSH/POP and friends*
-2+|000         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| POP[.E]
-2+|001         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| POPRET[.E]
-2+|010         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| PUSH[.E]
+2+|000         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| POP
+2+|001         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| POPRET
+2+|010         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| PUSH
 18+| *custom-0 encoding group (all architectures), compare-immediate-branch*
 6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 001   4+| offset[5:1]       |0001011| BEQI
 6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 010   4+| offset[5:1]       |0001011| BLTI
@@ -72,9 +72,9 @@ This should not be taken as a final set at this stage. Any instruction may be re
 [width="100%",options=header]
 |==============================================================================================================================================================================================
 |instruction           | definition
-| POP[.E]              | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers]
-| POPRET[.E]           | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[POP registers and return]
-| PUSH[.E]             | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers]
+| POP                  | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers]
+| POPRET               | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers and return]
+| PUSH                 | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH registers]
 | BEQI                 | if (rs1==sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 | BLTI                 | if (rs1< sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 | BGEI                 | if (rs1>=sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
@@ -148,9 +148,9 @@ These instructions may be included in a later revision of the code-size reductio
 |=========================================================================================================================
 | 31 | 30:29   |28|27| 26:25   |24  |23:20            | 19:16 |15 | 14:12        | 11:9        | 8 | 7 | 6 : 0 | instruction
 15+| *custom-0 encoding group (all architectures), PUSH/POP and friends*
-2+|000         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| _POPINT[.E]_
-2+|010         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| _PUSHINT[.E]_
-2+|011         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| _PUSHZERO[.E]_
+2+|000         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| _POPINT_
+2+|010         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| _PUSHINT_
+2+|011         |e |ra 2+|frcount    |rcount         2+|spimm     | 000        3+| 00000               |0001011| _PUSHZERO_
 15+| *custom-0 encoding group (all architectures), load/store multiple, .U means update address after spec to follow*
 |set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 0 | 0 |0001011| _LWM_
 |set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 0 | 1 |0001011| _LWM.U_
@@ -182,9 +182,9 @@ These instructions may be included in a later revision of the code-size reductio
 [width="100%",options=header]
 |=====================================================================================================================================================================================================
 |instruction           | definition
-| _POPINT[.E]_         | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[spec needs updating following the email thread]
-| _PUSHINT[.E]_        | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[spec needs updating following the email thread]
-| _PUSHZERO[.E]_       | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers and ZERO the allocated memory]
+| _POPINT_             | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[spec needs updating following the email thread]
+| _PUSHINT_            | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[spec needs updating following the email thread]
+| _PUSHZERO_           | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers and ZERO the allocated memory]
 | _LWM[.U]_            | spec to follow
 | _SWM[.U]_            | spec to follow
 | _LBU.U_              | rd=zero_ext(Memory[rs1+sign_ext(imm)][ 7:0]); rs1=rs1+1;
