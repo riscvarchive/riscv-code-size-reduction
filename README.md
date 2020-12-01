@@ -45,6 +45,9 @@ Publicly available benchmarks
   - Seems to be Debian installation only which I don't have available....... Tariq
 
 - [BDTI](https://www.bdti.com/services/bdti-dsp-kernel-benchmarks)
+
+   - Need to be licensed? It's a US company so I can't talk to them.... Tariq
+
 - Zephyr includes BLE (bluetooth)
 
   - [Nordic SDK](https://www.nordicsemi.com/Software-and-tools/Software/nRF-Connect-SDK)
