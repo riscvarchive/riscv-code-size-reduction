@@ -1,0 +1,31 @@
+= Meeting Minutes for Code-size Reduction 2020/12/01
+
+We had two presentations this week
+
+== Matteo Perotti presented RVfplib
+- ~ 60% smaller than libgcc
+- ~ 2x speedup on benchmarks
+
+Some points to address
+- divide is slower than libgcc, and doesn't yet use the hardware divider
+- the GPL license is too restrictive, libgcc uses GPL with an exclusion
+- what about producing a speed optimised version
+- benchmarks are internal or Embench, which doesn't have much FP, apparently BEEBS has more, and some others listed by Jeremy
+- interesting to look at the relative speedup on ARM of the optimised vs unoptimised library
+- the most useful code size metric is for linked code, as oppose to the raw library size
+- intersting to also compare against the ARC library
+
+Ideally this will be used to replace parts of libgcc
+- corporate assignments are required to submit to FSF
+- Jim Wilson can advise on the process
+
+
+== David Horner presented CALLVEC
+- a generic mechanism to replace sequenced / micro-coded instructions
+- a more concrete example would be useful to understand how it would replace push/pop
+- this might be more appropriate for the unpriv/priv committees as it's a general mechanism, not list limited to code size reduction
+
+
+Next meeting
+2020 / 12 / 08, same time - 7am PDT
+
