@@ -157,6 +157,7 @@ These instructions may be included in a later revision of the code-size reductio
 |set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 1 | 0 |0001011| _SWM_
 |set  6+| mask32[13:3]                              2+| rs1      | 110          |  mask32[2:0]| 1 | 1 |0001011| _SW.MU_
 15+| *custom-0 encoding group (all architectures), load/store arbitrary pair of registers*
+15+| *should use an odd/even reg pair, giving 5 bits more immediate and maybe 1 more bit from the reg field*
 2+|000       3+| imm[5:2]    2+|   rd2              2+| rs1      | 111        3+|  rd                 |0001011| _LWP_
 2+|001       3+| imm[5:2]    2+|   rs2              2+| rs1      | 111        3+|  rs3                |0001011| _SWP_
 15+| *custom-0 encoding group (all architectures), pre-index loads with address writeback*
