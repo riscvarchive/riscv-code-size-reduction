@@ -233,10 +233,14 @@ The following cases do not decode as `PUSH*/POP*/POPRET*`
 [options="header",width="100%"]
 |=======================================================================
 |15 |14 |13 |12 |11 |10 |9 |8 |7 |6 |5 |4 |3 |2 |1 |0 |instruction
-3+|100|1|0|0 3+|rcount|0|0 3+|spimm 2+|00|C.POP
-3+|100|1|0|0 3+|rcount|0|1 3+|spimm 2+|00|C.POPRET
-3+|100|1|0|0 3+|rcount|1|0 3+|spimm 2+|00|C.PUSH
+3+|100|1|0|0|0 2+|rcount|0 |0 2+|00 | spimm 2+|00|C.POP
+3+|100|1|0|0 3+|rcount|0 |1 3+|spimm 2+|00|C.POPRET
+3+|100|1|0|0 3+|rcount|1 |0 3+|spimm 2+|00|C.PUSH
 |=======================================================================
+
+[NOTE]
+  * For `C.POP`, `spimm[1]=0`, and `rcount[2]=0` are reserved, as these encodings  give minimal benefit
+  * For `C.PUSH/C.POPRET`, if `rcount[2]=1` then `spimm[2]=0` as these encodings  give minimal benefit
 
 == Encoding Fields
 
@@ -248,7 +252,7 @@ The `stack_adjustment` field in the assembly syntax comprises of two components:
 . the memory required for the registers in the list, rounded up to 16-bytes (using the `Align16` function below)
 . additional stack space allocated for local variables, encoded in the `spimm` field
 
-The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has 3-bits), and the 32-bit encoding allows up to 15.
+The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up to 3-bits), and the 32-bit encoding allows up to 15.
 
 [source,sourceCode,text]
 ----
@@ -293,18 +297,18 @@ The registers in the `reg_list` are controlled by these three fields
 |==========================
 |rcount  | ABI names      
 | 0      |none       
-| 1      |s0         
-| 2      |s0-s1      
-| 3      |s0-s2      
-| 4      |s0-s3          
-| 5      |s0-s4          
-| 6      |s0-s5          
-| 7      |s0-s6          
-| 8      |s0-s7          
-| 9      |s0-s8          
-| 10     |s0-s9          
-| 11     |s0-s10         
-| 12     |s0-s11         
+| 1      |s0
+| 2      |s0-s1
+| 3      |s0-s2
+| 4      |s0-s3
+| 5      |s0-s4
+| 6      |s0-s5
+| 7      |s0-s6
+| 8      |s0-s7
+| 9      |s0-s8
+| 10     |s0-s9
+| 11     |s0-s10
+| 12     |s0-s11
 | 13-15  | *reserved*
 |==========================
 
@@ -314,18 +318,36 @@ The registers in the `reg_list` are controlled by these three fields
 .`rcount` values for the 16-bit encodings
 [options="header",width=100%]
 |============================
-|rcount| ABI names           
-|      |                     
-|      |                     
-|0     |ra                   
-|1     |ra, s0               
-|2     |ra, s0-s1            
-|3     |ra, s0-s2            
-|4     |ra, s0-s3            
-|5     |ra, s0-s5            
-|6     |ra, s0-s8            
+|rcount| ABI names
+|0     |ra
+|1     |ra, s0
+|2     |ra, s0-s1
+|3     |ra, s0-s2
+2+|Following options for `C.PUSH/C.POPRET` only
+|4     |ra, s0-s3
+|5     |ra, s0-s5
+|6     |ra, s0-s8
 |7     |ra, s0-s11
 |============================
+
+== Benchmarking results
+
+Using the `PUSH/POP` support in HCC (Huawei GCC branch) allows the full range of register lists in the 16-bit encodings, and up to 5-bits of `spimm`.
+
+The target for the 16-bit encodings has been to minimise encoding space while keeping ~ 95% of the cases on the benchmark suite (94.9% achieved)
+
+The overall saving compared to -msave-restore is 4.8% using HCC (this result is subject to change as the benchmark suite is updated). Minimising the encoding space reduces this benefit to 4.6%.
+
+[#results-table]
+.16-bit encoding code-size benefit
+[options="header",width=100%]
+|==================================================================
+|Instruction|percentage of calls from HCC|overall code-size saving
+|All        | 94.9%                      | 4.6% (94.9% of 4.8%)
+|`C.PUSH`   | 47.5%                      | 2.3%
+|`C.POPRET` | 37.6%                      | 1.8%
+|`C.POP`    | 9.8%                       | 0.5%
+|==================================================================
 
 == Assembly examples
 
