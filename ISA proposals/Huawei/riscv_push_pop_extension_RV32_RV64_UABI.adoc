@@ -334,6 +334,8 @@ The registers in the `reg_list` are controlled by these three fields
 
 Using the `PUSH/POP` support in HCC (Huawei GCC branch) allows the full range of register lists in the 16-bit encodings, and up to 5-bits of `spimm`.
 
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/push_pop_encoding_results.xlsx[This spreadsheet] shows the results across the whole benchmark suite to show which instructions were inferred (not broken down by benchmark).
+
 The target for the 16-bit encodings has been to minimise encoding space while keeping ~ 95% of the cases on the benchmark suite (94.9% achieved)
 
 The overall saving compared to -msave-restore is 4.8% using HCC (this result is subject to change as the benchmark suite is updated). Minimising the encoding space reduces this benefit to 4.6%.
