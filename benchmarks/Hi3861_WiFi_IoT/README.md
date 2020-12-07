@@ -35,3 +35,22 @@ The output elf is here:
 
 Hi3861/SDK/HiHope_WiFi-IoT_Hi3861SPC021/output/bin/Hi3861_demo.out
 
+Building in Linux
+---------------------------
+To compile the source code in Linux:
+
+A) Place the compiler in a direcotry called hcc_riscv32, and add the bin subdirectory of the compiler the PATH variable
+B) Install any version of scons newer than 3.0.1 and install any version of python newer than 3.7 
+C) Change the following files:
+   1) build/scripts/scons_env_cfg.py:
+                                 env_path_param = os.environ['PATH'].split(';') to be changed to  env_path_param = os.environ['PATH'].split(':') 
+                                 compiler = os.path.join(param, 'riscv32-unknown-elf-gcc.exe') to compiler = os.path.join(param, 'riscv32-unknown-elf-gcc')
+   2) build/scripts/sconts_utils.py:
+                                 env_path_param = os.environ['PATH'].split(';') to be changed to  env_path_param = os.environ['PATH'].split(':') 
+                                 compiler = os.path.join(param, 'riscv32-unknown-elf-gcc.exe') to compiler = os.path.join(param, 'riscv32-unknown-elf-gcc')
+   3) tools/nvtools/build_nv.py:
+                                 g_nv_env.nv_tool=os.path.join(root_dir, 'tools', 'nv', 'cdbm.exe') to  g_nv_env.nv_tool=os.path.join(root_dir, 'tools', 'nv', 'cdbm')
+D) Run ./build.sh
+
+Note 2: to obtain identical results to the one reported, the optimization flag need to be changed from -O2 to -Os
+
