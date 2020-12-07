@@ -73,12 +73,15 @@ For the 16-bit encodings
 
 . `ra` must be included
 . `s0-sN` may be included, valid values of `N` are 0,1,2,3,5,8,11
-. `fs0-fsM` may not be included
-. the `stack_adjustment` must be no more than the total memory required for `xreg_list`, rounded up to a multiple of 16-bytes, + 7*16-bytes.
+. `fs0-fsM` must not be included
+. the `stack_adjustment` must be no more than the total memory required for `xreg_list`, rounded up to a multiple of 16-bytes, plus an addition (0..7)*16-bytes.
+
+[NOTE]
+  To save encoding space some opcodes do not allow the full range of `spimm` which reduces the possible `stack adjustment` range further, see <<#16bitencodings>>
 
 For the 32-bit encodings
 
-. the `stack_adjustment` must be no more than the total memory required for `reg_list`, rounded up to a multiple of 16-bytes, + 15*16-bytes.
+. the `stack_adjustment` must be no more than the total memory required for `reg_list`, rounded up to a multiple of 16-bytes, plus an additional (0..15)*16-bytes.
 
 For example
 
@@ -227,6 +230,7 @@ The following cases do not decode as `PUSH*/POP*/POPRET*`
 * `rcount>12`
 * `fd=1 and frcount=0`
 
+[#16bitencodings]
 == 16-bit Encodings
 
 .proposed 16-bit encodings
