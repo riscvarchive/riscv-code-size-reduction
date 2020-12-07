@@ -23,7 +23,7 @@ Click on HI3861V100
 
 ![download2](https://github.com/riscv/riscv-code-size-reduction/blob/master/benchmarks/Hi3861_WiFi_IoT/pic4.png)
 
-The download includes HCC which has the Huawei custom instructions included, e.g. 48-bit L.LI so you can try them out (using –femit-lli)
+You can download HCC (you can see it in the picture) which has the Huawei custom instructions included, e.g. 48-bit L.LI so you can try them out (using –femit-lli)
 Download the release with the highest SPC number to get the latest version.
  
 This link shows the custom instructions that we use:
