@@ -63,6 +63,9 @@ Proprietary benchmarks
 Useful papers
 - [Peijie Li's Berkeley paper](https://www2.eecs.berkeley.edu/Pubs/TechRpts/2019/EECS-2019-107.pdf)
 
+Useful software
+- [RISCV-NEWOP - auto detect fused instructions from a spike trace and add the instructions to spike](https://github.com/riscv-newop/riscv-newop)
+
 Reference Architectures
 -----------------------
 
