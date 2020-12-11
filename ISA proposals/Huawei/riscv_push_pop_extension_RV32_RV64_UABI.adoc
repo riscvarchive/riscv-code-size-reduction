@@ -257,7 +257,10 @@ The `stack_adjustment` field in the assembly syntax comprises of two components:
 . the memory required for the registers in the list, rounded up to 16-bytes (using the `Align16` function below)
 . additional stack space allocated for local variables, encoded in the `spimm` field
 
-The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up to 3-bits), and the 32-bit encoding allows up to 15.
+The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up to 3-bits), and the 32-bit encoding allows up to 31.
+
+[NOTE]
+  we may reduce the size of `spimm` in the 32-bit encoding once benchmarking work has completed
 
 [source,sourceCode,text]
 ----
