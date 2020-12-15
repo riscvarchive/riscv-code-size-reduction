@@ -12,15 +12,15 @@ Version 0.1
 
 This document describes：
 
-* 32-bit encodings for `PUSH`, `POP` and `POPRET`
+* 32-bit encodings for `PUSH/PUSH.[FDQ]`, `POP/POP.[FDQ]` and `POPRET/POPRET.[FDQ]`
 * 16-bit encodings for `C.PUSH, C.POP` and `C.POPRET` instructions 
 
-The instructions are defined for RV32 and RV64 architectures I variants only, using the UABI. 
+The instructions are defined for RV32, RV64 and RV128 architectures I variants only, using the UABI. 
 
 Future revisions may include:
 
-* The E variant and EABI.
-* RV128[FDQ]
+* The E variant
+* EABI.
 
 These instructions are to reduce the code-size of function prologues and epilogues by using a single encoding to replace a sequence of instructions. 
 They are designed to replace common function prologue/epilogue sequences, but will not replace all possible cases. 
@@ -30,22 +30,30 @@ They are designed to replace common function prologue/epilogue sequences, but wi
 it's better to list these first, as they are resolved I'll update the proposal
 
 * whether to remove `spimm` and always allocate (e.g.) 128-bytes
+* whether to implement floating point save / restore - currently I have no benchmarks which make use of them
+* whether to allow the x-register syntax? It breaks up the ranges which is annoying as s1 and s2 do not map to consecutive registers, so it's excluded at the moment
 
 == Assembler Syntax
 
 [source,sourceCode,text]
 ----
 //these encodings may be 16-bit or 32-bit depending upon the parameters
-push     {<xreg_list>},  -<stack_adjustment>
-pop      {<xreg_list>},   <stack_adjustment> 
-popret   {<xreg_list>},   <stack_adjustment> 
+push           {<xreg_list>},  -<stack_adjustment>
+pop            {<xreg_list>},   <stack_adjustment> 
+popret         {<xreg_list>},   <stack_adjustment> 
 
-//these encodings are 32-bit as F registers are included in the list
-push     {<fxreg_list>}, -<stack_adjustment> 
-pop      {<fxreg_list>},  <stack_adjustment> 
-popret   {<fxreg_list>},  <stack_adjustment> 
-
+//these encodings are 32-bit as F registers are included in the list, the length of the F registers are specified in the encoding
+push.[fdq]     {<fxreg_list>}, -<stack_adjustment> 
+pop.[fdq]      {<fxreg_list>},  <stack_adjustment> 
+popret.[fdq]   {<fxreg_list>},  <stack_adjustment> 
 ----
+
+[NOTE]
+
+  It is required to hard-code the length of the F registers in the opcode, and not just save/restore the whole register. Otherwise F-code running on a D/Q-part
+  or D-code running on a Q-part will store the registers at different addresses to the ones expected by the compiler. An alternative would be to use `misa.[FDQ]`
+  to directly control the behaviour and so set `misa.[DQ]=0` when running F code, but nothing else in the architecture requires this, so it seems unreasonable to 
+  add this requirement here.
 
 . `PUSH` pushes the registers specified in `[f]xreg_list` to the stack, and then adjust the stack pointer by the `stack_adjustment`.
 . `POP` pops the registers in `[f]xreg_list to the stack` from the stack, and then adjusts the stack pointer by the `stack_adjustment`.
@@ -80,34 +88,37 @@ For the 32-bit encodings
 
 For example
 
-. `push {ra,s0-s2}, -64` can use a 16-bit encoding
-. `push {ra,s0-s2, fs0}, -64` must use a 32-bit encoding as `fs0` is in the register list
-. `push {ra,s0-s2}, -256` must use a 32-bit encoding as the `stack_adjustment` is out of range
-
-[NOTE]
- Should we allow the x-register syntax? It breaks up the ranges which is annoying as s1 and s2 do not map to consecutive registers
+. `push   {ra,s0-s2}, -64` can use a 16-bit encoding
+. `push.f {ra,s0-s2, fs0}, -64` must use a 32-bit encoding as `fs0` is in the register list
+. `push   {ra,s0-s2}, -256` must use a 32-bit encoding as the `stack_adjustment` is out of range
 
 To be a legal encoding:
 
 1.  The stack adjustment must be negative for all `PUSH` variants and positive for a `POP[RET]` variants
 2.  The stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register list must be valid (see above)
+4.  If any F registers are included in the list there must be a `.[fdq]` suffix
+5.  It there is a `.[fdq]` suffix, there must be F registers in the list
 
 [NOTE]
   When moving from accessing `x` registers to `f` registers there may be a gap as the registers may be different widths, and all registers must be aligned in memory
 
 == Determining XLEN and FLEN to decoding and execute the instructions
 
-The width of `x` registers in the register list depends upon XLEN and so `misa.MXL`.
-If floating point registers are included in the register list then the width of them depend on the current value of FLEN, and also `misa.D`.
+The width of `x` registers in the register list depends upon XLEN and so `misa.MXL`. From the ELF file header, XLEN is determined by the following flags:
 
-The value of XLEN and FLEN affect the `total_stack_adjustment` which is needed decode the instructions using `objdump`. 
-The architecture specified at compilation is the correct one to use, using the following information from the ELF header:
+* ELFCLASS64 for RV64
+* ELFCLASS32 for RV32 
 
-* ELFCLASS64 or ELFCLASS32 for RV64 or RV32 respectively
-* EF_FLOAT_ABI_SINGLE for FLEN==32, EF_FLOAT_ABI_SINGLE for FLEN==64
+[NOTE]
 
-Follow this linke for details of the https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md#file-header[ELF file header]
+  I don't think there's an ELFCLASS128 for RV128
+
+If using a debugger then `misa.MXL` can be read, if XLEN is now known for the core.
+
+FLEN is explicitly specified in the opcode as the presence of any F registers requires a `.[fdq]` suffix on the opcode.
+
+Follow this link for details of the https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md#file-header[ELF file header]
 
 == Implementation of sequenced instructions
 
@@ -132,7 +143,8 @@ The pseudo-code uses assembly inserts so that it can use `fsw/fsd`.
 [source,sourceCode,text]
 ----
 if (misa.MXL==1) {bytes=4;}
-else             {bytes=8;}
+if (misa.MXL==2) {bytes=8;}
+else             {bytes=16;}
 addr=sp;
 sp+=stack_adjustment; //decrement
 if (ra) {
@@ -140,6 +152,7 @@ if (ra) {
   switch(bytes) {
     4:  asm("sw ra, 0(addr)");
     8:  asm("sd ra, 0(addr)");
+    16: asm("sq ra, 0(addr)");
   }
 }
 for(i in xreg_list)  {
@@ -147,14 +160,23 @@ for(i in xreg_list)  {
   switch(bytes) {
     4:  asm("sw s[i], 0(addr)");
     8:  asm("sd s[i], 0(addr)");
+    16: asm("sq s[i], 0(addr)");
   }
 }
-if (freg_list AND misa.D==1 AND bytes==4 AND (addr%8)>0) { 
-  addr-=4; //RV32D - need to ensure fs0 is aligned
-}
-for(i in freg_list)  {
-  if (misa.D) {addr-= 8; asm("fsd fs[i], 0(addr)");}
-  else        {addr-= 4; asm("fsw fs[i], 0(addr)");}
+if (freq_list) {
+  switch (opcode) {
+    //if FLEN > XLEN, then get the address back into alignment before saving the F registers
+    "PUSH.D": if (bytes< 8) {while(addr% 8) {addr-=bytes;}}
+    "PUSH.Q": if (bytes<16) {while(addr%16) {addr-=bytes;}}
+  }
+  for(i in freg_list)  {
+    addr-=bytes;
+    switch (opcode) {
+      "PUSH.F": asm("fsw fs[i], 0(addr)");
+      "PUSH.D": asm("fsd fs[i], 0(addr)");
+      "PUSH.Q": asm("fsq fs[i], 0(addr)");
+    }
+  }
 }
 ----
 
@@ -169,13 +191,16 @@ The pseudo-code uses assembly inserts so that it can use `flw/fld/ret`.
 [source,sourceCode,text]
 ----
 if (misa.MXL==1) {bytes=4;}
-else             {bytes=8;}
+if (misa.MXL==2) {bytes=8;}
+else             {bytes=16;}
 addr=sp+stack_adjustment;
 if (ra) {
   addr-=bytes;
   switch(bytes) {
     4:  asm("lw ra, 0(addr)");
     8:  asm("ld ra, 0(addr)");
+    16: asm("lq ra, 0(addr)");
+
   }
 }
 for(i in xreg_list)  {
@@ -183,14 +208,23 @@ for(i in xreg_list)  {
   switch(bytes) {
     4:  asm("lw s[i], 0(addr)");
     8:  asm("ld s[i], 0(addr)");
+    16: asm("lq s[i], 0(addr)");
   }
 }
-if (freg_list AND misa.D==1 AND bytes==4 AND (addr%8)>0) { 
-  addr-=4; //RV32D - need to ensure fs0 is aligned
-}
-for(i in freg_list)  {
-  if (misa.D) {addr-= 8; asm("fld fs[i], 0(addr)");}
-  else        {addr-= 4; asm("flw fs[i], 0(addr)");}
+if (freq_list) {
+  switch (opcode) {
+    //if FLEN > XLEN, then get the address back into alignment before saving the F registers
+    "PUSH.D": if (bytes< 8) {while(addr% 8) {addr-=bytes;}}
+    "PUSH.Q": if (bytes<16) {while(addr%16) {addr-=bytes;}}
+  }
+  for(i in freg_list)  {
+    addr-=bytes;
+    switch (opcode) {
+      "PUSH.F": asm("flw fs[i], 0(addr)");
+      "PUSH.D": asm("fld fs[i], 0(addr)");
+      "PUSH.Q": asm("flq fs[i], 0(addr)");
+    }
+  }
 }
 sp+=stack_adjustment; //increment
 if (opcode == "POPRET*) { 
@@ -203,22 +237,41 @@ if (opcode == "POPRET*) {
 .proposed 32-bit encodings
 [options="header",width="100%"]
 |============================================================================
-|31:28  |27|26:24   |23:20  |19:15 |14:12 |11:7  |6:0     |name
-|xxxxxx |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
-|xxxxxx |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP
-|xxxxxx |ra|frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
+|31:30  |29:28|27:25   |24 |23:20  |19:15 |14:12 |11:7  |6:0     |name
+|xx     |xx   |0000    |ra |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
+|xx     |xx   |0000    |ra |rcount |spimm |001   |xxxxx |xxxxxxx |POP
+|xx     |xx   |0000    |ra |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
 
-9+|*reserved as `rcount` is out of range*
-|xxxxxx |x |xxx     |>12    |spimm |xxx   |xxxxx |xxxxxxx |*reserved*
-9+|*reserved as no registers are specified*
-|xxxxxx |0 |000     |000    |spimm |xxx   |xxxxx |xxxxxxx |*reserved*
+|xx     |00   |frcount |ra |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.F
+|xx     |00   |frcount |ra |rcount |spimm |001   |xxxxx |xxxxxxx |POP.F
+|xx     |00   |frcount |ra |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.F
+
+|xx     |01   |frcount |ra |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.D
+|xx     |01   |frcount |ra |rcount |spimm |001   |xxxxx |xxxxxxx |POP.D
+|xx     |01   |frcount |ra |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.D
+
+|xx     |10   |frcount |ra |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.Q
+|xx     |10   |frcount |ra |rcount |spimm |001   |xxxxx |xxxxxxx |POP.Q
+|xx     |10   |frcount |ra |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.Q
+
+10+|*reserved as `rcount` is out of range*
+|xx     |xx   |xxxx    |x  |>12    |xxxx  |xxx   |xxxxx |xxxxxxx |*reserved*
+10+|*reserved as no registers are specified*
+|xx     |xx   |0000    |0  |0000   |xxxx  |xxx   |xxxxx |xxxxxxx |*reserved*
+10+|*reserved as `flen` is out of range (bits [29:28]) and `frcount>0`*
+|xx     |11   |>0     |0  |0000   |xxxx  |xxx    |xxxxx |xxxxxxx |*reserved*
 |============================================================================
+
+[NOTE]
+  bits [29:28] are the `flen` field
 
 === Illegal instructions for the 32-bit encodings
 
 The encoding takes the same behaviour as any floating point instruction if executed when disabled:
 
 * if `frcount>0` and `misa.F==0`
+* if `frcount>0` and `flen==1` and `misa.D==0`
+* if `frcount>0` and `flen==2` and `misa.Q==0`
 
 The following cases do not decode as `PUSH*/POP*/POPRET*`
 
@@ -424,14 +477,14 @@ lw   ra, 156(sp);
 addi sp, sp, 160
 ----
 
-=== PUSH RV32 UABI (16-byte aligned stack)
+=== PUSH.F RV32 UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
-push  {fs0, ra, s0-s4}, -64
+push.f  {fs0, ra, s0-s4}, -64
 ----
 
-Encoding: eabi=0, ra=1, rcount=5, frcount=1, spimm=2 (16-byte aligned)
+Encoding: eabi=0, ra=1, rcount=5, frcount=1, flen=0, spimm=2 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -447,14 +500,14 @@ sw  s0,  24(sp);
 sw  ra,  28(sp);
 ----
 
-=== PUSH RV64 UABI (16-byte aligned stack)
+=== PUSH.F RV64 UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
-push  {fs0, ra, s0-s4}, -64
+push.f  {fs0, ra, s0-s4}, -64
 ----
 
-Encoding: eabi=0, ra=1, rcount=5, frcount=1, spimm=0 (16-byte aligned)
+Encoding: eabi=0, ra=1, rcount=5, frcount=1, flen=0, spimm=0 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -470,28 +523,28 @@ sw  s0,  48(sp);
 sw  ra,  56(sp);
 ----
 
-=== PUSH RV64 UABI (16-byte aligned stack)
+=== PUSH.D RV64 UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
-push  {fs0-fs7}, -128
+push.d  {fs0-fs7}, -128
 ----
 
-Encoding: eabi=0, rcount=0, frcount=12, spimm=2 (16-byte aligned)
+Encoding: eabi=0, rcount=0, frcount=12, flen=2, spimm=2 (16-byte aligned)
 
 Micro operation sequence:
 
 [source,sourceCode,text]
 ----
 addi sp, sp, -128; 
-fsw  fs7,  64(sp); 
-fsw  fs6,  72(sp);
-fsw  fs5,  80(sp); 
-fsw  fs4,  88(sp);
-fsw  fs3,  96(sp); 
-fsw  fs2, 108(sp);
-fsw  fs1, 116(sp); 
-fsw  fs0, 128(sp);
+fsd  fs7,  64(sp); 
+fsd  fs6,  72(sp);
+fsd  fs5,  80(sp); 
+fsd  fs4,  88(sp);
+fsd  fs3,  96(sp); 
+fsd  fs2, 108(sp);
+fsd  fs1, 116(sp); 
+fsd  fs0, 128(sp);
 ----
 
 === POP RV32I UABI (16-byte aligned stack)
@@ -521,14 +574,14 @@ lw   s9, 212(sp);
 addi sp, sp, 256
 ----
 
-=== POPRET RV32I UABI (16-byte aligned stack)
+=== POPRET.F RV32I UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
-popret   {fs0-fs1, ra, s0-s3}, 32
+popret.f   {fs0-fs1, ra, s0-s3}, 32
 ----
 
-Encoding: eabi=0, ra=1, rcount=4, frcount=2, spimm=0 (16-byte aligned)
+Encoding: eabi=0, ra=1, rcount=4, frcount=2, flen=1, spimm=0 (16-byte aligned)
 
 Micro operation sequence:
 
