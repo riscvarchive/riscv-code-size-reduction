@@ -424,7 +424,7 @@ lw   ra, 156(sp);
 addi sp, sp, 160
 ----
 
-=== PUSH.F RV32 UABI (16-byte aligned stack)
+=== PUSH RV32 UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
