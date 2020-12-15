@@ -47,9 +47,9 @@ popret   {<fxreg_list>},  <stack_adjustment>
 
 ----
 
-. All variants of `PUSH` push the registers specified in `[f]xreg_list` to the stack, and then adjust the stack pointer by the `stack_adjustment`.
-. All variants of `POP` pop the registers in `[f]xreg_list to the stack` from the stack, and then adjusts the stack pointer by the `stack_adjustment`.
-. all variants of `POPRET` have the same behaviour as `POP`, followed by `RET`.
+. `PUSH` pushes the registers specified in `[f]xreg_list` to the stack, and then adjust the stack pointer by the `stack_adjustment`.
+. `POP` pops the registers in `[f]xreg_list to the stack` from the stack, and then adjusts the stack pointer by the `stack_adjustment`.
+. `POPRET` has the same behaviour as `POP`, followed by `RET`.
 
 32-bit and 16-bit forms are available, the assembler should choose the 16-bit form if the parameters permit and the C extension is implemented.
 
@@ -102,12 +102,12 @@ The width of `x` registers in the register list depends upon XLEN and so `misa.M
 If floating point registers are included in the register list then the width of them depend on the current value of FLEN, and also `misa.D`.
 
 The value of XLEN and FLEN affect the `total_stack_adjustment` which is needed decode the instructions using `objdump`. 
-The architecture specified at compilation is the correct one to use, using the following information fromthe ELF header:
+The architecture specified at compilation is the correct one to use, using the following information from the ELF header:
 
 * ELFCLASS64 or ELFCLASS32 for RV64 or RV32 respectively
 * EF_FLOAT_ABI_SINGLE for FLEN==32, EF_FLOAT_ABI_SINGLE for FLEN==64
 
-https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md#file-header[ELF file header]
+Follow this linke for details of the https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md#file-header[ELF file header]
 
 == Implementation of sequenced instructions
 
