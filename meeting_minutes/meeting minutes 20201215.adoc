@@ -1,0 +1,32 @@
+= Meeting Minutes for Code-size Reduction 2020/12/15
+
+== Zfinx tool status
+- thanks for Jiawei for his hard word on the Zfinx toolchain
+- there are still unresolved issues in QEMU and Spike, which should be resolved within two weeks
+-- let's review again at the first meeting of 2021 on 5th Jan
+- we need to specify toolchain acceptance criteria
+-- I've started a shared document for this https://docs.google.com/document/d/1T74JcH9KKllT1DXM0OIRvhk9PEPDarVL/edit
+- an open issue is the specification of GDB, so I've added this text into the Zfinx spec https://github.com/riscv/riscv-zfinx/blob/master/Zfinx_spec.adoc
+-- When using GDB on a Zfinx core, GDB must report x-registers instead of f-registers when disassembling floating point opcodes. No other changes are required.
+
+== SAIL
+- we're almost ready to submit the patch but are getting no support
+- Ibrahim will write up the status, and then we will tackle the support issue
+
+== Ray Simar @ Rice
+- Working on a benchmark suite with students
+- Benchmarks suites may be missing memory IO instensive benchmarks
+- Jennifer is workong on tools for opcode counting, and analysing instructions
+-- she's doing her finals, so couldn't attend
+- His team is working on bigger tests, up to 1MB
+
+== PUSH/POP - do we need .F/.D/.Q opcodes? yes we do
+- can't rely on the ELF header being available to disassemble instructions
+- the debugger can access misa.mxl / misa.d
+- but the compiler needs to know where stack variables are in memory, so we can't allow this to change dpeendong on misa
+-- we should be able to run F code on a D part without having to set misa.D=0, nothing else requires that
+
+
+Next meeting
+2021 / 01 / 05, same time - 7am PDT
+
