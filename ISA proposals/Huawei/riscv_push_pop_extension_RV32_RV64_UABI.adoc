@@ -69,7 +69,7 @@ The registers in `xreg_list` are in a comma separated list. The list must not be
 <xreg_list>  ::= <ra> "," <xreg_range> | <ra> | <xreg_range>
 <fxreg_list> ::= <ra> "," <xreg_range> ", " <freg_range> | <ra> "," <freg_range> | <xreg_range> "," <freg_range> | <freg_range>
 <xreg_range> ::= <s0>  | <s0-sN>   (where `N` is in the range [1, 11])
-<freg_range> ::= <fs0> | <fs0-fsM> (where `M` is in the range [1, 7])
+<freg_range> ::= <fs0> | <fs0-fsM> (valid values of `M` are 0,1,2,3,5,8,11)
 ----
 
 For the 16-bit encodings
@@ -339,13 +339,13 @@ The registers in the `reg_list` are controlled by these three fields
 | 2      |fs0-fs1     
 | 3      |fs0-fs2     
 | 4      |fs0-fs3     
-| 5      |fs0-fs4     
-| 6      |fs0-fs5     
-| 7      |fs0-fs6     
+| 5      |fs0-fs5     
+| 6      |fs0-fs8     
+| 7      |fs0-fs11     
 |=====================
 
 [NOTE]
-  We could allocate one more bit for `frcount` to allow up to `fs11` to be accessed but more than 7 floating point arguments are very unlikely. We may even reduce this field further TBD.
+  We save 1-bit of encoding space by grouping the floating point registers
 
 [#32bit-rcount]
 .`rcount` field values for the 32-bit encodings
@@ -464,16 +464,16 @@ Equivalent sequence:
 
 [source,sourceCode,text]
 ----
-lw   s8, 120(sp);  
-lw   s7, 124(sp);  
-lw   s6, 128(sp);  
-lw   s5, 132(sp);  
-lw   s4, 136(sp);  
-lw   s3, 140(sp);  
-lw   s2, 144(sp);  
-lw   s1, 148(sp);  
-lw   s0, 152(sp);  
 lw   ra, 156(sp);
+lw   s0, 152(sp);  
+lw   s1, 148(sp);  
+lw   s2, 144(sp);  
+lw   s3, 140(sp);  
+lw   s4, 136(sp);  
+lw   s5, 132(sp);  
+lw   s6, 128(sp);  
+lw   s7, 124(sp);  
+lw   s8, 120(sp);  
 addi sp, sp, 160
 ----
 
@@ -484,43 +484,43 @@ addi sp, sp, 160
 push.f  {fs0, ra, s0-s4}, -64
 ----
 
-Encoding: eabi=0, ra=1, rcount=5, frcount=1, flen=0, spimm=2 (16-byte aligned)
+Encoding: ra=1, rcount=5, frcount=1, flen=0, spimm=2 (16-byte aligned)
 
 Micro operation sequence:
 
 [source,sourceCode,text]
 ----
 addi sp, sp, -64;
-fsw fs0,  4(sp)
-sw  s4,   8(sp); 
-sw  s3,  12(sp); 
-sw  s2,  16(sp); 
-sw  s1,  20(sp); 
-sw  s0,  24(sp); 
 sw  ra,  28(sp);
+sw  s0,  24(sp); 
+sw  s1,  20(sp); 
+sw  s2,  16(sp); 
+sw  s3,  12(sp); 
+sw  s4,   8(sp); 
+fsw fs0,  4(sp)
 ----
 
-=== PUSH.F RV64 UABI (16-byte aligned stack)
+=== PUSH.D RV64 UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
 push.f  {fs0, ra, s0-s4}, -64
 ----
 
-Encoding: eabi=0, ra=1, rcount=5, frcount=1, flen=0, spimm=0 (16-byte aligned)
+Encoding: ra=1, rcount=5, frcount=1, flen=1, spimm=0 (16-byte aligned)
 
 Micro operation sequence:
 
 [source,sourceCode,text]
 ----
 addi sp, sp, -64;
-fsw fs0,  8(sp)
-sw  s4,  16(sp); 
-sw  s3,  24(sp);
-sw  s2,  32(sp); 
-sw  s1,  40(sp);
-sw  s0,  48(sp); 
 sw  ra,  56(sp);
+sw  s0,  48(sp); 
+sw  s1,  40(sp);
+sw  s2,  32(sp); 
+sw  s3,  24(sp);
+sw  s4,  16(sp); 
+fsd fs0,  8(sp)
 ----
 
 === PUSH.D RV64 UABI (16-byte aligned stack)
@@ -530,21 +530,25 @@ sw  ra,  56(sp);
 push.d  {fs0-fs7}, -128
 ----
 
-Encoding: eabi=0, rcount=0, frcount=12, flen=2, spimm=2 (16-byte aligned)
+Encoding: rcount=0, frcount=12, flen=2, spimm=2 (16-byte aligned)
 
 Micro operation sequence:
 
 [source,sourceCode,text]
 ----
 addi sp, sp, -128; 
-fsd  fs7,  64(sp); 
-fsd  fs6,  72(sp);
-fsd  fs5,  80(sp); 
-fsd  fs4,  88(sp);
+fsd  fs0, 120(sp);
+fsd  fs1, 112(sp); 
+fsd  fs2, 104(sp);
 fsd  fs3,  96(sp); 
-fsd  fs2, 108(sp);
-fsd  fs1, 116(sp); 
-fsd  fs0, 128(sp);
+fsd  fs5,  88(sp); 
+fsd  fs4,  80(sp);
+fsd  fs6,  72(sp);
+fsd  fs7,  64(sp); 
+fsd  fs8,  56(sp); 
+fsd  fs9,  48(sp); 
+fsd  fs10, 40(sp); 
+fsd  fs11, 32(sp); 
 ----
 
 === POP RV32I UABI (16-byte aligned stack)
@@ -554,7 +558,7 @@ fsd  fs0, 128(sp);
 pop   {ra, s0-s9}, 256
 ----
 
-Encoding: eabi=0, ra=1, rcount=10, frcount=0, spimm=13 (16-byte aligned)
+Encoding: ra=1, rcount=10, frcount=0, spimm=13 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -581,7 +585,7 @@ addi sp, sp, 256
 popret.f   {fs0-fs1, ra, s0-s3}, 32
 ----
 
-Encoding: eabi=0, ra=1, rcount=4, frcount=2, flen=1, spimm=0 (16-byte aligned)
+Encoding: ra=1, rcount=4, frcount=2, flen=1, spimm=0 (16-byte aligned)
 
 Micro operation sequence:
 
