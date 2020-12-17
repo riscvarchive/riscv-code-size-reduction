@@ -20,7 +20,7 @@ The instructions are defined for RV32, RV64 and RV128 architectures I variants o
 Future revisions may include:
 
 * The E variant
-* EABI.
+* EABI support
 
 These instructions are to reduce the code-size of function prologues and epilogues by using a single encoding to replace a sequence of instructions. 
 They are designed to replace common function prologue/epilogue sequences, but will not replace all possible cases. 
@@ -29,8 +29,6 @@ They are designed to replace common function prologue/epilogue sequences, but wi
 
 it's better to list these first, as they are resolved I'll update the proposal
 
-* whether to remove `spimm` and always allocate (e.g.) 128-bytes
-* whether to implement floating point save / restore - currently I have no benchmarks which make use of them
 * whether to allow the x-register syntax? It breaks up the ranges which is annoying as s1 and s2 do not map to consecutive registers, so it's excluded at the moment
 
 == Assembler Syntax
@@ -42,7 +40,7 @@ push           {<xreg_list>},  -<stack_adjustment>
 pop            {<xreg_list>},   <stack_adjustment> 
 popret         {<xreg_list>},   <stack_adjustment> 
 
-//these encodings are 32-bit as F registers are included in the list, the length of the F registers are specified in the encoding
+//these encodings are 32-bit as F registers are included in the list, the length of the F registers is specified in the encoding
 push.[fdq]     {<fxreg_list>}, -<stack_adjustment> 
 pop.[fdq]      {<fxreg_list>},  <stack_adjustment> 
 popret.[fdq]   {<fxreg_list>},  <stack_adjustment> 
@@ -50,9 +48,11 @@ popret.[fdq]   {<fxreg_list>},  <stack_adjustment>
 
 [NOTE]
 
-  It is required to hard-code the length of the F registers in the opcode, and not just save/restore the whole register. Otherwise F-code running on a D/Q-part
-  or D-code running on a Q-part will store the registers at different addresses to the ones expected by the compiler. An alternative would be to use `misa.[FDQ]`
-  to directly control the behaviour and so set `misa.[DQ]=0` when running F code, but nothing else in the architecture requires this, so it seems unreasonable to 
+  It is required to hard-code the length of the F registers in the opcode, and not just save/restore the whole register. We must allow code compiled for the F-extension
+  to run on a  core which supports D and posibly Q, and for code compiled for the D-extension to run on a core which supports Q.
+  If we don't explicitly state the F register width and always store the whole register, then the registers will be stored at different addresses to the ones expected 
+  by the compiler. An alternative would be to use `misa.[FDQ]`
+  to directly control the behaviour and so set `misa.[DQ]=0` when running F code. Nothing else in the architecture requires this, so it seems unreasonable to 
   add this requirement here.
 
 . `PUSH` pushes the registers specified in `[f]xreg_list` to the stack, and then adjust the stack pointer by the `stack_adjustment`.
@@ -103,7 +103,7 @@ To be a legal encoding:
 [NOTE]
   When moving from accessing `x` registers to `f` registers there may be a gap as the registers may be different widths, and all registers must be aligned in memory
 
-== Determining XLEN and FLEN to decoding and execute the instructions
+== Determining XLEN and FLEN to decode and execute the instructions
 
 The width of `x` registers in the register list depends upon XLEN and so `misa.MXL`. From the ELF file header, XLEN is determined by the following flags:
 
@@ -114,7 +114,7 @@ The width of `x` registers in the register list depends upon XLEN and so `misa.M
 
   I don't think there's an ELFCLASS128 for RV128
 
-If using a debugger then `misa.MXL` can be read, if XLEN is now known for the core.
+If using a debugger then `misa.MXL` can be read, if XLEN is not known for the core.
 
 FLEN is explicitly specified in the opcode as the presence of any F registers requires a `.[fdq]` suffix on the opcode.
 
@@ -135,7 +135,7 @@ Handling of these cases is implementation defined but it is recommended that the
 === PUSH Pseudo-code
 
 All variants of the `PUSH` instruction store the set of registers from `reg_list` to consecutive memory locations, and decrement the stack pointer.
-The pseudo-code uses assembly inserts so that it can use `fsw/fsd`.
+The pseudo-code uses assembly inserts so that it can use `fsw/fsd` etc.
 
 [NOTE]
   `stack_adjustment` is negative.
@@ -166,8 +166,8 @@ for(i in xreg_list)  {
 if (freq_list) {
   switch (opcode) {
     //if FLEN > XLEN, then get the address back into alignment before saving the F registers
-    "PUSH.D": if (bytes< 8) {while(addr% 8) {addr-=bytes;}}
-    "PUSH.Q": if (bytes<16) {while(addr%16) {addr-=bytes;}}
+    "PUSH.D": while(addr% 8) {addr-=bytes;}
+    "PUSH.Q": while(addr%16) {addr-=bytes;}
   }
   for(i in freg_list)  {
     addr-=bytes;
@@ -214,8 +214,8 @@ for(i in xreg_list)  {
 if (freq_list) {
   switch (opcode) {
     //if FLEN > XLEN, then get the address back into alignment before saving the F registers
-    "PUSH.D": if (bytes< 8) {while(addr% 8) {addr-=bytes;}}
-    "PUSH.Q": if (bytes<16) {while(addr%16) {addr-=bytes;}}
+    "PUSH.D": while(addr% 8) {addr-=bytes;}
+    "PUSH.Q": while(addr%16) {addr-=bytes;}
   }
   for(i in freg_list)  {
     addr-=bytes;
@@ -277,6 +277,7 @@ The following cases do not decode as `PUSH*/POP*/POPRET*`
 
 * No registers are specified (`ra, rcount, frcount` are all zero)
 * `rcount>12`
+* `flen=3`
 
 [#16bitencodings]
 == 16-bit Encodings
