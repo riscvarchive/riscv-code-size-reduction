@@ -29,6 +29,7 @@ They are designed to replace common function prologue/epilogue sequences, but wi
 
 it's better to list these first, as they are resolved I'll update the proposal
 
+* allocate encodings for the 32-bit versions
 * whether to allow the x-register syntax? It breaks up the ranges which is annoying as s1 and s2 do not map to consecutive registers, so it's excluded at the moment
 
 == Assembler Syntax
