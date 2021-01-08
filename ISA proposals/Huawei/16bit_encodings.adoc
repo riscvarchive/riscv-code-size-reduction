@@ -139,6 +139,8 @@ Discussion should be mainly focussed on the proposals for v1.0
 | C.POP         | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers]
 | C.POPRET      | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers and return]
 | C.PUSH        | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH registers]
+| C.TBLJ        | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[Table jump]
+| C.TBLJAL      | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[Table jump]
 | C.ZEXT.B      | rd' = zero_ext(rd'[ 7:0])
 | C.ZEXT.H      | rd' = zero_ext(rd'[15:0])
 | C.SEXT.B      | rd' = sign_ext(rd'[ 7:0])
