@@ -25,16 +25,8 @@ Here an example from the Huawei IoT code, GCC output:
 [source,sourceCode,text]
 ----
 00e079ce <fwrite>:
-  
-replace this code with
-
   e079ce:	001f9317          	auipc	t1,0x1f9
   e079d2:	c7a302e7          	jalr	t0,-902(t1) # 1000648 <__riscv_save_0>
-  
-this code
-
-  e079ce:	xxxx              	tbljal #0 ;#<mapped to __riscv_save_0>, saving 6-bytes
-
   e079d6:	84ae                	mv	s1,a1
   e079d8:	02c58933          	mul	s2,a1,a2
   e079dc:	4401                	li	s0,0
@@ -42,31 +34,36 @@ this code
   e079e0:	8432                	mv	s0,a2
   e079e2:	8636                	mv	a2,a3
   e079e4:	85ca                	mv	a1,s2
-  
-we could replace this code
-
   e079e6:	f5dff0ef          	jal	ra,e07942 <__fwritex>
-
-with this code, but there are only two calls to it in the ELF file, so it doesn't save code-size overall.
-
-  e079e6:	xxxx             	tlbjal #1 ;#{mapped to __fwritex>
-
   e079ea:	00a90463          	beq	s2,a0,e079f2 <fwrite+0x24>
   e079ee:	02955433          	divu	s0,a0,s1
   e079f2:	8522                	mv	a0,s0
-
-replace this code with
-
   e079f4:	001f9317          	auipc	t1,0x1f9
   e079f8:	c7830067          	jr	-904(t1) # 100066c <__riscv_restore_0>
+----
 
-this code
+using table jump we can reduce this as follows:
 
-  e079f4:	xxxx             	tblj #2 ;#<mapped to __riscv_restore_0>
+[source,sourceCode,text]
+----
+00e079ce <fwrite>:
+  e079ce:	xxxx              	tbljal #0 ;#<mapped to __riscv_save_0>, saving 6-bytes
+  e079d6:	84ae                	mv	s1,a1
+  e079d8:	02c58933          	mul	s2,a1,a2
+  e079dc:	4401                	li	s0,0
+  e079de:	c191                	beqz	a1,e079e2 <fwrite+0x14>
+  e079e0:	8432                	mv	s0,a2
+  e079e2:	8636                	mv	a2,a3
+  e079e4:	85ca                	mv	a1,s2
+  e079e6:	xxxx             	jal	ra,e07942 <__fwritex> ;# don't replace with c.tlbjal as there are only two calls in the elf file, so no code size is saved
+  e079ea:	00a90463          	beq	s2,a0,e079f2 <fwrite+0x24>
+  e079ee:	02955433          	divu	s0,a0,s1
+  e079f2:	8522                	mv	a0,s0
+  e079f4:	xxxx             	tblj #1 ;#<mapped to __riscv_restore_0>
 
 ----
 
-The principle is to have a single lookup table of addresses for `C.TBLJ` and `C.TBLJAL`, which is built by the linker. The linker than substitutes the code as shown in the example above there the 46-byte function is reduced to 34-bytes giving ~ 26% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines.
+The principle is to have a single lookup table of addresses for `C.TBLJ` and `C.TBLJAL`, which is built by the linker. The linker than substitutes the code as shown in the example above where the 46-byte function is reduced to 34-bytes giving ~ 26% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines.
 
 Note that `C.TBLJ` is less frequent than `C.TBLJAL` so the 16-bit encoding can be optimised to have a smaller index into the table.
 
@@ -78,6 +75,8 @@ Note that `C.TBLJ` is less frequent than `C.TBLJAL` so the 16-bit encoding can b
 3+|  100       | 1  | 1  2+| 11 7+|         index7              2+| 00  | C.TBLJAL
 |=============================================================================================
 
+== Modes
+
 Two modes are proposed for the lookup table
 
 - simple jump table (`tbljvec.scale`=0)
@@ -85,27 +84,26 @@ Two modes are proposed for the lookup table
 
 |=============================================================================================
 | 31:4          | 3: 0  | CSR
-| base[31:4]    | scale | TLBJVEC
+| base[31:4]    | scale | MTLBJVEC
 |=============================================================================================
 
 === Jump table mode
 
-In jump table mode the behaviour is to load the target address from `TLBJVEC.base` with an offset which is four times the parameter.
+In jump table mode the behaviour is to load the target address from `TMLBJVEC.base` with an offset which is four times the parameter.
 
 [source,sourceCode,text]
 ----
 # tmp is temporary internal state, it doesn't represent a real register
-c.tblj   #n ;# LW tmp, Mem[{TLBJVEC.base[31:4],4'b0} + n<<2]; JR tmp
-c.tbljal #n ;# LW tmp, Mem[{TLBJVEC.base[31:4],4'b0} + n<<2]; JALR ra, tmp
+c.tblj   #n ;# LW tmp, Mem[{MTLBJVEC.base[31:4],4'b0} + n<<2]; JR tmp
+c.tbljal #n ;# LW tmp, Mem[{MTLBJVEC.base[31:4],4'b0} + n<<2]; JALR ra, tmp
 ----
 
-For the `fwrite` example above:
+For the `fwrite` example above, the table contains the base addresses of the functions.
 
 [source,sourceCode,text]
 ----
-TLBJVEC.base+0 = __riscv_save_0
-TLBJVEC.base+4 = __fwritex
-TLBJVEC.base+8 = __riscv_restore_0
+MTLBJVEC.base+0 = # 1000648 <__riscv_save_0>
+MTLBJVEC.base+4 = # 100066c <__riscv_restore_0>
 ----
 
 The functions are not moved in memory, the table lookup is only to give a reference to them using a 16-bit encoding.
@@ -113,10 +111,10 @@ The functions are not moved in memory, the table lookup is only to give a refere
 === Vector table mode
 
 In vector table mode, execution passes directly to the offset from the base register.
-The entry points are scaled, according to `TLBJVEC.scale`
+The entry points are scaled, according to `MTLBJVEC.scale`
 
 |==================================================================
-| `TLBJVEC.scale` | `tablescale` 
+| `MTLBJVEC.scale` | `tablescale` 
 | 0               | jump table mode
 | 1               | 16-bytes, enough for minimum code + `ret`
 | 2               | 32-bytes
@@ -126,16 +124,42 @@ The entry points are scaled, according to `TLBJVEC.scale`
 
 [source,sourceCode,text]
 ----
-c.tblj   #n ;# JR       Mem[{TLBJVEC.base[31:4],4'b0} + n*tablescale];
-c.tbljal #n ;# JALR ra, Mem[{TLBJVEC.base[31:4],4'b0} + n*tablescale];
+c.tblj   #n ;# JR       Mem[{MTLBJVEC.base[31:4],4'b0} + n*tablescale];
+c.tbljal #n ;# JALR ra, Mem[{MTLBJVEC.base[31:4],4'b0} + n*tablescale];
 ----
 
-This method doesn't have the jump table - the code is actually placed in the table. If the code is too large then it will have to call a routine outside the table.
-This avoid an additional redirection to get to the actual code. 
-If the scale is set to 4K then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. 
+This method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table.
+This avoids an additional redirection to get to the actual code, assuming the whole body of the code actually fits in the table.
 
-In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example like a true flash patch mechanism, but it can form the basis of such.
+If the scale is set to 4K then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `MTLBJVEC` must be changed by machine mode only so as the table refers to the system as a whole.
 
+In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example like a true flash patch mechanism, but it can form the basis of such a mechanism.
+
+For the `fwrite` example above __riscv_save_0 / __riscv_restore_0 each take 12 bytes. Therefore `MTLBJVEC.scale=1` is stuiable (16 bytes per entry) and the actual code is placed in the table.
+
+[source,sourceCode,text]
+----
+
+MTLBJVEC.base+0  <__riscv_save_0>:
+ MTLBJVEC.base+0 :	1141                	addi	sp,sp,-16
+ MTLBJVEC.base+2 :	c04a                	sw	s2,0(sp)
+ MTLBJVEC.base+4 :	c226                	sw	s1,4(sp)
+ MTLBJVEC.base+6 :	c422                	sw	s0,8(sp)
+ MTLBJVEC.base+8 :	c606                	sw	ra,12(sp)
+ MTLBJVEC.base+10:	8282                	jr	t0
+
+MTLBJVEC.base+16 <__riscv_restore_0>:
+ MTLBJVEC.base+16:	4902                	lw	s2,0(sp)
+ MTLBJVEC.base+18:	4492                	lw	s1,4(sp)
+ MTLBJVEC.base+20:	4422                	lw	s0,8(sp)
+ MTLBJVEC.base+22:	40b2                	lw	ra,12(sp)
+ MTLBJVEC.base+24:	0141                	addi	sp,sp,16
+ MTLBJVEC.base+26:	8082                	ret
+
+
+----
+
+Clearly some memory is wasted.
 
 
 
