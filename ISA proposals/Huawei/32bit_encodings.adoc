@@ -65,6 +65,9 @@ This should not be taken as a final set at this stage. Any instruction may be re
 8+|imm[11:0]                                          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULI
 7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULIADD
 7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11101         3+| rd'       |0011011| ADDIADD
+18+| *table jump - no encodings yet*
+7+|xxxxxx 4+|index8 |000   4+|xxxxx |xxxxxxx |TBLJ
+7+|xxxxxx 4+|index8 |001   4+|xxxxx |xxxxxxx |TBLJAL
 |=========================================================================================================================
 
 [#v1.0semantics]
@@ -75,6 +78,8 @@ This should not be taken as a final set at this stage. Any instruction may be re
 | POP                  | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers]
 | POPRET               | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers and return]
 | PUSH                 | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH registers]
+| TBLJ                 | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[Table jump]
+| TBLJAL               | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[Table jump and link]
 | BEQI                 | if (rs1==sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 | BLTI                 | if (rs1< sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 | BGEI                 | if (rs1>=sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
