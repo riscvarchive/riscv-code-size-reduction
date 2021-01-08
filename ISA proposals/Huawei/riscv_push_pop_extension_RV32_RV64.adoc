@@ -10,6 +10,10 @@ Version 0.1
 :le: &#8804;
 :rarr: &#8658;
 
+Deprecated - see this document instead: 
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[updated proposal excluding EABI]
+
 This document describes 32-bit and 16-bit encodings for `[C.]PUSH`,
 `[C.]POP` and `[C.]POPRET` instructions for RV32 and RV64,
 architectures, I and E variants. 
