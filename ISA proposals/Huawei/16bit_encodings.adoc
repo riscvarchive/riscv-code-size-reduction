@@ -56,9 +56,9 @@ Discussion should be mainly focussed on the proposals for v1.0
 3+|  100       | 1  | 1  4+|rcount (0,10) | 0  | 1  3+| spimm   2+| 00  | C.POPRET
 3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 0  3+| spimm   2+| 00  | C.PUSH
 17+|PUSHZERO spec is less mature than PUSH/POP/POPRET and the benefit is lower
-3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | *reserved*
-3+|  100       | 1  | 1  4+| 1011       5+|                     2+| 00  | *reserved*
-3+|  100       | 1  | 1  2+| 11 7+|                             2+| 00  | *reserved*
+3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | *reserved for PUSHZERO*
+3+|  100       | 1  | 1  4+| 1011       5+| index               2+| 00  | C.TBLJ
+3+|  100       | 1  | 1  2+| 11 7+|         index               2+| 00  | C.TBLJAL
 |=============================================================================================
 
 [#proposed-16bit-encodings-2]
