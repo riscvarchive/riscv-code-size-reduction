@@ -82,8 +82,8 @@ Two modes are proposed for the lookup table
 - vector table, similar to the interrupt handler vector (`MTBLJVEC.scale>0`)
 
 |=============================================================================================
-| 31:4          | 3: 0  | CSR
-| base[31:4]    | scale | MTBLJVEC
+| 31:4          | 3: 0  | CSR       | Permissions
+| base[31:4]    | scale | MTBLJVEC  | MRW
 |=============================================================================================
 
 === Jump table mode
@@ -97,7 +97,7 @@ c.tblj   #n ;# LW tmp, Mem[{MTLBJVEC.base[31:4],4'b0} + n<<2]; JR tmp
 c.tbljal #n ;# LW tmp, Mem[{MTLBJVEC.base[31:4],4'b0} + n<<2]; JALR ra, tmp
 ----
 
-For the `fwrite` example above, the table contains the base addresses of the functions.
+For the `vsprintf` example above, the table contains the base addresses of the functions.
 
 [source,sourceCode,text]
 ----
@@ -173,6 +173,7 @@ For improved performance, the implementation may cache the contents of the table
 
 Any write to `MTBLJVEC`, even if the actual value is not updated, will indicate that any table caching must be flushed and refetched.
 
+Therefore if there are any updates to generated code in the table in vector mode, a write to `MTBLJVEC` is required to ensure that the cached contents are not stale.
 
 
 
