@@ -40,24 +40,17 @@ using table jump we can reduce this as follows (accepting gaps in the PCs as cod
 
 [source,sourceCode,text]
 ----
-00e079ce <fwrite>:
-  e079ce:	xxxx              	tbljal #0 ;#<mapped to __riscv_save_0>, saving 6-bytes
-  e079d6:	84ae                	mv	s1,a1
-  e079d8:	02c58933          	mul	s2,a1,a2
-  e079dc:	4401                	li	s0,0
-  e079de:	c191                	beqz	a1,e079e2 <fwrite+0x14>
-  e079e0:	8432                	mv	s0,a2
-  e079e2:	8636                	mv	a2,a3
-  e079e4:	85ca                	mv	a1,s2
-  e079e6:	xxxx             	jal	ra,e07942 <__fwritex> ;# don't replace with c.tlbjal as there are only two calls in the elf file, so no code size is saved
-  e079ea:	00a90463          	beq	s2,a0,e079f2 <fwrite+0x24>
-  e079ee:	02955433          	divu	s0,a0,s1
-  e079f2:	8522                	mv	a0,s0
-  e079f4:	xxxx             	tblj #1 ;#<mapped to __riscv_restore_0>
-
+00e084be <vsprintf>:
+  e084be:	xxxx              	tbljal #0 ;#<mapped to __riscv_save_0>, saving 6-bytes
+  e084c6:	86b2                	mv	a3,a2
+  e084c8:	862e                	mv	a2,a1
+  e084ca:	800005b7          	lui	a1,0x80000
+  e084ce:	fff5c593          	not	a1,a1
+  e084d2:	xxxx              	tbljal #1 ;#<mapped to vsnprintf>, saving 2-bytes (8-byte references to this fn also exist)
+  e084da:	xxxx              	tblj #2 ;#<mapped to __riscv_restore_0>
 ----
 
-The principle is to have a single lookup table of addresses for `C.TBLJ` and `C.TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 46-byte function is reduced to 34-bytes giving ~ 26% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines.
+The principle is to have a single lookup table of addresses for `C.TBLJ` and `C.TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. Not all functions are reduced by this much.
 
 Note that `C.TBLJ` is less frequent than `C.TBLJAL` so the 16-bit encoding can be optimised to have a smaller index into the table.
 
@@ -79,7 +72,7 @@ With the proposed encoding, routines called with `C.TBLJ` must be in the lowest 
 |xxxxxx |index7 |001   |xxxxx |xxxxxxx |TBLJAL
 |============================================================================
 
-In the 32-bit encoding, the full range is allowed for `TBLJ`. It would be possible to make the table index field larger, but it's not clear that this would be useful.
+In the 32-bit encoding, the full range is allowed for `TBLJ`. It would be possible to make the table index field larger then 7 bits, but it's not clear that this would be useful.
 
 == CSR and Modes
 
@@ -109,14 +102,15 @@ For the `fwrite` example above, the table contains the base addresses of the fun
 [source,sourceCode,text]
 ----
 MTLBJVEC.base+0 = # 1000648 <__riscv_save_0>
-MTLBJVEC.base+4 = # 100066c <__riscv_restore_0>
+MTLBJVEC.base+4 = #  e08432 <vsnprintf>
+MTLBJVEC.base+8 = # 100066c <__riscv_restore_0>
 ----
 
 The functions are not moved in memory, the table lookup is only to give a reference to them using a 16-bit encoding.
 
 === Vector table mode
 
-In vector table mode, execution passes directly to the offset from the base register.
+In vector table mode, execution passes directly to the scaled offset from the base register.
 The entry points are scaled, according to `MTLBJVEC.scale`
 
 |==================================================================
@@ -139,34 +133,45 @@ This avoids an additional redirection to get to the actual code, assuming the wh
 
 If the scale is set to 4K then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `MTLBJVEC` must be changed by machine mode only so as the table refers to the system as a whole.
 
-In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example like a true flash patch mechanism, but it can form the basis of such a mechanism.
+In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
-For the `fwrite` example above __riscv_save_0 / __riscv_restore_0 each take 12 bytes. Therefore `MTLBJVEC.scale=1` is stuiable (16 bytes per entry) and the actual code is placed in the table.
+For the `vsprintf` example above __riscv_save_0 / __riscv_restore_0 each take 12 bytes, and `MTLBJVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsnprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage.
 
 [source,sourceCode,text]
 ----
 
-MTLBJVEC.base+0  <__riscv_save_0>:
- MTLBJVEC.base+0 :	1141                	addi	sp,sp,-16
- MTLBJVEC.base+2 :	c04a                	sw	s2,0(sp)
- MTLBJVEC.base+4 :	c226                	sw	s1,4(sp)
- MTLBJVEC.base+6 :	c422                	sw	s0,8(sp)
- MTLBJVEC.base+8 :	c606                	sw	ra,12(sp)
- MTLBJVEC.base+10:	8282                	jr	t0
+MTBLJVEC.base+0  <__riscv_save_0>:
+ MTBLJVEC.base+0 :	1141                	addi	sp,sp,-16
+ MTBLJVEC.base+2 :	c04a                	sw	s2,0(sp)
+ MTBLJVEC.base+4 :	c226                	sw	s1,4(sp)
+ MTBLJVEC.base+6 :	c422                	sw	s0,8(sp)
+ MTBLJVEC.base+8 :	c606                	sw	ra,12(sp)
+ MTBLJVEC.base+10:	8282                	jr	t0
 
-MTLBJVEC.base+16 <__riscv_restore_0>:
- MTLBJVEC.base+16:	4902                	lw	s2,0(sp)
- MTLBJVEC.base+18:	4492                	lw	s1,4(sp)
- MTLBJVEC.base+20:	4422                	lw	s0,8(sp)
- MTLBJVEC.base+22:	40b2                	lw	ra,12(sp)
- MTLBJVEC.base+24:	0141                	addi	sp,sp,16
- MTLBJVEC.base+26:	8082                	ret
+MTBLJVEC.base+16: <vsnprintf>
+  MTBLJVEC.base+16:	xxxx                	tlbjal #0 ;# call to <__riscv_save_0>
+  MTBLJVEC.base+18:	xxxx                	#### prologue
+  ...
+  MTBLJVEC.base+28:	xxxx                	j <_vsnprintf_body> ;# call rest of function
+ 
+  
+
+MTBLJVEC.base+32 <__riscv_restore_0>:
+ MTBLJVEC.base+32:	4902                	lw	s2,0(sp)
+ MTBLJVEC.base+34:	4492                	lw	s1,4(sp)
+ MTBLJVEC.base+36:	4422                	lw	s0,8(sp)
+ MTBLJVEC.base+38:	40b2                	lw	ra,12(sp)
+ MTBLJVEC.base+40:	0141                	addi	sp,sp,16
+ MTBLJVEC.base+48:	8082                	ret
 
 
 ----
 
-Clearly some memory is wasted.
+== Caching
 
+For improved performance, the implementation may cache the contents of the table, for either mode. To assist this and avoid unnecessary memory fetches, we state that the table contents may be cached without consistency checks against memory outside the core if `MTBLJVEC` has not been written to. 
+
+Any write to `MTBLJVEC`, even if the actual value is not updated, will indicate that any table caching must be flushed and refetched.
 
 
 
