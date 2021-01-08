@@ -36,7 +36,7 @@ Here's an example from the Huawei IoT code, GCC output:
   e084da:	19630067          	jr	406(t1) # 100066c <__riscv_restore_0>
 ----
 
-using table jump we can reduce this as follows (accepting gaps in the PCs as code has been deleted)
+using `C.TBLJ[AL]` we can reduce this as follows (accepting gaps in the PCs as code has been deleted)
 
 [source,sourceCode,text]
 ----
@@ -46,7 +46,7 @@ using table jump we can reduce this as follows (accepting gaps in the PCs as cod
   e084c8:	862e                	mv	a2,a1
   e084ca:	800005b7          	lui	a1,0x80000
   e084ce:	fff5c593          	not	a1,a1
-  e084d2:	xxxx              	tbljal #1 ;#<mapped to vsnprintf>, saving 2-bytes (8-byte references to this fn also exist)
+  e084d2:	xxxx              	tbljal #1 ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
   e084da:	xxxx              	tblj #2 ;#<mapped to __riscv_restore_0>
 ----
 
@@ -135,7 +135,7 @@ If the scale is set to 4K then this allows each entry in the table to be owned b
 
 In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
-For the `vsprintf` example above __riscv_save_0 / __riscv_restore_0 each take 12 bytes, and `MTLBJVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsnprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage.
+For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTLBJVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsnprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage.
 
 [source,sourceCode,text]
 ----
@@ -169,11 +169,11 @@ MTBLJVEC.base+32 <__riscv_restore_0>:
 
 == Caching
 
-For improved performance, the implementation may cache the contents of the table, for either mode. To assist this and avoid unnecessary memory fetches, we state that the table contents may be cached without consistency checks against memory outside the core if `MTBLJVEC` has not been written to. 
+For improved performance, the implementation may cache the contents of the table, for either mode. To assist this and avoid unnecessary memory fetches, we state that the table contents may be cached without consistency checks against memory outside the hart if `MTBLJVEC` has not been written to. 
 
 Any write to `MTBLJVEC`, even if the actual value is not updated, will indicate that any table caching must be flushed and refetched.
 
-Therefore if there are any updates to generated code in the table in vector mode, a write to `MTBLJVEC` is required to ensure that the cached contents are not stale.
+Therefore if there are any updates to generated code in the table in vector mode, a write to `MTBLJVEC` is required to ensure that any cached contents are not stale.
 
 
 
