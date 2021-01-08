@@ -172,11 +172,10 @@ if (freq_list) {
     "PUSH.Q": while(addr%16) {addr-=bytes;}
   }
   for(i in freg_list)  {
-    addr-=bytes;
     switch (opcode) {
-      "PUSH.F": asm("fsw fs[i], 0(addr)");
-      "PUSH.D": asm("fsd fs[i], 0(addr)");
-      "PUSH.Q": asm("fsq fs[i], 0(addr)");
+      "PUSH.F": {asm("fsw fs[i], 0(addr)");addr-=4;}
+      "PUSH.D": {asm("fsd fs[i], 0(addr)");addr-=8;}
+      "PUSH.Q": {asm("fsq fs[i], 0(addr)");addr-=16;}
     }
   }
 }
@@ -220,11 +219,10 @@ if (freq_list) {
     "PUSH.Q": while(addr%16) {addr-=bytes;}
   }
   for(i in freg_list)  {
-    addr-=bytes;
     switch (opcode) {
-      "PUSH.F": asm("flw fs[i], 0(addr)");
-      "PUSH.D": asm("fld fs[i], 0(addr)");
-      "PUSH.Q": asm("flq fs[i], 0(addr)");
+      "PUSH.F": {asm("flw fs[i], 0(addr)");addr-=4;}
+      "PUSH.D": {asm("fld fs[i], 0(addr)");addr-=8;}
+      "PUSH.Q": {asm("flq fs[i], 0(addr)");addr-=16;}
     }
   }
 }
@@ -484,7 +482,7 @@ addi sp, sp, 160
 
 [source,sourceCode,text]
 ----
-push.f  {fs0, ra, s0-s4}, -64
+push.f  {ra, s0-s4, fs0}, -64
 ----
 
 Encoding: ra=1, rcount=5, frcount=1, flen=0, spimm=2 (16-byte aligned)
@@ -507,7 +505,7 @@ fsw fs0,  4(sp)
 
 [source,sourceCode,text]
 ----
-push.f  {fs0, ra, s0-s4}, -64
+push.f  {ra, s0-s4, fs0}, -64
 ----
 
 Encoding: ra=1, rcount=5, frcount=1, flen=1, spimm=0 (16-byte aligned)
@@ -585,7 +583,7 @@ addi sp, sp, 256
 
 [source,sourceCode,text]
 ----
-popret.f   {fs0-fs1, ra, s0-s3}, 32
+popret.f   {ra, s0-s3, fs0-fs1}, 32
 ----
 
 Encoding: ra=1, rcount=4, frcount=2, flen=1, spimm=0 (16-byte aligned)
