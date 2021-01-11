@@ -16,6 +16,7 @@ The 32-bit instruction will ensure that 64-bit sequences are not needed to call 
 == Issues 
 
 . what functionality to add in the 32-bit verson, if any, for example is there any reason to table the table index field larger?
+. maybe allow x1 or x5 as the link reg for TBLJAL?
 
 == Rationale
 
@@ -82,19 +83,31 @@ Two modes are proposed for the lookup table
 - vector table, similar to the interrupt handler vector (`MTBLJVEC.scale>0`)
 
 |=============================================================================================
-| 31:4          | 3: 0  | CSR       | Permissions
-| base[31:4]    | scale | MTBLJVEC  | MRW
+| XLEN-1:4          | 3: 0  | CSR       | Permissions
+| base[XLEN-1:4]    | scale | MTBLJVEC  | MRW
 |=============================================================================================
 
 === Jump table mode
 
-In jump table mode the behaviour is to load the target address from `MTBLJVEC.base` with an offset which is four times the parameter.
+In jump table mode the behaviour is to load the target address from `MTBLJVEC.base` with an offset which is XLEN/8 times the parameter.
 
 [source,sourceCode,text]
 ----
-# tmp is temporary internal state, it doesn't represent a real register
-c.tblj   #n ;# LW tmp, Mem[MTLBJVEC.base<<3 + n<<2]; JR tmp
-c.tbljal #n ;# LW tmp, Mem[MTLBJVEC.base<<3 + n<<2]; JALR ra, tmp
+switch(opcode) {
+  # tmp is temporary internal state, it doesn't represent a real register
+  c.tblj:   
+    switch(XLEN) {
+      32:  {LW tmp, Mem[MTLBJVEC.base + n<<2][XLEN-1:0]; JR tmp;}
+      64:  {LD tmp, Mem[MTLBJVEC.base + n<<3][XLEN-1:0]; JR tmp;}
+      128: {LQ tmp, Mem[MTLBJVEC.base + n<<4][XLEN-1:0]; JR tmp;}
+    }
+  c.tbljal:   
+    switch(XLEN) {
+      32:  {LW tmp, Mem[MTLBJVEC.base + n<<2][XLEN-1:0]; JALR ra, tmp;}
+      64:  {LD tmp, Mem[MTLBJVEC.base + n<<3][XLEN-1:0]; JALR ra, tmp;}
+      128: {LQ tmp, Mem[MTLBJVEC.base + n<<4][XLEN-1:0]; JALR ra, tmp;}
+    }
+}
 ----
 
 For the `vsprintf` example above, the table contains the base addresses of the functions.
@@ -125,12 +138,12 @@ The entry points are scaled, according to `MTLBJVEC.scale`
 | 11-15           | *reserved*
 |==================================================================
 
-Note that in vector table mode, `tablescale = 2<<(MTLBJVEC.scale+2);`
+Note that in vector table mode, `tablescale = 4<<MTLBJVEC.scale`
 
 [source,sourceCode,text]
 ----
-c.tblj   #n ;# JR       Mem[MTLBJVEC.base<<3 + n<<tablescale];
-c.tbljal #n ;# JALR ra, Mem[MTLBJVEC.base<<3 + n<<tablescale];
+c.tblj   #n ;# JR       Mem[MTLBJVEC.base + n<<tablescale];
+c.tbljal #n ;# JALR ra, Mem[MTLBJVEC.base + n<<tablescale];
 ----
 
 This method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table, or use more than one entry which invalidates one or more table entries.
@@ -140,7 +153,7 @@ If the scale is set to 4K then this allows each entry in the table to be owned b
 
 In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
-For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTLBJVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage. The original `vsprintf` function is 136-bytes. After shrinking due to use of `c.tblj[al]` it would fit with 4 entries so we could allocate entries 1-4 and make `__riscv_restore_0` entry 5 instead of entry 2.
+For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTLBJVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage. The original `vsprintf` function is 136-bytes. After shrinking due to use of `c.tblj[al]` it would fit within 4 entries so I could allocate entries 1-4 and make `__riscv_restore_0` entry 5 instead of entry 2.
 
 [source,sourceCode,text]
 ----
