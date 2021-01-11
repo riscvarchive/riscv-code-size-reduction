@@ -220,9 +220,9 @@ if (freq_list) {
   }
   for(i in freg_list)  {
     switch (opcode) {
-      "PUSH.F": {asm("flw fs[i], 0(addr)");addr-=4;}
-      "PUSH.D": {asm("fld fs[i], 0(addr)");addr-=8;}
-      "PUSH.Q": {asm("flq fs[i], 0(addr)");addr-=16;}
+      "PUSH.F": {addr-=4;asm("flw fs[i], 0(addr)");}
+      "PUSH.D": {addr-=8;asm("fld fs[i], 0(addr)");}
+      "PUSH.Q": {addr-=16;asm("flq fs[i], 0(addr)");}
     }
   }
 }
