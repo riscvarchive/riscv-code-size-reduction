@@ -313,7 +313,7 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 
 [source,sourceCode,text]
 ----
-total_register_bytes = number_of_registers_in_reg_list * XLEN / 8
+total_register_bytes = number_of_registers_in_reg_list * XLEN/8 + number_of_registers_in_freg_list * FLEN/8
 stack_adjustment = Align16(total_register_bytes) + 16*spimm
 ----
 
@@ -492,13 +492,13 @@ Micro operation sequence:
 [source,sourceCode,text]
 ----
 addi sp, sp, -64;
-sw  ra,  28(sp);
-sw  s0,  24(sp); 
-sw  s1,  20(sp); 
-sw  s2,  16(sp); 
-sw  s3,  12(sp); 
-sw  s4,   8(sp); 
-fsw fs0,  4(sp)
+sw  ra,  60(sp);
+sw  s0,  56(sp); 
+sw  s1,  52(sp); 
+sw  s2,  48(sp); 
+sw  s3,  44(sp); 
+sw  s4,  40(sp); 
+fsw fs0, 36(sp)
 ----
 
 === PUSH.D RV64 UABI (16-byte aligned stack)
