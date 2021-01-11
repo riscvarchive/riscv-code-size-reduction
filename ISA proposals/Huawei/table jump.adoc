@@ -93,8 +93,8 @@ In jump table mode the behaviour is to load the target address from `MTBLJVEC.ba
 [source,sourceCode,text]
 ----
 # tmp is temporary internal state, it doesn't represent a real register
-c.tblj   #n ;# LW tmp, Mem[{MTLBJVEC.base[31:4],4'b0} + n<<2]; JR tmp
-c.tbljal #n ;# LW tmp, Mem[{MTLBJVEC.base[31:4],4'b0} + n<<2]; JALR ra, tmp
+c.tblj   #n ;# LW tmp, Mem[MTLBJVEC.base<<3 + n<<2]; JR tmp
+c.tbljal #n ;# LW tmp, Mem[MTLBJVEC.base<<3 + n<<2]; JALR ra, tmp
 ----
 
 For the `vsprintf` example above, the table contains the base addresses of the functions.
@@ -116,26 +116,31 @@ The entry points are scaled, according to `MTLBJVEC.scale`
 |==================================================================
 | `MTLBJVEC.scale` | `tablescale` 
 | 0               | jump table mode
-| 1               | 16-bytes, enough for minimum code + `ret`
-| 2               | 32-bytes
-| 3-14            | to be defined / *reserved?*
-| 15              | 4k to match minimum TLB page size
+2+| *All other values are vector table mode*
+| 1               | 8-bytes
+| 2               | 16-bytes
+| 3               | 32-bytes
+2+| .....
+| 10              | 4KB bytes to match minimum TLB page size
+| 11-15           | *reserved*
 |==================================================================
+
+Note that in vector table mode, `tablescale = 2<<(MTLBJVEC.scale+2);`
 
 [source,sourceCode,text]
 ----
-c.tblj   #n ;# JR       Mem[{MTLBJVEC.base[31:4],4'b0} + n*tablescale];
-c.tbljal #n ;# JALR ra, Mem[{MTLBJVEC.base[31:4],4'b0} + n*tablescale];
+c.tblj   #n ;# JR       Mem[MTLBJVEC.base<<3 + n<<tablescale];
+c.tbljal #n ;# JALR ra, Mem[MTLBJVEC.base<<3 + n<<tablescale];
 ----
 
-This method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table.
+This method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table, or use more than one entry which invalidates one or more table entries.
 This avoids an additional redirection to get to the actual code, assuming the whole body of the code actually fits in the table.
 
 If the scale is set to 4K then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `MTLBJVEC` must be changed by machine mode only so as the table refers to the system as a whole.
 
 In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
-For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTLBJVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsnprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage.
+For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTLBJVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage. The original `vsprintf` function is 136-bytes. After shrinking due to use of `c.tblj[al]` it would fit with 4 entries so we could allocate entries 1-4 and make `__riscv_restore_0` entry 5 instead of entry 2.
 
 [source,sourceCode,text]
 ----
