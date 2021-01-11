@@ -127,11 +127,11 @@ Assembler Syntax
 
 .. code-block:: text
 
-  add x1, x2, x3, sll  #1// x1 = x2 + (x3 << 1)``
-  sub x1, x2, x3, ror #30// x1 = x2 – ror(x3, 30)``
-  or  x1, x2, x3, srl #30// x1 = x2 | (x3 >> 30)``
-  xor x1, x2, x3, sra #30// x1 = x2 ^ asr(x3, 30)``
-  and x1, x2, x3, sll #30// x1 = x2 & (x3 << 30)``
+  add x1, x2, x3, sll  #1// x1 = x2 + (x3 << 1)
+  sub x1, x2, x3, ror #30// x1 = x2 – ror(x3, 30)
+  or  x1, x2, x3, srl #30// x1 = x2 | (x3 >> 30)
+  xor x1, x2, x3, sra #30// x1 = x2 ^ asr(x3, 30)
+  and x1, x2, x3, sll #30// x1 = x2 & (x3 << 30)
 
 This pseudo instruction is also defined
 
