@@ -89,7 +89,7 @@ Two modes are proposed for the lookup table
 
 Using `MTBLJVEC.base` in the pseudo code below implicitly assumes that `MTBLJVEC.base[3:0]=0`. this is consistent with the description of `MTVEC` in the Unprivileged ISA manual.
 
-For RV128 `MTBLJVEC.base` can be misaligned. In this case it is platform defined whether `MTBLJVEC.base[4]` is writeable.
+`MTBLJVEC.base` is naturally aligned for all legal values of `XLEN`
 
 === Jump table mode
 
