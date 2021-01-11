@@ -42,13 +42,13 @@ using `C.TBLJ[AL]` we can reduce this as follows (accepting gaps in the PCs as c
 [source,sourceCode,text]
 ----
 00e084be <vsprintf>:
-  e084be:	xxxx              	tbljal #0 ;#<mapped to __riscv_save_0>, saving 6-bytes
+  e084be:	xxxx              	tbljal  #0 ;#<mapped to __riscv_save_0>, saving 6-bytes
   e084c6:	86b2                	mv	a3,a2
   e084c8:	862e                	mv	a2,a1
   e084ca:	800005b7          	lui	a1,0x80000
   e084ce:	fff5c593          	not	a1,a1
-  e084d2:	xxxx              	tbljal #1 ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
-  e084da:	xxxx              	tblj #2 ;#<mapped to __riscv_restore_0>
+  e084d2:	xxxx              	tbljal  #1 ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
+  e084da:	xxxx              	tblj    #2 ;#<mapped to __riscv_restore_0>
 ----
 
 The principle is to have a single lookup table of addresses for `C.TBLJ` and `C.TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. Not all functions are reduced by this much.
@@ -87,6 +87,10 @@ Two modes are proposed for the lookup table
 | base[XLEN-1:4]    | scale | MTBLJVEC  | MRW
 |=============================================================================================
 
+Using `MTBLJVEC.base` in the pseudo code below implicitly assumes that `MTBLJVEC.base[3:0]=0`. this is consistent with the description of `MTVEC` in the Unprivileged ISA manual.
+
+For RV128 `MTBLJVEC.base` can be misaligned. In this case it is platform defined whether `MTBLJVEC.base[4]` is writeable.
+
 === Jump table mode
 
 In jump table mode the behaviour is to load the target address from `MTBLJVEC.base` with an offset which is XLEN/8 times the parameter.
@@ -95,6 +99,7 @@ In jump table mode the behaviour is to load the target address from `MTBLJVEC.ba
 ----
 switch(opcode) {
   # tmp is temporary internal state, it doesn't represent a real register
+  # Mem is byte indexed
   c.tblj:   
     switch(XLEN) {
       32:  {LW tmp, Mem[MTLBJVEC.base + n<<2][XLEN-1:0]; JR tmp;}
@@ -134,7 +139,7 @@ The entry points are scaled, according to `MTLBJVEC.scale`
 | 2               | 16-bytes
 | 3               | 32-bytes
 2+| .....
-| 10              | 4KB bytes to match minimum TLB page size
+| 10              | 4096-bytes to match minimum TLB page size
 | 11-15           | *reserved*
 |==================================================================
 
@@ -142,18 +147,20 @@ Note that in vector table mode, `tablescale = 4<<MTLBJVEC.scale`
 
 [source,sourceCode,text]
 ----
-c.tblj   #n ;# JR       Mem[MTLBJVEC.base + n<<tablescale];
-c.tbljal #n ;# JALR ra, Mem[MTLBJVEC.base + n<<tablescale];
+c.tblj   #n ;# JR       Mem[MTLBJVEC.base + n*tablescale][XLEN-1:0];
+c.tbljal #n ;# JALR ra, Mem[MTLBJVEC.base + n*tablescale][XLEN-1:0];
 ----
 
 This method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table, or use more than one entry which invalidates one or more table entries.
 This avoids an additional redirection to get to the actual code, assuming the whole body of the code actually fits in the table.
 
-If the scale is set to 4K then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `MTLBJVEC` must be changed by machine mode only so as the table refers to the system as a whole.
+Setting `MTBLJVEC.scale` to specific values does not set a requirement on the alignment of `MTBLJVEC.base`. For example if `tablescale=4096`, `MTBLJVEC.base` does _not_ need to be 4096-byte aligned. 
+
+If `tablescale` is set to 4096 then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `MTLBJVEC` must be changed by machine mode only so as the table refers to the system as a whole.
 
 In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
-For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTLBJVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage. The original `vsprintf` function is 136-bytes. After shrinking due to use of `c.tblj[al]` it would fit within 4 entries so I could allocate entries 1-4 and make `__riscv_restore_0` entry 5 instead of entry 2.
+For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTLBJVEC.scale=2` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is much larger so I have placed the function prologue in the table, and the body elsewhere to mimimise memory wastage. The original `vsprintf` function is 136-bytes. After shrinking due to use of `c.tblj[al]` it would fit within 4 entries so I could allocate entries 1-4 and make `__riscv_restore_0` entry 5 instead of entry 2.
 
 [source,sourceCode,text]
 ----
