@@ -173,9 +173,9 @@ if (freq_list) {
   }
   for(i in freg_list)  {
     switch (opcode) {
-      "PUSH.F": {asm("fsw fs[i], 0(addr)");addr-=4;}
-      "PUSH.D": {asm("fsd fs[i], 0(addr)");addr-=8;}
-      "PUSH.Q": {asm("fsq fs[i], 0(addr)");addr-=16;}
+      "PUSH.F": {addr-= 4;asm("fsw fs[i], 0(addr)");}
+      "PUSH.D": {addr-= 8;asm("fsd fs[i], 0(addr)");}
+      "PUSH.Q": {addr-=16;asm("fsq fs[i], 0(addr)");}
     }
   }
 }
@@ -183,7 +183,7 @@ if (freq_list) {
 
 === POP[RET] Pseudo-code
 
-A `POP` instruction loads the set of registers from `reg_list` from consecutive memory locations, and then increments the stack pointer. 
+A `POP[RET]` instruction loads the set of registers from `reg_list` from consecutive memory locations, and then increments the stack pointer. 
 The pseudo-code uses assembly inserts so that it can use `flw/fld/ret`.
 
 [NOTE]
@@ -215,14 +215,14 @@ for(i in xreg_list)  {
 if (freq_list) {
   switch (opcode) {
     //if FLEN > XLEN, then get the address back into alignment before saving the F registers
-    "PUSH.D": while(addr% 8) {addr-=bytes;}
-    "PUSH.Q": while(addr%16) {addr-=bytes;}
+    "POP.D", "POPRET.D": while(addr% 8) {addr-=bytes;}
+    "POP.Q", "POPRET.Q": while(addr%16) {addr-=bytes;}
   }
   for(i in freg_list)  {
     switch (opcode) {
-      "PUSH.F": {addr-=4;asm("flw fs[i], 0(addr)");}
-      "PUSH.D": {addr-=8;asm("fld fs[i], 0(addr)");}
-      "PUSH.Q": {addr-=16;asm("flq fs[i], 0(addr)");}
+      "POP.F", "POPRET.F": {addr-= 4;asm("flw fs[i], 0(addr)");}
+      "POP.D", "POPRET.D": {addr-= 8;asm("fld fs[i], 0(addr)");}
+      "POP.Q", "POPRET.Q": {addr-=16;asm("flq fs[i], 0(addr)");}
     }
   }
 }
@@ -313,8 +313,14 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 
 [source,sourceCode,text]
 ----
-total_register_bytes = number_of_registers_in_reg_list * XLEN/8 + number_of_registers_in_freg_list * FLEN/8
-stack_adjustment = Align16(total_register_bytes) + 16*spimm
+if (FLEN>XLEN && number_of_registers_in_freg_list>0) {
+  //need padding to ensure FLEN registers are aligned
+  padding = (FLEN/XLEN - (number_of_registers_in_reg_list % (FLEN/XLEN))) * XLEN/8;
+} else {
+  padding = 0
+}
+total_register_bytes = number_of_registers_in_reg_list * XLEN/8 + padding + number_of_registers_in_freg_list * FLEN/8;
+stack_adjustment = Align16(total_register_bytes) + 16*spimm;
 ----
 
 === `ra, frcount, rcount` for the 32-bit encodings
