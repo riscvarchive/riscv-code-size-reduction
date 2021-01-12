@@ -10,13 +10,13 @@ Version 0.1
 :le: &#8804;
 :rarr: &#8658;
 
-This document describes 16-bit instructions to allow table jumps to reduce the code size of `JAL` / `JALR` instructions, where `JALR` jumps to a fixed target and an `AUIPC/JALR' sequence is required because the offset from the PC is out of the +/-1MB range.
+This document describes 16-bit instructions to allow table jumps to reduce the code size of `JAL` / `JALR` instructions, where `JALR` jumps to a fixed target and an `AUIPC/JALR` sequence is required because the offset from the PC is out of the +/-1MB range.
 
 The 32-bit instruction encoding will ensure that 64-bit sequences are not needed to call functions, and additional functionality may be added TBD.
 
 == Issues 
 
-. what functionality to add in the 32-bit verson, if any, for example is there any reason to table the table index field larger?
+. what functionality to add in the 32-bit version?
 
 == Rationale
 
@@ -60,7 +60,7 @@ The principle is to have a single lookup table of `TBLJAL_ENTRIES` addresses for
 3+|  100       | 1  | 1  2+| 11 7+|         index7              2+| 00  | C.TBLJAL
 |=============================================================================================
 
-the 16-bit encoding allows half of the `TBLJAL_ENTRIES` to be accessed (to be confirmed).
+The 16-bit encoding allows half of the `TBLJAL_ENTRIES` to be accessed (_to be confirmed_).
 
 == 32-bit Opcode Assignment
 
@@ -69,14 +69,14 @@ the 16-bit encoding allows half of the `TBLJAL_ENTRIES` to be accessed (to be co
 |xxxxxx |index8  |001   |xxxxx |xxxxxxx |TBLJAL
 |============================================================================
 
-`TBLJAL_ENTRIES` is defined by index field in the 32-bit encoding, so initially 256 (to be confirmed).
+`TBLJAL_ENTRIES` is defined by index field in the 32-bit encoding, so initially 256 (_to be confirmed_).
 
 == CSR and Modes
 
 Two modes are proposed for the lookup table
 
 - simple jump table (`MTBLJVEC.scale`=0)
-- vector table, similar to the interrupt handler vector (`MTBLJVEC.scale>0`)
+- vector table, similar to the interrupt handler vector (`MTBLJVEC.scale`>0)
 
 [#MTBLJALVEC-table]
 .`MTBLJALVEC` definition
@@ -107,7 +107,7 @@ The two watermarks are used to control which tables entries link to
 [#MTBLJALWM-table-watermarks]
 .`MTBLJALWM` watermarks
 |==========================================================
-| Low Entry         | High Entry       | Link register
+| Low Entry         | High Entry         | Link register
 | 0                 | `MTBLJALWM.wmx0`-1 | x0
 | `MTBLJALWM.wmx0`  | `MTBLJALWM.wmx5`-1 | x5
 | `MTBLJALWM.wmx5`  | `TBLJAL_ENTRIES`-1 | x1
@@ -130,17 +130,19 @@ For the 32-bit encoding:
 * `TBLJAL #5` to `TBLJAL #9` will `JAL x5` to the destination PC
 * `TBLJAL #6` to `TBLJAL #255` will `JAL x1` to the destination PC
 
+They are specified in this order as I expect there to be few `JAL x0` / `JAL x5` calls but many `JAL x1` calls. In this way the 32-bit encoding is likely to add more `JAL x1` calls only, so the most frequent can be made available to the 16-bit encoding and the 32-bit encoding for less frequent calls which use 64-bit `AUIPC/JALR` calling sequences.
+
 ==== Watermark end conditions
 
 [#MTBLJALWM-table-watermark-end-conditions]
 .`MTBLJALWM` watermark end conditions
-|===========================================================
+|============================================================================================
 | MTBLJALWM.wmx0  | MTBLJALWM.wmx5  | meaning
 | 0               | 0               | always JAL x1
 | 0               | `TBLJAL_ENTRIES`| always JAL X5
 | `TBLJAL_ENTRIES`| `TBLJAL_ENTRIES`| always JAL X0
-| X               | < X             | illegal instruction
-|===========================================================
+| X               |  ≤ X            | illegal instruction (wmx5 must be greater then wmx0)
+|============================================================================================
 
 
 === Jump table mode
@@ -165,9 +167,12 @@ For the `vsprintf` example above, the table contains the base addresses of the f
 
 [source,sourceCode,text]
 ----
-MTLBJVEC.base+0 = # 1000648 <__riscv_save_0>
-MTLBJVEC.base+4 = #  e08432 <vsnprintf>
-MTLBJVEC.base+8 = # 100066c <__riscv_restore_0>
+MTBJALVECWM.wmx0 = 1 # c.tbljal #0 maps to JAL x0
+MTBJALVECWM.wmx5 = 2 # c.tbljal #1 maps to JAL x5, c.tbljal #2+ map to JAL x1
+
+MTLBJVEC.base+ 0(index 0) = # 100066c <__riscv_restore_0> # requires JAL x0
+MTLBJVEC.base+ 8(index 2) = # 1000648 <__riscv_save_0>    # requires JAL x1
+MTLBJVEC.base+12(index 3) = #  e08432 <vsnprintf>         # requires JAL x1
 ----
 
 The functions are not moved in memory, the table lookup is only to give a reference to them using a 16-bit encoding.
@@ -210,29 +215,29 @@ For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12
 [source,sourceCode,text]
 ----
 
-MTBLJVEC.base+0  <__riscv_save_0>:
- MTBLJVEC.base+0 :	1141                	addi	sp,sp,-16
- MTBLJVEC.base+2 :	c04a                	sw	s2,0(sp)
- MTBLJVEC.base+4 :	c226                	sw	s1,4(sp)
- MTBLJVEC.base+6 :	c422                	sw	s0,8(sp)
- MTBLJVEC.base+8 :	c606                	sw	ra,12(sp)
- MTBLJVEC.base+10:	8282                	jr	t0
-
-MTBLJVEC.base+16: <vsnprintf>
-  MTBLJVEC.base+16:	xxxx                	tlbjal #0 ;# call to <__riscv_save_0>
-  MTBLJVEC.base+18:	xxxx                	#### prologue
+MTBLJVEC.base+0: <vsnprintf>
+  MTBLJVEC.base+0:	xxxx                	tlbjal #0 ;# call to <__riscv_save_0>
+  MTBLJVEC.base+2:	xxxx                	#### prologue
   ...
-  MTBLJVEC.base+28:	xxxx                	j <_vsnprintf_body> ;# call rest of function
+  MTBLJVEC.base+14:	xxxx                	j <_vsnprintf_body> ;# call rest of function
  
+MTBLJVEC.base+32  <__riscv_save_0>:
+ MTBLJVEC.base+34 :	1141                	addi	sp,sp,-16
+ MTBLJVEC.base+36 :	c04a                	sw	s2,0(sp)
+ MTBLJVEC.base+38 :	c226                	sw	s1,4(sp)
+ MTBLJVEC.base+40 :	c422                	sw	s0,8(sp)
+ MTBLJVEC.base+42 :	c606                	sw	ra,12(sp)
+ MTBLJVEC.base+44:	8282                	jr	t0
+
   
 
-MTBLJVEC.base+32 <__riscv_restore_0>:
- MTBLJVEC.base+32:	4902                	lw	s2,0(sp)
- MTBLJVEC.base+34:	4492                	lw	s1,4(sp)
- MTBLJVEC.base+36:	4422                	lw	s0,8(sp)
- MTBLJVEC.base+38:	40b2                	lw	ra,12(sp)
- MTBLJVEC.base+40:	0141                	addi	sp,sp,16
- MTBLJVEC.base+48:	8082                	ret
+MTBLJVEC.base+48 <__riscv_restore_0>:
+ MTBLJVEC.base+50:	4902                	lw	s2,0(sp)
+ MTBLJVEC.base+52:	4492                	lw	s1,4(sp)
+ MTBLJVEC.base+54:	4422                	lw	s0,8(sp)
+ MTBLJVEC.base+56:	40b2                	lw	ra,12(sp)
+ MTBLJVEC.base+58:	0141                	addi	sp,sp,16
+ MTBLJVEC.base+60:	8082                	ret
 
 
 ----
