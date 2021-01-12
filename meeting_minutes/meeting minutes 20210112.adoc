@@ -1,0 +1,27 @@
+Zfinx toolchain report
+
+- QEMU SPIKE done ilp32, ilp32e, ilp64, GCC + toolchain
+--	Need to run standard GCC and binutils regression tests
+--	Must get same answers with/without Zfinx
+--	What about LLVM? Already started, need to confirm timescale 
+--  https://github.com/isrc-cas/rvv-llvm/tree/zfinx
+
+Need to confirm toolchain meets acceptance criteria
+
+- https://docs.google.com/document/d/1T74JcH9KKllT1DXM0OIRvhk9PEPDarVL/edit
+- Jeremy will move the document into the standard RISC-V area
+
+Zfinx ABI discussion 
+
+– Zfinx code is not binary compatible with non-Zfinx code
+
+Usage of github / mailiing list
+
+- Action items on issues list on github
+- Discussion on mailing list
+- Cross-group action items on JIRA
+
+RVA22 / RVM22 – can we have 48-bit? Plan in next 2 months.
+
+short look at table call proposal, but ran out of time:
+- https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc
