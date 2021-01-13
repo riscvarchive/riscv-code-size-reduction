@@ -10,9 +10,14 @@ Version 0.1
 :le: &#8804;
 :rarr: &#8658;
 
-This document describes 16-bit instructions to allow table jumps to reduce the code size of `JAL` / `JALR` instructions, where `JALR` jumps to a fixed target and an `AUIPC/JALR` sequence is required because the offset from the PC is out of the +/-1MB range.
+This document describes 16/32-bit instructions to allow table jumps to reduce the code size of `JAL` / `JALR` instructions.
 
-The 32-bit instruction encoding will ensure that 64-bit sequences are not needed to call functions, and additional functionality may be added TBD.
+* replace 32-bit `JAL` calls to 16-bit `C.TBLJAL`
+* replace 64-bit `AUIPC/JALR` calls to fixed locations with either a 16-bit `C.TBLJAL` or a 32-bit `TBLJAL` 
+** `[C.]TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically intferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the +/-1MB range.
+* the 32-bit encoding allows more functions to be called, but saves less code size, so the most common functions should be callable by the 16-bit encoding
+
+The 32-bit instruction encoding will ensure that 64-bit sequences unlikely to be needed to call functions, unless the table is full. Additional functionality may be added TBD.
 
 == Issues 
 
@@ -37,7 +42,7 @@ Here's an example from the Huawei IoT code, GCC output:
   e084da:	19630067            jr	406(t1) # 100066c <__riscv_restore_0>
 ----
 
-using `C.TBLJ[AL]` we can reduce this as follows (accepting gaps in the PCs as code has been deleted)
+using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as code has been deleted)
 
 [source,sourceCode,text]
 ----
@@ -51,7 +56,7 @@ using `C.TBLJ[AL]` we can reduce this as follows (accepting gaps in the PCs as c
   e084da:	xxxx                tbljal  #z ;#<mapped to __riscv_restore_0>
 ----
 
-The principle is to have a single lookup table of `TBLJAL_ENTRIES` addresses for `[C.]TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. Not all functions are reduced by this much.
+The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `[C.]TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. Not all functions are reduced by this much.
 
 == 16-bit Opcode Assignment
 
@@ -60,7 +65,7 @@ The principle is to have a single lookup table of `TBLJAL_ENTRIES` addresses for
 3+|  100       | 1  | 1  2+| 11 7+|         index7              2+| 00  | C.TBLJAL
 |=============================================================================================
 
-The 16-bit encoding allows half of the `TBLJAL_ENTRIES` to be accessed (_to be confirmed_).
+The 16-bit encoding allows half of the `TBLJALENTRIES` to be accessed (_to be confirmed_).
 
 == 32-bit Opcode Assignment
 
@@ -69,7 +74,7 @@ The 16-bit encoding allows half of the `TBLJAL_ENTRIES` to be accessed (_to be c
 |xxxxxx |index8  |001   |xxxxx |xxxxxxx |TBLJAL
 |============================================================================
 
-`TBLJAL_ENTRIES` is defined by index field in the 32-bit encoding, so initially 256 (_to be confirmed_).
+`TBLJALENTRIES` is defined by index field in the 32-bit encoding, so initially 256 (_to be confirmed_).
 
 == CSR and Modes
 
@@ -89,6 +94,8 @@ Using `MTBLJVEC.base` in the pseudo code below implicitly assumes that `MTBLJVEC
 
 `MTBLJVEC.base` is naturally aligned for all legal values of `XLEN`
 
+`MTBLJALWM` control the _watermarks_ used to control which link register is in use for each table entry.
+
 [#MTBLJALWM-table]
 .`MTBLJALWM` definition
 |=============================================================================================
@@ -105,45 +112,35 @@ The two watermarks are used to control which tables entries link to
 *  x5
 
 [#MTBLJALWM-table-watermarks]
-.`MTBLJALWM` watermarks
-|==========================================================
-| Low Entry         | High Entry         | Link register
-| 0                 | `MTBLJALWM.wmx0`-1 | x0
-| `MTBLJALWM.wmx0`  | `MTBLJALWM.wmx5`-1 | x5
-| `MTBLJALWM.wmx5`  | `TBLJAL_ENTRIES`-1 | x1
-|==========================================================
-
-For example:
-
-* `MTBLJALWM.wmx0` = 5
-* `MTBLJALWM.wmx5` = 10
-
-For the 16-bit encoding:
-
-* `C.TBLJAL #0` to `C.TBLJAL #4` will `JAL x0` to the destination PC
-* `C.TBLJAL #5` to `C.TBLJAL #9` will `JAL x5` to the destination PC
-* `C.TBLJAL #6` to `C.TBLJAL #127` will `JAL x1` to the destination PC
-
-For the 32-bit encoding:
-
-* `TBLJAL #0` to `TBLJAL #4` will `JAL x0` to the destination PC
-* `TBLJAL #5` to `TBLJAL #9` will `JAL x5` to the destination PC
-* `TBLJAL #6` to `TBLJAL #255` will `JAL x1` to the destination PC
-
-They are specified in this order as I expect there to be few `JAL x0` / `JAL x5` calls but many `JAL x1` calls. In this way the 32-bit encoding is likely to add more `JAL x1` calls only, so the most frequent can be made available to the 16-bit encoding and the 32-bit encoding for less frequent calls which use 64-bit `AUIPC/JALR` calling sequences.
-
-==== Watermark end conditions
+.`MTBLJALWM` watermarks when `wmx5` > `wmx0` AND `wxm0` > 0
+|=====================================================================
+| Low Entry               | High Entry                | Link register
+| 0                       | `MTBLJALWM.wmx0`-1        | x0
+| `MTBLJALWM.wmx0`        | `MTBLJALWM.wmx5`-1        | x5
+| `MTBLJALWM.wmx5`        | `TBLJALENTRIES`-1         | x1
+|=====================================================================
 
 [#MTBLJALWM-table-watermark-end-conditions]
-.`MTBLJALWM` watermark end conditions
-|============================================================================================
-|`MTBLJALWM.wmx0` |`MTBLJALWM.wmx5` | meaning
-| 0               | 0               | always JAL x1
-| 0               | `TBLJAL_ENTRIES`| always JAL X5
-| `TBLJAL_ENTRIES`| `TBLJAL_ENTRIES`| always JAL X0
-| X               |  ≤ X            | illegal instruction (wmx5 must be greater then wmx0)
-|============================================================================================
+.`MTBLJALWM` watermark when `wmx5` ≤ `wmx0` OR `wmx0` == 0
+|==================================================================================================================
+|`MTBLJALWM.wmx0`   |`MTBLJALWM.wmx5` | JAL x0 range | JAL x5 range | JAL x1 range
+| 0                 | 0               | none         | none         | 0 to `TBLJALENTRIES`-1
+| X, X>0            | X               | none         | 0 to X-1     | X to `TBLJALENTRIES`-1
+| 0                 | Y, Y>0          | 0 to Y-1     | none         | Y to `TBLJALENTRIES`-1
+| Z                 | <Z            3+|*reserved* cause illegal instruction
+|==================================================================================================================
 
+[#MTBLJALWM-table-watermark-examples]
+.`MTBLJALWM` watermark examples
+|==========================================================================================================================
+|`MTBLJALWM.wmx0`   |`MTBLJALWM.wmx5` | JAL x0 range | JAL x5 range | 16-bit JAL x1 range      | 32-bit JAL x1 range
+| 20                | 40              | 0 to 19      | 20 to 39     | 40 to `TBLJALENTRIES/2-1`| 40 to `TBLJALENTRIES-1`
+| 0                 | 40              | 0 to 39      | none         | 40 to `TBLJALENTRIES/2-1`| 40 to `TBLJALENTRIES-1`
+| 40                | 40              | none         | 0 to 39      | 40 to `TBLJALENTRIES/2-1`| 40 to `TBLJALENTRIES-1`
+| 40                | 39            3+| *reserved*
+|==========================================================================================================================
+
+`JAL x1` is always highest in the range, so that the 32-bit encoding adds more cases using `x1` as 64-bit sequences using `JALR x1` are the most common.
 
 === Jump table mode
 
@@ -156,9 +153,9 @@ switch(opcode) {
   # Mem is byte indexed
   # LINK is x0, x1, x5 depending on the index number and the watermarks
   switch(XLEN) {
-    32:  {LW tmp, Mem[MTLBJVEC.base + n<<2][XLEN-1:0]; JALR LINK, tmp;}
-    64:  {LD tmp, Mem[MTLBJVEC.base + n<<3][XLEN-1:0]; JALR LINK, tmp;}
-    128: {LQ tmp, Mem[MTLBJVEC.base + n<<4][XLEN-1:0]; JALR LINK, tmp;}
+    32:  {LW tmp, Mem[MTBLJVEC.base + n<<2][XLEN-1:0]; JALR LINK, tmp;}
+    64:  {LD tmp, Mem[MTBLJVEC.base + n<<3][XLEN-1:0]; JALR LINK, tmp;}
+    128: {LQ tmp, Mem[MTBLJVEC.base + n<<4][XLEN-1:0]; JALR LINK, tmp;}
   }
 }
 ----
@@ -170,9 +167,9 @@ For the `vsprintf` example above, the table contains the base addresses of the f
 MTBJALVECWM.wmx0 = 1 # c.tbljal #0 maps to JAL x0
 MTBJALVECWM.wmx5 = 2 # c.tbljal #1 maps to JAL x5, c.tbljal #2+ map to JAL x1
 
-MTLBJVEC.base+ 0(index 0) = # 100066c <__riscv_restore_0> # requires JAL x0
-MTLBJVEC.base+ 8(index 2) = # 1000648 <__riscv_save_0>    # requires JAL x1
-MTLBJVEC.base+12(index 3) = #  e08432 <vsnprintf>         # requires JAL x1
+MTBLJVEC.base+ 0(index 0) = # 100066c <__riscv_restore_0> # requires JAL x0
+MTBLJVEC.base+ 8(index 2) = # 1000648 <__riscv_save_0>    # requires JAL x1
+MTBLJVEC.base+12(index 3) = #  e08432 <vsnprintf>         # requires JAL x1
 ----
 
 The functions are not moved in memory, the table lookup is only to give a reference to them using a 16-bit encoding.
@@ -180,25 +177,25 @@ The functions are not moved in memory, the table lookup is only to give a refere
 === Vector table mode
 
 In vector table mode, execution passes directly to the scaled offset from the base register.
-The entry points are scaled, according to `MTLBJVEC.scale`
+The entry points are scaled, according to `MTBLJVEC.scale`
 
 |==================================================================
-| `MTLBJVEC.scale` | `tablescale` 
+| `MTBLJVEC.scale` | `tablescale` 
 | 0               | jump table mode
 2+| *All other values are vector table mode*
 | 1               | 8-bytes
 | 2               | 16-bytes
 | 3               | 32-bytes
 2+| .....
-| 10              | 4096-bytes to match minimum TLB page size
+| 10              | 4096-bytes to match minimum TBL page size
 | 11-15           | *reserved*
 |==================================================================
 
-Note that in vector table mode, `tablescale = 4<<MTLBJVEC.scale`
+Note that in vector table mode, `tablescale = 4<<MTBLJVEC.scale`
 
 [source,sourceCode,text]
 ----
-c.tbljal #n ;# JALR LINK, Mem[MTLBJVEC.base + n*tablescale][XLEN-1:0];
+c.tbljal #n ;# JALR LINK, Mem[MTBLJVEC.base + n*tablescale][XLEN-1:0];
 ----
 
 This method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table, or use more than one entry which invalidates one or more table entries.
@@ -206,11 +203,11 @@ This avoids an additional redirection to get to the actual code, assuming the wh
 
 Setting `MTBLJVEC.scale` to specific values does not set a requirement on the alignment of `MTBLJVEC.base`. For example if `tablescale=4096`, `MTBLJVEC.base` does _not_ need to be 4096-byte aligned. 
 
-If `tablescale` is set to 4096 then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `MTLBJVEC` must be changed by machine mode only so as the table refers to the system as a whole.
+If `tablescale` is set to 4096 then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `MTBLJVEC` must be changed by machine mode only so as the table refers to the system as a whole.
 
 In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
-For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTLBJVEC.scale=2` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is 136 bytes, but will shrink to 128-bytes or smaller by use of `c.tbljal` so I have allocated the first 4 entries to it.
+For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTBLJVEC.scale=2` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is 136 bytes, but will shrink to 128-bytes or smaller by use of `c.tbljal` so I have allocated the first 4 entries to it.
 
 [source,sourceCode,text]
 ----
@@ -238,9 +235,9 @@ MTBLJVEC.base+32  <__riscv_save_0>:
 
 # index 3-6 (JAL x1)
 MTBLJVEC.base+48: <vsnprintf>
-  	xxxx                	tlbjal #5 ;# call to <__riscv_save_0>
+  	xxxx                	tbljal #5 ;# call to <__riscv_save_0>
   ...  up to 128-byte function body ...
-  	xxxx                	tlbjal #4 ;# call to <__riscv_restore_0>
+  	xxxx                	tbljal #4 ;# call to <__riscv_restore_0>
 ----
 
 == Caching
