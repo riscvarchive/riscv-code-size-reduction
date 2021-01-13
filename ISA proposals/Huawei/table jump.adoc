@@ -166,12 +166,12 @@ For the `vsprintf` example above, the table contains the base addresses of the f
 
 [source,sourceCode,text]
 ----
-MTBJALVECWM.wmx0 = 1 # c.tbljal #0 maps to JAL x0
-MTBJALVECWM.wmx5 = 2 # c.tbljal #1 maps to JAL x5, c.tbljal #2+ map to JAL x1
+MTBJALVECWM.wmx0 = 0 # c.tbljal #0 maps to JAL x0
+MTBJALVECWM.wmx5 = 1 # c.tbljal #1+ map to JAL x1
 
 MTBLJVEC.base+ 0(index 0) = # 100066c <__riscv_restore_0> # requires JAL x0
-MTBLJVEC.base+ 8(index 2) = # 1000648 <__riscv_save_0>    # requires JAL x1
-MTBLJVEC.base+12(index 3) = #  e08432 <vsnprintf>         # requires JAL x1
+MTBLJVEC.base+ 8(index 1) = # 1000648 <__riscv_save_0>    # requires JAL x1
+MTBLJVEC.base+12(index 2) = #  e08432 <vsnprintf>         # requires JAL x1
 ----
 
 The functions are not moved in memory, the table lookup is only to give a reference to them using a 16-bit encoding.
@@ -214,8 +214,8 @@ For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12
 [source,sourceCode,text]
 ----
 
-MTBJALVECWM.wmx0 = 1 # c.tbljal #0 maps to JAL x0
-MTBJALVECWM.wmx5 = 2 # c.tbljal #1 maps to JAL x5, c.tbljal #2+ map to JAL x1
+MTBJALVECWM.wmx0 = 0 # c.tbljal #0 maps to JAL x0
+MTBJALVECWM.wmx5 = 1 # c.tbljal #1+ map to JAL x1
 
 #index 0 (JAL x0)
 MTBLJVEC.base+0 <__riscv_restore_0>:
