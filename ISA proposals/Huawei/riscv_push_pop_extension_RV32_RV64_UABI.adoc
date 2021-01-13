@@ -313,15 +313,49 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 
 [source,sourceCode,text]
 ----
-if (FLEN>XLEN && number_of_registers_in_freg_list>0) {
+if (FLEN>XLEN && 
+    number_of_registers_in_freg_list>0 && 
+    number_of_registers_in_reg_list % (FLEN/XLEN)>0) {
   //need padding to ensure FLEN registers are aligned
-  padding = (FLEN/XLEN - (number_of_registers_in_reg_list % (FLEN/XLEN))) * XLEN/8;
+  padding = (FLEN/XLEN - number_of_registers_in_reg_list % (FLEN/XLEN)) * XLEN/8;
 } else {
   padding = 0
 }
 total_register_bytes = number_of_registers_in_reg_list * XLEN/8 + padding + number_of_registers_in_freg_list * FLEN/8;
 stack_adjustment = Align16(total_register_bytes) + 16*spimm;
 ----
+
+The bytes required for padding is simple - if FLEN==XLEN it's always zero. If FLEN=2*XLEN it is 0 or 4. RV32Q is more complex (see below) but this is an unlikely configuration.
+`n` is an integer in the tables so `2n` is always even, `2n+1` is always odd.
+
+[#padding-examples-RV32D]
+.RV32D padding examples, XLEN=32, FLEN=64
+[options="header"]
+|====================================
+| #Xreg  |Padding required if accessing Fregs
+| 2n     |none                     
+| 2n+1   |4-bytes
+|====================================
+
+[#padding-examples-RV64Q]
+.RV64Q padding examples, XLEN=64, FLEN=128
+[options="header"]
+|====================================
+| #Xreg  |Padding required if accessing Fregs
+| 2n     |none                     
+| 2n+1  |4-bytes
+|====================================
+
+[#padding-examples-RV32Q]
+.RV64Q padding examples, XLEN=32, FLEN=128
+[options="header"]
+|====================================
+| #Xreg  |Padding required if accessing Fregs
+| 4n     |none                     
+| 4n+1   |4-bytes
+| 4n+2   |8-bytes                     
+| 4n+3   |12-bytes
+|====================================
 
 === `ra, frcount, rcount` for the 32-bit encodings
 
@@ -511,7 +545,7 @@ fsw fs0, 36(sp)
 
 [source,sourceCode,text]
 ----
-push.f  {ra, s0-s4, fs0}, -64
+push.d  {ra, s0-s4, fs0}, -64
 ----
 
 Encoding: ra=1, rcount=5, frcount=1, flen=1, spimm=0 (16-byte aligned)
