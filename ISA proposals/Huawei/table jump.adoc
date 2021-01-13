@@ -99,9 +99,13 @@ Using `MTBLJVEC.base` in the pseudo code below implicitly assumes that `MTBLJVEC
 [#MTBLJALWM-table]
 .`MTBLJALWM` definition
 |=============================================================================================
-| XLEN-1:16       | 24:15    | 14:9 |  8: 0  | CSR        | Permissions
-| ROZ             | wmx5     | ROZ  | wmx0   | MTBLJALWM  | MRW
+| XLEN-1:24       | 23:16    | 15:8 |  7: 0  | CSR        | Permissions
+| ROZ             | entries  | wxm5 | wmx0   | MTBLJALWM  | MRW
 |=============================================================================================
+
+[NOTE]
+
+  The range of `MTBLJALWM.entries` is from 0 to `TBLJALENTRIES`
 
 === Watermarks
 
@@ -113,18 +117,19 @@ The two watermark fields are used to control which tables entries link to
 
 Some table entries always link to `x1`. Table entries can also link to `x0` and or `x5`, depending on the programming.
 
+In the table MAX is `TBLJALENTRIES`-1 (255)
 
 [#MTBLJALWM-table-watermark-end-conditions]
 .`MTBLJALWM` watermarks
 |==================================================================================================================
 |`MTBLJALWM.wmx0`   |`MTBLJALWM.wmx5` | `JAL x0` range | `JAL x5` range | `JAL x1` range | Comment
-| X, X>0            | Y, Y>X          | 0 to X-1     | X to Y-1     | Y to `TBLJALENTRIES`-1 | Use all 3 link registers
-| 0                 | 0               | none         | none         | 0 to `TBLJALENTRIES`-1 | Only link to x1
-| 0                 | `TBLJALENTRIES` | 0 to `TBLJALENTRIES`-1      | none     | none        | Only link to x0   
-| `TBLJALENTRIES`   | `TBLJALENTRIES` | none | 0 to `TBLJALENTRIES`-1          | none        | Only link to x5      
-| X, X>0            | X               | none         | 0 to X-1     | X to `TBLJALENTRIES`-1 | Only link to x1, x5
-| 0                 | Y, Y>0          | 0 to Y-1     | none         | Y to `TBLJALENTRIES`-1 | Only link to x0, x1
-| Z                 | <Z            3+|illegal instruction                                   | *reserved*
+| X, X>0            | Y, Y>X          |*0 to X-1*      |*X to Y-1*      |*Y to MAX*      | Use all 3 link registers
+| 0                 |  MAX            |*0 to MAX*      |_none_          |_none_          | Only link to x0   
+| MAX               |  MAX            |_none_          |*0 to MAX*      |_none_          | Only link to x5      
+| 0                 | 0               |_none_          |_none_          |*0 to MAX*      | Only link to x1
+| 0                 | Y, Y>0          |*0 to Y-1*      |_none_          |*Y to MAX*      | Only link to x0, x1
+| X, X>0            | X               |_none_          |*0 to X-1*      |*X to MAX*      | Only link to x1, x5
+| Z                 | <Z            3+|illegal instruction                               | *reserved*
 |==================================================================================================================
 
 With the proposed encodings `TBLJALENTRIES/2=128` so entries 0-127 are accessible by the 16-bit encoding, and 0-255 are accessible by the 32-bit encoding. 
@@ -133,13 +138,13 @@ With the proposed encodings `TBLJALENTRIES/2=128` so entries 0-127 are accessibl
 .`MTBLJALWM` watermark examples
 |==========================================================================================================================
 |`MTBLJALWM.wmx0`   |`MTBLJALWM.wmx5` |`JAL x0` range|`JAL x5` range| `JAL x1` range 
-| 20                | 40              | 0 to 19      | 20 to 39     | 40 to 255
-| 0                 | 40              | 0 to 39      | none         | 40 to 255
-| 40                | 40              | none         | 0 to 39      | 40 to 255
+| 20                | 40              |*0 to 19*     |*20 to 39*    |*40 to 255*
+| 0                 | 40              |*0 to 39*     |_none_        |*40 to 255*
+| 40                | 40              |_none_        |*0 to 39*     |*40 to 255*
 | 40                | 39            3+| *reserved*
-| 0                 | 0               | none         | none         | 0 to 255                 
-| 256               | 256             | none         | 0 to 255     | none                     
-| 0                 | 256             | 0 to 255     | none         | none                    
+| 0                 | 255             |*0 to 255*    |_none_        |_none_
+| 255               | 255             |_none_        |*0 to 255*    |_none_
+| 0                 | 0               |_none_        |_none_        |*0 to 255*               
 |==========================================================================================================================
 
 `JAL x1` is always highest in the range (if enabled), so that the 32-bit encoding typically adds more cases using `x1` to convert `AUIPC/JALR x1` sequences to `TBLJAL` to save code size.
@@ -250,6 +255,11 @@ Any write to `MTBLJVEC`, even if the actual value is not updated, will indicate 
 
 Therefore if there are any updates to generated code in the table in vector mode, a write to `MTBLJVEC` is required to ensure that any cached contents are not stale.
 
+== Security (future ideas)
+
+The table jump mechanism could be reused for security in the future. It is possible to define that the memory allocated to to the table (in vector mode) can only have entry points on the specific vectors, and also only from `TBLJAL` instructions. In this way sensitive code can be placed in the table which cannot be reused for ROP/JOP gadgets, because the code cannot be targetted by `JALR` instructions.
+
+These ideas will not be pursued as part of the code size work.
 
 
 
