@@ -31,15 +31,15 @@ Here's an example from the Huawei IoT code, GCC output:
 [source,sourceCode,text]
 ----
 00e084be <vsprintf>:
-  e084be:	001f8317            auipc	t1,0x1f8
-  e084c2:	18a302e7            jalr	t0,394(t1) # 1000648 <__riscv_save_0>
-  e084c6:	86b2                mv a3,a2
-  e084c8:	862e                mv a2,a1
-  e084ca:	800005b7            lui	a1,0x80000
-  e084ce:	fff5c593            not	a1,a1
-  e084d2:	f61ff0ef            jal	ra,e08432 <vsnprintf>
+  e084be:	001f8317            auipc t1,0x1f8
+  e084c2:	18a302e7            jalr  t0,394(t1) # 1000648 <__riscv_save_0>
+  e084c6:	86b2                mv    a3,a2
+  e084c8:	862e                mv    a2,a1
+  e084ca:	800005b7            lui	  a1,0x80000
+  e084ce:	fff5c593            not	  a1,a1
+  e084d2:	f61ff0ef            jal	  ra,e08432 <vsnprintf>
   e084d6:	001f8317            auipc	t1,0x1f8
-  e084da:	19630067            jr	406(t1) # 100066c <__riscv_restore_0>
+  e084da:	19630067            jr	  406(t1) # 100066c <__riscv_restore_0>
 ----
 
 using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as code has been deleted)
@@ -47,13 +47,13 @@ using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as cod
 [source,sourceCode,text]
 ----
 00e084be <vsprintf>:
-  e084be:	xxxx                tbljal  #x ;#<mapped to __riscv_save_0>, saving 6-bytes
-  e084c6:	86b2                mv a3,a2
-  e084c8:	862e                mv a2,a1
-  e084ca:	800005b7            lui	a1,0x80000
-  e084ce:	fff5c593            not	a1,a1
-  e084d2:	xxxx                tbljal  #y ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
-  e084da:	xxxx                tbljal  #z ;#<mapped to __riscv_restore_0>
+  e084be:	xxxx                tbljal #x ;#<mapped to __riscv_save_0>, saving 6-bytes
+  e084c6:	86b2                mv     a3,a2
+  e084c8:	862e                mv     a2,a1
+  e084ca:	800005b7            lui	   a1,0x80000
+  e084ce:	fff5c593            not	   a1,a1
+  e084d2:	xxxx                tbljal #y ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
+  e084da:	xxxx                tbljal #z ;#<mapped to __riscv_restore_0>
 ----
 
 The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `[C.]TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. Not all functions are reduced by this much.
