@@ -165,14 +165,29 @@ With the proposed encodings
 
 `JAL x1` is always highest in the range (if enabled), so that the 32-bit encoding typically adds more cases using `x1` to convert `AUIPC/JALR x1` sequences to `TBLJAL` to save code size.
 
+
+.watermark example
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump2.PNG[watermark example]
+
 === Exceptions
 
-Take an illegal instruction exception if `[C.]TBLJAL #n` is executed and:
+Take an illegal instruction exception if `[C.]TBLJAL #n` is executed and oe of more of these conditions are true:
 
-- `n > MTBLJALWM.maxentry` AND/OR
-- `MTBLJALWM.wmx5 < MTBLJALWM.wxm0` (this is an _unsigned_ comparison)
+- `n > MTBLJALWM.maxentry` 
+- `MTBLJALWM.wmx5 < MTBLJALWM.wxm0` 
+- `MTBLJALWM.wmx0 > MTBLJALWM.maxentry` 
+- `MTBLJALWM.wmx5 > MTBLJALWM.maxentry`
 
-=== Jump table mode
+All comparisons are _unsigned_.
+
+=== Modes
+
+Table jump supports both jump table and vector modes.
+
+.table jump and vector modes
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump1.PNG[table jump and vector modes]
+
+==== Jump table mode
 
 In jump table mode the behaviour is to load the target address from `MTBLJVEC.base` with an offset which is XLEN/8 times the parameter.
 
@@ -206,7 +221,7 @@ MTBLJVEC.base+12(index 2) = #  e08432 <vsnprintf>         # requires JAL x1
 
 The functions are not moved in memory, the table lookup is only to give a reference to them using a 16-bit encoding.
 
-=== Vector table mode
+==== Vector table mode
 
 In vector table mode, execution passes directly to the scaled offset from the base register.
 The entry points are scaled, according to `MTBLJVEC.scale`
