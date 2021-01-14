@@ -102,6 +102,10 @@ To be a legal encoding:
 4.  If any F registers are included in the list there must be a `.[fdq]` suffix
 5.  It there is a `.[fdq]` suffix, there must be F registers in the list
 
+Additionally:
+
+. If `sp` is not 16-byte aligned then take an illegal instruction exception
+
 [NOTE]
   When moving from accessing `x` registers to `f` registers there may be a gap as the registers may be different widths, and all registers must be aligned in memory
 
@@ -144,6 +148,8 @@ The pseudo-code uses assembly inserts so that it can use `fsw/fsd` etc.
 
 [source,sourceCode,text]
 ----
+//sp must be correctly aligned
+if (sp[3:0])     {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -191,6 +197,8 @@ The pseudo-code uses assembly inserts so that it can use `flw/fld/ret`.
 
 [source,sourceCode,text]
 ----
+//sp must be correctly aligned
+if (sp[3:0])     {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -313,6 +321,7 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 
 [source,sourceCode,text]
 ----
+//the padding calculation requires SP to be 16-byte aligned before executing the instruction
 if (FLEN>XLEN && 
     number_of_registers_in_freg_list>0 && 
     number_of_registers_in_reg_list % (FLEN/XLEN)>0) {
