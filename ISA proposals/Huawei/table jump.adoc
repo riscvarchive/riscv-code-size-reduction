@@ -14,14 +14,14 @@ This document describes 16/32-bit instructions to allow table jumps to reduce th
 
 * replace 32-bit `JAL` calls to 16-bit `C.TBLJAL`
 * replace 64-bit `AUIPC/JALR` calls to fixed locations with either a 16-bit `C.TBLJAL` or a 32-bit `TBLJAL` 
-** `[C.]TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically intferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the +/-1MB range.
+** `[C.]TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically inferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the +/-1MB range.
 * the 32-bit encoding allows more functions to be called, but saves less code size, so the most common functions should be callable by the 16-bit encoding
 
 The 32-bit instruction encoding will ensure that 64-bit sequences are unlikely to be needed to call functions, unless the table is full. Additional functionality may be added TBD.
 
 == Issues 
 
-. what functionality to add in the 32-bit version?
+. what additional functionality to add in the 32-bit version, if any?
 
 == Rationale
 
@@ -74,7 +74,7 @@ The 16-bit encoding allows half of the `TBLJALENTRIES` to be accessed (_to be co
 |xxxxxx |index8  |001   |xxxxx |xxxxxxx |TBLJAL
 |============================================================================
 
-`TBLJALENTRIES` is defined by index field in the 32-bit encoding, so initially 256 (_to be confirmed_).
+`TBLJALENTRIES` is defined by the `index8` field in the 32-bit encoding, so initially 256 (_to be confirmed_).
 
 == CSR and Modes
 
@@ -94,50 +94,66 @@ Using `MTBLJVEC.base` in the pseudo code below implicitly assumes that `MTBLJVEC
 
 `MTBLJVEC.base` is naturally aligned for all legal values of `XLEN`
 
-`MTBLJALWM` control the _watermarks_ used to control which link register is in use for each table entry.
+`MTBLJALCFG` control the valid entries inthe table and the _watermarks_ which are used to control which link register is in use for each table entry.
 
-[#MTBLJALWM-table]
-.`MTBLJALWM` definition
+[#MTBLJALCFG-table]
+.`MTBLJALCFG` definition
 |=============================================================================================
-| XLEN-1:24       | 23:16    | 15:8 |  7: 0  | CSR        | Permissions
-| ROZ             | entries  | wxm5 | wmx0   | MTBLJALWM  | MRW
+| XLEN-1:24       | 23:16    | 15:8 |  7: 0  | CSR         | Permissions
+| ROZ             |maxentry  | wxm5 | wmx0   | MTBLJALCFG  | MRW
 |=============================================================================================
 
 [NOTE]
 
-  The range of `MTBLJALWM.entries` is from 0 to `TBLJALENTRIES`
+  The range of `MTBLJALCFG.maxentry` is from 0 to `TBLJALENTRIES-1`
+
+[NOTE]
+  All 3 fields are _unsigned_ integers
 
 === Watermarks
 
 The two watermark fields are used to control which tables entries link to
 
-*  x0 (i.e. `J` not `JAL`)
-*  x1
-*  x5
+*  `x0` (i.e. `J` not `JAL`)
+*  `x1` (`ra`, standard link register)
+*  `x5` (alternate link register for millicode routines)
 
-Some table entries always link to `x1`. Table entries can also link to `x0` and or `x5`, depending on the programming.
+Depending upon the programming, table entries can all be allocated to 1, 2 or all 3 link registers.
 
-In the table MAX is `TBLJALENTRIES`-1 (255)
+In the table MAX is `TBLJALENTRIES-1` (255)
 
-[#MTBLJALWM-table-watermark-end-conditions]
-.`MTBLJALWM` watermarks
+[#MTBLJALCFG-table-watermark-end-conditions]
+.`MTBLJALCFG` watermarks
 |==================================================================================================================
-|`MTBLJALWM.wmx0`   |`MTBLJALWM.wmx5` | `JAL x0` range | `JAL x5` range | `JAL x1` range | Comment
+|`MTBLJALCFG.wmx0`  |`MTBLJALCFG.wmx5`| `JAL x0` range | `JAL x5` range | `JAL x1` range | Comment
+6+| Normal programming model, use all 3 link registers
 | X, X>0            | Y, Y>X          |*0 to X-1*      |*X to Y-1*      |*Y to MAX*      | Use all 3 link registers
+6+| Restricted programming model, exclude 1 or 2 link registers
 | 0                 |  MAX            |*0 to MAX*      |_none_          |_none_          | Only link to x0   
 | MAX               |  MAX            |_none_          |*0 to MAX*      |_none_          | Only link to x5      
 | 0                 | 0               |_none_          |_none_          |*0 to MAX*      | Only link to x1
 | 0                 | Y, Y>0          |*0 to Y-1*      |_none_          |*Y to MAX*      | Only link to x0, x1
 | X, X>0            | X               |_none_          |*0 to X-1*      |*X to MAX*      | Only link to x1, x5
+6+| reserved for future use
 | Z                 | <Z            3+|illegal instruction                               | *reserved*
 |==================================================================================================================
 
-With the proposed encodings `TBLJALENTRIES/2=128` so entries 0-127 are accessible by the 16-bit encoding, and 0-255 are accessible by the 32-bit encoding. 
+Some of the modes may not be so useful, so we can consider restricting them, for example
 
-[#MTBLJALWM-table-watermark-examples]
-.`MTBLJALWM` watermark examples
+- only link to x5 (only millicode routines)
+- only link to x1, x5 (no J equivalent)
+- _this needs review, but in general I'd like the specification to be flexible_
+
+
+With the proposed encodings 
+
+- the 16-bit encoding can access entry 0 to min(127, `MTBLJALCFG.maxentry`)
+- the 32-bit encoding can access entry 0 to min(255, `MTBLJALCFG.maxentry`)
+
+[#MTBLJALCFG-table-watermark-examples]
+.`MTBLJALCFG` watermark examples
 |==========================================================================================================================
-|`MTBLJALWM.wmx0`   |`MTBLJALWM.wmx5` |`JAL x0` range|`JAL x5` range| `JAL x1` range 
+|`MTBLJALCFG.wmx0`  |`MTBLJALCFG.wmx5`|`JAL x0` range|`JAL x5` range| `JAL x1` range 
 | 20                | 40              |*0 to 19*     |*20 to 39*    |*40 to 255*
 | 0                 | 40              |*0 to 39*     |_none_        |*40 to 255*
 | 40                | 40              |_none_        |*0 to 39*     |*40 to 255*
@@ -149,22 +165,31 @@ With the proposed encodings `TBLJALENTRIES/2=128` so entries 0-127 are accessibl
 
 `JAL x1` is always highest in the range (if enabled), so that the 32-bit encoding typically adds more cases using `x1` to convert `AUIPC/JALR x1` sequences to `TBLJAL` to save code size.
 
+=== Exceptions
+
+Take an illegal instruction exception if `[C.]TBLJAL #n` is executed and:
+
+- `n > MTBLJALWM.maxentry` AND/OR
+- `MTBLJALWM.wmx5 < MTBLJALWM.wxm0` (this is an _unsigned_ comparison)
+
 === Jump table mode
 
 In jump table mode the behaviour is to load the target address from `MTBLJVEC.base` with an offset which is XLEN/8 times the parameter.
 
 [source,sourceCode,text]
 ----
-switch(opcode) {
-  # tmp is temporary internal state, it doesn't represent a real register
-  # Mem is byte indexed
-  # LINK is x0, x1, x5 depending on the index number and the watermarks
-  switch(XLEN) {
-    32:  {LW tmp, Mem[MTBLJVEC.base + n<<2][XLEN-1:0]; JALR LINK, tmp;}
-    64:  {LD tmp, Mem[MTBLJVEC.base + n<<3][XLEN-1:0]; JALR LINK, tmp;}
-    128: {LQ tmp, Mem[MTBLJVEC.base + n<<4][XLEN-1:0]; JALR LINK, tmp;}
+# tmp is temporary internal state, it doesn't represent a real register
+# Mem is byte indexed
+# LINK is x0, x1, x5 depending on the index number and the watermarks
+if (n > MTBLJALCFG.maxentry OR MTBLJALWM.wmx5 < MTBLJALWM.wxm0) {
+  take_illegal_instruction_exception();
   }
+switch(XLEN) {
+  32:  {LW tmp, Mem[MTBLJVEC.base + n<<2][XLEN-1:0]; JALR LINK, tmp;}
+  64:  {LD tmp, Mem[MTBLJVEC.base + n<<3][XLEN-1:0]; JALR LINK, tmp;}
+  128: {LQ tmp, Mem[MTBLJVEC.base + n<<4][XLEN-1:0]; JALR LINK, tmp;}
 }
+
 ----
 
 For the `vsprintf` example above, the table contains the base addresses of the functions.
@@ -195,14 +220,19 @@ The entry points are scaled, according to `MTBLJVEC.scale`
 | 3               | 32-bytes
 2+| .....
 | 10              | 4096-bytes to match minimum TBL page size
-| 11-15           | *reserved*
+| 11+             | *reserved*
 |==================================================================
 
-Note that in vector table mode, `tablescale = 4<<MTBLJVEC.scale`
+Note that in vector table mode, `tablescale = 1<<(MTBLJVEC.scale+2)`
 
 [source,sourceCode,text]
 ----
-c.tbljal #n ;# JALR LINK, Mem[MTBLJVEC.base + n*tablescale][XLEN-1:0];
+# Mem is byte indexed
+# LINK is x0, x1, x5 depending on the index number and the watermarks
+if (n > MTBLJALCFG.maxentry OR MTBLJALWM.wmx5 < MTBLJALWM.wxm0) {
+  take_illegal_instruction_exception();
+  }
+JALR LINK, Mem[MTBLJVEC.base + n*tablescale][XLEN-1:0];
 ----
 
 This method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table, or use more than one entry which invalidates one or more table entries.
