@@ -32,6 +32,7 @@ it's better to list these first, as they are resolved I'll update the proposal
 * allocate encodings for the 32-bit versions
 * whether to allow x-registers to be specified in the assembler syntax instead of only ABI names
 ** only using ABI names should make it easier to work with the EABI as well, as those names don't change but the x-register mappings do. Providing the hardware knows which ABI is in use then this can work, so the disassembly works seamlessly. TBD.
+* whether the fault handling should be profile defined
 
 == Assembler Syntax
 
@@ -47,15 +48,6 @@ push.[fdq]     {<fxreg_list>}, -<stack_adjustment>
 pop.[fdq]      {<fxreg_list>},  <stack_adjustment> 
 popret.[fdq]   {<fxreg_list>},  <stack_adjustment> 
 ----
-
-[NOTE]
-
-  It is required to hard-code the length of the F registers in the opcode, and not just save/restore the whole register. We must allow code compiled for the F-extension
-  to run on a  core which supports D and posibly Q, and for code compiled for the D-extension to run on a core which supports Q.
-  If we don't explicitly state the F register width and always store the whole register, then the registers will be stored at different addresses to the ones expected 
-  by the compiler. An alternative would be to use `misa.[FDQ]`
-  to directly control the behaviour and so set `misa.[DQ]=0` when running F code. Nothing else in the architecture requires this, so it seems unreasonable to 
-  add this requirement here.
 
 . `PUSH` pushes the registers specified in `[f]xreg_list` to the stack, and then adjust the stack pointer by the `stack_adjustment`.
 . `POP` pops the registers in `[f]xreg_list to the stack` from the stack, and then adjusts the stack pointer by the `stack_adjustment`.
@@ -126,22 +118,32 @@ FLEN is explicitly specified in the opcode as the presence of any F registers re
 
 Follow this link for details of the https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md#file-header[ELF file header]
 
-== Implementation of sequenced instructions
+=== Rationale: why include the .[fdq] suffix
 
-The sequences below show the required architectural state updates only, the hardware implementation is not specified here. 
+It is required to hard-code the length of the F registers in the opcode, and not just save/restore the whole register. We must allow code compiled for the F-extension
+to run on a  core which supports D and possibly Q,. We must also allow code compiled for the D-extension to run on a core which supports Q.
 
-Note that each step of the example sequence can be executed as a standard RISC-V 32-bit encoding, so that it is possible to convert the sequences into a sequence of standard instructions. 
+If we don't explicitly state the F register width and always store the whole register, then the registers will be stored at different addresses to the ones expected 
+by the compiler. 
 
-Because the sequences include load and store operations, they may take any exception caused by executing loads or stores such as page faults, PMP faults, debug triggers. 
+An alternative would be to use `misa.[FDQ]`
+to directly control the behaviour and so set `misa.[DQ]=0` when running F code. Nothing else in the architecture requires this, so it seems unreasonable to 
+add this requirement here.
 
-Additionally interrupts and debug halts may be received during execution. 
+== Pseudo-code
 
-Handling of these cases is implementation defined but it is recommended that the standard interrupt/exception/debug handlers can be used without modification.
+The pseudo-code below show the required architectural state updates. 
+
+Note that every architectural state update in the pseudo-code can be executed as a standard RISC-V 32-bit encoding, so that it is possible execute the instructions as sequences of standard instructions. 
+
+Because the pseudo-code includes load or store operations, they may take any fault caused by executing loads or stores. See <<fault-handling>> for more details.
 
 === PUSH Pseudo-code
 
 All variants of the `PUSH` instruction store the set of registers from `reg_list` to consecutive memory locations, and decrement the stack pointer.
 The pseudo-code uses assembly inserts so that it can use `fsw/fsd` etc.
+
+The pseudo-code shows the memory and architectural state updates of the whole instruction which has completed without faults, debug halts or interrupts. See <<fault-handling>> and <<software-view>> for more information.
 
 [NOTE]
   `stack_adjustment` is negative.
@@ -191,6 +193,8 @@ if (freq_list) {
 
 A `POP[RET]` instruction loads the set of registers from `reg_list` from consecutive memory locations, and then increments the stack pointer. 
 The pseudo-code uses assembly inserts so that it can use `flw/fld/ret`.
+
+The pseudo-code shows the architectural state updates of the whole instruction which has completed without faults, debug halts or interrupts. See <<fault-handling>> and <<software-view>> for more information.
 
 [NOTE]
   `stack_adjustment` is positive.
@@ -436,7 +440,111 @@ The registers in the `reg_list` are controlled by these three fields
 |7     |ra, s0-s11
 |============================
 
-== Benchmarking results
+[#fault-handling]
+== Fault handling
+
+The sequence required to execute the instruction may be interrupted, or may not be able to start execution for several reasons.
+
+* virtual memory page fault or PMP fault
+** these can be detected before execution, or during execution if the memory addresses cross a page/PMP boundary
+* watchpoint trigger
+** these can be detected before execution, or during execution depending on the trigger type (load data triggers require the sequence to have started executing, for example)
+* external debug halt
+** the halt can treat the whole sequence atomically, or interrupt mid sequence (implementation defined)
+* debug halt caused by a trigger
+** same comment as watchpoint trigger above
+* load access fault
+** these are detected while the sequence is executing
+* store access fault (precise or imprecise)
+** these may be detected while the sequence is executing, or afterwards if imprecise
+* interrupts
+** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
+
+Because some faults can only be detected during the sequence the core implementation is able to recover from the fault and re-execute the sequence. This may involve executing some or all of the loads and stores from the sequence multiple times before the sequence completes (as multiple faults or multiple interrupts are possible).
+
+Therefore correct execution requires that `sp` refers to idempotent memory.
+
+[#software-view]
+== Software view of execution
+
+=== Software view of `PUSH` sequence
+
+From a software perspective the `PUSH` sequence appears as:
+
+* A sequence of stores writing a contiguous block of memory. Any of the bytes may be written multiple times.
+* A stack pointer adjustment
+
+Because the memory is idempotent and the stores are non-overlapping, they may be reordered, grouped into larger accesses, split into smaller access or any combination of these.
+
+If an implementation allows interrupts during the sequence, and the interrupt handler uses `sp` to allocate stack memory, then any stores which were executed before the interrupt maybe be overwritten by the handler. This is safe because the memory is idempotent and the stores will be re-executed once the handler completes.
+
+The stack pointer adjustment must only be committed once it is certain that all of the stores will complete successfully.
+
+Referring to the example in <<push-example-1>> 
+
+[source,sourceCode,text]
+----
+c.push  {ra, s0-s5}, -64
+----
+
+Appears to software as:
+
+[source,sourceCode,text]
+----
+# any bytes from SP-1 to SP-28 may be written multiple times before the instruction completes
+sw  ra, -4(sp);   
+sw  s0, -8(sp);   
+sw  s1,-12(sp);   
+sw  s2,-16(sp);  
+sw  s3,-20(sp);   
+sw  s4,-24(sp);   
+sw  s5,-28(sp);   
+
+# this must only execute once, and will only execute after all stores complete sucessfully
+addi sp, sp, -64; 
+----
+
+=== Software view of `POP[RET]` sequence
+
+From a software perspective the `POP[RET]` sequence appears as:
+
+* A sequence of loads, any of which may be executed multiple times
+* A stack pointer adjustment
+* An optional `RET`
+
+If an implementation allows interrupts during the sequence, then any loads which were executed before the interrupt may update architectural state. The loads will be re-executed once the handler completes, so the values will be overwritten. Therefore it is permitted for an implementation to update some of the destination registers before taking the interrupt or other fault.
+
+The stack pointer adjustment must only be committed once it is certain that all of the loads will complete successfully.
+
+For `POPRET` once the stack pointer adjustment has been committed the `RET` much execute.
+
+Referring to the example in <<popret-example-1>> 
+
+[source,sourceCode,text]
+----
+popret.f   {ra, s0-s3, fs0-fs1}, 32 ; 
+----
+
+Appears to software as:
+
+[source,sourceCode,text]
+----
+# any or all of these load instructions may execute multiple times
+lw   ra, 28(sp);
+lw   s0, 24(sp);
+lw   s1, 20(sp);
+lw   s2, 16(sp);
+lw   s3, 12(sp);
+flw  fs0, 8(sp);
+flw  fs1, 4(s0);
+
+# must only execute once, will only execute after all loads complete successfully
+# both instructions must execute atomically
+addi sp, sp, 32;
+ret;
+----
+
+== Initial benchmarking results
 
 Using the `PUSH/POP` support in HCC (Huawei GCC branch) allows the full range of register lists in the 16-bit encodings, and up to 5-bits of `spimm`.
 
@@ -459,6 +567,7 @@ The overall saving compared to -msave-restore is 4.8% using HCC (this result is 
 
 == Assembly examples
 
+[#push-example-1]
 === C.PUSH RV32 UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
@@ -527,7 +636,7 @@ lw   s8, 120(sp);
 addi sp, sp, 160
 ----
 
-=== PUSH.F RV32 UABI (16-byte aligned stack)
+=== PUSH.F RV32I[FDQ] UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
@@ -550,7 +659,7 @@ sw  s4,  40(sp);
 fsw fs0, 36(sp)
 ----
 
-=== PUSH.D RV64 UABI (16-byte aligned stack)
+=== PUSH.D RV64I[DQ] UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
@@ -573,7 +682,7 @@ sd  s4,  16(sp);
 fsd fs0,  8(sp)
 ----
 
-=== PUSH.D RV64 UABI (16-byte aligned stack)
+=== PUSH.D RV64I[DQ] UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
@@ -628,7 +737,8 @@ lw   s9, 212(sp);
 addi sp, sp, 256
 ----
 
-=== POPRET.F RV32I UABI (16-byte aligned stack)
+[#popret-example-1]
+=== POPRET.F RV32I[FDQ] UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
