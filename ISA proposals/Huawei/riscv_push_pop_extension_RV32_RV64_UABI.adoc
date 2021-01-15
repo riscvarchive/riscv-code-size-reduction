@@ -121,7 +121,7 @@ Follow this link for details of the https://github.com/riscv/riscv-elf-psabi-doc
 === Rationale: why include the .[fdq] suffix
 
 It is required to hard-code the length of the F registers in the opcode, and not just save/restore the whole register. We must allow code compiled for the F-extension
-to run on a  core which supports D and possibly Q,. We must also allow code compiled for the D-extension to run on a core which supports Q.
+to run on a  core which supports D and possibly Q. We must also allow code compiled for the D-extension to run on a core which supports Q.
 
 If we don't explicitly state the F register width and always store the whole register, then the registers will be stored at different addresses to the ones expected 
 by the compiler. 
@@ -478,7 +478,7 @@ Because the memory is idempotent and the stores are non-overlapping, they may be
 
 If an implementation allows interrupts during the sequence, and the interrupt handler uses `sp` to allocate stack memory, then any stores which were executed before the interrupt maybe be overwritten by the handler. This is safe because the memory is idempotent and the stores will be re-executed once the handler completes.
 
-The stack pointer adjustment must only be committed once it is certain that all of the stores will complete successfully.
+The stack pointer adjustment must only be committed once it is certain that all of the stores will complete within triggerring any precise faults (stores may return imprecise bus errors which are received after the instruction has completed execution).
 
 Referring to the example in <<push-example-1>> 
 
