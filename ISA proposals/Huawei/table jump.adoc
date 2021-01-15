@@ -185,7 +185,7 @@ All comparisons are _unsigned_.
 Table jump supports both jump table and vector modes.
 
 .table jump and vector modes
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump1.PNG[table jump and vector modes]
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump3.PNG[table jump and vector modes]
 
 ==== Jump table mode
 
