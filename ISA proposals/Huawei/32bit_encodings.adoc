@@ -56,11 +56,11 @@ This should not be taken as a final set at this stage. Any instruction may be re
 6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 101   4+| offset[5:1]       |0001011| BGEUI
 18+| *custom-0 encoding group (all architectures), GP relative load/store, allowing X3 (tp=0) and X4 (tp=1) as GPs*
  8+|imm[11:0]                                       3+| rs1           | 001   3+| imm[15:12]    | tp|1011011| LBUGP
- 8+|imm[11:0]                                       3+| rs1           | 010   3+| imm[15:12]    | tp|1011011| LHUGP
- 8+|imm[11:0]                                       3+| rs1           | 011   3+| imm[15:12]    | tp|1011011| LWGP
+ 8+|imm[11:1, 16]                                   3+| rs1           | 010   3+| imm[15:12]    | tp|1011011| LHUGP
+ 8+|imm[11:2, 17:16]                                3+| rs1           | 011   3+| imm[15:12]    | tp|1011011| LWGP
  5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 100   4+| imm[4:0]          |1011011| SBGP
- 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 101   4+| imm[4:0]          |1011011| SHGP
- 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 110   4+| imm[4:0]          |1011011| SWGP
+ 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 101   4+| imm[4:1, 16]      |1011011| SHGP
+ 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 110   4+| imm[4:2, 17:16]   |1011011| SWGP
 18+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from B-extension]*
 8+|imm[11:0]                                          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULI
 7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULIADD
