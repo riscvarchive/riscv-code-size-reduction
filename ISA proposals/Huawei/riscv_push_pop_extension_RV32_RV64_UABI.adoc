@@ -155,8 +155,7 @@ if (sp[3:0])     {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
-addr=sp;
-sp+=stack_adjustment; //decrement
+addr=sp+stack_adjustment;
 if (ra) {
   addr-=bytes;
   switch(bytes) {
@@ -187,6 +186,7 @@ if (freq_list) {
     }
   }
 }
+sp+=stack_adjustment; //decrement
 ----
 
 === POP[RET] Pseudo-code
@@ -516,7 +516,7 @@ If an implementation allows interrupts during the sequence, then any loads which
 
 The stack pointer adjustment must only be committed once it is certain that all of the loads will complete successfully.
 
-For `POPRET` once the stack pointer adjustment has been committed the `RET` much execute.
+For `POPRET` once the stack pointer adjustment has been committed the `RET` must execute.
 
 Referring to the example in <<popret-example-1>> 
 
