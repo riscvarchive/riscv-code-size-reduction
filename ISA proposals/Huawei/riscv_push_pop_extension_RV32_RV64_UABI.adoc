@@ -155,7 +155,7 @@ if (sp[3:0])     {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
-addr=sp+stack_adjustment;
+addr=sp;
 if (ra) {
   addr-=bytes;
   switch(bytes) {
