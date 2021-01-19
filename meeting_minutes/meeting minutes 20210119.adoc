@@ -1,0 +1,45 @@
+rvnewop
+-------
+
+Thanks Nagendra for his presentation
+
+repo: github.com/riscv-newop
+
+Currently
+- the subblocks are split on load/store instructions at the moment, so the analysis is limited
+- they want to unroll loops so they can analyse across iterations
+- candidate instructions are 2R+1W only, so they fit the current architecture
+-	Could look at effect on caching, not yet considered
+-	Big effect on embench/matmult-int with shift-add semantics – shifts each source by a different amount
+
+What we would like for code-size or RISC-V in general:
+
+- Can we run “depth” analysis on proposed instructions from ISA extensions to check they are not overly complex
+- Static analysis would be better for code-size – just assume everything gets executed once
+- Can use CGEN to add into into GAS (which they are using), for LLVM TABLEGEN is used.
+ -- Jeremy and others can point Nagendra in the right direction
+
+Freddie and Jeremy have both done similar work in the past:
+
+* https://www.doc.ic.ac.uk/~phjk/GROW09/papers/05-ISAExtension-Franke.pdf
+* https://www.cl.cam.ac.uk/techreports/UCAM-CL-TR-129.html
+
+Zfinx header
+------------
+
+-	Wait for psABI group to be formed and make a proposal
+
+Table Jump proposal
+-------------------
+
+-	Interaction with fast interrupt group, David Horner is helping with this
+-	If an OS loads an new elf file – will need a new table loaded, who should look at how that works?
+-	Need bigger code in EMBENCH to show the cost of 64-bit JAL calls
+- Note that SEGGER have already implemented something similar in their RISC-V linker for Andes CoDense
+
+Anders asked: Why to two modes? Placing code in the table itself will lead to gaps between function, which is counter-productive.
+-- this was a proposal from Andy Glew
+
+Evandro said: The table might reside too far from the instruction.
+-- the jump table is referenced via a CSR and contains absolute addresses
+
