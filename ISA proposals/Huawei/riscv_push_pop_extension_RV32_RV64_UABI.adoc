@@ -304,7 +304,7 @@ The following cases do not decode as `PUSH*/POP*/POPRET*`
 |=======================================================================
 
 [NOTE]
-  * For `C.POP`, `spimm[1]=0`, and `rcount[2]=0` are reserved, as these encodings  give minimal benefit
+  * For `C.POP`, `spimm[2:1]=0`, and `rcount[2]=0` are reserved, as these encodings  give minimal benefit
   * For `C.PUSH/C.POPRET`, if `rcount[2]=1` then `spimm[2]=0` as these encodings  give minimal benefit
   * These encodings remain *reserved* for the time being so we can add them later if they can be justified
 
