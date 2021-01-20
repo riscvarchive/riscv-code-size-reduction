@@ -130,6 +130,7 @@ Need a lot more detail for these, they're just placeholders at the moment
 - link time optimisation including dead code elimination
 - function prologue/epilogue optimisation in software, to close the gap with the PUSH/POP ISA extension proposal
 - smaller instruction sequences to jump to distant addresses
+  - including jump-chaining, where a tree of jumps is built to allow access to distant functions using mainly shorter encodings
 - smaller instruction sequences to load/store to distant addresses
 - smaller instruction sequences to load 32-bit constants
 - load/store multiple
