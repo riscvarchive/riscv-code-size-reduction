@@ -283,9 +283,6 @@ Take an illegal instruction exception if `[C.]TBLJAL #n` is executed and one of 
 
 All comparisons are _unsigned_.
 
-.table jump and vector modes
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump3.PNG[table jump and vector modes]
-
 ==== Pseudo-code for vector table mode
 
 [source,sourceCode,text]
@@ -351,14 +348,22 @@ MTBLJALVEC.base+48: <vsnprintf>
 Emulation mode is the simplest. It doesn't have a jump table or vector table, so allow a minimal hardware implementation.
 It relies on the values in temporary registers not being maintained across function calls.
 
+No illegal instruction exceptions are possible in emulation mode.
+
 ==== Pseudo-code for emulation mode
 
 [source,sourceCode,text]
 ----
-t4 = PC;
-t5 = n; # immediate operand
+t4 = next_PC; #PC+2 for c.tbljal, PC+4 for tbljal
+t5 = n;       #immediate operand
 J MTBLJALVEC.base
 ----
+
+== Diagram for all modes
+
+.all three modes
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump1.PNG[all three modes]
+
 
 == Caching (jump / vector table modes)
 
