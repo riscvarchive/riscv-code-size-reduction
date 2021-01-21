@@ -72,7 +72,7 @@ The principle is to have a single lookup table of `TBLJALENTRIES` addresses for 
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100       | 1  | 1  2+| 11 7+|         index7              2+| 00  | C.TBLJAL
+3+|  100       | 1  | 1  |1 8+|                index8               2+| 00  | C.TBLJAL
 |=============================================================================================
 
 The 16-bit encoding allows half of the `TBLJALENTRIES` to be accessed (_to be confirmed_).
@@ -81,11 +81,11 @@ The 16-bit encoding allows half of the `TBLJALENTRIES` to be accessed (_to be co
 
 [width="100%",options=header]
 |============================================================================
-|31:23  |22:15   |14:12 |11:7  |6:0     |name
-|xxxxxx |index8  |001   |xxxxx |xxxxxxx |TBLJAL
+|31:23  |23:15   |14:12 |11:7  |6:0     |name
+|xxxxxx |index9  |001   |xxxxx |xxxxxxx |TBLJAL
 |============================================================================
 
-`TBLJALENTRIES` is defined by the `index8` field in the 32-bit encoding, so initially 256 (_to be confirmed_).
+`TBLJALENTRIES` is defined by the `index9` field in the 32-bit encoding, so initially 512 (_to be confirmed_).
 
 == Operating Modes
 
