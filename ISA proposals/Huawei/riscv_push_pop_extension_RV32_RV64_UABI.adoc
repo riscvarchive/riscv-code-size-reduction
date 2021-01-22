@@ -34,6 +34,35 @@ it's better to list these first, as they are resolved I'll update the proposal
 ** only using ABI names should make it easier to work with the EABI as well, as those names don't change but the x-register mappings do. Providing the hardware knows which ABI is in use then this can work, so the disassembly works seamlessly. TBD.
 * whether the fault handling should be profile defined
 
+=== Whether to implement PUSH + MV
+
+The example is from FPMark but most functions when compiled with HCC or GCC10 are the same:
+
+[source,sourceCode,text]
+----
+0001085c <floatXRoundToInt>:
+   10862:       8258                    push    {ra,s0-s3},-64
+   10876:       89b2                    mv      s3,a2
+   10878:       892e                    mv      s2,a1
+   1087a:       842a                    mv      s0,a0
+----
+
+I observe that _almost_ every function saves one or more argument (`a`) registers as part of the prologue. This is so common that it is costing a considerable amount of code-size (not yet measured). In this example the `mv` instructions take significantly more code-size than the `push` instruction.
+
+Therefore the proposal is to automatically include them into the `c.push` instruction, so that no more encoding space is used.
+Therefore there will be occasions when
+
+* the `push` instruction issues too many `mv` instructions, which costs performance
+** given that `-msave-restore` saves/restores registers which are not needed, I don't see this as a problem
+* the `push` instruction issues too few `mv` instructions so the compiler will generate more
+
+Neither of these are a problem, and the code size will improve.
+
+* For the 16-bit encoding the number of registers will be based on the number of registers saved.
+* for the 32-bit encoding the number of registers will be controlled by a field in the encoding.
+
+The next stage is to estimate the saving and decide how many registers to save for each `rcount` value for the 16-bit encoding.
+
 == Assembler Syntax
 
 [source,sourceCode,text]
