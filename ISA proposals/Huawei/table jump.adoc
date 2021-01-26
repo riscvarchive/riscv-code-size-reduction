@@ -22,6 +22,7 @@ The 32-bit instruction encoding will ensure that 64-bit sequences are unlikely t
 == Issues 
 
 . what additional functionality to add in the 32-bit version, if any?
+. see <<pros-and-cons>>, currently it seems that we should only implement table jump mode, but more discussion is required
 
 == Rationale
 
@@ -102,7 +103,9 @@ All require the following CSR:
 
 Using `MTBLJALVEC.base` in the pseudo code below implicitly assumes that `MTBLJALVEC.base[5:0]=0`. This is consistent with the description of `MTVEC` in the Unprivileged ISA manual.
 
-`MTBLJALVEC.base` is naturally aligned for all legal values of `XLEN`
+`MTBLJALVEC.base` is naturally aligned for all legal values of `XLEN`.
+
+The memory pointed to be `MTBLJALVEC.base` only requires eXecute permission for all three proposed modes. Read/Write access is not required once the jump table/vector table have been configured.
 
 [#MTBLJALVEC-mode-table]
 .`MTBLJALVEC.mode` definition
@@ -359,6 +362,15 @@ t5 = n;       #immediate operand
 J MTBLJALVEC.base
 ----
 
+[#pros-and-cons]
+== Pros and cons
+
+Jump table mode is easy to implement in the linker and doesn't affect the compiler at all as it is only a link time optimisation. It may complicate instruction fetch due to the indirection, and so may cost performance. The instruction fetch can choose the cache the table.
+
+Vector table mode is simplest for the hardware, as it's just the same mechanism as for the interrupt handler vector. The jump is direct to the destination. However the compiler would have to be aware as it will have to try to fit functions into the table, as each entry is a fixed size so it's not so obviously implementable in the toolchain. We may find other reasons for having this mode. TBD.
+
+Emulation mode - there are concerns about overwriting the temporary registers, so I'm not sure about this at the moment.
+
 == Diagram for all modes
 
 .all three modes
@@ -371,7 +383,12 @@ For improved performance, the implementation may cache the contents of the jump 
 
 Any write to `MTBLJALVEC`, even if the actual value is not updated, will indicate that any table caching must be flushed and refetched.
 
-Therefore if there are any updates to generated code in the table in vector mode, a write to `MTBLJALVEC` is required to ensure that any cached contents are not stale.
+Therefore if there are any updates to generated code in the table in vector mode, a write to `MTBLJALVEC` is required to ensure that any cached contents are not stale. This is not expected to be the common case, because in the absence of dynamically linked libraries, the jump table/vector table is static for a given executable. Therefore the recommendation is that it is set with eXecute only privileges as the rest of the code is. This is better for security to prevent code in the vector table being scanned for gadgets. The jump table also only requires eXecute privileges.
+
+
+== Benchmarking Jump Table Mode
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/meeting_minutes/code%20size%20meeting%20slides%2020210126.pdf[See this presentation, the "bigger benchmarks" slide]
 
 == Security (future ideas for vector mode)
 
