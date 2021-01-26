@@ -1,0 +1,32 @@
+= Table jump review
+
+== benchmarking
+
+-	Try other optimisations (other than -Os) e.g. What about –O3? Does table jump have a similar effect - we can try it but we expect the advantage to reduce
+-	What about on LLVM output? Or IAR? We can certainly download LLVM and try it.
+-	Try embedded C++ to check out the function calling, and they also pass around small objects so we need this for benchmarking
+-	JVM benchmark for lots of small calls, Spark etc. modern workloads
+-	Wei Wu has javascript now for the performance work, can we share it?
+
+== spec / implementation
+
+-	What about Cache fragmentation for larger cores? If table jump may not be suitable, it's better to put something in the spec about it.
+-	Should the table be execute only? In the D$ / I$? Again, list something in the spec.
+
+== toolchain
+
+-	Table jump (in table jump mode) is linker stage only, doesn’t affect the libraries or the compiler, which is a big advantage
+-	Wasted space in the vector mode, can’t be fixed by the linker to shrink/grow/realign functions, but the performance is better as the jump is directly to the target
+-	Can emulation mode set temp regs? Seems like it will break the linker
+
+I'll add some of these as notes to the proposal
+
+= Optimisation group
+
+Objectives are to
+
+-	Reduce meeting fatigue
+-	To improve the GCC/RISCV compiler quality and also maintain commercial advantage
+-	We need people to run projects and report back
+- Next week we'll talk about compiler optimisation
+
