@@ -21,6 +21,8 @@
 
 I'll add some of these as notes to the proposal
 
+Benchmarknig results here: https://github.com/riscv/riscv-code-size-reduction/blob/master/meeting_minutes/code%20size%20meeting%20slides%2020210126.pptx
+
 = Optimisation group
 
 Objectives are to
