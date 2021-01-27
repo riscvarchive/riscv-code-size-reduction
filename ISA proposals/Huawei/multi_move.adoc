@@ -39,7 +39,7 @@ Common usages are:
    10482:	8194                	popret	{ra,s0-s7},64
 ----
 
-The proposal is to use a single 16-bit encoding to do the work of two 16-bit 's' to 'a' register moves.
+The proposal is to use a single 16-bit encoding to do the work of two 16-bit `s` to `a` register moves.
 
 == Encoding
 
@@ -82,7 +82,7 @@ mv (a2, a3), (s7, s2) ; # mv a2, s7; mv a1, s2
 
 == Implementation
 
-Clearly this isntruction requires two write ports. The isntruction can be sequenced to avoid adding the extra write port. 
+Clearly this instruction requires two write ports. The isntruction can be sequenced to avoid adding the extra write port. 
 This is invisible to software as the whole isntruction must execute atomically.
 
 == Benchmark results
@@ -91,7 +91,7 @@ My rough estimate is 0.4% for both the benchmark suite and the debian distributi
 
 == Toolchain implementation
 
-The is designed to be a link-time optimisation. The linker will combine suitable `mv` isntructions.
+This is designed to be a link-time optimisation. The linker will combine suitable `mv` isntructions.
 
 == 32-bit form
 
