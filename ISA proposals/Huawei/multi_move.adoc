@@ -41,7 +41,7 @@ Common usages are:
 
 The proposal is to use a single 16-bit encoding to do the work of two 16-bit `s` to `a` register moves.
 
-== Encoding
+== Encoding proposal 1
 
 [#proposed-16bit-encodings-1]
 .proposed 16-bit encodings-1 
@@ -80,10 +80,34 @@ mv (a0, a3), (s1, s3) ; # mv a0, s1; mv a3, s3
 mv (a2, a3), (s7, s2) ; # mv a2, s7; mv a1, s2
 ----
 
+== Encoding proposal 2
+
+[#proposed-16bit-encodings-1]
+.proposed 16-bit encodings-1 
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+| ?  | ?  |  ? |  ? | 0 3+| sreg1   3+| sreg2     5+|             ????? | C.MVA01S
+| ?  | ?  |  ? |  ? | 1 3+| sreg1   3+| sreg2     5+|             ????? | C.MVA23S
+|=============================================================================================
+
+`sreg[12]` specify which two `s` registers are moved, using the ABI name only so that `s0-s7` can be moved into the `(a0,a1)` and `(a2,a3)` register pairs.
+
+[source,sourceCode,text]
+----
+# c.mva01s: sreg1 = 0; sreg2 = 0;
+mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
+
+# c.mva23s: sreg1 = 1; sreg2 = 3;
+mv (a2, a3), (s1, s3) ; # mv a2, s1; mv a3, s3
+----
+
+This approach uses 2-bits fewer encoding space, but clearly provides fewer options.
+
 == Implementation
 
-Clearly this instruction requires two write ports. The isntruction can be sequenced to avoid adding the extra write port. 
-This is invisible to software as the whole isntruction must execute atomically.
+Clearly multi-move requires two write ports. The instruction(s) can be sequenced to avoid adding the extra write port. 
+This is invisible to software as the whole instruction must execute atomically.
 
 == Benchmark results
 
@@ -96,6 +120,7 @@ This is designed to be a link-time optimisation. The linker will combine suitabl
 == 32-bit form
 
 Not yet specified, probably allow more range in `a` and `s` register choice. TBD.
+The 32-bit form must move more than 2 registers or there is no advantage over 2 `c.mv` instructions.
 
 
 
