@@ -34,7 +34,7 @@ it's better to list these first, as they are resolved I'll update the proposal
 ** only using ABI names should make it easier to work with the EABI as well, as those names don't change but the x-register mappings do. Providing the hardware knows which ABI is in use then this can work, so the disassembly works seamlessly. TBD.
 * whether the fault handling should be profile defined
 
-=== Whether to implement PUSH + MV
+=== Extra proposal PUSH + MV
 
 The example is from FPMark but most functions when compiled with HCC or GCC10 are the same:
 
@@ -47,21 +47,37 @@ The example is from FPMark but most functions when compiled with HCC or GCC10 ar
    1087a:       842a                    mv      s0,a0
 ----
 
-I observe that _almost_ every function saves one or more argument (`a`) registers as part of the prologue. This is so common that it is costing a considerable amount of code-size (not yet measured). In this example the `mv` instructions take significantly more code-size than the `push` instruction.
+I observe that _almost_ every function saves one or more argument (`a`) registers as part of the prologue. This is so common that it is costing a considerable amount of code-size. In this example the `mv` instructions take significantly more code-size than the `c.push` instruction.
 
 Therefore the proposal is to automatically include them into the `c.push` instruction, so that no more encoding space is used.
 Therefore there will be occasions when
 
 * the `push` instruction issues too many `mv` instructions, which costs performance
-** given that `-msave-restore` saves/restores registers which are not needed, I don't see this as a problem
+** given that `-msave-restore` saves/restores registers which are not needed, I don't see this as a problem, `mv` instructions are cheap in comparison
 * the `push` instruction issues too few `mv` instructions so the compiler will generate more
 
 Neither of these are a problem, and the code size will improve.
 
 * For the 16-bit encoding the number of registers will be based on the number of registers saved.
-* for the 32-bit encoding the number of registers will be controlled by a field in the encoding.
+* for the 32-bit encoding the number of registers _may_ be controlled by a field in the encoding, TBD
 
-The next stage is to estimate the saving and decide how many registers to save for each `rcount` value for the 16-bit encoding.
+Initial analysis shows that the automatic register saves  in <<rcount-table>> _may_ be optimal.
+The code-size reduction will initially be analysed for this configuration.
+
+[#rcount-table]
+.`rcount` values for the 16-bit encodings
+[options="header",width=100%]
+|=====================================================
+|rcount| ABI names  | automatic mv instructions
+|0     |ra          | none
+|1     |ra, s0      | mv s0, a0; mv s1, a1;
+|2     |ra, s0-s1   | mv s0, a0; mv s1, a1;
+|3     |ra, s0-s2   | mv s0, a0; mv s1, a1;
+|4     |ra, s0-s3   | mv s0, a0; mv s1, a1;
+|5     |ra, s0-s5   | mv s0, a0; mv s1, a1; mv s2, a2;
+|6     |ra, s0-s8   | mv s0, a0; mv s1, a1; mv s2, a2;
+|7     |ra, s0-s11  | mv s0, a0; mv s1, a1; mv s2, a2;
+|=====================================================
 
 == Assembler Syntax
 
