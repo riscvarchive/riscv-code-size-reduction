@@ -15,6 +15,7 @@ This document describes 16/32-bit instructions to allow table jumps to reduce th
 * replace 32-bit `JAL` calls to 16-bit `C.TBLJAL`
 * replace 64-bit `AUIPC/JALR` calls to fixed locations with either a 16-bit `C.TBLJAL` or a 32-bit `TBLJAL` 
 ** `[C.]TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically inferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the +/-1MB range.
+* RV64 does not have `C.JAL` so `C.TBLJAL` is even more valuable
 * the 32-bit encoding allows more functions to be called, but saves less code size, so the most common functions should be callable by the 16-bit encoding
 
 The 32-bit instruction encoding will ensure that 64-bit sequences are unlikely to be needed to call functions, unless the table is full. Additional functionality may be added TBD.
@@ -23,6 +24,10 @@ The 32-bit instruction encoding will ensure that 64-bit sequences are unlikely t
 
 . what additional functionality to add in the 32-bit version, if any?
 . see <<pros-and-cons>>, currently it seems that we should only implement table jump mode, but more discussion is required
+. Whether to have `STBLJALVEC` to allow the OS to control the jump table
+. Whether to have `UTBLJALVEC` to allow user code to control the jump table (sounds dangerous?!)
+.. I would like to be able to switch tables when moving to execution in different DLLs... `JAL` takes up most instruction space in the Debian distro
+
 
 == Rationale
 
@@ -105,7 +110,7 @@ Using `MTBLJALVEC.base` in the pseudo code below implicitly assumes that `MTBLJA
 
 `MTBLJALVEC.base` is naturally aligned for all legal values of `XLEN`.
 
-The memory pointed to be `MTBLJALVEC.base` only requires eXecute permission for all three proposed modes. Read/Write access is not required once the jump table/vector table have been configured.
+The memory pointed to by `MTBLJALVEC.base` only requires eXecute permission for all three proposed modes. Read/Write access is not required once the jump table/vector table has been configured.
 
 [#MTBLJALVEC-mode-table]
 .`MTBLJALVEC.mode` definition
@@ -309,7 +314,7 @@ If `tablescale` is set to 4096 then this allows each entry in the table to be ow
 
 In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
-For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTBLJALVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is 136 bytes, but will shrink to 128-bytes or smaller by use of `c.tbljal` so I have allocated the first 4 entries to it.
+For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `MTBLJALVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is 136 bytes, but will shrink to 128-bytes or smaller by use of `c.tbljal` so I have allocated 4 entries to it.
 
 [source,sourceCode,text]
 ----
