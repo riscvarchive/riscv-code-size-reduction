@@ -393,7 +393,7 @@ if (freq_list) {
   }
 }
 sp+=stack_adjustment; //increment
-if (opcode == "POPRET*) { 
+if (opcode == "POPRET") { 
    asm("ret");
 }
 ----
