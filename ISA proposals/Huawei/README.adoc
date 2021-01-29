@@ -1,2 +1,37 @@
 = Code-size reduction ISA extension status
 
+[push_pop_status_table]
+.PUSH/POP status
+[width=100%,options="header",]
+|===================================================================================================
+|Extension        8+|Estimated code-size reduction                                         
+|                 2+|IoT application 2+|IoT protocol 2+|Zephyr Central 2+|Zephyr Peripheral
+9+|Text size of baseline build with -msave-restore
+| baseline          |393060   | N/A    |1235044 | N/A  |46816 | N/A      |88930   | N/A    
+9+|Measured by compiling with HCC vs baseline
+| PUSH/POP          |373788   | 4.90%  |1194200 | 3.31%|44468 | 5.0%     |85300   | 4.08%  
+9+|Improvement of PUSH+MV proposal over PUSH/POP estimated by a script, so elf files don't exist
+| PUSH+MV           2+| 0.94% | 2+|1.02% | 2+| 1.55%    | 2+| 1.35%  
+9+|Cumulative benefit of PUSH/POP and PUSH+MV, previous two rows added
+| PUSH+MV/POP       2+| *5.84%* | 2+|*4.33%*| 2+|*6.57%*|2+|*5.43%* 
+|===================================================================================================
+
+PUSH/POP spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[here]
+
+[table_jump_status_table]
+.Table Jump status, for jump table mode
+[width=100%,options="header",]
+|===================================================================================================
+|                 2+|IoT application 2+|IoT protocol 2+|Zephyr Central 2+|Zephyr Peripheral
+9+|Estimated by a script, so elf files don't exist, relative to the baseline above, 256 table entries
+| TBLJAL            2+| 9.90%  2+| 7.37% 2+| 7.23%  2+| 6.83%  
+9+|relative the the HCC PUSH/POP output above, estimated by a script, 256 table entries
+| TBLJAL + PUSH/POP 2+| 11.15%  2+| 8.20% 2+| 8.29%  2+| 8.57%  
+9+|add in estimated benefit of PUSH+MV
+| TBLJAL + PUSH+MV/POP 2+| *12.09%*  2+| *9.22%* 2+| *9.84%*  2+| *9.92%*
+|===================================================================================================
+
+Table jump spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[here]
+
+The multi-move spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[here]. I'm roughly estimating about 0.4% reduction. It needs estimating more accurately, but 0.4% would bring 3/4 of the main benchmarks to greater than 10% code size reduction.
+
