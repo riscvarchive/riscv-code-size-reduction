@@ -9,7 +9,7 @@ Move two `s` registers into two `a` registers.
 Common usages are:
 
 - moving function arguments into saved registers at the end of a function prologue, to save the arguments before calling another function. 
-  This case is covered by the PUSH+MV proposal.
+  This case is covered by the https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH+MV proposal].
 
 [source,sourceCode,text]
 ----
@@ -102,7 +102,7 @@ mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
 mv (a2, a3), (s1, s3) ; # mv a2, s1; mv a3, s3
 ----
 
-This approach uses 2-bits fewer encoding space, but clearly provides fewer options.
+This approach uses 2-bits fewer of the encoding space, so is 1/4 of the cost, but clearly provides fewer options.
 
 == Implementation
 
@@ -115,13 +115,48 @@ My rough estimate is 0.4% for both the benchmark suite and the debian distributi
 
 == Toolchain implementation
 
-This is designed to be a link-time optimisation. The linker will combine suitable `mv` isntructions.
+This is designed to be a link-time optimisation. The linker will combine suitable `mv` instructions.
 
 == 32-bit form
 
 Not yet specified, probably allow more range in `a` and `s` register choice. TBD.
 The 32-bit form must move more than 2 registers or there is no advantage over 2 `c.mv` instructions.
 
+== Other ideas
 
+This function from the Opus codec (I think from GLIBC) is an excellent example of the problem:. All 8 `mv` instructions are due to the ABI.
+
+[source,sourceCode,text]
+----
+00038818 <__subdf3>:
+   38818:       8038                    push    {ra,s0-s1},-16
+   3881a:       842a                    mv      s0,a0 ;# merge into PUSH+MV
+   3881c:       84ae                    mv      s1,a1 ;# merge into PUSH+MV
+   3881e:       8532                    mv      a0,a2 ;# new instruction? shuffle/slide a registers?
+   38820:       85b6                    mv      a1,a3 ;# new instruction? shuffle/slide a registers?
+   38822:       2cc9                    jal     38af4 <__negdf2>
+   38824:       862a                    mv      a2,a0 ;# new instruction? shuffle/slide a registers?
+   38826:       86ae                    mv      a3,a1 ;# new instruction? shuffle/slide a registers?
+   38828:       8522                    mv      a0,s0 ;# C.MVA01S
+   3882a:       85a6                    mv      a1,s1 ;# C.MVA01S
+   3882c:       8030                    pop     {ra,s0-s1},16
+   3882e:       ebdfe06f                j       376ea <__adddf3>
+----
+
+So we could also design an `a` register shuffle/slide instruction so maybe the optimised function would look like this:
+
+[source,sourceCode,text]
+----
+00038818 <__subdf3>:
+   38818:       8038                    push    {ra,s0-s1},-16
+   3881e:       XXXX                    mv      (a0,a2), (a1,a3) ;# new instruction
+   38822:       2cc9                    jal     38af4 <__negdf2>
+   38824:       XXXX                    mv      (a2,a3), (a0,a1) ;# new instruction
+   38828:       XXXX                    mv      (a0,a1), (s0,s1) ;# C.MVA01S - this proposal
+   3882c:       8030                    pop     {ra,s0-s1},16
+   3882e:       ebdfe06f                j       376ea <__adddf3>
+----
+
+This would delete 5 16-bit encodings. After analysing this proposal we'll analyse the `a` register shuffle/slide
 
 
