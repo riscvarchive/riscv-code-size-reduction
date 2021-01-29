@@ -40,11 +40,12 @@ The example is from FPMark but most functions when compiled with HCC or GCC10 ar
 
 [source,sourceCode,text]
 ----
-0001085c <floatXRoundToInt>:
-   10862:       8258                    push    {ra,s0-s3},-64
-   10876:       89b2                    mv      s3,a2
-   10878:       892e                    mv      s2,a1
-   1087a:       842a                    mv      s0,a0
+000123b8 <complex_rand_fp>:
+   123b8:	83a8                	push	{ra,s0-s8},-96
+   123ba:	1024                	addi	s1,sp,40
+   123bc:	8a2a                	mv	s4,a0
+   123be:	8aae                	mv	s5,a1
+   123c0:	8b32                	mv	s6,a2
 ----
 
 I observe that _almost_ every function saves one or more argument (`a`) registers as part of the prologue. This is so common that it is costing a considerable amount of code-size. In this example the `mv` instructions take significantly more code-size than the `c.push` instruction.
@@ -78,6 +79,114 @@ The code-size reduction will initially be analysed for this configuration.
 |6     |ra, s0-s8   | mv s0, a0; mv s1, a1; mv s2, a2;
 |7     |ra, s0-s11  | mv s0, a0; mv s1, a1; mv s2, a2;
 |=====================================================
+
+Therefore the example about would become:
+
+[source,sourceCode,text]
+----
+000123b8 <complex_rand_fp>:
+   123b8:	83a8                	push	{ra,s0-s8},-96 ;# includes mv s0, a0; mv s1, a1; mv s2, a2;
+   123ba:	1024                	addi	s1,sp,40
+   #note that the s registers are now moved to s0, s1, s2 not s4, s5, s6
+----
+
+6-bytes have been saved.
+
+Another example from FPmark is:
+
+[source,sourceCode,text]
+----
+000124e6 <fromint_f64_01_vector_uniform>:
+   124e6:	8068                	push	{ra,s0-s4},-32 ;# note that this proposal will also save s5, HCC currently allows this mode
+   124e8:	842e                	mv	s0,a1
+   124ea:	00cee5b7          	lui	a1,0xcee
+   124ee:	1a400613          	li	a2,420
+   124f2:	5a058593          	addi	a1,a1,1440 # cee5a0 <th_rand_data+0x4150>
+   124f6:	8a2a                	mv	s4,a0
+----
+
+this will become:
+
+[source,sourceCode,text]
+----
+000124e6 <fromint_f64_01_vector_uniform>:
+   124e6:	8068                	push	{ra,s0-s5},-32;# includes mv s0, a0; mv s1, a1; mv s2, a2;
+   124ea:	00cee5b7          	lui	a1,0xcee
+   124ee:	1a400613          	li	a2,420
+   124f2:	5a058593          	addi	a1,a1,1440 # cee5a0 <th_rand_data+0x4150>
+----
+
+so the `mv s2, a2;` is wasted costing performance. However 8-bytes of code-size are saved.
+
+The final example is also from FPMark:
+
+[source,sourceCode,text]
+----
+00012ae6 <bignum_convert>:
+   12ae6:	8138                	push	{ra,s0-s1},-32
+   12ae8:	842a                	mv	s0,a0
+   12aea:	c62e                	sw	a1,12(sp)
+   12aec:	c436                	sw	a3,8(sp)
+   12aee:	c23a                	sw	a4,4(sp)
+   12af0:	84be                	mv	s1,a5
+----
+
+This becomes
+
+[source,sourceCode,text]
+----
+00012ae6 <bignum_convert>:
+   12ae6:	8138                	push	{ra,s0-s1},-32# includes mv s0, a0; mv s1, a1;
+   12aea:	c62e                	sw	a1,12(sp)
+   12aec:	c436                	sw	a3,8(sp)
+   12aee:	c23a                	sw	a4,4(sp)
+   12af0:	84be                	mv	s1,a5
+----
+
+In this case the `mv s1, a1;` is wasted, as `a1` wasn't moved, `a5` was moved. The code size saving is 2-bytes.
+
+=== Estimated PUSH+MV benchmark results
+
+The results in <<pushmvresults>> are incremental improvements over compiling with PUSH/POP enabled using HCC. The estimates are made using a script which searches for `mv` instructions between a `push` instruction and the first jump `j/jal/jr/jalr` instruction. I've highlighted the four large code-bases which give the most representative results for a real embedded system.
+
+[#pushmvresults]
+.Estimated benchmark results
+[options="header",width=100%]
+|=====================================================
+|ELF file|Saving
+|*zephyr_central.elf*|*1.60%*
+|*zephyr_peripheral.elf*|*1.37%*
+|embench_nbody.elf|1.16%
+|embench_crc32.elf|1.03%
+|*huawei_iot_protocol.elf*|*1.02%*
+|*huawei_iot_application.elf*|*0.94%*
+|embench_slre.elf|0.79%
+|embench_sglib-combined.elf|0.78%
+|embench_st.elf|0.70%
+|embench_ud.elf|0.63%
+|embench_wikisort.elf|0.59%
+|embench_matmult-int.elf|0.53%
+|testfloat.elf|0.35%
+|embench_nettle-aes.elf|0.30%
+|fpmark-inner-product-mid-10k.elf|0.29%
+|fpmark-atan-1M.elf|0.26%
+|fpmark-radix2-sml-2k.elf|0.24%
+|embench_minver.elf|0.23%
+|embench_picojpeg.elf|0.20%
+|embench_qrduino.elf|0.20%
+|embench_aha-mont64.elf|0.20%
+|fpmark-xp1px-sml-c100n20.elf|0.18%
+|embench_nettle-sha256.elf|0.15%
+|embench_huffbench.elf|0.12%
+|coremark.elf|0.08%
+|embench_statemate.elf|0.05%
+|embench_cubic.elf|0.00%
+|embench_edn.elf|0.00%
+|embench_nsichneu.elf|0.00%
+|opus_demo_fixed.elf|0.00%
+|opus_demo_float.elf|0.00%
+|=====================================================
+
 
 == Assembler Syntax
 
