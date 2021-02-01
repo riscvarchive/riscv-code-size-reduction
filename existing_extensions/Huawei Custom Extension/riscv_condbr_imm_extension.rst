@@ -60,7 +60,7 @@ percentage  instruction
 19.4%       BGEUI
 9.5%        BLTUI
 1.4%        BLTI
-0.7%        BEGI
+0.7%        BGEI
 =========== =============
 
 The full set needed to be implemented to allow HCC to infer the instructions, even though some are clearly of limited value.
