@@ -84,6 +84,14 @@ The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/e
 The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst[here]
 We need to analyse the encoding space used - which includes two immediates - branch offset and compare immediate.
 
+==== maybe implement incblz?
+
+Andy Glew suggested `incblz rd,target`:
+  
+`rd += 1; if( rd < 0 ) goto target`
+  
+This requires no immediate value for comparison, so requires the loop counter to start negative and count up, so gives a bigger branch offset range which could be extremely valuable.
+
 == Proposals which save < 0.5%
 
 === Multi-move
@@ -141,7 +149,7 @@ These will probably offer small improvements, I estimate around 0.1% for each. T
 - `C.NOT/C.LSBNOT`
 - `C.SEXT.*`
 - `C.MUL`
-- https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_preshifted_arithmetic.rst[preshifted arithmetic]
+- https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_preshifted_arithmetic.rst[preshifted arithmetic - delay to next time?]
 - ...and look at the B-extension
 
 
