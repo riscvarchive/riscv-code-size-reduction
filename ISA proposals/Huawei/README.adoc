@@ -1,5 +1,17 @@
 = Code-size reduction ISA extension status
 
+This shows the code-size reduction status of proposed ISA extensions on the four main benchmarks.
+Huawei IoT (2 cores - application and protocol)
+Zephyr (2 cores - central and peripheral)
+
+[NOTE]
+
+  We need more realistic benchmarks which we can recompile
+
+== Proposals which save > 0.5%
+
+=== PUSH/POP or PUSH+MV/POP
+
 [push_pop_status_table]
 .PUSH/POP status
 [width=100%,options="header",]
@@ -17,6 +29,8 @@
 
 PUSH/POP spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[here]
 
+=== Table jump
+
 [table_jump_status_table]
 .Table Jump status, for jump table mode
 [width=100%,options="header",]
@@ -32,6 +46,8 @@ PUSH/POP spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/
 
 Table jump spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[here]
 
+=== 16-bit load/store byte/half unsigned
+
 [ldstbh_status_table]
 .`c.lbu/c.lhu/c.sb/c.sh` status
 [width=100%,options="header",]
@@ -46,17 +62,83 @@ Table jump spec is https://github.com/riscv/riscv-code-size-reduction/blob/maste
 |===================================================================================================
 
 We may decide that a shorter immediate value is acceptable for `c.lbu/c.lhu/c.sb/c.sh` or to only implement `c.lbu/c.sb` as the benefit is highest.
+The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_ldst_bh_extension.rst[here]
 
-The multi-move spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[here]. I'm roughly estimating about 0.4% reduction, so  hopefully > 12% across the 4 benchmarks (accurate analysis to be done). 
+=== 32-bit compare-immediate-branch
 
-Next to analyse and add into this table
+[cmpimmbr_status_table]
+.compare-imediate-branch status
+[width=100%,options="header",]
+|===================================================================================================
+|            |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
+5+|Compiled with HCC, 5-bit unsigned immediate, relative to baseline
+| all cmp-imm-br | 0.79%  | 0.80% | 0.81% | 0.68%  
+5+|Only BEQI/BNEI, the most commonly used two (69% of the benefit)
+| all cmp-imm-br | 0.55%  | 0.55% | 0.56% | 0.47%  
+5+|Add in estimated benefit of TBLJAL, PUSH+MV/POP and load/store byte/half
+| total        |*14.57%*|*12.36%*|*13.64%*|*12.71%*
+|===================================================================================================
 
-- `LWGP/SWGP`
+The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst[here]
+We need to analyse the encoding space used - which includes two immediates - branch offset and compare immediate.
+
+== Proposals which save < 0.5%
+
+=== Multi-move
+
+The multi-move proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[here]. I'm roughly estimating about 0.4% reduction (accurate analysis to be done). 
+
+=== 32-bit MULIADD
+
+[muliadd_status_table]
+.compare-imediate-branch status
+[width=100%,options="header",]
+|===================================================================================================
+|            |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
+5+|Compiled with HCC, relative to baseline
+| MULIADD    | 0.20%  | 0.32% | 0.15% | 0.10%  
+|===================================================================================================
+
+Proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[here].
+It takes too much encoding space, Clare Wolf has a proposal for a cheaper version:
+
+https://lists.riscv.org/g/tech-bitmanip/topic/multiply_immediate_add/78289291?p=,,,20,0,0,0::recentpostdate%2Fsticky,,,20,2,0,78289291[email thread]
+https://docs.google.com/spreadsheets/d/1rZnfWd4_K50rtPeg-yQD4h5mKcjOoghwzNg4u30Hyx0/edit#gid=0[analysis results]
+
+Clare also proposed `MULI` and `ADDIADD`.
+
+Maybe these should go into the next version of bit manip?
+
+=== `C.ZEXT[BH]`
+
+[czext_status_table]
+.`c.zext[bh]` status
+[width=100%,options="header",]
+|===================================================================================================
+|            |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
+5+|Compiled with HCC, relative to baseline
+| c.zext[bh] | 0.29%  | 0.32% | 0.17% | 0.12%  
+|===================================================================================================
+
+The benchmarks are for two 3-bit operand specifiers: `c.zext[bh] rd', rs1'`
+It would be more sensible to limit the encoding space an use a single 3-bit src/dst operand: `c.zext[bh] rd'`
+The instructions zero extend either a byte or half-word up to the full register width, and expand to `zext.[bh]` in the B-extension.
+
+== To be analysed
+
+== `lwgp/swgp`
+
+Proposal is listed on https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc[this page].
+It could benefit from a separate proposal page.
+I expect the benefit to be high (> 2%),
+
+== others
+
+These will probably offer small improvements, I estimate around 0.1% for each. They could be considered more as speed improvements for specific algorithms which need them.
+
 - `C.NOT/C.LSBNOT`
-- `MULIADD/ADDIADD/MULI` - from Clare's proposal (need to locate it)
-- `C.ZEXT.\*/C.SEXT.*`
+- `C.SEXT.*`
 - `C.MUL`
-- https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst[cmp_imm_branch]
 - https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_preshifted_arithmetic.rst[preshifted arithmetic]
 - ...and look at the B-extension
 
