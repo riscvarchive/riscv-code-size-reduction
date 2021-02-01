@@ -4,16 +4,15 @@
 .PUSH/POP status
 [width=100%,options="header",]
 |===================================================================================================
-|Extension        8+|Estimated code-size reduction                                         
-|                 2+|IoT application 2+|IoT protocol 2+|Zephyr Central 2+|Zephyr Peripheral
-9+|Text size of baseline build with -msave-restore
-| baseline          |393060   | N/A    |1235044 | N/A  |46816 | N/A      |88930   | N/A    
-9+|Measured by compiling with HCC vs baseline
-| PUSH/POP          |373788   | 4.90%  |1194200 | 3.31%|44468 | 5.0%     |85300   | 4.08%  
-9+|Improvement of PUSH+MV proposal over PUSH/POP estimated by a script, so elf files don't exist
-| PUSH+MV           2+| 0.94% | 2+|1.02% | 2+| 1.55%    | 2+| 1.35%  
-9+|Cumulative benefit of PUSH/POP and PUSH+MV, previous two rows added
-| PUSH+MV/POP       2+| *5.84%* | 2+|*4.33%*| 2+|*6.57%*|2+|*5.43%* 
+| Extension       |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
+5+|Text size of baseline build with -msave-restore
+| baseline            | N/A   | N/A  | N/A     | N/A    
+5+|Measured by compiling with HCC vs baseline
+| PUSH/POP           | 4.90%  | 3.31% | 5.0%   | 4.08%  
+5+|Improvement of PUSH+MV proposal over PUSH/POP estimated by a script, so elf files don't exist
+| PUSH+MV           | 0.94% |1.02% | 1.55%    | 1.35%  
+5+|Cumulative benefit of PUSH/POP and PUSH+MV, previous two rows added
+| PUSH+MV/POP       | *5.84%* |*4.33%*|*6.57%* |*5.43%* 
 |===================================================================================================
 
 PUSH/POP spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[here]
@@ -33,11 +32,25 @@ PUSH/POP spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/
 
 Table jump spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[here]
 
-The multi-move spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[here]. I'm roughly estimating about 0.4% reduction. It needs estimating more accurately, and 0.4% would bring 3/4 of the main benchmarks to greater than 10% code size reduction.
+[ldstbh_status_table]
+.`c.lbu/c.lhu/c.sb/c.sh` status
+[width=100%,options="header",]
+|===================================================================================================
+|            |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
+5+|Compiled with HCC, 5-bit unsigned immediate, relative to baseline
+| C.LBU/C.SB | 1.39%  | 1.80% | 2.56% | 1.88%  
+5+|Compiled with HCC, 5-bit unsigned immediate, relative to baseline
+| C.LHU/C.SH | 0.54%  | 0.79% | 0.68%  | 0.45%
+5+|Add in estimated benefit of TBLJAL + PUSH+MV/POP
+| total        |*14.02%*|*11.81%*|*13.08%*|*12.25%*
+|===================================================================================================
+
+We may decide that a shorter immediate value is acceptable for `c.lbu/c.lhu/c.sb/c.sh` or to only implement `c.lbu/c.sb` as the benefit is highest.
+
+The multi-move spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[here]. I'm roughly estimating about 0.4% reduction, so  hopefully > 12% across the 4 benchmarks (accurate analysis to be done). 
 
 Next to analyse and add into this table
 
-- `C.LHU/C.LBU/C.SH/C.SB`
 - `LWGP/SWGP`
 - `C.NOT/C.LSBNOT`
 - `MULIADD/ADDIADD/MULI` - from Clare's proposal (need to locate it)
