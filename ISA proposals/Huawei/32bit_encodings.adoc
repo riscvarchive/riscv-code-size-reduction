@@ -10,6 +10,8 @@ Version 0.1
 :le: &#8804;
 :rarr: &#8658;
 
+See the latest status of the instruction proposals and benchmarking results https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/README.adoc[here]
+
 This document describes 32-bit instructions proposed to help reduce code-size.
 They are split into v1.0 and `future` instructions. For the time being we will only analyse v1.0 instructions and push to ratify a subset of those in 2021. 
 New proposals will be added into the `future` instructions category.
@@ -23,13 +25,12 @@ All instructions in _italics_ are for the `future`
 
 . Anders requested load/stores with scaled offsets, which have not yet been considered
 . Andy Glew also suggested this for accessing variables in arrays using a loop counter - so that the loop variable can be used directly
-.. eg load rd := M[rs1+rs2<<scaleImm] so rs2 is the unmodified loop counter
-. Andy Glew suggested incblz rd,target
+.. eg `load rd := M[rs1+rs2<<scaleImm]` so `rs2` is the unmodified loop counter
+. Andy Glew suggested `incblz rd,target`
 .. `rd += 1; if( rd < 0 ) goto target` 
 .. this requires no immediate value for comparison, so requires the loop counter to start negative and count up, so gives a bigger branch offset range
 . I'm worried that `c.slli + c.add` is not the right solution for compiling softfloat as it overwrites the shifted operand compared to 32-bit encoding for `addshf`, I think we may need `addshf/orshf` TBD
 . Andes Performance Extension has `beqc/bnec` which are similar to `beqi` but the constant ranges are different (`cmpimm[6:0]` and `offset[10:1]`). Do we need `bnec`? And do we need the other instructions `blti` etc? At the time the compiler team requested a full set of comparisons, which is why we added them all.  It would be better to remove `blti`, `bgei` if we can (need compiler expert input) as they're not so useful.
-. Whether `lbgp`, `lhgp` are required, and even `ldgp`?
 
 == v1.0 proposal
 
@@ -50,23 +51,15 @@ This should not be taken as a final set at this stage. Any instruction may be re
 2+|010         |e |ra 2+|frcount  2+|rcount         3+|spimm          | 000   4+| 00000             |0001011| PUSH
 18+| *custom-0 encoding group (all architectures), compare-immediate-branch*
 6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 001   4+| offset[5:1]       |0001011| BEQI
-6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 010   4+| offset[5:1]       |0001011| BLTI
-6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 011   4+| offset[5:1]       |0001011| BGEI
-6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 100   4+| offset[5:1]       |0001011| BLTUI
-6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 101   4+| offset[5:1]       |0001011| BGEUI
+6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 010   4+| offset[5:1]       |0001011| BNEI
 18+| *custom-0 encoding group (all architectures), GP relative load/store, allowing X3 (tp=0) and X4 (tp=1) as GPs*
- 8+|imm[11:0]                                       3+| rs1           | 001   3+| imm[15:12]    | tp|1011011| LBUGP
- 8+|imm[11:1, 16]                                   3+| rs1           | 010   3+| imm[15:12]    | tp|1011011| LHUGP
  8+|imm[11:2, 17:16]                                3+| rs1           | 011   3+| imm[15:12]    | tp|1011011| LWGP
- 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 100   4+| imm[4:0]          |1011011| SBGP
- 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 101   4+| imm[4:1, 16]      |1011011| SHGP
  5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 110   4+| imm[4:2, 17:16]   |1011011| SWGP
 18+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from B-extension]*
 8+|imm[11:0]                                          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULI
 7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULIADD
 7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11101         3+| rd'       |0011011| ADDIADD
 18+| *table jump - no encodings yet*
-7+|xxxxxx 4+|index8 |000   4+|xxxxx |xxxxxxx |TBLJ
 7+|xxxxxx 4+|index8 |001   4+|xxxxx |xxxxxxx |TBLJAL
 |=========================================================================================================================
 
@@ -78,18 +71,10 @@ This should not be taken as a final set at this stage. Any instruction may be re
 | POP                  | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers]
 | POPRET               | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers and return]
 | PUSH                 | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH registers]
-| TBLJ                 | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[Table jump]
 | TBLJAL               | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[Table jump and link]
 | BEQI                 | if (rs1==sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
-| BLTI                 | if (rs1< sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
-| BGEI                 | if (rs1>=sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
-| BLTUI                | if (rs1< zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
-| BGEUI                | if (rs1>=zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
-| LBUGP                | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][ 7:0]);
-| LHUGP                | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][15:0]);
+| BNEI                 | if (rs1< sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 | LWGP                 | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][31:0]);
-| SBUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][ 7:0])=rs2[ 7:0];
-| SHUGP                | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][15:0])=rs2[15:0];
 | SWGP                 | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][31:0])=rs2[31:0];
 | MULI                 | rd' = rs1' * sign_ext(imm)
 | MULIADD              | rd' = rs1' + rs2' * sign_ext(imm)
@@ -103,42 +88,14 @@ https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensio
 [source,sourceCode,text]
 ----
 beqi  a5,1,e005e2       # if (a5== 1) branch_target=0xe005e2; else branch_target=PC+4; //signed comparison
-blti  a5,4,e06222       # if (a5<  4) branch_target=0xe06222; else branch_target=PC+4; //signed comparison
-bgei  a2,3,e088f6       # if (a2>= 3) branch_target=0xe088f6; else branch_target=PC+4; //signed comparison
-bltui	a4,13,e08878      # if (a4< 13) branch_target=0xe08878; else branch_target=PC+4; //unsigned comparison
-bgeui	a3,32,e095cc      # if (a3>=32) branch_target=0xe095cc; else branch_target=PC+4; //unsigned comparison
+bnei  a5,4,e06222       # if (a5!= 4) branch_target=0xe06222; else branch_target=PC+4; //signed comparison
 
-lbu a1,0xfffff(gp)      # will use LBUGP if immediate is out of range for LBU
-lhu a1,0xfffff(gp)      # will use LHUGP if immediate is out of range for LHU
-lw  a1,0xfffff(gp)      # will use LWGP  if immediate is out of range for LW
+lw  a1,0xfffff(gp)      # will use LWGP if immediate is out of range for LW
+sw  a1,0xfffff(tp)      # will use SWGP if immediate is out of range for SW
 
-sb  a1,0xfffff(gp)      # will use SBGP if immediate is out of range for SB
-sh  a1,0xfffff(gp)      # will use SHGP if immediate is out of range for SH
-sw  a1,0xfffff(gp)      # will use SWGP if immediate is out of range for SW
-
-muliadd  a1, a1, a2,20  # a1 = a1 + (a2 * 20) ; overwrite base pointer - muliadda
-muliadd  a2, a1, a2,20  # a1 = a2 + (a2 * 20) ; overwrite array index  - muliaddb
+muliadd  a1, a2, a3,20  # a1 = a2 + (a3 * 20) 
 
 ----
-
-=== v1.0 Benchmarking results on the Huawei IoT code
-
-[#analysis_results]
-.Analysis results
-[width="100%",options=header]
-|=========================================================================================================================================================================================================================================================================================================
-| Instruction             | saving | status 
-| BEQI                    | 0.41%  | implemented in HCC and measured
-| BLTI                    | 0.02%  | implemented in HCC and measured
-| BGEI                    | 0.01%  | implemented in HCC and measured
-| BLTUI                   | 0.15%  | implemented in HCC and measured
-| BGEUI                   | 0.30%  | implemented in HCC and measured
-| L*GP, S*GP              | no estimate | need to analyse load/store addresses and set gp/tp and check with load/store addresses are in range. L.LI is useful for the analysis as it always has the full label addresses. Are signed loads useful?
-| MULIADD                 | 0.32%  | implemented in HCC and measured
-| MULI                    | no estimate  | to be done
-| ADDIADD                 | no estimate  | to be done
-|=========================================================================================================================================================================================================================================================================================================
-
 
 == `Future` Proposals
 
@@ -182,6 +139,10 @@ These instructions may be included in a later revision of the code-size reductio
 2+|110       3+| imm[8:5]    2+| rs2                2+| rs1      | 000        3+| imm[4:0]            |1011011| _SH.PU_
 2+|111       3+| imm[8:5]    2+| rs2                2+| rs1      | 000        3+| imm[4:0]            |1011011| _SW.PU_
 |=========================================================================================================================
+
+[NOTE] 
+
+  maybe add preshifted arithmetic from https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_preshifted_arithmetic.rst[here??]
 
 [#futuresemantics]
 .`Future` semantics
@@ -237,6 +198,3 @@ sw  a1, (t0)4!          # store word to t0, t0=t0+4
 
 == Rejected instructions
 
-`JAL8M/JAL16M` are versions of JAL which have a longer immediate offset. They were useful in the Huawei IoT code (`JAL16M` was implemented on silicon) 
-but take up too much encoding space, so a 48-bit solution would be better: `L.JAL`.
-They replace cases where 64-bits are required to jump to functions with 32 or 48-bits on instruction.
