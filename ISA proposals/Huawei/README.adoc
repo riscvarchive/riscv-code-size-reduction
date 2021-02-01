@@ -6,7 +6,11 @@ Zephyr (2 cores - central and peripheral)
 
 [NOTE]
 
-  We need more realistic benchmarks which we can recompile
+  We need more large, real benchmarks which we can recompile with different compiler options
+
+[NOTE]
+
+  The baseline code-size for these tables is to compile the benchmarks on HCC with `-msave-restore`
 
 == Proposals which save > 0.5%
 
@@ -17,14 +21,12 @@ Zephyr (2 cores - central and peripheral)
 [width=100%,options="header",]
 |===================================================================================================
 | Extension       |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
-5+|Text size of baseline build with -msave-restore
-| baseline            | N/A   | N/A  | N/A     | N/A    
 5+|Measured by compiling with HCC vs baseline
 | PUSH/POP           | 4.90%  | 3.31% | 5.0%   | 4.08%  
-5+|Improvement of PUSH+MV proposal over PUSH/POP estimated by a script, so elf files don't exist
+5+|Improvement of PUSH+MV proposal over PUSH/POP estimated by a script
 | PUSH+MV           | 0.94% |1.02% | 1.55%    | 1.35%  
 5+|Cumulative benefit of PUSH/POP and PUSH+MV, previous two rows added
-| PUSH+MV/POP       | *5.84%* |*4.33%*|*6.57%* |*5.43%* 
+|*PUSH+MV/POP*       | *5.84%* |*4.33%*|*6.57%* |*5.43%* 
 |===================================================================================================
 
 PUSH/POP spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[here]
@@ -41,7 +43,7 @@ PUSH/POP spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/
 9+|relative the the HCC PUSH/POP output above, estimated by a script, 256 table entries
 | TBLJAL + PUSH/POP 2+| 11.15%  2+| 8.20% 2+| 8.29%  2+| 8.57%  
 9+|add in estimated benefit of PUSH+MV
-| TBLJAL + PUSH+MV/POP 2+| *12.09%*  2+| *9.22%* 2+| *9.84%*  2+| *9.92%*
+|*TBLJAL + PUSH+MV/POP* 2+| *12.09%*  2+| *9.22%* 2+| *9.84%*  2+| *9.92%*
 |===================================================================================================
 
 Table jump spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[here]
@@ -58,7 +60,7 @@ Table jump spec is https://github.com/riscv/riscv-code-size-reduction/blob/maste
 5+|Compiled with HCC, 5-bit unsigned immediate, relative to baseline
 | C.LHU/C.SH | 0.54%  | 0.79% | 0.68%  | 0.45%
 5+|Add in estimated benefit of TBLJAL + PUSH+MV/POP
-| total        |*14.02%*|*11.81%*|*13.08%*|*12.25%*
+|*Total*       |*14.02%*|*11.81%*|*13.08%*|*12.25%*
 |===================================================================================================
 
 We may decide that a shorter immediate value is acceptable for `c.lbu/c.lhu/c.sb/c.sh` or to only implement `c.lbu/c.sb` as the benefit is highest.
@@ -74,9 +76,9 @@ The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/e
 5+|Compiled with HCC, 5-bit unsigned immediate, relative to baseline
 | all cmp-imm-br | 0.79%  | 0.80% | 0.81% | 0.68%  
 5+|Only BEQI/BNEI, the most commonly used two (69% of the benefit)
-| all cmp-imm-br | 0.55%  | 0.55% | 0.56% | 0.47%  
+| BEQI/BNEI | 0.55%  | 0.55% | 0.56% | 0.47%  
 5+|Add in estimated benefit of TBLJAL, PUSH+MV/POP and load/store byte/half
-| total        |*14.57%*|*12.36%*|*13.64%*|*12.71%*
+|*Total*        |*14.57%*|*12.36%*|*13.64%*|*12.71%*
 |===================================================================================================
 
 The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst[here]
@@ -102,7 +104,7 @@ The multi-move proposal is https://github.com/riscv/riscv-code-size-reduction/bl
 Proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[here].
 It takes too much encoding space, Clare Wolf has a proposal for a cheaper version:
 
-https://lists.riscv.org/g/tech-bitmanip/topic/multiply_immediate_add/78289291?p=,,,20,0,0,0::recentpostdate%2Fsticky,,,20,2,0,78289291[email thread]
+See the https://lists.riscv.org/g/tech-bitmanip/topic/multiply_immediate_add/78289291?p=,,,20,0,0,0::recentpostdate%2Fsticky,,,20,2,0,78289291[email thread] and the 
 https://docs.google.com/spreadsheets/d/1rZnfWd4_K50rtPeg-yQD4h5mKcjOoghwzNg4u30Hyx0/edit#gid=0[analysis results]
 
 Clare also proposed `MULI` and `ADDIADD`.
