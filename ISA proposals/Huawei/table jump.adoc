@@ -24,10 +24,6 @@ The 32-bit instruction encoding will ensure that 64-bit sequences are unlikely t
 
 . what additional functionality to add in the 32-bit version, if any?
 . see <<pros-and-cons>>, currently it seems that we should only implement table jump mode, but more discussion is required
-. Whether to have `STBLJALVEC` to allow the OS to control the jump table
-. Whether to have `UTBLJALVEC` to allow user code to control the jump table (sounds dangerous?!)
-.. I would like to be able to switch tables when moving to execution in different DLLs... `JAL` takes up most instruction space in the Debian distro
-
 
 == Rationale
 
