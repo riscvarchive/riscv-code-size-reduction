@@ -1,0 +1,45 @@
+= Meeting Minutes 2021/02/02
+
+First Optimisation Group Meeting
+
+== Objectives from the group from asking everyone from opinions:
+
+- want to catch up with compilers from other architectures for embedded
+- continue with performance tracking system, and rigorous definitions for the projects
+- testing - to find a good set of benchmarks for comparing compilers against commercial tools, and for trace
+- power optimisations for embedded systems (reduced code-size/increased code-speed should help with this)
+- need proper procedures - need copyright assignments in place
+- generalised approaches - leveraging micro-code in user mode to improve size/speed
+- embedded in general, IoT, hard-drive controllers, probably others
+
+Performance tracking will become its own task-group
+
+Merge size/speed github pages in due course
+
+== Zfinx report
+
+Some compiler errors being generated, and testcases being written.
+Need to make more use of the mailing list to help solve the problems.
+
+== Companies working on the same extensions
+
+V-extension: SiFive and PLCT working on it, and others?
+P-extension: invite Andes to join the meeting, opens-sourced implementation
+B-extension: SiFive and PLCT
+K-extension: PLCT working on QEMU and LLVM for crypto-scalar
+
+LLVM - the different companies have a forum to communicate independantly from Risc-V
+
+Lots of big players are not engaged with RiscV.
+For vectors - several companies must collaborate to make it happen.
+- for LLVM vector support this is already happening
+
+Once there's a forum for people to collaborate then we can invite more compiler experts to join us.
+
+Wei Wu will look at setting up a bi-weekly meeting for RiscV GCC
+
+== Volunteers
+
+Need benchmarks and examples of deficiences in the compiler, and people to fix them
+
+
