@@ -80,7 +80,7 @@ The code-size reduction will initially be analysed for this configuration.
 |7     |ra, s0-s11  | mv s0, a0; mv s1, a1; mv s2, a2;
 |=====================================================
 
-Therefore the example about would become:
+Therefore the example above would become:
 
 [source,sourceCode,text]
 ----
@@ -403,29 +403,23 @@ if (opcode == "POPRET") {
 .proposed 32-bit encodings
 [options="header",width="100%"]
 |============================================================================
-|31:30  |29:28|27:25   |24 |23:20  |19:15 |14:12 |11:7  |6:0     |name
-|xx     |xx   |0000    |ra |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
-|xx     |xx   |0000    |ra |rcount |spimm |001   |xxxxx |xxxxxxx |POP
-|xx     |xx   |0000    |ra |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
+|31:28  |27:26|25:24   |23:20  |19:15 |14:12 |11:7  |6:0     |name
+|xxxx   |xx   |mv      |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
+|xxxx   |xx   |mv      |rcount |spimm |001   |xxxxx |xxxxxxx |POP
+|xxxx   |xx   |mv      |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
 
-|xx     |00   |frcount |ra |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.F
-|xx     |00   |frcount |ra |rcount |spimm |001   |xxxxx |xxxxxxx |POP.F
-|xx     |00   |frcount |ra |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.F
+|xxxx   |00   |frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.F
+|xxxx   |00   |frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.F
+|xxxx   |00   |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.F
 
-|xx     |01   |frcount |ra |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.D
-|xx     |01   |frcount |ra |rcount |spimm |001   |xxxxx |xxxxxxx |POP.D
-|xx     |01   |frcount |ra |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.D
+|xxxx   |01   |frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.D
+|xxxx   |01   |frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.D
+|xxxx   |01   |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.D
 
-|xx     |10   |frcount |ra |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.Q
-|xx     |10   |frcount |ra |rcount |spimm |001   |xxxxx |xxxxxxx |POP.Q
-|xx     |10   |frcount |ra |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.Q
+|xxxx   |10   |frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.Q
+|xxxx   |10   |frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.Q
+|xxxx   |10   |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.Q
 
-10+|*reserved as `rcount` is out of range*
-|xx     |xx   |xxxx    |x  |>12    |xxxx  |xxx   |xxxxx |xxxxxxx |*reserved*
-10+|*reserved as no registers are specified*
-|xx     |xx   |0000    |0  |0000   |xxxx  |xxx   |xxxxx |xxxxxxx |*reserved*
-10+|*reserved as `flen` is out of range (bits [29:28]) and `frcount>0`*
-|xx     |11   |>0     |0  |0000   |xxxx  |xxx    |xxxxx |xxxxxxx |*reserved*
 |============================================================================
 
 [NOTE]
@@ -441,8 +435,8 @@ The encoding takes the same behaviour as any floating point instruction if execu
 
 The following cases do not decode as `PUSH*/POP*/POPRET*`
 
-* No registers are specified (`ra, rcount, frcount` are all zero)
-* `rcount>12`
+* No registers are specified (`rcount, frcount` are both zero)
+* `rcount>13`
 * `flen=3`
 
 [#16bitencodings]
@@ -524,36 +518,33 @@ The bytes required for padding is simple - if FLEN==XLEN it's always zero. If FL
 | 4n+3   |12-bytes
 |====================================
 
-=== `ra, frcount, rcount` for the 32-bit encodings
+=== `mv, frcount, rcount` for the 32-bit encodings
 
-The registers in the `reg_list` are controlled by these three fields
+The registers in the `reg_list` are controlled by these fields
 
-[#32bit-ra]
-.`ra` field
-[options="header"]
-|====================================
-|ra      | ABI names               
-| 0      |none                     
-| 1      |ra
-|====================================
+Note that `frcount` and `mv` are in the same location in the encoding.
 
 [#32bit-frcount]
-.`frcount` values for the 32-bit encodings
+.`frcount` values for the 32-bit encodings for `PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]`
 [options="header"]
 |=====================
 |frcount | ABI names  
 | 0      |none        
 | 1      |fs0         
-| 2      |fs0-fs1     
-| 3      |fs0-fs2     
-| 4      |fs0-fs3     
-| 5      |fs0-fs5     
-| 6      |fs0-fs8     
-| 7      |fs0-fs11     
+| 2      |fs0-fs1
+| 3      |fs0-fs5
 |=====================
 
-[NOTE]
-  We save 1-bit of encoding space by grouping the floating point registers
+[#32bit-mv]
+.`mv` values for the 32-bit encodings for `PUSH, POP, POPRET`
+[options="header"]
+|=========================================
+|mv      |ABI names  
+| 0      |none        
+| 1      |a0
+| 2      |a0-a2
+| 3      |a0-a4
+|=========================================
 
 [#32bit-rcount]
 .`rcount` field values for the 32-bit encodings
@@ -561,19 +552,23 @@ The registers in the `reg_list` are controlled by these three fields
 |==========================
 |rcount  | ABI names      
 | 0      |none       
-| 1      |s0
-| 2      |s0-s1
-| 3      |s0-s2
-| 4      |s0-s3
-| 5      |s0-s4
-| 6      |s0-s5
-| 7      |s0-s6
-| 8      |s0-s7
-| 9      |s0-s8
-| 10     |s0-s9
-| 11     |s0-s10
-| 12     |s0-s11
-| 13-15  | *reserved*
+| 1      |ra
+| 2      |ra,s0
+| 3      |ra,s0-s1
+| 4      |ra,s0-s2
+| 5      |ra,s0-s3
+| 6      |ra,s0-s4
+| 7      |ra,s0-s5
+| 8      |ra,s0-s6
+| 9      |ra,s0-s7
+| 10     |ra,s0-s8
+| 11     |ra,s0-s9
+| 12     |ra,s0-s10
+| 13     |ra,s0-s11
+2+|only valid for `PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]`
+| 14     |ra,s0-s11,fs0-fs11
+2+|could be used for interrupt save/restore
+| 15     | *reserved*
 |==========================
 
 === `rcount` for the 16-bit encodings
