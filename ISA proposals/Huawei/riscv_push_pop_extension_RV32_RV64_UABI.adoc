@@ -489,10 +489,10 @@ Note that `frcount` and `mv` are in the same location in the encoding.
 | 10     |s0-s9
 | 11     |s0-s10
 | 12     |s0-s11
-2+|`frcount=0` for this to be valid, 
-2+| The opcode must have a `[.FDQ]`` suffix
+2+| for `rcount=13` to be valid `frcount=0` and
+2+| the opcode must have an `[.fdq]` suffix
 | 13     |s0-s11,fs0-fs11
-2+|could be used for interrupt save/restore
+2+|these values could be used for interrupt save/restore
 | 14-15  | *reserved*
 |==========================
 
