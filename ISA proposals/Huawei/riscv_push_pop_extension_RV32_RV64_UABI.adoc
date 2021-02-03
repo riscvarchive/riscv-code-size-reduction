@@ -62,11 +62,11 @@ pop.[fdq]      {<fsreg_list>},  <stack_adjustment>
 popret.[fdq]   {<fsreg_list>},  <stack_adjustment> 
 ----
 
-Tese instructions allow `fs` registers to be pushed/popped and do not allow `a` to `s` register moves (to save encoding space).
+These instructions allow `fs` registers to be pushed/popped and do not allow `a` to `s` register moves (to save encoding space).
 
 32-bit and 16-bit forms are available, the assembler should choose the 16-bit form if the parameters permit and the C extension is implemented.
 
-The registers in `fsreg_list` are in a comma separated list. The list must not be empty. `areg_list` may be empty.
+The registers in `reg_list` and `areg_list` are comma separated lists. `areg_list` may be empty, `reg_list` must not be empty.
 
 [source,sourceCode,text]
 ----
@@ -75,9 +75,10 @@ The registers in `fsreg_list` are in a comma separated list. The list must not b
 <fsreg_list> ::= <ra> "," <sreg_range> ", " <freg_range> | <ra> "," <freg_range> | <sreg_range> "," <freg_range> | <freg_range>
 <rfsreg_list> ::= <ra> "," <sreg_range> ", " <freg_range> | <ra> "," <freg_range>
 <areg_list>  ::= {} | <areg_range>
-<sreg_range> ::= <s0>  | <s0-sN>   (where `N` is in the range [1, 11])
-<freg_range> ::= <fs0> | <fs0-fsM> (valid values of `M` are 1,2,3,5,8,11)
-<areg_range> ::= <a0>  | <a0-aP>   (where `P` is in the range [1, 2])
+<sreg_range> ::= <s0>  | <s0-sN>   (where N is in the range [1, 11])
+<freg_range> ::= <fs0> | <fs0-fsM> (valid values of M are 1,2,3,5,8,11)
+<areg_range> ::= <a0>  | <a0-aP>   (where P is in the range [1, 2])
+<reg_list>   ::= <sreg_list>  | <rsreg_list> | <fsreg_list> | <rfsreg_list>
 
 //legal syntax
 
@@ -103,37 +104,37 @@ For the 16-bit encodings
 .. `if sreg_list={ra,s0}:    areg_list={a0}`
 .. `if sreg_list={ra,s0-sN}: areg_list={a0-a1} where N=2,3`
 .. `if sreg_list={ra,s0-sN}: areg_list={a0-a2} where N=5,8,11`
-. The `stack_adjustment` must be no more than the total memory required for `sreg_list`, rounded up to a multiple of 16-bytes, plus an additional (0..7)*16-bytes.
+. The `stack_adjustment` must be no more than the total memory required for `reg_list`, rounded up to a multiple of 16-bytes, plus an additional (0..7)*16-bytes.
 
 Examples of valid 16-bit encodings for RV32 or RV64:
 
 [source,sourceCode,text]
 ----
 
-push   {ra},                 -16; //store ra; decrement sp by 16
-push   {ra,s0},    {a0},     -32; //store ra,s0; mv s0,a0; decrement sp by 32
-push   {ra,s0-s3}, {a0-a1},  -96; //store ra,s0-s3; mv s0,a0; mv s1,a1; decrement sp by 96
+push   {ra},                 -16; //store ra;                                      decrement sp by 16
+push   {ra,s0},    {a0},     -32; //store ra,s0;     mv s0,a0;                     decrement sp by 32
+push   {ra,s0-s3}, {a0-a1},  -96; //store ra,s0-s3;  mv s0,a0; mv s1,a1;           decrement sp by 96
 push   {ra,s0-s11},{a0-a2}, -128; //store ra,s0-s11; mv s0,a0; mv s1,a1; mv s2,a2; decrement sp by 128
 
-pop    {ra},        16; //load  ra; increment sp by 16
-popret {ra},        16; //load  ra; increment sp by 16; jump to ra
+pop    {ra},        16;  //load  ra;        increment sp by 16
+popret {ra},        16;  //load  ra;        increment sp by 16; jump to ra
 
-pop    {ra,s0},     32; //load  ra,s0; mv s0,a0; increment sp by 32
-popret {ra,s0},     32; //load  ra,s0; mv s0,a0; increment sp by 32; jump to ra
+pop    {ra,s0},     32;  //load  ra,s0;     increment sp by 32
+popret {ra,s0},     32;  //load  ra,s0;     increment sp by 32; jump to ra
 
-pop    {ra,s0-s3},  96; //load  ra,s0-s3; mv s0,a0; mv s1,a1; increment sp by 96
-popret {ra,s0-s3},  96; //load  ra,s0-s3; mv s0,a0; mv s1,a1; increment sp by 96; jump to ra
+pop    {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96
+popret {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96; jump to ra
 
-pop    {ra,s0-s11}, 128; //load  ra,s0-s11; mv s0,a0; mv s1,a1; mv s2,a2; increment sp by 128
-popret {ra,s0-s11}, 128; //load  ra,s0-s11; mv s0,a0; mv s1,a1; mv s2,a2; increment sp by 128; jump to ra
+pop    {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128
+popret {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128; jump to ra
 
 ----
 [NOTE]
-  There is no encoding space in the 16-bit encoding to explicitly specify `areg_list` so it is automatically determined from the `sreg_list` value based on analysing usage in the benchmark suite
+  There is no encoding space in the 16-bit encoding to explicitly specify `areg_list` so it is automatically determined from the `reg_list` value based on analysing usage in the benchmark suite
 
 
 [NOTE]
-  To save encoding space some opcodes do not allow the full range of `spimm` or `sreg_list` which reduces the possible `stack adjustment` range further, see <<#16bitencodings>>
+  To save encoding space some opcodes do not allow the full range of `spimm` or `reg_list` which reduces the possible `stack adjustment` range further, see <<#16bitencodings>>
 
 For the 32-bit encodings
 
@@ -155,14 +156,14 @@ To be a legal encoding:
 5.  It there is a `.[fdq]` suffix, there must be `F` registers in the list
 6.  It there is a `.[fdq]` suffix, `areg_list` must be empty
 7.  For `POPRET` variants, `sreg_list` must include `ra`
-8.  `areg_list` must not overwrite any `s` registers which are not in `sreg_list`
+8.  `areg_list` must be empty for all `POP` and `POPRET` variants and for `PUSH.[FDQ]`
 
 Additionally:
 
 . If `sp` is not 16-byte aligned then take an illegal instruction exception
 
 [NOTE]
-  When moving from accessing `x` registers to `f` registers there may be a gap as the registers may be different widths, and all registers must be aligned in memory
+  When moving from loading or storing `x` registers to `f` registers there may be a gap as the registers may be different widths, and all registers must be aligned in memory
 
 == Determining XLEN and FLEN to decode and execute the instructions
 
@@ -488,7 +489,8 @@ Note that `frcount` and `mv` are in the same location in the encoding.
 | 10     |s0-s9
 | 11     |s0-s10
 | 12     |s0-s11
-2+|only valid for `PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]`, `frcount=0` for this to be valid
+2+|`frcount=0` for this to be valid, 
+2+| The opcode must have a `[.FDQ]`` suffix
 | 13     |s0-s11,fs0-fs11
 2+|could be used for interrupt save/restore
 | 14-15  | *reserved*
@@ -621,24 +623,7 @@ ret;
 
 == Initial benchmarking results
 
-Using the `PUSH/POP` support in HCC (Huawei GCC branch) allows the full range of register lists in the 16-bit encodings, and up to 5-bits of `spimm`.
-
-https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/push_pop_encoding_results.xlsx[This spreadsheet] shows the results across the whole benchmark suite to show which instructions were inferred (not broken down by benchmark).
-
-The target for the 16-bit encodings has been to minimise encoding space while keeping ~ 95% of the cases on the benchmark suite (94.9% achieved)
-
-The overall saving compared to -msave-restore is 4.8% using HCC (this result is subject to change as the benchmark suite is updated). Minimising the encoding space reduces this benefit to 4.6%.
-
-[#results-table]
-.16-bit encoding code-size benefit
-[options="header",width=100%]
-|==================================================================
-|Instruction|percentage of calls from HCC|overall code-size saving
-|All        | 94.9%                      | 4.6% (94.9% of 4.8%)
-|`C.PUSH`   | 47.5%                      | 2.3%
-|`C.POPRET` | 37.6%                      | 1.8%
-|`C.POP`    | 9.8%                       | 0.5%
-|==================================================================
+See https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/README.adoc[PUSH+MV/POP] in on this page.
 
 == Assembly examples
 
