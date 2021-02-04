@@ -29,6 +29,8 @@ dec4bgez rd', #offset; # rd' = rd' - 4; bge rd', zero, -#offset;
 dec8bgez rd', #offset; # rd' = rd' - 8; bge rd', zero, -#offset;
 ----
 
+I haven't proposed an encoding yet, but I expect that a 6-bit immediate will fit meaning that the backwards branch will be up to 124 bytes.
+
 This reduces the loop by one 16-bit instruction to:
 
 [source,sourceCode,text]
