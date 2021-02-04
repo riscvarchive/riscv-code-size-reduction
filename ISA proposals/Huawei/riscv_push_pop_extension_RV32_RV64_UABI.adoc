@@ -82,13 +82,13 @@ The registers in `reg_list` and `areg_list` are comma separated lists. `areg_lis
 
 //legal syntax
 
-push         {<sreg_list>},  [{<areg_list>}], stack_adjustment
-push.[fdq]   {<fsreg_list>}, stack_adjustment
+push         {<sreg_list>},  [{<areg_list>}], -stack_adjustment
+push.[fdq]   {<fsreg_list>},                  -stack_adjustment
 
-pop          {<sreg_list>},  stack_adjustment
-popret       {<rsreg_list>}, stack_adjustment //popret must include ra
-
+pop          {<sreg_list>},   stack_adjustment
 pop.[fdq]    {<fsreg_list>},  stack_adjustment
+
+popret       {<rsreg_list>},  stack_adjustment //popret must include ra
 popret.[fdq] {<rfsreg_list>}, stack_adjustment //popret must include ra
 
 ----
@@ -143,17 +143,18 @@ For the 32-bit encodings
 For example
 
 . `push   {ra,s0-s2}, {a0-a1}, -64` can use a 16-bit encoding
+. `push   {s0-s2}, {a0-a1}, -64` must use a 32-bit encoding as `ra` is not in the register list
 . `push.f {ra,s0-s2, fs0}, -64` must use a 32-bit encoding as `fs0` is in the register list
 . `push   {ra,s0-s2}, {a0-a1}, -256` must use a 32-bit encoding as the `stack_adjustment` is out of range
-. `push   {ra,s0-s2}, -32` must use a 32-bit encoding as `sreg_list` requires `areg_list={a0-a1}`
+. `push   {ra,s0-s2}, -32` must use a 32-bit encoding as `sreg_list` requires `areg_list={a0-a1}` for the16-bit encoding
 
 To be a legal encoding:
 
 1.  The stack adjustment must be negative for all `PUSH` variants and positive for all `POP[RET]` variants
 2.  The stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register lists must be valid (see above)
-4.  If any `F` registers are included in the list there must be a `.[fdq]` suffix
-5.  It there is a `.[fdq]` suffix, there must be `F` registers in the list
+4.  If any `f` registers are included in the list there must be a `.[fdq]` suffix
+5.  It there is a `.[fdq]` suffix, there must be `f` registers in the list
 6.  It there is a `.[fdq]` suffix, `areg_list` must be empty
 7.  For `POPRET` variants, `sreg_list` must include `ra`
 8.  `areg_list` must be empty for all `POP` and `POPRET` variants and for `PUSH.[FDQ]`
@@ -178,16 +179,16 @@ The width of `x` registers in the register list depends upon XLEN and so `misa.M
 
 If using a debugger then `misa.MXL` can be read, if XLEN is not known for the core.
 
-FLEN is explicitly specified in the opcode as the presence of any F registers requires a `.[fdq]` suffix on the opcode.
+FLEN is explicitly specified in the opcode as the presence of any `f` registers requires a `.[fdq]` suffix on the opcode.
 
 Follow this link for details of the https://github.com/riscv/riscv-elf-psabi-doc/blob/master/riscv-elf.md#file-header[ELF file header]
 
 === Rationale: why include the .[fdq] suffix
 
-It is required to hard-code the length of the F registers in the opcode, and not just save/restore the whole register. We must allow code compiled for the F-extension
+It is required to hard-code the length of the `f` registers in the opcode, and not just save/restore the whole register. We must allow code compiled for the F-extension
 to run on a  core which supports D and possibly Q. We must also allow code compiled for the D-extension to run on a core which supports Q.
 
-If we don't explicitly state the F register width and always store the whole register, then the registers will be stored at different addresses to the ones expected 
+If we don't explicitly state the `f` register width and always store the whole register, then the registers will be stored at different addresses to the ones expected 
 by the compiler. 
 
 An alternative would be to use `misa.[FDQ]`
@@ -352,8 +353,16 @@ The encoding takes the same behaviour as any floating point instruction if execu
 The following cases do not decode as `PUSH*/POP*/POPRET*`
 
 * No registers are specified (`rcount, frcount` are both zero)
-* `rcount>13`
+* `rcount>14`
 * `flen=3`
+* `rcount==13` and `frcount>0` and opcode doesn't have an [fdq] suffix
+
+==== Rational: `rcount=13, frcount=0` saving all saved regsiters
+
+The debian distro does save all `s` and `fs` registers on a few occasions, so I used a special encoding for this case. I saw no justification for saving all `fs` registers *without* saving all `s` registers. It seems useful to have a form which saves all saved registers.
+
+The programmable range for `frcount` doesn't save many `fs` registers as `FPMark` only saves one or two and Debian rarely saves more than that.
+
 
 [#16bitencodings]
 == 16-bit Encodings
@@ -489,8 +498,7 @@ Note that `frcount` and `mv` are in the same location in the encoding.
 | 10     |s0-s9
 | 11     |s0-s10
 | 12     |s0-s11
-2+| for `rcount=13` to be valid `frcount=0` and
-2+| the opcode must have an `[.fdq]` suffix
+2+|  `rcount=13` is valid if `frcount=0` for `[.fdq]` opcodes
 | 13     |s0-s11,fs0-fs11
 2+|these values could be used for interrupt save/restore
 | 14-15  | *reserved*
@@ -558,7 +566,7 @@ Referring to the example in <<push-example-1>>
 
 [source,sourceCode,text]
 ----
-c.push  {ra, s0-s5},{a0-a2} -64
+c.push  {ra, s0-s5},{a0-a2}, -64
 ----
 
 Appears to software as:
@@ -575,9 +583,9 @@ sw  s4,-24(sp);
 sw  s5,-28(sp);   
 
 # these must only execute once, and will only execute after all stores complete sucessfully
-mv s0, a0
-mv s1, a1
-mv s2, a2
+mv s0, a0;
+mv s1, a1;
+mv s2, a2;
 addi sp, sp, -64; 
 ----
 
@@ -648,9 +656,9 @@ sw  s2, -16(sp);
 sw  s3, -20(sp);
 sw  s4, -24(sp); 
 sw  s5, -28(sp);
-mv  s0, a0
-mv  s1, a1
-mv  s2, a2
+mv  s0, a0;
+mv  s1, a1;
+mv  s2, a2;
 addi sp, sp, -64;
 ----
 
@@ -670,8 +678,8 @@ Equivalent sequence:
 sw  ra, -4(sp);
 sw  s0, -8(sp); 
 sw  s1, -12(sp);
-mv s0, a0
-mv s1, a1
+mv s0, a0;
+mv s1, a1;
 addi sp, sp, -32;
 ----
 
