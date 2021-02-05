@@ -12,6 +12,55 @@ Zephyr (2 cores - central and peripheral)
 
   The baseline code-size for these tables is to compile the benchmarks on HCC with `-msave-restore`
 
+== A nice example of the code size reduction
+
+This function is probably from glibc and is linked to FPMark executables
+
+[source,sourceCode,text]
+----
+00018e0c <_open_r>:
+   18e0c:	1141                	addi	sp,sp,-16 ;#PUSH (1)
+   18e0e:	c422                	sw	s0,8(sp)  ;#PUSH (2)
+   18e10:	c226                	sw	s1,4(sp)  ;#PUSH (3)
+   18e12:	00cf2437          	lui	s0,0xcf2
+   18e16:	84aa                	mv	s1,a0     ;#PUSH (4) - will target s0 not s1
+   18e18:	852e                	mv	a0,a1     ;#MVAA (1)
+   18e1a:	85b2                	mv	a1,a2     ;#MVAA (2)
+   18e1c:	8636                	mv	a2,a3     ;#MVAA (3)
+   18e1e:	c606                	sw	ra,12(sp) ;#PUSH (4)
+   18e20:	e0042e23          	sw	zero,-484(s0) # cf1e1c <errno>
+   18e24:	3290f0ef          	jal	ra,2894c <_open> ;#TBLJAL
+   18e28:	57fd                	li	a5,-1                       ;#BNEI (1)
+   18e2a:	00f51663          	bne	a0,a5,18e36 <_open_r+0x2a>  ;#BNEI(2)
+   18e2e:	e1c42783          	lw	a5,-484(s0)
+   18e32:	c391                	beqz	a5,18e36 <_open_r+0x2a>
+   18e34:	c09c                	sw	a5,0(s1)
+   18e36:	40b2                	lw	ra,12(sp)   ;#POPRET (1)
+   18e38:	4422                	lw	s0,8(sp)    ;#POPRET (2)
+   18e3a:	4492                	lw	s1,4(sp)    ;#POPRET (3)
+   18e3c:	0141                	addi	sp,sp,16    ;#POPRET (4)
+   18e3e:	8082                	ret                 ;#POPRET (5)
+----
+
+After using many of the proposed new instructions the result is (note that I have to swap `s0` and `s1` as `push` moves `a0` into `s0`):
+
+[source,sourceCode,text]
+----
+00018e0c <_open_r>:
+   18e0c:	<16-bit>                push	{ra,s0-s2},{a0},-16
+   18e12:	00cf2437          	lui	s1,0xcf2
+   18e18:	<16-bit>                mv	(a0,a1), (a1,a2), (a2,a3)
+   18e20:	e0042e23          	sw	zero,-484(s1) # cf1e1c <errno>
+   18e24:	<16-bit>            	tbljal	#x
+   18e2a:	<32-bit>          	bnei	a0,-1,18e36 <_open_r+0x2a>
+   18e2e:	e1c42783          	lw	a5,-484(s1)
+   18e32:	c391                	beqz	a5,18e36 <_open_r+0x2a>
+   18e34:	c09c                	sw	a5,0(s0)
+   18e36:	<16-bit>                popret	{ra,s0-s2},-16
+----
+
+This function reduces from 54-bytes to 28-bytes, ~48% reduction in size. Clearly not all functions will benefit this much and the lack of `-msave-restore` means the comparison is maybe a bit optimistic.
+
 == Proposals which save > 0.5%
 
 === PUSH/POP or PUSH+MV/POP
