@@ -52,14 +52,19 @@ Move a sequential pair of a registers into `(a0,a1)`
 [source,sourceCode,text]
 ----
 
-c.mvaslide #[0-3] - assembly syntax is:
+c.mvaslide #[0-7] - assembly syntax is:
 
 mv (a0,a1), (a1,a2)
 mv (a0,a1), (a2,a3)
 mv (a0,a1), (a3,a4)
 mv (a0,a1), (a4,a5)
 
+mv (a1,a2), (a2,a3)
+mv (a1,a2), (a3,a4)
+mv (a2,a3), (a3,a4)
+mv (a3,a4), (a4,a5)
+
 ----
 
-4-options so requires 4 encodings.
+8-options so requires a 3-bit field in the encoding.
 
