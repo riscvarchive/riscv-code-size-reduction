@@ -122,41 +122,4 @@ This is designed to be a link-time optimisation. The linker will combine suitabl
 Not yet specified, probably allow more range in `a` and `s` register choice. TBD.
 The 32-bit form must move more than 2 registers or there is no advantage over 2 `c.mv` instructions.
 
-== Other ideas
-
-This function from the Opus codec (I think from GLIBC) is an excellent example of the problem:. All 8 `mv` instructions are due to the ABI.
-
-[source,sourceCode,text]
-----
-00038818 <__subdf3>:
-   38818:       8038                    push    {ra,s0-s1},-16
-   3881a:       842a                    mv      s0,a0 ;# merge into PUSH+MV
-   3881c:       84ae                    mv      s1,a1 ;# merge into PUSH+MV
-   3881e:       8532                    mv      a0,a2 ;# new instruction? shuffle/slide a registers?
-   38820:       85b6                    mv      a1,a3 ;# new instruction? shuffle/slide a registers?
-   38822:       2cc9                    jal     38af4 <__negdf2>
-   38824:       862a                    mv      a2,a0 ;# new instruction? shuffle/slide a registers?
-   38826:       86ae                    mv      a3,a1 ;# new instruction? shuffle/slide a registers?
-   38828:       8522                    mv      a0,s0 ;# C.MVA01S
-   3882a:       85a6                    mv      a1,s1 ;# C.MVA01S
-   3882c:       8030                    pop     {ra,s0-s1},16
-   3882e:       ebdfe06f                j       376ea <__adddf3>
-----
-
-So we could also design an `a` register shuffle/slide instruction so maybe the optimised function would look like this:
-
-[source,sourceCode,text]
-----
-00038818 <__subdf3>:
-   38818:       8038                    push    {ra,s0-s1},-16
-   3881e:       XXXX                    mv      (a0,a2), (a1,a3) ;# new instruction
-   38822:       2cc9                    jal     38af4 <__negdf2>
-   38824:       XXXX                    mv      (a2,a3), (a0,a1) ;# new instruction
-   38828:       XXXX                    mv      (a0,a1), (s0,s1) ;# C.MVA01S - this proposal
-   3882c:       8030                    pop     {ra,s0-s1},16
-   3882e:       ebdfe06f                j       376ea <__adddf3>
-----
-
-This would delete 5 16-bit encodings. After analysing this proposal we'll analyse the `a` register shuffle/slide
-
 
