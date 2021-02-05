@@ -1,0 +1,65 @@
+= `a` register slide
+
+Move multiple `a` registers into lower numbered `a` registers for shifting function arguments
+
+== Rationale
+
+`mv` instructions are the most common in both the benchmark suite and the https://wiki.debian.org/RISC-V[RISC-V Debian distro].
+
+The example code is linked into FPMark (I think from glibc)
+
+[source,sourceCode,text]
+----
+00015054 <fabs>:
+   15054:	800007b7          	lui	a5,0x80000
+   15058:	fff7c793          	not	a5,a5
+   1505c:	872a                	mv	a4,a0
+   1505e:	8fed                	and	a5,a5,a1
+   15060:	853a                	mv	a0,a4 ;#these can be combined
+   15062:	85be                	mv	a1,a5 ;#these can be combined
+   15064:	8082                	ret
+----
+
+See also the example https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/README.adoc[here]
+
+The proposal is to use a single 16-bit encoding to slide `a` registers into lower numbered `a` registers.
+
+== Proposal 
+
+The proposal is to have two modes
+
+=== Slide mode
+
+Slide 3 `a` registers left one place, for example
+[source,sourceCode,text]
+----
+
+c.mvaslide #[0-1] - assembly syntax is
+
+mv (a0,a1,a2),    (a1,a2,a3) ;#this one is useful
+mv (a1,a2,a3),    (a2,a3,a4) ;#less useful
+
+----
+
+It's possible that we only implement the first one, requiring *no* operands! Minimal encoding space.
+
+
+
+=== Pair mode
+
+Move a sequential pair of a registers into `(a0,a1)`
+
+[source,sourceCode,text]
+----
+
+c.mvaslide #[0-3] - assembly syntax is:
+
+mv (a0,a1), (a1,a2)
+mv (a0,a1), (a2,a3)
+mv (a0,a1), (a3,a4)
+mv (a0,a1), (a4,a5)
+
+----
+
+4-options so requires 4 encodings.
+
