@@ -1,4 +1,4 @@
-= Multiple Register Move
+= Multiple A to S Register Move
 
 Move two `s` registers into two `a` registers.
 
@@ -102,7 +102,7 @@ mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
 mv (a2, a3), (s1, s3) ; # mv a2, s1; mv a3, s3
 ----
 
-This approach uses 2-bits fewer of the encoding space, so is 1/4 of the cost, but clearly provides fewer options.
+These two instructions combined use uses 1/3 of the encoding space of C.MVAS, but clearly provide fewer options.
 
 == Implementation
 
