@@ -24,9 +24,9 @@ This function is probably from glibc and is linked to FPMark executables
    18e10:	c226                	sw	s1,4(sp)  ;#PUSH (3)
    18e12:	00cf2437          	lui	s0,0xcf2
    18e16:	84aa                	mv	s1,a0     ;#PUSH (4) - will target s0 not s1
-   18e18:	852e                	mv	a0,a1     ;#MVAA (1)
-   18e1a:	85b2                	mv	a1,a2     ;#MVAA (2)
-   18e1c:	8636                	mv	a2,a3     ;#MVAA (3)
+   18e18:	852e                	mv	a0,a1     ;#MVASLIDE (1)
+   18e1a:	85b2                	mv	a1,a2     ;#MVASLIDE (2)
+   18e1c:	8636                	mv	a2,a3     ;#MVASLIDE (3)
    18e1e:	c606                	sw	ra,12(sp) ;#PUSH (4)
    18e20:	e0042e23          	sw	zero,-484(s0) # cf1e1c <errno>
    18e24:	3290f0ef          	jal	ra,2894c <_open> ;#TBLJAL
@@ -60,6 +60,8 @@ After using many of the proposed new instructions the result is (note that I hav
 ----
 
 This function reduces from 54-bytes to 28-bytes, ~48% reduction in size. Clearly not all functions will benefit this much and the lack of `-msave-restore` means the comparison is maybe a bit optimistic.
+
+Details of `c.mvaslide` are https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/a_reg_slide.adoc[here]
 
 == Proposals which save > 0.5%
 
