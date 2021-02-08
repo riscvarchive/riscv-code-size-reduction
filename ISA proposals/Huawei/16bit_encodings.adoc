@@ -48,14 +48,11 @@ Discussion should be mainly focussed on the proposals for v1.0
 [#proposed-16bit-encodings-1]
 .proposed 16-bit encodings-1 
 [width="100%",options=header]
-|=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|PUSH/POP/POPRET specifications are mature
-3+|100         |1   |0   |0   |0 2+|rcount|0 |0 2+|00 | spimm 2+|00|C.POP
-3+|100         |1   |0   |0 3+|rcount|0 |1 3+|spimm 2+|00|C.POPRET
-3+|100         |1   |0   |0 3+|rcount|1 |0 3+|spimm 2+|00|C.PUSH
-17+|PUSHZERO spec is less mature than PUSH/POP/POPRET and the benefit is lower
-3+|100         |1   |1   |0 3+|rcount|1 |0 3+|spimm 2+|00| *maybe reserved for C.PUSHZERO*
+|=======================================================================
+|15 |14 |13 |12 |11 |10 |9 |8 |7 |6 |5 |4 |3 |2 |1 |0 |instruction
+3+|100|1|0|0|0 2+|rcount|0 |0 2+|00 | spimm 2+|00|C.POP
+3+|100|1|0|0 3+|rcount|ret_sreg[0]|1 3+|spimm 2+|00|C.POPRET
+3+|110|1|0|0 3+|rcount|1 |0 3+|spimm 2+|00|C.PUSH
 17+|C.TBLJAL has very high benefit - the 8 bit immediate is valuable
 3+|  100       | 1  | 1  |1 8+|                index8               2+| 00  | C.TBLJAL
 |=============================================================================================
@@ -257,8 +254,6 @@ sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|PUSHZERO spec is less mature than PUSH/POP/POPRET and the benefit is lower
-3+|  100       | 1  | 1  4+|rcount (0,10) | 1  | 1  3+| spimm   2+| 00  | _C.PUSHZERO_
 17+|two-step execution, load PC relative value and then jump to the loaded value
 3+|  100       | 0  | 1 2+| 00     7+| uimm[8:2]                2+| 00  | _C.CALL_
 17+|PC relative load, only available for RV32 as this encoding is C.SLLI with an out of range shift
@@ -273,7 +268,6 @@ sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| _C.PUSHZERO_| https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64.adoc[PUSH registers and ZERO the allocated memory]
 | _C.LSBNOT_      | rd' = rs1' XOR 1
 | _C.CALL_        | ra  = sign_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0])); JAL(ra);
 | _C.LWPC_        | rd' = sign_ext(Memory[pc_offset(PC, zero_ext(uimm))][31:0])
@@ -313,20 +307,11 @@ lw  a5, 16(pc); # a5 = zero_extend(Memory[PC + 16<<2)[31:0]), for 16-bit encodin
 jal ra, 16(pc); # jump to Memory(pc_16), ra=PC+2, for 16-bit encoding offset must be in range, the link register must be ra
 ----
 
-=== `Future` Benchmarking results on the Huawei IoT code
-
-[#analysis_results]
-.Analysis results
-[width="100%",options=header]
-|=======================================================================================================
-| Instruction             | saving | status 
-| _C.PUSHZERO_            | 0.2%   | estimated - see email dated 2020/10/12 PUSHZERO
-|=======================================================================================================
-
-
 == Rejected instructions
 
 Jim Wilson pointed at that we should fix `-mno-strict-align` and mandate that cores which need `C.ORSLL[8|16|24]` support unaligned load/store, so that we don't need to assemble bytes into words
 
 `C.RORI` is only useful under limited circumstances
 
+`C.
+` a lot of extra complexity for little extra gain
