@@ -9,17 +9,17 @@ Move two `s` registers into two `a` registers.
 Common usages are:
 
 - moving function arguments into saved registers at the end of a function prologue, to save the arguments before calling another function. 
-  This case is covered by the https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH+MV proposal].
+  This case is covered by the https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH/POP proposal] for `a0-a2`:
 
 [source,sourceCode,text]
 ----
 # from FPMark
 00010402 <helper_atan1M>: 
    10402:	8198                	push	{ra,s0-s7},-64
-   10404:	89aa                	mv	s3,a0
-   10406:	892e                	mv	s2,a1
-   10408:	84b2                	mv	s1,a2
-   1040a:	8bb6                	mv	s7,a3
+   10404:	89aa                	mv	s3,a0 ;# use push {ra,s0-s7},{a0-a2},-64
+   10406:	892e                	mv	s2,a1 ;# use push {ra,s0-s7},{a0-a2},-64
+   10408:	84b2                	mv	s1,a2 ;# use push {ra,s0-s7},{a0-a2},-64
+   1040a:	8bb6                	mv	s7,a3 ;#others aren't optimised by ISA extensions
    1040c:	8abe                	mv	s5,a5
    1040e:	8a42                	mv	s4,a6
    10410:	8b46                	mv	s6,a7
@@ -29,61 +29,22 @@ Common usages are:
 
 [source,sourceCode,text]
 ----
-# from the same FPMark function, this case can be optimised
-   10444:	85a6                	mv	a1,s1
-   10446:	8522                	mv	a0,s0
+# from the same FPMark function, this case can be optimised by this proposal
+   10444:	85a6                	mv	a1,s1 ;#use mv (a0, a1), (s0, s1)
+   10446:	8522                	mv	a0,s0 ;#use mv (a0, a1), (s0, s1)
    10448:	0eb000ef          	jal	ra,10d32 <th_strncpy>
    ....
-#only a0 as a return value, so not easy to optimise (unless it's merged with the `POPRET` TBD)
-   10480:	8522                	mv	a0,s0
+#only a0 as a return value, can be merged with c.popret
+   10480:	8522                	mv	a0,s0 ;#use popret {ra,s0-s7},{s0},64
    10482:	8194                	popret	{ra,s0-s7},64
 ----
 
 The proposal is to use a single 16-bit encoding to do the work of two 16-bit `s` to `a` register moves.
 
-== Encoding proposal 1
+== Encoding proposal
 
-[#proposed-16bit-encodings-1]
-.proposed 16-bit encodings-1 
-[width="100%",options=header]
-|=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-| ?  | ?  3+| aregpair        3+| sreg1     3+| sreg2     5+|            ????? | C.MVAS
-|=============================================================================================
-
-[#aregpair]
-.aregpair encoding field 
-[width="100%",options=header]
-|==================================
-| aregpair | target a register pair
-| 000     | a0, a1
-| 001     | a0, a2
-| 010     | a0, a3
-| 011     | a1, a2
-| 100     | a1, a3
-| 101     | a2, a3
-| 110     | *reserved*
-| 111     | *reserved*
-|==================================
-
-`sreg[12]` specify which two `s` registers are moved, using the ABI name only so that `s0-s7` can be moved into the first and second `a` register specified by `aregpair`.
-
-[source,sourceCode,text]
-----
-# aregpair = 0 sreg1 = 0; sreg2 = 0;
-mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
-
-# aregpair = 2 sreg1 = 1; sreg2 = 3;
-mv (a0, a3), (s1, s3) ; # mv a0, s1; mv a3, s3
-
-# aregpair = 5 sreg1 = 7; sreg2 = 2;
-mv (a2, a3), (s7, s2) ; # mv a2, s7; mv a1, s2
-----
-
-== Encoding proposal 2
-
-[#proposed-16bit-encodings-1]
-.proposed 16-bit encodings-1 
+[#proposed-16bit-encodings]
+.proposed 16-bit encodings-
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
@@ -102,8 +63,6 @@ mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
 mv (a2, a3), (s1, s3) ; # mv a2, s1; mv a3, s3
 ----
 
-These two instructions combined use uses 1/3 of the encoding space of C.MVAS, but clearly provide fewer options.
-
 == Implementation
 
 Clearly multi-move requires two write ports. The instruction(s) can be sequenced to avoid adding the extra write port. 
@@ -111,7 +70,7 @@ This is invisible to software as the whole instruction must execute atomically.
 
 == Benchmark results
 
-My rough estimate is 0.4% for both the benchmark suite and the debian distribution. We'll make a better estimate.
+See https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/README.adoc[results here]
 
 == Toolchain implementation
 
@@ -122,4 +81,6 @@ This is designed to be a link-time optimisation. The linker will combine suitabl
 Not yet specified, probably allow more range in `a` and `s` register choice. TBD.
 The 32-bit form must move more than 2 registers or there is no advantage over 2 `c.mv` instructions.
 
+== Other ideas
 
+Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/a_reg_slide.adoc[A-register slide] for optimising `a` register moves
