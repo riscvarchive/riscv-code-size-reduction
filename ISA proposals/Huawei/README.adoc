@@ -61,8 +61,6 @@ After using many of the proposed new instructions the result is (note that I hav
 
 This function reduces from 54-bytes to 28-bytes, ~48% reduction in size. Clearly not all functions will benefit this much and the lack of `-msave-restore` means the comparison is maybe a bit optimistic.
 
-Details of `c.mvaslide` are https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/a_reg_slide.adoc[here]
-
 == Proposals which save > 0.5%
 
 === PUSH/POP or PUSH+MV/POP
@@ -74,8 +72,8 @@ Details of `c.mvaslide` are https://github.com/riscv/riscv-code-size-reduction/b
 | Extension       |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
 5+|Measured by compiling with HCC vs baseline
 | PUSH/POP           | 4.90%  | 3.31% | 5.0%   | 4.08%  
-5+|Improvement of PUSH+MV proposal over PUSH/POP estimated by a script
-| PUSH+MV           | 0.94% |1.02% | 1.55%    | 1.35%  
+5+|Improvement of PUSH moving a registers into s registers, over the PUSH/POP result estimated by a script
+| PUSH+MV/POP        | 0.94% |1.02% | 1.55%    | 1.35%  
 5+|Cumulative benefit of PUSH/POP and PUSH+MV, previous two rows added
 |*PUSH+MV/POP*       | *5.84%* |*4.33%*|*6.57%* |*5.43%* 
 |===================================================================================================
@@ -91,10 +89,8 @@ PUSH/POP spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/
 |                 2+|IoT application 2+|IoT protocol 2+|Zephyr Central 2+|Zephyr Peripheral
 9+|Estimated by a script, so elf files don't exist, relative to the baseline above, 256 table entries
 | TBLJAL            2+| 9.90%  2+| 7.37% 2+| 7.23%  2+| 6.83%  
-9+|relative the the HCC PUSH/POP output above, estimated by a script, 256 table entries
-| TBLJAL + PUSH/POP 2+| 11.15%  2+| 8.20% 2+| 8.29%  2+| 8.57%  
-9+|add in estimated benefit of PUSH+MV
-|*TBLJAL + PUSH+MV/POP* 2+| *12.09%*  2+| *9.22%* 2+| *9.84%*  2+| *9.92%*
+9+|relative to the HCC PUSH/POP output above, estimated by a script, 256 table entries
+| TBLJAL + PUSH/POP 2+| *12.09%*  2+| *9.22%* 2+| *9.84%*  2+| *9.92%*
 |===================================================================================================
 
 Table jump spec is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[here]
@@ -110,12 +106,14 @@ Table jump spec is https://github.com/riscv/riscv-code-size-reduction/blob/maste
 | C.LBU/C.SB | 1.39%  | 1.80% | 2.56% | 1.88%  
 5+|Compiled with HCC, 5-bit unsigned immediate, relative to baseline
 | C.LHU/C.SH | 0.54%  | 0.79% | 0.68%  | 0.45%
-5+|Add in estimated benefit of TBLJAL + PUSH+MV/POP
+5+|Cumulative benefit
 |*Total*       |*14.02%*|*11.81%*|*13.08%*|*12.25%*
 |===================================================================================================
 
 We may decide that a shorter immediate value is acceptable for `c.lbu/c.lhu/c.sb/c.sh` or to only implement `c.lbu/c.sb` as the benefit is highest.
 The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_ldst_bh_extension.rst[here]
+
+Note that the debian distro has minimal use for `c.lb/c.lh`.
 
 === 32-bit compare-immediate-branch
 
@@ -128,26 +126,30 @@ The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/e
 | all cmp-imm-br | 0.79%  | 0.80% | 0.81% | 0.68%  
 5+|Only BEQI/BNEI, the most commonly used two (69% of the benefit)
 | BEQI/BNEI | 0.55%  | 0.55% | 0.56% | 0.47%  
-5+|Add in estimated benefit of TBLJAL, PUSH+MV/POP and load/store byte/half
+5+|Cumulative benefit
 |*Total*        |*14.57%*|*12.36%*|*13.64%*|*12.71%*
 |===================================================================================================
 
 The proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst[here]
 We need to analyse the encoding space used - which includes two immediates - branch offset and compare immediate.
 
-==== maybe implement incblz?
-
-Andy Glew suggested `incblz rd,target`:
-  
-`rd += 1; if( rd < 0 ) goto target`
-  
-This requires no immediate value for comparison, so requires the loop counter to start negative and count up, so gives a bigger branch offset range which could be extremely valuable.
-
 == Proposals which save < 0.5%
 
 === Multi-move
 
-The multi-move proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[here]. I'm roughly estimating about 0.4% reduction (accurate analysis to be done). 
+[multimove_status_table]
+.multi-move status
+[width=100%,options="header",]
+|===================================================================================================
+|            |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
+5+|Estimated with a script
+| C.MVA01S | 0.32% | 0.24% | 0.56% | 0.47%
+| C.MVA23S | 0.11% | 0.08% | 0.02% | 0.27%
+5+|Cumulative benefit
+|*Total*        |*15.00%*|*12.68%*|*14.22%*|*13.21%*
+|===================================================================================================
+
+The multi-move proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[here]. `C.MVA01S` is clearly beneficial, I'll keep an open mind about `C.MVA23S` until we have more results.
 
 === 32-bit MULIADD
 
@@ -158,6 +160,8 @@ The multi-move proposal is https://github.com/riscv/riscv-code-size-reduction/bl
 |            |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
 5+|Compiled with HCC, relative to baseline
 | MULIADD    | 0.20%  | 0.32% | 0.15% | 0.10%  
+5+|Cumulative benefit
+|*Total*        |*15.20%*|*13.00%*|*14.36%*|*13.31%*
 |===================================================================================================
 
 Proposal is https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[here].
@@ -179,21 +183,45 @@ Maybe these should go into the next version of bit manip?
 |            |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
 5+|Compiled with HCC, relative to baseline
 | c.zext[bh] | 0.29%  | 0.32% | 0.17% | 0.12%  
+5+|Cumulative benefit
+| Total | *15.49%* | *13.32%* | *14.53%* | *13.43%*
 |===================================================================================================
 
 The benchmarks are for two 3-bit operand specifiers: `c.zext[bh] rd', rs1'`
 It would be more sensible to limit the encoding space an use a single 3-bit src/dst operand: `c.zext[bh] rd'`
 The instructions zero extend either a byte or half-word up to the full register width, and expand to `zext.[bh]` in the B-extension.
 
+=== A-reg slide
+
+[areg_slide_status_table]
+.A-reg slide status
+[width=100%,options="header",]
+|===================================================================================================
+|            |IoT application |IoT protocol |Zephyr Central |Zephyr Peripheral
+5+|Estimated with a script
+| C.MVASLIDE #0 | x | x | x | x
+| C.MVASLIDE #1 | x | x | x | x
+| C.MVASHUFFLE #0 | x | x | x | x
+| C.MVASHUFFLE #1 | x | x | x | x
+| C.MVASHUFFLE #2 | x | x | x | x
+| C.MVASHUFFLE #3 | x | x | x | x
+| C.MVASHUFFLE #4 | x | x | x | x
+| C.MVASHUFFLE #5 | x | x | x | x
+| C.MVASHUFFLE #6 | x | x | x | x
+| C.MVASHUFFLE #7 | x | x | x | x
+5+|Cumulative benefit
+|*Total*        |*x*|*x*|*x*|*x*
+|===================================================================================================
+
 == To be analysed
 
-== `lwgp/swgp`
+=== `lwgp/swgp`
 
 Proposal is listed on https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc[this page].
 It could benefit from a separate proposal page.
 I expect the benefit to be high (> 2%),
 
-== others
+=== others
 
 These will probably offer small improvements, I estimate around 0.1% for each. They could be considered more as speed improvements for specific algorithms which need them.
 
