@@ -166,7 +166,7 @@ To be a legal encoding:
 
 Additionally:
 
-. If `sp` is not 16-byte aligned then take an illegal instruction exception
+. If `sp` is not 16-byte aligned then take an load (`push`) or store (`pop[ret]`) address misaligned exception, and do not issue any loads or stores.
 
 [NOTE]
   When moving from loading or storing `x` registers to `f` registers there may be a gap as the registers may be different widths, and all registers must be aligned in memory
