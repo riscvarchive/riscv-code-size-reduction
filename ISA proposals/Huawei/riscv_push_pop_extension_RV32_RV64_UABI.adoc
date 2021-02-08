@@ -125,7 +125,7 @@ pop    {ra},        16;  //load  ra;        increment sp by 16
 popret {ra},        16;  //load  ra;        increment sp by 16; jump to ra
 
 pop    {ra,s0},     32;  //load  ra,s0;     increment sp by 32
-popret {ra,s0},{s0} 32;  //load  ra,s0;     increment sp by 32; mv a0, s0; jump to ra
+popret {ra,s0},{s0},32;  //load  ra,s0;     increment sp by 32; mv a0, s0; jump to ra
 
 pop    {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96
 popret {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96; jump to ra
