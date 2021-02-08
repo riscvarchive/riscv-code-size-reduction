@@ -50,7 +50,7 @@ Move a sequential pair of `a` registers. The pairs shown are the 8 most common f
 [source,sourceCode,text]
 ----
 
-c.mvaslide #[0-7] - assembly syntax is:
+c.mvashuffle #[0-7] - assembly syntax is:
 
 mv (a2,a3), (a0,a1)
 mv (a2,a3), (a1,a2)
@@ -64,4 +64,12 @@ mv (a0,a1), (a4,a5)
 ----
 
 8-options so requires a 3-bit field in the encoding.
+
+== Encoding
+
+The encoding is not yet specified, but is cheap so can fit into one or two small gaps
+
+== Benchmarking results
+
+See https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/README.adoc[here]
 
