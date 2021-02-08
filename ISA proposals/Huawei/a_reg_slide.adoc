@@ -36,8 +36,8 @@ Slide 3 `a` registers left one place, for example
 
 c.mvaslide #[0-1] - assembly syntax is
 
-mv (a1,a2,a3),    (a0,a1,a2) ;# very useful
-mv (a0,a1,a2),    (a5,a0,a1) ;# maybe not useful enough
+mv (a1,a2,a3),    (a0,a1,a2) ;# mv a1, a0; mv a2, a1; mv a3, a2; #very useful!
+mv (a0,a1,a2),    (a5,a0,a1) ;# mv a0, a5; mv a1, a0; mv a2, a1; #maybe not useful enough, TBD
 
 ----
 
@@ -52,15 +52,15 @@ Move a sequential pair of `a` registers. The pairs shown are the 8 most common f
 
 c.mvashuffle #[0-7] - assembly syntax is:
 
-mv (a2,a3), (a0,a1)
-mv (a2,a3), (a1,a2)
-mv (a0,a1), (a5,a0)
-mv (a4,a5), (a5,a0)
+mv (a2,a3), (a0,a1) ;# mv a2, a0; mv a3, a1
+mv (a2,a3), (a1,a2) ;# mv a2, a1; mv a3, a2
+mv (a0,a1), (a5,a0) ;# mv a0, a5; mv a1, a0
+mv (a4,a5), (a5,a0) ;# mv a4, a5; mv a5, a0
 
-mv (a1,a2), (a0,a1)
-mv (a4,a5), (a3,a4)
-mv (a0,a5), (a5,a0)
-mv (a0,a1), (a4,a5)
+mv (a1,a2), (a0,a1) ;# mv a1, a0; mv a2, a1
+mv (a4,a5), (a3,a4) ;# mv a4, a3; mv a5, a4
+mv (a0,a5), (a5,a0) ;# mv a0, a5; mv a5, a0
+mv (a0,a1), (a4,a5) ;# mv a0, a4; mv a1, a5
 ----
 
 8-options so requires a 3-bit field in the encoding.
