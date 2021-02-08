@@ -37,18 +37,18 @@ it's better to list these first, as they are resolved I'll update the proposal
 [source,sourceCode,text]
 ----
 //these encodings may be 16-bit or 32-bit depending upon the parameters
-push           {<sreg_list>},[{<areg_list>},] -<stack_adjustment>
-pop            {<sreg_list>},                  <stack_adjustment> 
-popret         {<sreg_list>},                  <stack_adjustment> 
+push           {<rsreg_list>},[{<areg_list>},] -<stack_adjustment>
+pop            {<rsreg_list>},                  <stack_adjustment> 
+popret         {<rsreg_list>},                  <stack_adjustment> 
 ----
 
 . The `PUSH` instruction 
-** pushes(stores)  the registers specified in `sreg_list` to the stack
-** moves the registers in `areg_list` into `s` registers
+** pushes(stores)  the registers specified in `rsreg_list` to the stack
+** if `areg_list` is includes, moves the registers in the `areg_list` into `s` registers
 ** adjusts the stack pointer by the `stack_adjustment` 
 
 . The `POP` instruction 
-** pops(loads) the registers in `sreg_list to the stack` from the stack
+** pops(loads) the registers in `rsreg_list to the stack` from the stack
 ** adjusts the stack pointer by the `stack_adjustment`.
 
 . `POPRET` has the same behaviour as `POP`, followed by `RET`.
@@ -62,7 +62,7 @@ pop.[fdq]      {<fsreg_list>},  <stack_adjustment>
 popret.[fdq]   {<fsreg_list>},  <stack_adjustment> 
 ----
 
-These instructions allow `fs` registers to be pushed/popped and do not allow `a` to `s` register moves (to save encoding space).
+These instructions allow `fs` registers to be pushed/popped and `push.[fdq] does not allow `a` to `s` register moves (to save encoding space).
 
 32-bit and 16-bit forms are available, the assembler should choose the 16-bit form if the parameters permit and the C extension is implemented.
 
@@ -74,7 +74,7 @@ The registers in `reg_list` and `areg_list` are comma separated lists. `areg_lis
 <rsreg_list> ::= <ra> "," <sreg_range> | <ra>
 <fsreg_list> ::= <ra> "," <sreg_range> ", " <freg_range> | <ra> "," <freg_range> | <sreg_range> "," <freg_range> | <freg_range>
 <rfsreg_list> ::= <ra> "," <sreg_range> ", " <freg_range> | <ra> "," <freg_range>
-<areg_list>  ::= {} | <areg_range>
+<areg_list>  ::= <areg_range>
 <sreg_range> ::= <s0>  | <s0-sN>   (where N is in the range [1, 11])
 <freg_range> ::= <fs0> | <fs0-fsM> (valid values of M are 1,2,3,5,8,11)
 <areg_range> ::= <a0>  | <a0-aP>   (where P is in the range [1, 2])
@@ -146,18 +146,18 @@ For example
 . `push   {s0-s2}, {a0-a1}, -64` must use a 32-bit encoding as `ra` is not in the register list
 . `push.f {ra,s0-s2, fs0}, -64` must use a 32-bit encoding as `fs0` is in the register list
 . `push   {ra,s0-s2}, {a0-a1}, -256` must use a 32-bit encoding as the `stack_adjustment` is out of range
-. `push   {ra,s0-s2}, -32` must use a 32-bit encoding as `sreg_list` requires `areg_list={a0-a1}` for the16-bit encoding
+. `push   {ra,s0-s2}, -32` must use a 32-bit encoding as `sreg_list` requires `areg_list={a0-a1}` for the 16-bit encoding
 
 To be a legal encoding:
 
 1.  The stack adjustment must be negative for all `PUSH` variants and positive for all `POP[RET]` variants
 2.  The stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register lists must be valid (see above)
-4.  If any `f` registers are included in the list there must be a `.[fdq]` suffix
-5.  It there is a `.[fdq]` suffix, there must be `f` registers in the list
-6.  It there is a `.[fdq]` suffix, `areg_list` must be empty
-7.  For `POPRET` variants, `sreg_list` must include `ra`
-8.  `areg_list` must be empty for all `POP` and `POPRET` variants and for `PUSH.[FDQ]`
+4.  If any `f` registers are included in the list there must be an `.[fdq]` suffix
+5.  It there is an `.[fdq]` suffix, there must be `f` registers in the list
+6.  It there is an `.[fdq]` suffix, `areg_list` must not be included in the synax
+7.  For `POPRET` variants, `rsreg_list` must include `ra`
+8.  `areg_list` must not be included for all `POP` and `POPRET` variants and for `PUSH.[FDQ]`
 
 Additionally:
 
@@ -355,7 +355,7 @@ The following cases do not decode as `PUSH*/POP*/POPRET*`
 * No registers are specified (`rcount, frcount` are both zero)
 * `rcount>14`
 * `flen=3`
-* `rcount==13` and `frcount>0` and opcode doesn't have an [fdq] suffix
+* `rcount==13` and `frcount>0` and opcode doesn't have an `[fdq]` suffix
 
 ==== Rational: `rcount=13, frcount=0` saving all saved regsiters
 
