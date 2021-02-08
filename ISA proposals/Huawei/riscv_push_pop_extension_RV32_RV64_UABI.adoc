@@ -29,7 +29,6 @@ They are designed to replace common function prologue/epilogue sequences, but wi
 
 it's better to list these first, as they are resolved I'll update the proposal
 
-* whether to allow an option of including `mv a0,s0` in `c.pop[ret]`
 * allocate encodings for the 32-bit versions
 * whether the fault handling should be profile defined
 
@@ -45,7 +44,7 @@ popret         {<rsreg_list>},[{ret_sreg},]     <stack_adjustment>
 
 . The `PUSH` instruction 
 ** pushes(stores)  the registers specified in `rsreg_list` to the stack
-** if `areg_list` is includes, moves the registers in the `areg_list` into `s` registers
+** if `areg_list` is included, moves the registers in the `areg_list` into `s` registers
 ** adjusts the stack pointer by the `stack_adjustment` 
 
 . The `POP` instruction 
@@ -102,8 +101,10 @@ For the 16-bit encodings
 .. `ra` must be included
 .. `s0-sN` may be included, valid values of `N` are 0,1,2,3,5,8,11
 .. `fs0-fsM` must not be included
-. for `pop[ret], ret_sreg` must not be included *I may add an option for s0 in the 16-bit encoding TBD*
-. Only specific combinations of `areg_list` and `sreg_list` are permitted
+. for `pop, ret_sreg` must not be included 
+. for `popret, ret_sreg` may be included - and can only be set to `s0`
+.. about 10% of functions which infer `popret` issue `mv a0, s0` first
+. for `push` only specific combinations of `areg_list` and `sreg_list` are permitted
 .. `if sreg_list={ra}:       areg_list={}`
 .. `if sreg_list={ra,s0}:    areg_list={a0}`
 .. `if sreg_list={ra,s0-sN}: areg_list={a0-a1} where N=2,3`
@@ -124,7 +125,7 @@ pop    {ra},        16;  //load  ra;        increment sp by 16
 popret {ra},        16;  //load  ra;        increment sp by 16; jump to ra
 
 pop    {ra,s0},     32;  //load  ra,s0;     increment sp by 32
-popret {ra,s0},     32;  //load  ra,s0;     increment sp by 32; jump to ra
+popret {ra,s0},{s0} 32;  //load  ra,s0;     increment sp by 32; mv a0, s0; jump to ra
 
 pop    {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96
 popret {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96; jump to ra
@@ -134,7 +135,7 @@ popret {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128; jump to ra
 
 ----
 [NOTE]
-  There is no encoding space in the 16-bit encoding to explicitly specify `areg_list` so it is automatically determined from the `reg_list` value based on analysing usage in the benchmark suite
+  There is no encoding space in the 16-bit `c.push` encoding to explicitly specify `areg_list` so it is automatically determined from the `reg_list` value based on analysing usage in the benchmark suite
 
 
 [NOTE]
@@ -151,7 +152,8 @@ For example
 . `push   {ra,s0-s2}, {a0-a1}, -256` must use a 32-bit encoding as the `stack_adjustment` is out of range
 . `push   {ra,s0-s2},          -32` must use a 32-bit encoding as `sreg_list` requires `areg_list={a0-a1}` for the 16-bit encoding
 . `push.f {ra,s0-s2, fs0},     -64` must use a 32-bit encoding as `fs0` is in the register list
-. `pop    {ra,s0-s2}, {s0},     32` must use a 23-bit encoding as `s0` is the `ret_sreg` register
+. `pop    {ra,s0-s2}, {s0},     32` must use a 32-bit encoding as `s0` is the `ret_sreg` register
+. `popret {ra,s0-s2}, {s1},     32` must use a 32-bit encoding as `c.popret` only supports `s0` as the `ret_sreg` register
 
 To be a legal encoding:
 
@@ -166,7 +168,7 @@ To be a legal encoding:
 
 Additionally:
 
-. If `sp` is not 16-byte aligned then take an load (`push`) or store (`pop[ret]`) address misaligned exception, and do not issue any loads or stores.
+. If `sp` is not 16-byte aligned then take a load (`push`) or store (`pop[ret]`) address misaligned exception, and do not issue any loads or stores.
 
 [NOTE]
   When moving from loading or storing `x` registers to `f` registers there may be a gap as the registers may be different widths, and all registers must be aligned in memory
@@ -330,25 +332,25 @@ if (opcode == "POPRET") {
 |31:29  |28:27|26|25:24   |23:20  |19:15 |14:12 |11:7  |6:0     |name
 |xxx    |xx   |ra|mv      |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
 |xxx    |xx   |ra|ret_sreg|rcount |spimm |001   |xxxxx |xxxxxxx |POP
-|xxx    |xx   |1 |ret_sreg|rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
+|xxx    |xx   |x |ret_sreg|rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
 
 |xxx    |00   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.F
 |xxx    |00   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.F
-|xxx    |00   |1 |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.F
+|xxx    |00   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.F
 
 |xxx    |01   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.D
 |xxx    |01   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.D
-|xxx    |01   |1 |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.D
+|xxx    |01   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.D
 
 |xxx    |10   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.Q
 |xxx    |10   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.Q
-|xxx    |10   |1 |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.Q
+|xxx    |10   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.Q
 
 |============================================================================
 
 [NOTE]
   bits [28:27] are the `flen` field
-  `ra=1` for all `popret` encodings, if [26]=0 the encoding is *reserved*
+  `ra=1` for all `popret` encodings, it is not specified in the encoding
 
 === Illegal instructions for the 32-bit encodings
 
@@ -363,9 +365,9 @@ The following cases do not decode as `PUSH*/POP*/POPRET*`
 * No registers are specified (`rcount, frcount` are both zero)
 * `rcount>14`
 * `flen=3`
-* `rcount==13` and `frcount>0` and opcode doesn't have an `[fdq]` suffix
+* `rcount==13` and `frcount>0` and the opcode doesn't have an `[fdq]` suffix
 
-==== Rational: `rcount=13, frcount=0` saving all saved regsiters
+==== Rational: `rcount=13, frcount=0` saving all saved registers
 
 The debian distro does save all `s` and `fs` registers on a few occasions, so I used a special encoding for this case. I saw no justification for saving all `fs` registers *without* saving all `s` registers. It seems useful to have a form which saves all saved registers.
 
@@ -658,6 +660,7 @@ ret;
 == Initial benchmarking results
 
 See https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/README.adoc[PUSH+MV/POP] in on this page.
+Benchmarking not yet updated for `mv a0, s0` included in `c.popret`
 
 == Assembly examples
 
@@ -733,6 +736,34 @@ lw   s6, 128(sp);
 lw   s7, 124(sp);  
 lw   s8, 120(sp);  
 addi sp, sp, 160
+----
+
+=== C.POPRET RV32I UABI (16-byte aligned stack)
+
+[source,sourceCode,text]
+----
+c.pop   {ra, s0-s7},{s0}, 160
+----
+
+Encoding: rcount=6, spimm=7 
+
+Equivalent sequence:
+
+[source,sourceCode,text]
+----
+lw   ra, 156(sp);
+lw   s0, 152(sp);  
+lw   s1, 148(sp);  
+lw   s2, 144(sp);  
+lw   s3, 140(sp);  
+lw   s4, 136(sp);  
+lw   s5, 132(sp);  
+lw   s6, 128(sp);  
+lw   s7, 124(sp);  
+lw   s8, 120(sp);  
+addi sp, sp, 160;
+mv a0, s0;
+ret
 ----
 
 === PUSH.F RV32I[FDQ] UABI (16-byte aligned stack)
