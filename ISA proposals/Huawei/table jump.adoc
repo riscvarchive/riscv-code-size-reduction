@@ -394,6 +394,9 @@ Emulation mode - there are concerns about overwriting the temporary registers, s
 .all three modes
 image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump4.PNG[all three modes]
 
+== Context Switching
+
+The `xTBLJALVEC` (for all modes) and `xTBLJALCFG` (for vector table mode) form part of the current context, and so will need to be saved and restored. It is also possible for the jump table to have a single configuration for all contexts, but in general `xTBLJALVEC` and `xTBLJALCFG` are considered part of the context.
 
 == Caching (jump / vector table modes)
 
