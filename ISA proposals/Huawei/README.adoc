@@ -88,7 +88,7 @@ reduces to:
 [source,sourceCode,text]
 ----
 204011fe <split_chunks>:
-204011fe:	<32-bit>                push {ra,s0-s2},{a0-a2},-48
+204011fe:	<32-bit>                push 	{ra,s0-s2},{a0-a2},-48
 20401210:	3d21                	jal	20401028 <chunk_size>
 20401212:	412406b3          	sub	a3,s0,s2
 20401216:	408909b3          	sub	s3,s2,s0
@@ -102,14 +102,14 @@ reduces to:
 2040122c:	3d35                	jal	20401068 <set_chunk_size>
 2040122e:	46b2                	lw	a3,12(sp)
 20401230:	4601                	li	a2,0
-20401234:	8526                	mv	(a0,a1), (s1, s0)
+20401234:	8526                	mv	(a0, a1), (s1, s0)
 20401236:	3bd1                	jal	2040100a <chunk_set>
 2040123a:	8526                	mv	(a0, a1), (s1, s0) 
 2040123c:	33f5                	jal	20401028 <chunk_size>
 2040123e:	00a405b3          	add	a1,s0,a0
 20401248:	86ce                	mv	a3,s3
 20401250:	4601                	li	a2,0
-20401252:	<32-bit>                pop {ra, s0-s2}, {s1}, 48
+20401252:	<32-bit>                pop 	{ra, s0-s2}, {s1}, 48
 20401254:	bb5d                	j	2040100a <chunk_set>
 ----
 
@@ -168,7 +168,7 @@ reduces to
 [source,sourceCode,text]
 ----
 20405458 <bt_rand>:
-20405458:	<16-bit>                push {ra,s0-s2},{a0-a1},-16
+20405458:	<16-bit>                push	 {ra,s0-s2},{a0-a1},-16
 2040545c:	70000937          	lui	s2,0x70000
 20405460:	62090613          	addi	a2,s2,1568 # 70000620 <prng>
 2040546e:	<16-bit>          	tbljal #x <tc_hmac_prng_generate>	
@@ -182,7 +182,7 @@ reduces to
 2040548e:	556d                	li	a0,-5
 20405490:	<32-bit>          	bne	a5,1,20405496 <bt_rand+0x3e>	;#BNEI(2)
 20405494:	4501                	li	a0,0
-20405496:	<16-bit>                popret {ra,s0-s2}, 16
+20405496:	<16-bit>                popret	 {ra,s0-s2}, 16
 
 ----
 
