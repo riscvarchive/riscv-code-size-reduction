@@ -23,7 +23,83 @@ Future revisions may include:
 * EABI support
 
 These instructions are to reduce the code-size of function prologues and epilogues by using a single encoding to replace a sequence of instructions. 
-They are designed to replace common function prologue/epilogue sequences, but will not replace all possible cases. 
+They are designed to replace the most common function prologue/epilogue sequences, but will not replace all possible cases. 
+
+== A brief example from Zephyr
+
+This example gives a nice illustration of what `PUSH/POP` is trying to achieve.
+
+[source,sourceCode,text]
+----
+from subsys/bluetooth/controller/crypto/crypto.c
+int bt_rand(void *buf, size_t len)
+{
+        return lll_csrand_get(buf, len);
+}
+----
+
+compiles with GCC10 to:
+
+[source,sourceCode,text]
+----
+20405458 <bt_rand>:
+20405458:	1141                	addi	sp,sp,-16	;#PUSH(1)
+2040545a:	c04a                	sw	s2,0(sp)	;#PUSH(2)
+2040545c:	70000937          	lui	s2,0x70000
+20405460:	62090613          	addi	a2,s2,1568 # 70000620 <prng>
+20405464:	c422                	sw	s0,8(sp)	;#PUSH(3)
+20405466:	c226                	sw	s1,4(sp)	;#PUSH(4)
+20405468:	c606                	sw	ra,12(sp)	;#PUSH(5)
+2040546a:	842a                	mv	s0,a0		;#PUSH(6)
+2040546c:	84ae                	mv	s1,a1		;#PUSH(7)
+<function body>
+20405494:	4501                	li	a0,0		;#POPRET(1)
+20405496:	40b2                	lw	ra,12(sp)	;#POPRET(2)
+20405498:	4422                	lw	s0,8(sp)	;#POPRET(3)
+2040549a:	4492                	lw	s1,4(sp)	;#POPRET(4)
+2040549c:	4902                	lw	s2,0(sp)	;#POPRET(5)
+2040549e:	0141                	addi	sp,sp,16	;#POPRET(6)
+204054a0:	8082                	ret			;#POPRET(7)
+----
+
+with the GCC option `msave-restore` the output is the following:
+
+[source,sourceCode,text]
+----
+204089ac <bt_rand>:
+204089ac:       f97f72ef                jal     t0,20400942 <__riscv_save_0>	;#PUSH(1)
+204089b0:       70001937                lui     s2,0x70001
+204089b4:       ac090613                addi    a2,s2,-1344 # 70000ac0 <prng>
+204089b8:       842a                    mv      s0,a0	;#PUSH(2)
+204089ba:       84ae                    mv      s1,a1	;#PUSH(3)
+<function_body>
+204089e2:       4501                    li      a0,0	;#POPRET(1)
+204089e4:       f83f706f                j       20400966 <__riscv_restore_0>	;#POPRET(2)
+----
+
+with `PUSH/POP` this reduces to
+
+[source,sourceCode,text]
+----
+20405458 <bt_rand>:
+20405458:	<16-bit>                push	 {ra,s0-s2},{a0-a1},-16
+2040545c:	70000937          	lui	s2,0x70000
+20405460:	62090613          	addi	a2,s2,1568 # 70000620 <prng>
+<function body>
+20405496:	<16-bit>                popret	 {ra,s0-s2},{0} 16
+
+----
+
+The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes with `-msave-restore`, and to to 8-bytes with `PUSH/POP`, which will also improve the performance.
+
+[NOTE]
+
+  We should also develop a better optimised version of `-msave-restore`
+  
+[NOTE]
+
+  The calls to `<riscv_save_0>/<riscv_restore_0>` become 64-bit when the target functions are out of the +/-1MB range, increasing the prologue/epilogue size to 22-bytes.
+
 
 == Open issues
 
