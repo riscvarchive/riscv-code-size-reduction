@@ -1,0 +1,110 @@
+= Zero page relocation
+
+[NOTE]
+
+  This proposed is entirely based on David Horner's work, written up by Tariq
+  
+This proposal adds new CSRs to control the behaviour of unusual encodings, which are not very useful in general, and changes the behaviour to make it more useful.
+
+
+== zero page JALR
+
+=== CSR
+
+* `MZPJALR[0] = enable`
+* `MZPJALR[31:12] = base`
+* `MZPJALR[11:1]` - *reserved*
+
+[NOTE]
+
+  The https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[table jump proposal] reduces the usefulness of this
+
+== Behaviour
+
+If `MZPJALR.enable=0` then the behaviour of `JALR rd, offset(x0)` is unchanged.
+
+If `MZPJALR.enable=1` then the behaviour of `JALR rd, offset(x0)` takes on a new meaning. 
+
+. `x0` is substituted for `MZPJALR.base`.
+. `offset` is shifted left twice before use to give a bigger range.
+
+Therefore the behaviour is:
+
+[source,sourceCode,text]
+----
+
+jalr rd, offset(x0);# executes as jalr rd, MZPJALR.base+offset*4
+
+----
+
+This gives a 16KB region which can always be accessed by `jalr` from anywhere in the address map. Note that there is no 16-bit form as `x0` cannot be specified as the base register for `c.jalr`.
+
+== Zero Page load/store
+
+=== CSR
+
+* `MZPLDST[0] = enable`
+* `MZPLDST[31:12] = base`
+* `MZPLDST[11:1]` - *reserved*
+
+== Behaviour
+
+If `MZPLDST.enable=0` then the behaviour of `[lq|ld|ldu|lw|lwu|lh|lhu|lb|lbu] rd, offset(x0)` is unchanged.
+
+If `MZPLDST.enable=0` then the behaviour of `[sq|sd|sw|sh|sb] rs2, offset(x0)` is unchanged.
+
+If `MZPLDST.enable=1` then the behaviour of `[lq|ld|ldu|lw|lwu|lh|lhu|lb|lbu] rd, offset(x0)` takes on a new meaning.
+
+If `MZPLDST.enable=1` then the behaviour of `[sq|sd|sw|sh|sb] rs2, offset(x0)` takes on a new meaning.
+
+. `x0` is substituted for `MZPLDST.base`.
+. `offset` is shifted left by the access width before use, to give a bigger range.
+
+Therefore the behaviour is:
+
+[source,sourceCode,text]
+----
+
+lb[u] rd, offset(x0);# executes as lb[u] rd, MZPLDST.base+offset
+lh[u] rd, offset(x0);# executes as lh[u] rd, MZPLDST.base+offset*2
+lw[u] rd, offset(x0);# executes as lw[u] rd, MZPLDST.base+offset*4
+ld[u] rd, offset(x0);# executes as ld[u] rd, MZPLDST.base+offset*8
+lq    rd, offset(x0);# executes as lq    rd, MZPLDST.base+offset*16
+
+sb rs1, offset(x0);# executes as sb rs1, MZPLDST.base+offset
+sh rs1, offset(x0);# executes as sh rs1, MZPLDST.base+offset*2
+sw rs1, offset(x0);# executes as sw rs1, MZPLDST.base+offset*4
+sd rs1, offset(x0);# executes as sd rs1, MZPLDST.base+offset*8
+sq rs1, offset(x0);# executes as sq rs1, MZPLDST.base+offset*16
+
+----
+
+This gives a 4KB-16KB region which can always be accessed by loads and stores from anywhere in the address map without using the global pointer, 
+although the whole range can't be accessed with the all data widths. 
+
+== Application
+
+If compiling with the GCC option `-fstack-protector-strong` then every function in the Huawei IoT code has these:
+
+
+[source,sourceCode,text]
+----
+ e04a5e:  00f00437                lui     s0,0xf00
+ e04a62:  02c42783                lw      a5,44(s0) # f0002c <__stack_chk_guard>
+----
+
+Some functions also have this (sometimes it's a 32-bit sequence to call it)
+
+[source,sourceCode,text]
+----
+10bef2c:     ffd47097                auipc   ra,0xffd47
+10bef30:     f52080e7                jalr    -174(ra) # e05e7e <__stack_chk_fail>
+----
+
+These could be replaced by zero-page `jalr` and `lw` meaning that 64-bit sequences would never be required. Additionally table jump can be used for the calls to `__stack_chk_fail`
+
+== Link Time Optimisation?
+
+Can the linker make use of this feature, so the compiler doesn't need to know about it?
+
+
