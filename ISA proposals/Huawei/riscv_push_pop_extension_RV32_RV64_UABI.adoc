@@ -39,8 +39,8 @@ it's better to list these first, as they are resolved I'll update the proposal
 ----
 //these encodings may be 16-bit or 32-bit depending upon the parameters
 push           {<rsreg_list>},[{<areg_list>},] -<stack_adjustment>
-pop            {<rsreg_list>},[{ret_sreg},]     <stack_adjustment> 
-popret         {<rsreg_list>},[{ret_sreg},]     <stack_adjustment> 
+pop            {<rsreg_list>},[{ret_val},]      <stack_adjustment> 
+popret         {<rsreg_list>},[{ret_val},]      <stack_adjustment> 
 ----
 
 . The `PUSH` instruction 
@@ -50,7 +50,7 @@ popret         {<rsreg_list>},[{ret_sreg},]     <stack_adjustment>
 
 . The `POP` instruction 
 ** pops(loads) the registers in `rsreg_list to the stack` from the stack
-** if `ret_sreg` is included, moves the specified `s` register into `a0` as the return value
+** if `ret_val` is included, moves the specified value into `a0` as the return value
 ** adjusts the stack pointer by the `stack_adjustment`.
 
 . `POPRET` has the same behaviour as `POP`, followed by `RET`.
@@ -64,7 +64,7 @@ pop.[fdq]      {<fsreg_list>},  <stack_adjustment>
 popret.[fdq]   {<fsreg_list>},  <stack_adjustment> 
 ----
 
-These instructions allow `fs` registers to be pushed/popped and do not allow `areg_list` or `ret_sreg` to be specified (to save encoding space).
+These instructions allow `fs` registers to be pushed/popped and do not allow `areg_list` or `ret_val` to be specified (to save encoding space).
 
 32-bit and 16-bit forms are available, the assembler should choose the 16-bit form if the parameters permit and the C extension is implemented.
 
@@ -77,7 +77,7 @@ The registers in `reg_list` and `areg_list` are comma separated lists and must n
 <fsreg_list> ::= <ra> "," <sreg_range> ", " <freg_range> | <ra> "," <freg_range> | <sreg_range> "," <freg_range> | <freg_range>
 <rfsreg_list> ::= <ra> "," <sreg_range> ", " <freg_range> | <ra> "," <freg_range>
 <areg_list>  ::= <areg_range>
-<ret_sreg>   ::= s0 | s1 | s2
+<ret_val>    ::= s0 | 0 | 1
 <sreg_range> ::= <s0>  | <s0-sN>   (where N is in the range [1, 11])
 <freg_range> ::= <fs0> | <fs0-fsM> (valid values of M are 1,2,3,5,8,11)
 <areg_range> ::= <a0>  | <a0-aP>   (where P is in the range [1, 2])
@@ -88,10 +88,10 @@ The registers in `reg_list` and `areg_list` are comma separated lists and must n
 push         {<sreg_list>},  [{<areg_list>}],-stack_adjustment
 push.[fdq]   {<fsreg_list>},                 -stack_adjustment
 
-pop          {<sreg_list>},  [{ret_sreg},]   stack_adjustment
+pop          {<sreg_list>},  [{ret_val},]    stack_adjustment
 pop.[fdq]    {<fsreg_list>},                 stack_adjustment
 
-popret       {<rsreg_list>}, [{ret_sreg},]   stack_adjustment //popret must include ra
+popret       {<rsreg_list>}, [{ret_val},]    stack_adjustment //popret must include ra
 popret.[fdq] {<rfsreg_list>},                stack_adjustment //popret must include ra
 
 ----
@@ -102,9 +102,9 @@ For the 16-bit encodings
 .. `ra` must be included
 .. `s0-sN` may be included, valid values of `N` are 0,1,2,3,5,8,11
 .. `fs0-fsM` must not be included
-. for `pop, ret_sreg` must not be included 
-. for `popret, ret_sreg` may be included - and can only be set to `s0`
-.. about 10% of functions which infer `popret` issue `mv a0, s0` first
+. for `pop, ret_val` must not be included 
+. for `popret, ret_val` may be included - and can only be set to `0`
+.. about 27% of functions which infer `popret` issue `li a0, 0` first
 . for `push` only specific combinations of `areg_list` and `sreg_list` are permitted
 .. `if sreg_list={ra}:       areg_list={}`
 .. `if sreg_list={ra,s0}:    areg_list={a0}`
@@ -153,8 +153,8 @@ For example
 . `push   {ra,s0-s2}, {a0-a1}, -256` must use a 32-bit encoding as the `stack_adjustment` is out of range
 . `push   {ra,s0-s2},          -32` must use a 32-bit encoding as `sreg_list` requires `areg_list={a0-a1}` for the 16-bit encoding
 . `push.f {ra,s0-s2, fs0},     -64` must use a 32-bit encoding as `fs0` is in the register list
-. `pop    {ra,s0-s2}, {s0},     32` must use a 32-bit encoding as `s0` is the `ret_sreg` register
-. `popret {ra,s0-s2}, {s1},     32` must use a 32-bit encoding as `c.popret` only supports `s0` as the `ret_sreg` register
+. `pop    {ra,s0-s2}, {s0},     32` must use a 32-bit encoding as `ret_val` is specified
+. `popret {ra,s0-s2}, {s0},     32` must use a 32-bit encoding as `c.popret` only supports `0` as the `ret_val` value
 
 To be a legal encoding:
 
@@ -316,8 +316,12 @@ if (freq_list) {
     }
   }
 }
-if (ret_sreg) {
-   asm("mv a0, %s", ret_sreg);
+if (ret_val) {
+   switch(ret_val) {
+      "s0": asm("mv a0, s0");
+      "0":  asm("li a0, 0");
+      "1":  asm("li a0, 1");
+   }
 }
 sp+=stack_adjustment; //increment
 if (opcode == "POPRET") { 
@@ -332,8 +336,8 @@ if (opcode == "POPRET") {
 |============================================================================
 |31:29  |28:27|26|25:24   |23:20  |19:15 |14:12 |11:7  |6:0     |name
 |xxx    |xx   |ra|mv      |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
-|xxx    |xx   |ra|ret_sreg|rcount |spimm |001   |xxxxx |xxxxxxx |POP
-|xxx    |xx   |x |ret_sreg|rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
+|xxx    |xx   |ra|ret_val |rcount |spimm |001   |xxxxx |xxxxxxx |POP
+|xxx    |xx   |x |ret_val |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
 
 |xxx    |00   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.F
 |xxx    |00   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.F
@@ -383,12 +387,12 @@ The programmable range for `frcount` doesn't save many `fs` registers as `FPMark
 |=======================================================================
 |15 |14 |13 |12 |11 |10 |9 |8 |7 |6 |5 |4 |3 |2 |1 |0 |instruction
 3+|100|1|0|0|0 2+|rcount|0 |0 2+|00 | spimm 2+|00|C.POP
-3+|100|1|0|0 3+|rcount|ret_sreg[0]|1 3+|spimm 2+|00|C.POPRET
+3+|100|1|0|0 3+|rcount|ret_val[0]|1 3+|spimm 2+|00|C.POPRET
 3+|110|1|0|0 3+|rcount|1 |0 3+|spimm 2+|00|C.PUSH
 |=======================================================================
 
 [NOTE]
-  * For `C.POPRET`, `ret_sreg[0]` is specified in the encoding, `ret_sreg[1]=0`. For `C.POP` `ret_sreg[1:0]=0`.
+  * For `C.POPRET`, `ret_val[0]` is specified in the encoding, `ret_val[1]=0`. For `C.POP` `ret_val[1:0]=0`.
   * Some encodings remain *reserved* for the time being so we can add them later if they can be justified
   ** For `C.POP`, `spimm[2:1]=0`, and `rcount[2]=0` are reserved, as these encodings give minimal benefit
   ** For `C.PUSH/C.POPRET`, if `rcount[2]=1` then `spimm[2]=0` as these encodings give minimal benefit
@@ -455,11 +459,11 @@ The bytes required for padding is simple - if FLEN==XLEN it's always zero. If FL
 | 4n+3   |12-bytes
 |====================================
 
-=== `mv, ret_sreg, ra, frcount, rcount` for the 32-bit encodings
+=== `mv, ret_val, ra, frcount, rcount` for the 32-bit encodings
 
 The registers in the `reg_list` are controlled by these fields
 
-Note that `frcount`, `mv` and `ret_sreg` are in the same location in the encoding.
+Note that `frcount`, `mv` and `ret_val` are in the same location in the encoding.
 
 [#32bit-frcount]
 .`frcount` values for the 32-bit encodings for `PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]`
@@ -483,15 +487,15 @@ Note that `frcount`, `mv` and `ret_sreg` are in the same location in the encodin
 | 3      |a0-a2
 |=========================================
 
-[#32bit-ret_sreg]
-.`ret_sreg` values for the 32-bit encodings for `POP, POPRET`
+[#32bit-ret_val]
+.`ret_val` values for the 32-bit encodings for `POP, POPRET`
 [options="header"]
 |=========================================
-|mv      |ABI names  
-| 0      |none        
-| 1      |s0
-| 2      |s1
-| 3      |s2
+|return value      |ABI names  
+| 0      |none (don't set a0)        
+| 1      |a0=0
+| 2      |a0=1
+| 3      |a0=s0
 |=========================================
 
 [#32bit-ra]
@@ -527,7 +531,7 @@ Note that `frcount`, `mv` and `ret_sreg` are in the same location in the encodin
 | 14-15  | *reserved*
 |==========================
 
-=== `rcount`, `ret_sreg` for the 16-bit encodings
+=== `rcount`, `ret_val` for the 16-bit encodings
 
 [#rcount-table]
 .`rcount` values for the 16-bit encodings
@@ -545,10 +549,10 @@ Note that `frcount`, `mv` and `ret_sreg` are in the same location in the encodin
 |7     |ra, s0-s11
 |============================
 
-`ret_sreg` is as specified in <<32bit-ret_sreg>>. Note that:
+`ret_val` is as specified in <<32bit-ret_val>>. Note that:
 
 * `C.POPRET` allows bit 0 to vary, bit 1 is always 0
-* `C.POP` always has `ret_sreg=0` to save encoding space
+* `C.POP` always has `ret_val=0` to save encoding space
 
 [#fault-handling]
 == Fault handling
@@ -657,6 +661,10 @@ mv a0, s1
 addi sp, sp, 32;
 ret;
 ----
+
+== Toolchain implementation
+
+`PUSH/POP` can be generated by the compiler, but can also be added as an optimisation in the linker. If they are inferred at link time then they can also be used to optimise precompiled library code. This means that the libraries can be shipped without these instructions, but platforms which implement them can still benefit from the code-size saving.
 
 == Initial benchmarking results
 
