@@ -75,7 +75,7 @@ compiles with GCC10 to:
 20401244:	50b2                	lw	ra,44(sp) ;#POP(2)
 20401246:	5902                	lw	s2,32(sp) ;#POP(3)
 20401248:	86ce                	mv	a3,s3
-2040124a:	8526                	mv	a0,s1 ;#POP(4) - but requires 32-bit encoding
+2040124a:	8526                	mv	a0,s1 ;#POP doesn't support this return value
 2040124c:	49f2                	lw	s3,28(sp) ;#POP(5)
 2040124e:	5492                	lw	s1,36(sp) ;#POP(6)
 20401250:	4601                	li	a2,0
@@ -108,12 +108,13 @@ reduces to:
 2040123c:	33f5                	jal	20401028 <chunk_size>
 2040123e:	00a405b3          	add	a1,s0,a0
 20401248:	86ce                	mv	a3,s3
+2040124a:	8526                	mv	a0,s1 
 20401250:	4601                	li	a2,0
 20401252:	<32-bit>                pop 	{ra, s0-s2}, {s1}, 48
 20401254:	bb5d                	j	2040100a <chunk_set>
 ----
 
-88-bytes to 56-bytes.
+88-bytes to 58-bytes.
 
 == Example 2 from Zephyr
 
@@ -153,13 +154,13 @@ compiles with GCC10 to:
 2040548c:	4705                	li	a4,1				;#BNEI(1)
 2040548e:	556d                	li	a0,-5
 20405490:	00e79363          	bne	a5,a4,20405496 <bt_rand+0x3e>	;#BNEI(2)
-20405494:	4501                	li	a0,0
-20405496:	40b2                	lw	ra,12(sp)	;#POPRET(1)
-20405498:	4422                	lw	s0,8(sp)	;#POPRET(2)
-2040549a:	4492                	lw	s1,4(sp)	;#POPRET(3)
-2040549c:	4902                	lw	s2,0(sp)	;#POPRET(4)
-2040549e:	0141                	addi	sp,sp,16	;#POPRET(5)
-204054a0:	8082                	ret			;#POPRET(6)
+20405494:	4501                	li	a0,0		;#POPRET(1)
+20405496:	40b2                	lw	ra,12(sp)	;#POPRET(2)
+20405498:	4422                	lw	s0,8(sp)	;#POPRET(3)
+2040549a:	4492                	lw	s1,4(sp)	;#POPRET(4)
+2040549c:	4902                	lw	s2,0(sp)	;#POPRET(5)
+2040549e:	0141                	addi	sp,sp,16	;#POPRET(6)
+204054a0:	8082                	ret			;#POPRET(7)
 
 ----
 
@@ -181,12 +182,11 @@ reduces to
 2040548a:	87aa                	mv	a5,a0
 2040548e:	556d                	li	a0,-5
 20405490:	<32-bit>          	bne	a5,1,20405496 <bt_rand+0x3e>	;#BNEI(2)
-20405494:	4501                	li	a0,0
-20405496:	<16-bit>                popret	 {ra,s0-s2}, 16
+20405496:	<16-bit>                popret	 {ra,s0-s2},{0} 16
 
 ----
 
-74-bytes to 42-bytes
+74-bytes to 40-bytes
 
 == Example 3 from FPMark
 
