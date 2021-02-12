@@ -146,6 +146,8 @@ to show it's relative to the zero-page pointer, and with the immediate scale, an
 zlw a1, 0x400
 ----
 
+Any specific disassembly requirement will require a adding a flag to the ELF file, or change to the ELF file format to add a new ELF section. TBD.
+
 == Caveat
 
 If a SoC has memory allocated ±2KB around address zero (i.e. the bottom and top 2KB of the address map), and the compiler / handwritten assembler reference it by using load/stores/`JALR` which reference x0 then the zero page mode will not be usable on that platform.
