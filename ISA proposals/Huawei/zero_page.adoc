@@ -33,7 +33,7 @@ Therefore the behaviour is:
 [source,sourceCode,text]
 ----
 
-jalr rd, offset(x0);# executes as jalr rd, MZPJALR.base+offset*4
+jalr rd, offset(x0);# executes as jalr rd, MZPJALR.base+offset*(XLEN/8)
 
 ----
 
@@ -58,7 +58,7 @@ If `MZPLDST.enable=1` then the behaviour of `[lq|ld|ldu|lw|lwu|lh|lhu|lb|lbu] rd
 If `MZPLDST.enable=1` then the behaviour of `[sq|sd|sw|sh|sb] rs2, offset(x0)` takes on a new meaning.
 
 . `MZPLDST.base` is substituted for `x0`.
-. `offset` is *may be* shifted left by the access width before use, to give a bigger range TBD.
+. `offset` *may be* shifted left by the access width before use, to give a bigger range TBD.
 
 Therefore the behaviour is:
 
@@ -157,7 +157,7 @@ zlw a1, 0x100
 
 == Caveat
 
-if an SoC has memory allocated ±2KB around address zero (i.e. the bottom and top 2KB of the address map), and the compiler / handwritten assembler reference it by using load/stores/`JALR` which reference x0 then the zero page mode will not be usable on that platform.
+If a SoC has memory allocated ±2KB around address zero (i.e. the bottom and top 2KB of the address map), and the compiler / handwritten assembler reference it by using load/stores/`JALR` which reference x0 then the zero page mode will not be usable on that platform.
 
 
 
