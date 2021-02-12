@@ -58,40 +58,31 @@ If `MZPLDST.enable=1` then the behaviour of `[lq|ld|ldu|lw|lwu|lh|lhu|lb|lbu] rd
 If `MZPLDST.enable=1` then the behaviour of `[sq|sd|sw|sh|sb] rs2, offset(x0)` takes on a new meaning.
 
 . `MZPLDST.base` is substituted for `x0`.
-. `offset` *may be* shifted left by the access width before use, to give a bigger range TBD.
+. the under utilised unaligned bits of `offset` are shifted up to the top, so that
+.. `offset` for `lb[u] rd, offset[11:0](x0)` is unchanged, giving a 4KB range
+.. `offset` for `lh[u] rd, (offset[0,11:1]<<1)(x0)` giving an 8KB range
+.. `offset` for `lw[u] rd, (offset[1:0:12,11:2]<<2)(x0)` giving a 16KB range
+.. `offset` for `ld[u] rd, (offset[2:0:12,11:3]<<3)(x0)` giving a 32KB range
+.. `offset` for `lq rd, (offset[3:0,11:4]<<4)(x0)` giving a 64KB range
 
 Therefore the behaviour is:
 
 [source,sourceCode,text]
 ----
 
-lb[u] rd, offset(x0);# executes as lb[u] rd, MZPLDST.base+offset
-lh[u] rd, offset(x0);# executes as lh[u] rd, MZPLDST.base+offset*2
-lw[u] rd, offset(x0);# executes as lw[u] rd, MZPLDST.base+offset*4
-ld[u] rd, offset(x0);# executes as ld[u] rd, MZPLDST.base+offset*8
-lq    rd, offset(x0);# executes as lq    rd, MZPLDST.base+offset*16
+lb[u] rd, offset(x0);# executes as lb[u] rd, MZPLDST.base+offset[11:0]
+lh[u] rd, offset(x0);# executes as lh[u] rd, MZPLDST.base+(offset[0,11:1]<<1)
+lw[u] rd, offset(x0);# executes as lw[u] rd, MZPLDST.base+(offset[1:0,11:2]<<2)
+ld[u] rd, offset(x0);# executes as ld[u] rd, MZPLDST.base+(offset[2:0,11:3]<<3)
+lq    rd, offset(x0);# executes as lq    rd, MZPLDST.base+(offset[3:0,11:4]<<4)
 
-sb rs1, offset(x0);# executes as sb rs1, MZPLDST.base+offset
-sh rs1, offset(x0);# executes as sh rs1, MZPLDST.base+offset*2
-sw rs1, offset(x0);# executes as sw rs1, MZPLDST.base+offset*4
-sd rs1, offset(x0);# executes as sd rs1, MZPLDST.base+offset*8
-sq rs1, offset(x0);# executes as sq rs1, MZPLDST.base+offset*16
+sb rs1, offset(x0);# executes as sb rs1, MZPLDST.base+offset[11:0]
+sh rs1, offset(x0);# executes as sh rs1, MZPLDST.base+(offset[0,11:1]<<1)
+sw rs1, offset(x0);# executes as sw rs1, MZPLDST.base+(offset[1:0,11:2]<<2)
+sd rs1, offset(x0);# executes as sd rs1, MZPLDST.base+(offset[2:0,11:3]<<3)
+sq rs1, offset(x0);# executes as sq rs1, MZPLDST.base+(offset[3:0,11:4]<<4)
 
 ----
-
-== Address ranges
-
-It's possible to have a variable range depending upon the access with giving a 4KB(`lb[u]/sb)`-64KB(`lq/sq`) region which can always be accessed by loads and stores from anywhere in the address map without using the global pointer, although the whole range can't be accessed with the all data widths. 
-
-Alternatives are:
-
-. use the offset directly, like normal load/stores
-. make the offset scaling programmable, adding a field into `MZPLDST` to control it
-.. then the disassembler should probably know about it
-. scale the offset by `XLEN/8`, and so use it for naturally aligned data types only
-.. sub-word loads become awkward, sub-word stores cannot be issued without copying `MZPLDST.base` into a normal register, unless an RMW sequence is issued
-.. but *most* load/stores into a data area fit the machine width, so it's a case of using it carefully
-.. this also means that the disassembler will know the scaling as it is fixed based upon the architecture
 
 == Application
 
@@ -145,14 +136,14 @@ maybe should disassemble as
 
 [source,sourceCode,text]
 ----
-lw a1, 0x100(zp)
+lw a1, 0x400(zp)
 ----
 
-to show it's relative to the zero-page pointer, or maybe use a different mnemonic:
+to show it's relative to the zero-page pointer, and with the immediate scale, and also maybe use a different mnemonic:
 
 [source,sourceCode,text]
 ----
-zlw a1, 0x100
+zlw a1, 0x400
 ----
 
 == Caveat
