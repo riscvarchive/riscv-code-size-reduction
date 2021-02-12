@@ -26,7 +26,7 @@ If `MZPJALR.enable=0` then the behaviour of `JALR rd, offset(x0)` is unchanged.
 If `MZPJALR.enable=1` then the behaviour of `JALR rd, offset(x0)` takes on a new meaning. 
 
 . `MZPJALR.base` is substituted for `x0`.
-. `offset` is shifted left twice before use to give a bigger range.
+. `offset` is scaled by `XLEN/8` before use to give a bigger range.
 
 Therefore the behaviour is:
 
@@ -88,7 +88,7 @@ Alternatives are:
 . use the offset directly, like normal load/stores
 . make the offset scaling programmable, adding a field into `MZPLDST` to control it
 .. then the disassembler should probably know about it
-. scale the offset by `XLEN/4`, and so use it for naturally aligned data types only
+. scale the offset by `XLEN/8`, and so use it for naturally aligned data types only
 .. sub-word loads become awkward, sub-word stores cannot be issued without copying `MZPLDST.base` into a normal register, unless an RMW sequence is issued
 .. but *most* load/stores into a data area fit the machine width, so it's a case of using it carefully
 .. this also means that the disassembler will know the scaling as it is fixed based upon the architecture
