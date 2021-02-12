@@ -25,7 +25,7 @@ If `MZPJALR.enable=0` then the behaviour of `JALR rd, offset(x0)` is unchanged.
 
 If `MZPJALR.enable=1` then the behaviour of `JALR rd, offset(x0)` takes on a new meaning. 
 
-. `x0` is substituted for `MZPJALR.base`.
+. `MZPJALR.base` is substituted for `x0`.
 . `offset` is shifted left twice before use to give a bigger range.
 
 Therefore the behaviour is:
@@ -57,8 +57,8 @@ If `MZPLDST.enable=1` then the behaviour of `[lq|ld|ldu|lw|lwu|lh|lhu|lb|lbu] rd
 
 If `MZPLDST.enable=1` then the behaviour of `[sq|sd|sw|sh|sb] rs2, offset(x0)` takes on a new meaning.
 
-. `x0` is substituted for `MZPLDST.base`.
-. `offset` is shifted left by the access width before use, to give a bigger range.
+. `MZPLDST.base` is substituted for `x0`.
+. `offset` is *may be* shifted left by the access width before use, to give a bigger range TBD.
 
 Therefore the behaviour is:
 
@@ -79,8 +79,19 @@ sq rs1, offset(x0);# executes as sq rs1, MZPLDST.base+offset*16
 
 ----
 
-This gives a 4KB-16KB region which can always be accessed by loads and stores from anywhere in the address map without using the global pointer, 
-although the whole range can't be accessed with the all data widths. 
+== Address ranges
+
+It's possible to have a variable range depending upon the access with giving a 4KB(`lb[u]/sb)`-64KB(`lq/sq`) region which can always be accessed by loads and stores from anywhere in the address map without using the global pointer, although the whole range can't be accessed with the all data widths. 
+
+Alternatives are:
+
+. use the offset directly, like normal load/stores
+. make the offset scaling programmable, adding a field into `MZPLDST` to control it
+.. then the disassembler should probably know about it
+. scale the offset by `XLEN/4`, and so use it for naturally aligned data types only
+.. sub-word loads become awkward, sub-word stores cannot be issued without copying `MZPLDST.base` into a normal register, unless an RMW sequence is issued
+.. but *most* load/stores into a data area fit the machine width, so it's a case of using it carefully
+.. this also means that the disassembler will know the scaling as it is fixed based upon the architecture
 
 == Application
 
@@ -103,8 +114,51 @@ Some functions also have this (sometimes it's a 32-bit sequence to call it)
 
 These could be replaced by zero-page `jalr` and `lw` meaning that 64-bit sequences would never be required. Additionally table jump can be used for the calls to `__stack_chk_fail`
 
-== Link Time Optimisation?
+== Link Time Optimisation
 
-Can the linker make use of this feature, so the compiler doesn't need to know about it?
+The linker should be able to make use of this feature, so the compiler doesn't need to know about it.
+
+== Context save/restore
+
+Whether `MZPJALR/MZPLDST` are saved and restored on a context switch is platform defined. They could be set globally for all contexts to use, or they could be set separately.
+
+It is probably not worth using the CSR space to create supervisor mode versions, as this scheme is primarily targetting small embedded cores which only supoprt M/U-modes. TBD.
+
+== Virtual memory and PMP
+
+The resulting address from the zero page instructions are virtual addresses where virtual memory is implemented and enabled. 
+
+They are also subject to PMP checks, where the PMP is implemented and enabled.
+
+Therefore the generated addresses are handled identically to any other load/store or fetch addresses.
+
+== Disassembly
+
+The disassembly for this should be modified to make it clear that zero page mode is in use. For example:
+
+[source,sourceCode,text]
+----
+lw a1, 0x100(x0)
+----
+
+maybe should disassemble as
+
+[source,sourceCode,text]
+----
+lw a1, 0x100(zp)
+----
+
+to show it's relative to the zero-page pointer, or maybe use a different mnemonic:
+
+[source,sourceCode,text]
+----
+zlw a1, 0x100
+----
+
+== Caveat
+
+if an SoC has memory allocated ±2KB around address zero (i.e. the bottom and top 2KB of the address map), and the compiler / handwritten assembler reference it by using load/stores/`JALR` which reference x0 then the zero page mode will not be usable on that platform.
+
+
 
 
