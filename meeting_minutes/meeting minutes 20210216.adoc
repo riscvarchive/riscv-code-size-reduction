@@ -1,0 +1,90 @@
+= Code Optimisation Group Meeting Minutes 16th Feb 2021
+
+Call for proposals for RISC-V forum:
+
+https://events.linuxfoundation.org/riscv-forum-security/program/cfp/#overview
+
+Wei Wu organising a meeting about GCC development status for RISC-V, details will be on T&R mailing list.
+- can be added to events.riscv.org
+
+== Code-speed projects
+
+Need to be consistent with the profile definition at the end of April
+
+11 real world workloads/benchmarks to verify extensions
+6 whatever we need for this year's profiles
+4 generic GCC optimisation
+3 link optimisation
+3 generic GCC/LLVM for extensions
+2 cache impact of code density
+2 optimisation for extensions (in general)
+2 general LLVM optimisation
+2 profiling
+2 superoptimiser (https://linki.tools/2018/05/s10-overview.html)
+2 prototyping
+1 vector
+1 machine learning outside the compiler
+1 runtime lib optimisation
+1 vendor specific relocations
+1 glibc/newlib optimisations
+1 K extension
+1 continuous integration
+
+we can also do a doodle poll to get more input
+
+== Continuous integration
+
+Jenkins style build system - need voluteers to start the process, or JFrog.
+Need to be able to run analysis on proprietary workloads, so people in companies will 
+
+== code analysis scripts / environment
+
+Superoptimiser finds ways to improve the compiler or designing new instructions
+Jeremy: Process and tools for analysis, Nagendra, Ray Simar to ask how they do it.
+
+Nidal - set up a configuration file to setup environment so get the same environment for proprietary code, not sure how this would work.
+
+== benchmarks
+
+Wei Wu has these benchmarks in his performance tracking system:
+
+JS: https://krakenbenchmark.mozilla.org/
+C/C++/Fortran; Embench, CoreMark, CSiBE, SPEC CPU 2000/2006/2017
+
+machine learning:
+
+MLPerf
+TensorFlow Lite
+
+others:
+
+block-chain
+Graphics
+LC3 and OPUS audio codecs
+SpecCPU (paritallyw ritten by Michael Wong)
+
+how to address reproducibility of benchmarks
+
+what do we care about? execution speed + code-size
+
+e.g. P-extension - need purpose written code with intrinsics, Ray Simar driving Embench DSP suite
+
+HPC huge benchmarks, take a week to complete, Michael will email about something we can run in a shorter time
+
+John W. setup jenkins for HPC, Mark Himelstein to email to create a group to do it. Hopefully we can work with this for the benchmarking work.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
