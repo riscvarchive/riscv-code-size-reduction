@@ -10,25 +10,27 @@ Wei Wu organising a meeting about GCC development status for RISC-V, details wil
 == Code-speed projects
 
 Need to be consistent with the profile definition at the end of April
-
-11 real world workloads/benchmarks to verify extensions
-6 whatever we need for this year's profiles
-4 generic GCC optimisation
-3 link optimisation
-3 generic GCC/LLVM for extensions
-2 cache impact of code density
-2 optimisation for extensions (in general)
-2 general LLVM optimisation
-2 profiling
-2 superoptimiser (https://linki.tools/2018/05/s10-overview.html)
-2 prototyping
-1 vector
-1 machine learning outside the compiler
-1 runtime lib optimisation
-1 vendor specific relocations
-1 glibc/newlib optimisations
-1 K extension
-1 continuous integration
+|=====================================================
+|votes|task
+|11 |real world workloads/benchmarks to verify extensions
+|6 |whatever we need for this year's profiles
+|4 |generic GCC optimisation
+|3 |link optimisation
+|3 |generic GCC/LLVM for extensions
+|2 |cache impact of code density
+|2 |optimisation for extensions (in general)
+|2 |general LLVM optimisation
+|2 |profiling
+|2 |superoptimiser (https://linki.tools/2018/05/s10-overview.html)
+|2 |prototyping
+|1 |vector
+|1 |machine learning outside the compiler
+|1 |runtime lib optimisation
+|1 |vendor specific relocations
+|1 |glibc/newlib optimisations
+|1 |K extension
+|1 |continuous integration
+|=====================================================
 
 we can also do a doodle poll to get more input
 
