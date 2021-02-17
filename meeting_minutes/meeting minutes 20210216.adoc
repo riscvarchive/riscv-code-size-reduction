@@ -73,7 +73,7 @@ e.g. P-extension - need purpose written code with intrinsics, Ray Simar driving 
 
 HPC huge benchmarks, take a week to complete, Michael will email about something we can run in a shorter time
 
-John W. setup jenkins for HPC, Mark Himelstein to email to create a group to do it. Hopefully we can work with this for the benchmarking work.
+John Leisel setup jenkins for HPC, Mark Himelstein to email to create a group to do it. Hopefully we can work with this for the benchmarking work.
 
 
 
