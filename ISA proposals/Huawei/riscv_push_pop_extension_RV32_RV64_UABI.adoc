@@ -977,3 +977,39 @@ flw  fs1, 4(s0);
 addi sp, sp, 32; 
 ret
 ----
+
+== Appendix: Usage as load/store-multiple
+
+`PUSH/POP` encodings can be reused as generic load/store multiple instructions. For example:
+
+[source,sourceCode,text]
+----
+
+lui t0, 0xffff
+sw  s5, 0x50(t0)
+sw  s4, 0x54(t0)
+sw  s3, 0x58(t0)
+sw  s2, 0x5c(t0)
+sw  s1, 0x60(t0)
+sw  s0, 0x64(t0)
+
+----
+
+Can be replaced by
+
+[source,sourceCode,text]
+----
+
+lui t0, 0xffff
+addi sp, t0, 0x68
+push {s0-s5}
+
+----
+
+Requiring that the actual `sp` is saved before the sequence and restored after the sequence, to follow one of the standard RISC-V ABIs. `POP` can be used to replace the equivalent series of loads. 
+
+Even though there is not much code-size saving once the `sp` save/restore code has been included there may be a performance benefit to doing this for small embedded cores; a load/store-multiple sequence may be issued to the peripheral bus as a single burst instead of multiple single accesses which individually require arbitration. In some cases this can save one or more cycles per access as the arbiter remains locked to the core until the sequence has completed.
+
+If the implementation allows `PUSH/POP` execution to be interrupted (see <<fault-handling>>) then this will cause a problem if one of these instructions is used on a peripheral or device, i.e. non-idempotent memory. As a consequence the implementation should _not_ allow interrupts during sequenced instructions if they are accessing non-idempotent memory.
+
+
