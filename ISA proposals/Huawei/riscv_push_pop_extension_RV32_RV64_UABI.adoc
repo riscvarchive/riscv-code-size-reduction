@@ -105,7 +105,6 @@ The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes w
 
 it's better to list these first, as they are resolved I'll update the proposal
 
-* possibly allow POP/POPRET to also move 0 or 1 into a0
 * allocate encodings for the 32-bit versions
 * whether the fault handling should be profile defined
 
