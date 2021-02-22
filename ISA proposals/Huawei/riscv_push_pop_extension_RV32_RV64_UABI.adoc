@@ -651,7 +651,7 @@ The sequence required to execute the instruction may be interrupted, or may not 
 
 Because some faults can only be detected during the sequence the core implementation is able to recover from the fault and re-execute the sequence. This may involve executing some or all of the loads and stores from the sequence multiple times before the sequence completes (as multiple faults or multiple interrupts are possible).
 
-Therefore correct execution requires that `sp` refers to idempotent memory.
+Therefore correct execution requires that `sp` refers to idempotent memory (see <<non-idem-mem>> for non-idempotent handling)
 
 [#software-view]
 == Software view of execution
@@ -736,6 +736,36 @@ mv a0, s1
 addi sp, sp, 32;
 ret;
 ----
+[[non-idem-mem]]
+=== Non-idempotent memory
+
+An implementation may have a requirement to issue `PUSH/POP` to non-idempotent memory. 
+
+==== Error detection
+
+If the core implemetnation does not have a requirement to support `PUSH/POP` to non-idempotent memories then take a load(`POP[RET]`) or store (`PUSH`) access fault exception.
+
+==== Non-idempotent support
+
+It is possible to support non-idempotent memory. One reason is to re-use `PUSH/POP` as a restricted form of a load/store multiple instruction to a peripheral (see <<ldstm>>), as there is no generic load/store multiple instruction currently in the RISC-V ISA. If load/store multiple is suported in the future then it should support non-idempotent memory.
+
+Non-idempotent memory support requires additional restrictions:
+
+. Do not allow interrupts during execution
+. Do not allow external debug halt during execution
+. Detect any virtual memory page faults or PMP faults for the whole instruction before starting execution (instead of during the sequence)
+. Do not split / merge / reorder the generated memory accesses
+
+It is possible that one of the following will still occur during execution:
+
+. Watchpoint trigger
+. Load/store access fault
+
+In these cases the core will jump to the debug or exception handler. If execution is required to continue afterwards (so the event is not fatal to the code execution), then the handler software is required to do so in software. 
+
+By following these rules memory accesses will only ever be issued once, and in the order listed in the pseudo-code.
+
+It is possible for implementations to follow these restricted rules and to safely access both types of memory. It is also possible for an implementation to use PMAs to detect the memory type and apply different rules, such as only allowing interrupts if accessing cacheable memory for example.
 
 == Toolchain implementation
 
@@ -977,6 +1007,7 @@ addi sp, sp, 32;
 ret
 ----
 
+[[ldstm]]
 == Appendix: Usage as load/store-multiple
 
 `PUSH/POP` encodings can be reused as generic load/store multiple instructions. For example:
@@ -1005,10 +1036,10 @@ push {s0-s5}, -64
 
 ----
 
-Requiring that the actual `sp` is saved before the sequence and restored after the sequence, to follow one of the standard RISC-V ABIs. `POP` can be used to replace the equivalent series of loads. 
+This requires that  `sp` is saved before and restored after the sequence. Also `POP` can be used to replace the equivalent series of loads. 
 
-Even though there is not much code-size saving once the `sp` save/restore code has been included, and the restrcted memory layout targetted by the instructions, there may be a performance benefit to doing this for small embedded cores. A load/store-multiple sequence may be issued to the peripheral bus as a single burst instead of multiple single accesses which individually require arbitration. In some cases this can save one or more cycles per access as the arbiter remains locked to the core until the sequence has completed.
+Even though there is not much code-size saving once the `sp` save/restore code has been included, and the restricted memory layout targetted by the instructions, there may be a performance benefit to doing this for small embedded cores. A load/store-multiple sequence may be issued to the peripheral bus as a single burst instead of multiple single accesses which individually require arbitration. In some cases this can save one or more cycles per access as the arbiter remains locked to the core until the sequence has completed.
 
-If the implementation allows `PUSH/POP` execution to be interrupted (see <<fault-handling>>) then this will cause a problem if one of these instructions is used on a peripheral or device, i.e. non-idempotent memory. As a consequence the implementation should _not_ allow interrupts during sequenced instructions if they are accessing non-idempotent memory.
+If the target memory is non-idempotent then see <<non-idem-mem>> for additional constraints.
 
 
