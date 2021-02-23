@@ -459,15 +459,15 @@ The programmable range for `frcount` doesn't save many `fs` registers as `FPMark
 
 .proposed 16-bit encodings
 [options="header",width="100%"]
-|=======================================================================
-|15 |14 |13 |12 |11 |10 |9 |8 |7 |6 |5 |4 |3 |2 |1 |0 |instruction
-3+|100|1|0|0|0 2+|rcount|0 |0 2+|00 | spimm 2+|00|C.POP
-3+|100|1|0|0 3+|rcount|ret_val[0]|1 3+|spimm 2+|00|C.POPRET
-3+|110|1|0|0 3+|rcount|1 |0 3+|spimm 2+|00|C.PUSH
-|=======================================================================
+|=============================================================================================
+|15 |14 |13 |12 |11 |10  |9 |8|7    |6   |5   |4|3|2        |1 |0 |instruction
+3+|100      |1  |0  |0   |0 2+|rcount|0   |0 2+|00 |spimm 2+|00   |C.POP
+3+|100      |1  |0  |0 3+|rcount    |ret0|1 3+|spimm      2+|00   |C.POPRET
+3+|110      |1  |0  |0 3+|rcount    |1   |0 3+|spimm      2+|00   |C.PUSH
+|=============================================================================================
 
 [NOTE]
-  * For `C.POPRET`, `ret_val[0]` is specified in the encoding, `ret_val[1]=0`. For `C.POP` `ret_val[1:0]=0`.
+  * For `C.POPRET`, `ret_val[0]=ret0` as specified in the encoding, `ret_val[1]=0`. For `C.POP` `ret_val[1:0]=0`. If `ret0==1` then return zero and return.
   * Some encodings remain *reserved* for the time being so we can add them later if they can be justified
   ** For `C.POP`, `spimm[2:1]=0`, and `rcount[2]=0` are reserved, as these encodings give minimal benefit
   ** For `C.PUSH/C.POPRET`, if `rcount[2]=1` then `spimm[2]=0` as these encodings give minimal benefit
