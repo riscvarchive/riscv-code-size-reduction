@@ -469,7 +469,7 @@ The programmable range for `frcount` doesn't save many `fs` registers as `FPMark
 [NOTE]
   * For `C.POPRET`, `ret_val[0]` is specified in the encoding, `ret_val[1]=0`. For `C.POP` `ret_val[1:0]=0`.
   * Some encodings remain *reserved* for the time being so we can add them later if they can be justified
-  ** For `C.POP`, `spimm[2:1]=0`, and `rcount[2]=0` are reserved, as these encodings give minimal benefit
+  ** For `C.POP`, `spimm[2:1]!=0`, and `rcount[2]=1` are reserved, as these encodings give minimal benefit
   ** For `C.PUSH/C.POPRET`, if `rcount[2]=1` then `spimm[2]=0` as these encodings give minimal benefit
 
 == Encoding Fields
