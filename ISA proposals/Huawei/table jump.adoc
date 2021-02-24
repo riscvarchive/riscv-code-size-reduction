@@ -1,4 +1,4 @@
-= RISC-V Table Jump ISA Proposal
+= RISC-V Table Jump ISA Proposal v0.1
 Version 0.1
 :doctype: book
 :encoding: utf-8
@@ -22,7 +22,8 @@ The 32-bit instruction encoding will ensure that 64-bit sequences are unlikely t
 
 == Issues 
 
-* confirm the table size on larger code bases, we can have an 11-bit index in the 16-bit encoding if necessary
+* confirm the table size for the 16 and 32-bit encodings on larger code bases
+** we can have an 11-bit index in the 16-bit encoding if necessary
 
 == Rationale
 
@@ -68,7 +69,7 @@ using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as cod
 
 The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `[C.]TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. Not all functions are reduced by this much.
 
-`TBLJALENTRIES` is set by the maximum size of the table, which is currently 1024 as the 32-bit encoding has an 11-bit index. _To be confirmed..._
+`TBLJALENTRIES` is set by the maximum size of the table, which is currently 1024 as the 32-bit encoding has an 11-bit index.
 
 == 16-bit Opcode Assignment
 
@@ -130,7 +131,7 @@ The memory pointed to by `xTBLJALVEC.base` only requires eXecute permission. Rea
 
 `xTBLJALVEC.mode` is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to attempt to program different modes and read back the values to see which are available.
 
-`xTBLJALVEC.scale` is also WARL, and reads as zero. It is reserved for Vector Table Mode, se <<vector-table-mode>>.
+`xTBLJALVEC.scale` is also WARL, and reads as zero. It is reserved for Vector Table Mode, see <<vector-table-mode>>.
 
 == Jump table mode
 
@@ -197,13 +198,13 @@ Any write to `xTBLJALVEC`, even if the actual value is not updated, will indicat
 
 Therefore if there are any updates to generated code in the table in vector mode, a write to `xTBLJALVEC` is required to ensure that any cached contents are not stale. This is not expected to be the common case, because in the absence of dynamically linked libraries, the jump table is static for a given executable. Therefore the recommendation is that it is set with eXecute only privileges, the same as the rest of the code. This is better for security to prevent code in the vector table being scanned for gadgets.
 
-== Power/performance of jump table mode
+=== Power/performance of jump table mode
 
 The instruction fetch unit could cache the most frequently accessed table jump targets to improve performance. The management of this caching will cost some power (although the ~ 10% code size saving should save power overall by reducing the number of instruction fetches).
 
 An alternative approach is to for the instruction fetch to cache a certain range of table jump indices, e.g. 0-31. The linker could be configured to place the most frequently used table jump indices into this range so that static caching can be used. For this to be successful the linker would need information about the dynamic call frequency of each function call.
 
-== Benchmarking Jump Table Mode
+=== Benchmarking Jump Table Mode
 
 https://github.com/riscv/riscv-code-size-reduction/blob/master/meeting_minutes/code%20size%20meeting%20slides%2020210126.pdf[See this presentation, the "bigger benchmarks" slide]
 
@@ -315,7 +316,7 @@ With the proposed encodings
 .watermark example
 image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump2.PNG[watermark example]
 
-=== Exceptions for vector table mode
+==== Exceptions for vector table mode
 
 Take an illegal instruction exception if `[C.]TBLJAL #n` is executed and one of more of these conditions are true:
 
@@ -326,7 +327,7 @@ Take an illegal instruction exception if `[C.]TBLJAL #n` is executed and one of 
 
 All comparisons are _unsigned_.
 
-=== Pseudo-code for vector table mode
+==== Pseudo-code for vector table mode
 
 [source,sourceCode,text]
 ----
@@ -338,7 +339,7 @@ if (n > MTBLJALCFG.maxentry OR MTBLJALWM.wmx5 < MTBLJALWM.wxm0) {
 JALR LINK, Mem[xTBLJALVEC.base + n*tablescale][XLEN-1:0];
 ----
 
-=== vector table code
+==== vector table code
 
 Because this method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table, or use more than one entry which invalidates one or more table entries.
 This avoids an additional redirection to get to the actual code, assuming the whole body of the code actually fits in the table.
@@ -386,14 +387,14 @@ xTBLJALVEC.base+48: <vsnprintf>
 
   This mode may waste memory as the target functions are very unlikely to all be multiples of `tablescale`.
 
-=== Vector Mode Security (future ideas)
+==== Vector Mode Security (future ideas)
 
 The vector mode mechanism could be reused for security in the future. It is possible to define that the memory allocated to to the table can only have entry points on the specific vectors, and also only from `[C.]TBLJAL` instructions. In this way sensitive code can be placed in the table which cannot be reused for ROP/JOP gadgets, because the code cannot be targetted by `JALR` instructions.
 
 These ideas will not be pursued as part of the code size work.
 
 [[emulation-mode]]
-== Emulation Mode
+=== Emulation Mode
 
 Emulation mode is the simplest. It doesn't have a jump table or vector table, so allow a minimal hardware implementation.
 It relies on the values in temporary registers not being maintained across function calls.
@@ -402,7 +403,7 @@ _There are concerns about overwriting the temporary registers so this may be rej
 
 No illegal instruction exceptions are possible in emulation mode.
 
-=== Pseudo-code for emulation mode
+==== Pseudo-code for emulation mode
 
 [source,sourceCode,text]
 ----
