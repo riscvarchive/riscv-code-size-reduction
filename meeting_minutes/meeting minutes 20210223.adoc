@@ -1,0 +1,23 @@
+= Code Size meeting minutes 23rd Feb 2021
+
+Unfortuantely my laptop crashed and I lost the minutes, here's what I can remember the next day:
+
+SIG + TG - we need to create a code optimisation SIG, through Toolchains and Runtimes
+
+Global Pointer optimisation - there are some pretty severe limitation at the moment where it doesn't catch all variables which are in-range.  
+It seems like this can be improved during LTO, let's discuss next week.
+
+RISC-V forum coming up - please submit papers
+RICV-V exchange - list your RISC-V related boards and services here
+
+PUSH/POP proof of concept - the Huawei implementation isn't quite the same, so do we need another proof of concept? And what about different options? 
+Do we need a proof of concept for each? Talk to Allen about this.
+
+CAS/ICT are available for proof of concept.
+
+Talk to Dan Lustig about non-idempotent memory for PUSH/POP.
+
+Hi3861 platform + software + HCC are available for download - to allow anyone to benchmark WiFi-IoT code.
+
+
+
