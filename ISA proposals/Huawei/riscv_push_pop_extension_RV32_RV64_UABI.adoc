@@ -1,4 +1,4 @@
-= RISC-V Push/Pop Extension (UABI only version)
+= RISC-V Push/Pop Extension v0.1
 Version 0.1
 :doctype: book
 :encoding: utf-8
