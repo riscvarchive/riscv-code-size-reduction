@@ -1,0 +1,683 @@
+= RISC-V Zce code-size reduction extension proposal v0.1
+Version 0.1
+:doctype: book
+:encoding: utf-8
+:lang: en
+:toc: left
+:toclevels: 4
+:numbered:
+:xrefstyle: short
+:le: &#8804;
+:rarr: &#8658;
+
+This document describes The `Zce` extension to reduce code-size.
+
+== Issues
+
+* there are probably too many instructions listed, so we need to reduce the list
+** we don't need `c.mvp` and `c.mvas*`
+* we need to check the sizes of the immediate fields, so we don't waste encoding space
+* I've put too many encodings in the D-extension 32-bit encoding space.
+** PUSH/POP and table jump shouldn't be there so larger cores which support D can use them
+
+== C-extension subsets
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/C-extension%20subsets.xlsx[This spreadsheet] has a proposal for how to divide the C-extension into subsets, and how to select code-size reduction instructions for all relevant base architectures and extensions
+
+== Zce proposal
+
+Zce is split into subsets. It includes 
+
+* `Zces` sequenced instructions
+** 16-bit: `C.POP, C.POPRET, C.PUSH, C.MVA01S07, C.MVA23S07, C.MVP`     
+** 32-bit: `POP, POPRET, PUSH`
+* `Zced` instructions which conflict with the D-extension
+** 16-bit: `C.LBU, C.LHU, C.SB, C.SH, C.DEC[1248]BGEZ`
+** 32-bit: `DEC[1248]BGEZ`
+* `Zcec` common instructions
+** all others
+
+If `Zce` is specified, and `D` is _not_ specified then `Zces_Zced_Zcec` are configured.
+
+If `Zce` is specified, and `D` _is_  specified then `Zces_Zcec` are configured.
+
+If `Zces` is not required then `Zcec` and optionally `Zced` must be specified.
+
+== 16-bit encodings
+
+== C-extension subsets
+
+The C-extension already reuses encodings between different architectures. `Zce` extends this concept further.
+
+The shared encoding column assigns an arbitrary number to show which encodings are grouped together (I can't find a better way of highlighting groups of cells in the table in adoc format). `Zce` instructions are in *bold*.
+
+[#zce_quad0]
+.C-extension quadrant 0
+[width="100%",options=header]
+|===============================================================================
+|Enc[15:13]|Instruction|shared encoding group|Ext Subset|RV32|RV64|RV128|Extension
+|000       |C.ADDI4SPN| |Zci |✓|✓ |✓  |C
+
+8+|The encodings for `C.FLD/C.LQ` are replaced by `C.LBU` and `C.DECnBGEZ`
+|001       |C.FLD     |1|Zcd |✓|✓ |   |C+D
+|001       |C.LQ      |1|Zcq |  |  |✓  |C
+|001       |*C.LBU*     |1|*Zced*|✓|✓ |  |C+*Zce*
+|001       |*C.DEC1BGEZ*|1|*Zced*|✓|✓ |  |C+*Zce*
+|001       |*C.DEC2BGEZ*|1|*Zced*|✓|✓ |  |C+*Zce*
+|001       |*C.DEC4BGEZ*|1|*Zced*|✓|✓ |  |C+*Zce*
+|001       |*C.DEC8BGEZ*|1|*Zced*|✓|✓ |  |C+*Zce*
+
+|010       |C.LW      | |Zci |✓|✓ |✓  |C
+
+|011       |C.FLW     |2|Zcf |✓|   |   |C+F
+|011       |C.LD      |2|Zc64/Zc128| |✓|✓|C
+|011       |*unallocated* |2| | || |C+*Zce*
+
+|100       |*C.TBLJAL*  | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.SHSP*    | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.SBSP*    | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.LHUSP*    | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.LBUSP*    | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.POP*     | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.POPRET*  | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.PUSH*    | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.SEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.SEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.ZEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.ZEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.LSBNOT*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.MUL*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.MVA01S07*| |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.MVA23S07*| |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+
+|101       |C.FSD     |3|Zcd|✓|✓| |C+D
+|101       |C.SQ      |3|Zcq| | |✓|D
+|101       |*C.SB*      |3|*Zced*|✓|✓| |C+*Zce*
+
+|110       |C.SW      | |Zci|✓|✓|✓|C
+
+|111       |C.FSW     |4|Zcf|✓| | |C+F
+|111       |C.SD      |4|Zc64/Zc128| |✓|✓|C
+|===============================================================================
+
+[#zce_quad1]
+.C-extension quadrant 1
+[width="100%",options=header]
+|===============================================================================
+|Enc[15:13]|Instruction|shared encoding group|Ext Subset|RV32|RV64|RV128|Extension
+
+|000       |C.NOP	| |Zci	|✓	|✓	|✓	|C
+|000       |C.ADDI	| |Zci	|✓	|✓	|✓	|C
+
+
+|001       |C.JAL	        |5|Zc32	        |✓	|	|	|C
+|001       |C.ADDIW (rd=0:RSV)  |5|Zc64/Zc128	|	|✓	|✓	|C
+
+|010       |C.LI (rd=0:HINT) | |Zci	|✓	|✓	|✓	|C
+
+
+|011       |C.ADDI16SP (nzimm=0:RSV)	| | Zci	|✓	|✓	|✓	|C
+|011       |C.LUI (nzimm=0: RSV; rd=0:HINT)	| |Zci	|✓	|✓	|✓	|C
+
+
+|100       |C.SRLI (nzuimm[5]=0:NSE)              |6|Zc32/Zc64	|✓	|✓	|	|C
+|100       |C.SRLI64 (RV32:HINT)                  |6|Zc128	|	|	|✓	|C
+|100       |C.SRAI (RV32:NSE, nzuimm[5]=1:RSV)    |7|Zc32/Zc64	|✓	|✓	|	|C
+|100       |C.SRAI64 ( RV32/64:HINT)              |7|Zc128	|	|	|✓       |C
+|100       |C.ANDI                                | |Zci	|✓	|✓	|✓	|C
+|100       |C.SUB                                 | |Zci	|✓	|✓	|✓	|C
+|100       |C.XOR                                 | |Zci	|✓	|✓	|✓	|C
+|100       |C.OR                                  | |Zci	|✓	|✓	|✓	|C
+|100       |C.AND                                 | |Zci	|✓	|✓	|✓	|C
+|100       |C.SUBW (RV32:RSV)                     | |Zc64/Zc128	|	|✓	|✓	|C
+|100       |C.ADDW (RV32:RSV)                     | |Zc64/Zc128	|	|✓	|✓	|C
+
+|101       |C.J	       | |Zci	|✓	|✓	|✓	|C
+
+
+|110       |C.BEQZ	| |Zci	|✓	|✓	|✓	|C
+
+
+|111       |C.BNEZ	| |Zci	|✓	|✓	|✓	|C
+|===============================================================================
+
+[#zce_quad2]
+.C-extension quadrant 2
+[width="100%",options=header]
+|======================================================================================================
+|Enc[15:13]|Instruction|shared encoding group|Ext Subset|RV32|RV64|RV128|Extension
+
+|000       |C.SLLI (rd=0:HINT; RV32 && nzuimm[5]=1:NSE)| 8|Zc32/Zc64	|✓	|✓	|	|C
+|000       |C.SLLI64 (RV32/64 or rd=0:HINT)	       | 8|Zc128	        |	|	|✓	|C
+|001       |C.FLDSP	                               | 9|Zcd	        |✓	|✓	|	|C+D
+|001       |C.LQSP (rd=0:RSV)	                       | 9|Zc128	        |	|	|✓	|C
+|001       |*C.LHU*	                               | 9|*Zced* 	|✓	|✓	| 	|C+*Zce*
+|001       |*C.MVP*	                               | 9|*Zced* 	|✓	|✓	| 	|C+*Zce*
+|010       |C.LWSP (rd=0:RSV)	                       |  |Zci	        |✓	|✓	|✓	|C
+|011       |C.FLWSP	                               |10|Zcf	        |✓	|	|	|C+F
+|011       |C.LDSP (rd=0:HINT)	                       |10|Zc64/Zc128	|	|✓	|✓	|C
+|100       |C.JR     (rd=0:RSV)	                       |  |Zci   	|✓	|✓	|✓	|C
+|100       |C.MV   (rd=0:HINT)	                       |  |Zci   	|✓	|✓	|✓	|C
+|100       |C.EBREAK	                               |  |Zci   	|✓	|✓	|✓	|C
+|100       |C.JALR	                               |  |Zci   	|✓	|✓	|✓	|C
+|100       |C.ADD (rd=0:HINT)	                       |  |Zci   	|✓	|✓	|✓	|C
+|101       |C.FSDSP	                               |11|Zcd	        |✓	|✓	|	|C+D
+|101       |C.SQSP	                               |11|Zc128		|       | 	|✓	|C
+|101       |*C.SH*	                               |11|*Zced**	|✓	|✓	| 	|C+*Zce*
+|110       |C.SWSP	                               |  |Zci	        |✓	|✓	|✓	|C
+|111       |C.FSWSP	                               |12|Zcf	        |✓	|	|	|C+F
+|111       |C.SDSP	                               |12|Zc128	        |	|✓	|✓	|C
+|======================================================================================================
+
+=== `Zces` definition
+
+[[pushpop]]
+==== PUSH/POP
+
+These are optional as cores may not want to build the sequencer to issue the instructions.
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[The specification is here.]
+
+[#proposed-16bit-encodings-1]
+.proposed 16-bit encodings for PUSH/POP
+[width="100%",options=header]
+|===============================================================================
+|15 |14 |13 |12 |11 |10  |9 |8  |7 |6   |5 |4 |3 |2           |1 |0 |instruction
+17+|C.POP and reserved values of rcount/spimm to save encoding space
+3+|100  |0  |0  |0  |0 2+|rcount[1:0]|0 |0 2+|00 | spimm[0] 2+| 00  |C.POP
+3+|100  |0  |0  |0  |1 2+|xx         |0 |0 3+|xxx           2+| 00  |*reserved*
+3+|100  |0  |0  |0 3+|xxx            |0 |0 2+|!=00| x       2+| 00  |*reserved*
+17+|C.POPRET and reserved values of rcount/spimm to save encoding space
+3+|100  |0  |0  |0 3+|rcount[2:0]  |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET
+3+|100  |0  |0  |0   |1 2+|xxx        |x|1 |1 2+|xx         2+| 00  |*reserved*
+17+|C.PUSH and reserved values of rcount/spimm to save encoding space
+3+|100  |0  |0  |0 3+|rcount[2:0]  |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH
+3+|100  |0  |0  |0   |1 2+|xx      |1 |0   |1 2+|xx         2+| 00  |*reserved*
+|===============================================================================
+
+[#pushpop_semantics]
+.PUSH/POP semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.POP         | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers]
+| C.POPRET      | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[POP registers and return]
+| C.PUSH        | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[PUSH registers]
+|=======================================================================
+
+[#pushpop-32bit]
+.v1.0 32-bit equivalent instructions for PUSH/POP
+[width="100%",options=header]
+|======================================================================================================
+|instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
+|C.POP       | pop    <args>         | arguments map to a 16-bit encoding | Zce
+|C.POPRET    | popret <args>         | arguments map to a 16-bit encoding | Zce
+|C.PUSH      | push   <args>         | arguments map to a 16-bit encoding | Zce
+|======================================================================================================
+
+==== S to A double moves
+
+These are optional as they require 2 register file write ports, or are sequenced.
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[The specification is here.]
+
+[#proposed-16bit-encodings-4]
+.proposed 16-bit encoding for register moves
+[width="100%",options=header]
+|================================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  100     2+|10     3+| 000      3+|sreg1      3+|sreg2    2+| 00    | C.MVA01S07
+3+|  100     2+|10     3+| 001      3+|sreg1      3+|sreg2    2+| 00    | C.MVA23S07
+|================================================================================================
+
+[#mvp]
+.double register move semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.MVA01S07    | mv a0, sreg1; mv a1, sreg2; #sreg[12] are specified using *ABI* names
+| C.MVA23S07    | mv a2, sreg1; mv a3, sreg2; #sreg[12] are specified using *ABI* names
+|=======================================================================
+
+[NOTE]
+
+  Currently there are no 32-bit equivalent instructions, is it enough to expand to *two* 32-bit instructions?
+
+=== `Zcec` definition
+
+[[tablejump]]
+==== Table Jump
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[The specification is here.]
+
+[#proposed-16bit-encodings-tbljal]
+.proposed 16-bit encodings for table jump
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  100       | 1  | 1     9+|index9                             2+| 00 | C.TBLJAL
+|=============================================================================================
+
+[NOTE]
+
+  The reserved encodings also conflict with the D-extension
+
+[#tablejumpsemantics]
+.load/store byte/half SP relative semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.TBLJAL      | https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[See the specification]
+|=======================================================================
+
+[#ldstbh_sprel_32bit]
+.v1.0 32-bit equivalent instructions for load/store byte/half SP relative
+[width="100%",options=header]
+|======================================================================================================
+|instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
+|C.TBLJAL    | tbljal #index         | index is in range                  | Zce
+|======================================================================================================
+
+==== Monadic/dyadic instructions
+
+[#proposed-16bit-encodings-2]
+.proposed 16-bit encodings for monadic/dyadic instructions
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|Single source/dest with room for 3 more encodings
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 000     2+| 00  | C.ZEXT.B
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 001     2+| 00  | C.ZEXT.H
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 010     2+| 00  | C.SEXT.B
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 011     2+| 00  | C.SEXT.H
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 100     2+| 00  | C.LSBNOT
+3+|  100       | 0  | 0  | 1 3+| xxx      | 0  | 0  3+| >=101   2+| 00  | *reserved*
+17+|Dyadic with room for 2 more encodings
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 1  3+| rs2'    2+| 00  | C.MUL
+3+|  100       | 0  | 0  | 1 3+| xxx    2+| 1x      3+| xxx     2+| 00  | *reserved*
+17+|These are taken from the B-extension draft specification
+3+|  011       |0   | 0  | 0 3+| rs1'/rd'  5+| 00000            2+| 01  | C.NOT
+3+|  011       |0   | 0  | 1 3+| rs1'/rd'  5+| 00000            2+| 01  | C.NEG
+|=============================================================================================
+
+[#mondysemantics]
+.monadic/dyadic semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.ZEXT.B      | rd' = zero_ext(rd'[ 7:0])
+| C.ZEXT.H      | rd' = zero_ext(rd'[15:0])
+| C.SEXT.B      | rd' = sign_ext(rd'[ 7:0])
+| C.SEXT.H      | rd' = sign_ext(rd'[15:0])
+| C.LSBNOT      | rd' = rd' XOR 1
+| C.MUL         | rd' = rd' * rs2'
+| C.NOT         | rd' = ~rd' / rd' = rd' XOR -1
+| C.NEG         | rd' = -rd'
+|=======================================================================
+
+[#mondy-32bit]
+.v1.0 32-bit equivalent instructions or pseudo-instructions for monadic/dyadic instructions
+[width="100%",options=header]
+|======================================================================================================
+|instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
+|C.ZEXT.B    | zext.b rd             | all registers x8-x15, rd==rs1      | I-extension
+|C.ZEXT.H    | zext.h rd             | all registers x8-x15, rd==rs1      | B-extension
+|C.SEXT.B    | sext.b rd             | all registers x8-x15, rd==rs1      | B-extension
+|C.SEXT.H    | sext.h rd             | all registers x8-x15, rd==rs1      | B-extension
+|C.LSBNOT    | lsbnot rd             | all registers x8-x15, rd==rs1      | I-extension
+|C.MUL       | mul    rd, rs1, rs2   | all registers x8-x15, rd==rs1      | I-extension
+|C.NOT       | not    rd, rs1        | all registers x8-x15, rd==rs1      | I-extension
+|C.NEG       | sub    rd, 0, rs2     | all registers x8-x15, rd==rs2      | I-extension
+|======================================================================================================
+
+Assembly Examples
+
+[source,sourceCode,text]
+----
+zext.b a5, a5;  # a5 = zero_ext(a5[7:0])
+zext.h a5, a5;  # a5 = zero_ext(a5[15:0])
+sext.b a5, a5;  # a5 = sign_ext(a5[7:0])
+sext.h a5, a5;  # a5 = sign_ext(a5[15:0])
+
+mul a5, a5, a6; # a5 = a5 * a6
+
+not a5          # a5 = ~a5 bitwise inversion
+neg a5          # a5 = -a5 two's complement inversion
+----
+
+==== load/store byte/half SP relative
+
+[#proposed-16bit-encodings-3]
+.proposed 16-bit encodings for load/store half/byte SP relative
+[width="100%",options=header]
+|================================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|source/dest with one other source operand, stack pointer relative
+3+|  100       | 0  | 1  |uimm[3] 3+|     rd' 3+|uimm[2:0]    2+|00 2+|00 | C.LBUSP
+3+|  100       | 0  | 1  |uimm[3] 3+|     rd' 3+|uimm[2:1，4] 2+|01 2+|00 | C.LHUSP
+3+|  100       | 0  | 1  |uimm[3] 3+|    rs2' 3+|uimm[2:0]    2+|10 2+|00 | C.SBSP
+3+|  100       | 0  | 1  |uimm[3] 3+|    rs2' 3+|uimm[2:1，4] 2+|11 2+|00 | C.SHSP
+|================================================================================================
+
+[#ldstbh_sprel]
+.load/store byte/half SP relative semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.LBUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][ 7:0])
+| C.LHUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][15:0])
+| C.SBSP        | Memory[sp + zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
+| C.SHSP        | Memory[sp + zero_ext(uimm)][15:0] = rs2'[15:0]
+|=======================================================================
+
+[#ldstbh_sprel_32bit]
+.v1.0 32-bit equivalent instructions for load/store byte/half SP relative
+[width="100%",options=header]
+|======================================================================================================
+|instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
+|C.LBUSP     | lbu    rd, imm(sp)    | rd is x8-x15, imm is in range      | I-extension
+|C.LHUSP     | lhu    rd, imm(sp)    | rd is x8-x15, imm is in range      | I-extension
+|C.SBSP      | sb     rd, imm(sp)    | rd is x8-x15, imm is in range      | I-extension
+|C.SHSP      | sh     rd, imm(sp)    | rd is x8-x15, imm is in range      | I-extension
+|======================================================================================================
+
+Assembly Examples
+
+[source,sourceCode,text]
+----
+lbu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[ 7:0])
+lhu a5,20(sp)   # a5 = zero_ext(Memory(sp+20)[15:0])
+sb  a5,20(sp)   # Memory(sp+20)[ 7:0] = a5[ 7:0]   
+sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0]   
+----
+
+=== `Zced` definition
+
+The D-extension takes priority over these encodings.
+
+==== Generic double moves
+
+These are optional as they require 2 register file write ports, or are sequenced.
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/multi_move.adoc[The specification is here.]
+
+[#proposed-16bit-encodings-4]
+.proposed 16-bit encoding for register moves
+[width="100%",options=header]
+|================================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  001     3+|000    4+| rdp[4:1] 4+|  rsp[4:1]       2+| 10    | C.MVP
+3+|  001     3+|>0 8+|xxxx                              2+| 10 | *reserved*
+|================================================================================================
+
+[#mvp]
+.double register move semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.MVP         | mv rdp, rsp;  mv rdp+1, rsp+1
+|=======================================================================
+
+[NOTE]
+
+  Currently there are no 32-bit equivalent instructions, is it enough to expand to *two* 32-bit instructions?
+
+[[decbr]]
+==== Decrement and branch
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/dec_and_br.adoc[The specification is here.]
+
+[#proposed-16bit-encodings-dec_br]
+.proposed 16-bit encodings for dec-and-branch
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  001          3+|uimm[6:4] 3+| rd'  3+|uimm[3:1] 2+|00    2+| 00 | C.DEC1BGEZ
+3+|  001          3+|uimm[6:4] 3+| rd'  3+|uimm[3:1] 2+|01    2+| 00 | C.DEC2BGEZ
+3+|  001          3+|uimm[6:4] 3+| rd'  3+|uimm[3:1] 2+|10    2+| 00 | C.DEC4BGEZ
+3+|  001          3+|uimm[6:4] 3+| rd'  3+|uimm[3:1] 2+|11    2+| 00 | C.DEC8BGEZ
+|=============================================================================================
+
+[#deccmpbrsemantics]
+.decrement, compare and branch semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.DEC1BGEZ    | rd' = rd' - 1; bge rd', zero, -zero_ext(uimm);
+| C.DEC2BGEZ    | rd' = rd' - 2; bge rd', zero, -zero_ext(uimm);
+| C.DEC4BGEZ    | rd' = rd' - 4; bge rd', zero, -zero_ext(uimm);
+| C.DEC8BGEZ    | rd' = rd' - 8; bge rd', zero, -zero_ext(uimm);
+|=======================================================================
+
+[#v1.0-32bit]
+.32-bit equivalent instructions for decrement, compare and branch semantics
+[width="100%",options=header]
+|======================================================================================================
+|instruction | assembly syntax        | requirements for 16-bit encoding   | 32-bit extension
+|C.DEC1BGEZ  | decbgez, rd, 1, offset | rd is x8-x15, offset is in range   | code-size reduction
+|C.DEC2BGEZ  | decbgez, rd, 2, offset | rd is x8-x15, offset is in range   | code-size reduction
+|C.DEC4BGEZ  | decbgez, rd, 4, offset | rd is x8-x15, offset is in range   | code-size reduction
+|C.DEC8BGEZ  | decbgez, rd, 8, offset | rd is x8-x15, offset is in range   | code-size reduction
+|======================================================================================================
+
+==== Load/store byte/half
+
+The D-extension takes priority over these encodings
+
+[#ldstbh]
+.proposed 16-bit encodings for load/store byte/half
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  101       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SB
+3+|  101       |1 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.LBU
+3+|  101       |0 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.SH
+3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LHU
+|=============================================================================================
+
+[#ldstbhsemantics]
+.Load/store byte/half semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.SB          | rd' = Memory[rs1'+zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
+| C.SH          | rd' = Memory[rs1'+zero_ext(uimm)][15:0] = rs2'[15:0]
+| C.LBU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][ 7:0])
+| C.LHU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][15:0])
+|=======================================================================
+
+[#ldstbh-32bit]
+.Load/store byte-half 32-bit equivalent instructions with a direct equivalent
+[width="100%",options=header]
+|======================================================================================================
+|instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
+|C.SB        | sb     rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
+|C.SH        | sh     rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
+|C.LBU       | lbu    rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
+|C.LHU       | lhu    rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
+|======================================================================================================
+
+[source,sourceCode,text]
+----
+lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0])
+lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0])
+sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0]
+sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
+----
+
+=== Spare 16-bit encodings
+
+Some spare encodings are noted in the tables above. The remaining unallocated space is listed here:
+
+[#spare encodings]
+.spare 16-bit encodings
+[width="100%",options=header]
+|================================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|These three are RV32 only
+3+|  000       |1 10+|  xxxxx                                   2+| 10  | *reserved*
+3+|  100       |1   |0  9+| xxxx                                2+| 01  | *reserved*
+3+|  100       |1 2+|11 8+| xxxx                                2+| 00  | *reserved*
+17+|This conflicts with the D-extension
+3+|  001     11+|xxxx                                           2+| 10 | *reserved*
+|================================================================================================
+
+
+== 32-bit encodings
+
+32-bit encodings have not yet been allocated, so the tables are approximate.
+
+=== `Zces` definition
+
+==== PUSH/POP
+
+Encodings needs to be allocated.
+
+.push/pop 32-bit encodings
+[options="header",width="100%"]
+|============================================================================
+|31:29  |28:27|26|25:24   |23:20  |19:15 |14:12 |11:7  |6:0     |name
+|xxx    |xx   |ra|mv      |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
+|xxx    |xx   |ra|ret_val |rcount |spimm |001   |xxxxx |xxxxxxx |POP
+|xxx    |xx   |x |ret_val |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
+
+|xxx    |00   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.F
+|xxx    |00   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.F
+|xxx    |00   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.F
+
+|xxx    |01   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.D
+|xxx    |01   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.D
+|xxx    |01   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.D
+
+|xxx    |10   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.Q
+|xxx    |10   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.Q
+|xxx    |10   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.Q
+|============================================================================
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[The specification is here] and the 16-bit encoding is in <<pushpop>>.
+
+=== `Zcec` definition
+
+==== Table Jump
+
+[NOTE]
+
+  This encoding is in custom=0, as no official encoding has been allocated yet
+
+The 16-bit encoding is in <<tablejump>>.
+
+[zcec-32bit-encodings-table-jump]
+.proposed 32-bit encodings for table jump
+[width="100%",options=header]
+|=========================================================================================================================
+| 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
+8+|00000               8+|index13                                      |0001011| TBLJAL
+|=========================================================================================================================
+
+==== Arithmetic
+
+See https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension].
+Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[this document], which is implemented on silicon.
+
+[zcec-32bit-encodings-arithmetic]
+.proposed 32-bit encodings for arithmetic instructions
+[width="100%",options=header]
+|=========================================================================================================================
+| 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
+18+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension]*
+8+|imm[11:0]                                          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULI
+7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULIADD
+7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11101         3+| rd'       |0011011| ADDIADD
+|=========================================================================================================================
+
+[#arithmetic_semantics]
+.Arithmetic semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+|MULI           |rd' = rs1' * sign_ext(imm)
+|MULIADD        |rd' = rs1' + rs2' * sign_ext(imm)
+|ADDIADD        |rd' = rs1' + rs2' + sign_ext(imm)
+|=======================================================================
+
+=== `Zced` definition
+
+==== Compare-immediate and branch
+
+These reuse the encodings for `FMADD.D/FMSUB.D`.
+
+The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
+
+Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst[this document], which is implemented on silicon.
+
+[zced-32bit-encodings]
+.proposed 32-bit encodings for `Zced`
+[width="100%",options=header]
+|=========================================================================================================================
+| 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
+6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 001   4+| offset[5:1]       |1000011| BEQI
+6+| cmpimm[7:0]                   2+|  offset[9:6]  3+| rs1           | 010   4+| offset[5:1]       |1000111| BNEI
+|=========================================================================================================================
+
+[#compare-immediate branch_semantics]
+.Compare immediate branch semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| BEQI          | if (rs1==sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BNEI          | if (rs1< sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+|=======================================================================
+
+==== Load/store GP relative
+
+These reuse the encodings for `FLD/FSD`.
+
+`tp` is used as a second `gp` for systems which do not have thread local storage. `LWGP/SWGP` allow a larger offset than the normal `LW/SW` relative to `gp` or `tp`. This allows two 18-bit memory spaces to be within reach of a 32-bit load or store word instruction.
+
+[zced-32bit-encodings]
+.proposed 32-bit encodings for `Zced`
+[width="100%",options=header]
+|=========================================================================================================================
+| 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
+ 8+|imm[11:2, 17:16]                                2+|imm[15:12]|tp  | 011   4+| rd                |0000111| LWGP
+ 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 011   4+| imm[4:2, 17:16]   |0100111| SWGP
+|=========================================================================================================================
+
+[#lwgp_semantics]
+.Load/store word GP relative semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| LWGP          | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][31:0]);
+| SWGP          | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][31:0])=rs2[31:0];
+|=======================================================================
+
+==== Decrement and branch
+
+This reuses the encoding for `FDIV.D`.
+
+The 16-bit encoding is in <<decbr>>.
+
+https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/dec_and_br.adoc[The specification is here]
+
+[zcec-32bit-encodings-arithmetic]
+.proposed 32-bit encodings for arithmetic instructions
+[width="100%",options=header]
+|=========================================================================================================================
+| 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
+5+|0001101                   6+|imm[9:0]                              |scale  4+| rd                |1010011| DECBGEZ
+|=========================================================================================================================
+
+[#deccmpbrsemantics32]
+.decrement, compare and branch 32-bit semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| DECBGEZ       | rd = rd - (1<<scale); bge rd, zero, sign_ext(imm);
+|=======================================================================
+
+== B-extension reuse
+
+Some instructions will be reused from the B-extension.
+
+
