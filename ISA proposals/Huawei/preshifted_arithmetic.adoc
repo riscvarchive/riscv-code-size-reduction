@@ -1,7 +1,7 @@
 
 
-Pre-shifted Arithmetic Proposal
-===============================
+Pre-shifted Arithmetic Proposal - not for Zce, maybe in the future
+===================================================================
 
 This proposal is based upon https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_preshifted_arithmetic.rst[this one]
 which should be read first.
