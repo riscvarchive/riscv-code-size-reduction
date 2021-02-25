@@ -24,7 +24,7 @@ Zce is split into subsets. It includes
 
 * `Zces` sequenced instructions
 ** 16-bit: `C.POP, C.POPRET, C.PUSH, C.MVA01S07, C.MVA23S07, C.MVP`     
-** 32-bit: `POP, POPRET, PUSH, POP.[FDQ}, POPRET.[FDQ], PUSH.[FDQ]`
+** 32-bit: `POP, POPRET, PUSH, POP.[FDQ], POPRET.[FDQ], PUSH.[FDQ]`
 * `Zced` instructions which conflict with the D-extension
 ** 16-bit: `C.LBU, C.LHU, C.SB, C.SH, C.DECBGEZ`
 ** 32-bit: `DECBGEZ, LWGP, SWGP, BEQI, BNEI`
@@ -39,7 +39,15 @@ If `Zces` is not required then `Zcec` and optionally `Zced` must be specified.
 
 == C-extension subsets
 
-The C-extension already reuses encodings between different architectures. `Zce` extends this concept further.
+The C-extension already reuses encodings between different architectures. `Zce` extends this concept further. <<zce_quad0>>, <<zce_quad1>> and <<zce_quad2>> show how each encoding is allocated for different architectures or for different combinations of extensions.
+
+For example:
+
+* C.FLD, C.LQ, and {C.LBU, C.DECBGEZ} share opcodes, so for different configurations the encodings represent:
+** `C.FLD` for `RV32CD/RV64CD`
+** `C.LQ`  for `RV128C`
+** `C.LBU` and `C.DECBGEZ` for `RV32C_Zce, RV64C_Zce`
+** illegal encoding for `RV32C, RV64C`, as neither `D` nor `Zce` was specified
 
 The shared encoding column in the tables assigns an arbitrary number to show which encodings are grouped together (I can't find a better way of highlighting groups of cells in the table in adoc format). `Zce` instructions are in *bold*.
 
@@ -50,7 +58,6 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |Enc[15:13]|Instruction|shared encoding group|Ext Subset|RV32|RV64|RV128|Extension
 |000       |C.ADDI4SPN| |Zci |✓|✓ |✓  |C
 
-8+|The encodings for `C.FLD/C.LQ` are replaced by `C.LBU` and `C.DECBGEZ`
 |001       |C.FLD     |1|Zcd |✓|✓ |   |C+D
 |001       |C.LQ      |1|Zcq |  |  |✓  |C
 |001       |*C.LBU*     |1|*Zced*|✓|✓ |  |C+*Zce*
@@ -161,7 +168,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 
 == Allocation of new 16-bit encodings
 
-This section gives a short-hand lookup of exactly where the new encodings are allocated to make it easier to review.
+This section gives a short-hand lookup of exactly where the new encodings are allocated to make it easier to review the encoding space.
 
 |======================================
 |[15:13]|[12:10]|[1:0]|Instruction
