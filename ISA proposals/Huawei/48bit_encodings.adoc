@@ -1,4 +1,4 @@
-= RISC-V 48-bit code-size reduction extension proposal
+= RISC-V 48-bit code-size reduction extension proposal - not for Zce, maybe in the future
 Version 0.1
 :doctype: book
 :encoding: utf-8
