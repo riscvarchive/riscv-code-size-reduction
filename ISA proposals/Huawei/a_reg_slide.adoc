@@ -1,4 +1,4 @@
-= `a` register slide
+= `a` register slide - REJECTED, benefit too low
 
 Move multiple `a` registers into lower numbered `a` registers for shifting function arguments
 
