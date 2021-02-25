@@ -406,31 +406,7 @@ if (opcode == "POPRET") {
 
 == 32-bit Encodings
 
-.proposed 32-bit encodings
-[options="header",width="100%"]
-|============================================================================
-|31:29  |28:27|26|25:24   |23:20  |19:15 |14:12 |11:7  |6:0     |name
-|xxx    |xx   |ra|mv      |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH
-|xxx    |xx   |ra|ret_val |rcount |spimm |001   |xxxxx |xxxxxxx |POP
-|xxx    |xx   |x |ret_val |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET
-
-|xxx    |00   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.F
-|xxx    |00   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.F
-|xxx    |00   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.F
-
-|xxx    |01   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.D
-|xxx    |01   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.D
-|xxx    |01   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.D
-
-|xxx    |10   |ra|frcount |rcount |spimm |000   |xxxxx |xxxxxxx |PUSH.Q
-|xxx    |10   |ra|frcount |rcount |spimm |001   |xxxxx |xxxxxxx |POP.Q
-|xxx    |10   |x |frcount |rcount |spimm |010   |xxxxx |xxxxxxx |POPRET.Q
-
-|============================================================================
-
-[NOTE]
-  bits [28:27] are the `flen` field
-  `ra=1` for all `popret` encodings, it is not specified in the encoding
+The 32-bit encodings are https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc#pushpop-1[here].
 
 === Illegal instructions for the 32-bit encodings
 
@@ -457,21 +433,7 @@ The programmable range for `frcount` doesn't save many `fs` registers as `FPMark
 [#16bitencodings]
 == 16-bit Encodings
 
-.proposed 16-bit encodings
-[options="header",width="100%"]
-|=============================================================================================
-|15 |14 |13 |12 |11 |10  |9 |8|7    |6   |5   |4|3|2        |1 |0 |instruction
-3+|100      |1  |0  |0   |0 2+|rcount|0   |0 2+|00 |spimm 2+|00   |C.POP
-3+|100      |1  |0  |0 3+|rcount    |ret0|1 3+|spimm      2+|00   |C.POPRET
-3+|110      |1  |0  |0 3+|rcount    |1   |0 3+|spimm      2+|00   |C.PUSH
-|=============================================================================================
-
-[NOTE]
-  * For `C.POPRET`, `ret_val[0]=ret0` as specified in the encoding, `ret_val[1]=0`. For `C.POP` `ret_val[1:0]=0`. If `ret0==1` then return zero and return.
-  * Some encodings remain *reserved* for the time being so we can add them later if they can be justified
-  ** For `C.POP`, `rcount[2]=1` is reserved
-  ** For `C.POP`, `spimm > 1` is reserved
-  ** For `C.PUSH/C.POPRET`, `rcount[2]=1 && spimm[2]=1` is reserved
+The 16-bit encodings are https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc#pushpop[here].
 
 == Encoding Fields
 

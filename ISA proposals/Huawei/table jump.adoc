@@ -1,5 +1,5 @@
-= RISC-V Table Jump ISA Proposal v0.1
-Version 0.1
+= RISC-V Table Jump ISA Proposal v0.11
+Version 0.11
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -69,28 +69,13 @@ using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as cod
 
 The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `[C.]TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. Not all functions are reduced by this much.
 
-`TBLJALENTRIES` is set by the maximum size of the table, which is currently 1024 as the 32-bit encoding has an 11-bit index.
+`TBLJALENTRIES` is set by the maximum size of the table, which is currently 8192 as the 32-bit encoding has an 13-bit index.
 
-== 16-bit Opcode Assignment
+== Encoding
 
-[width="100%",options=header]
-|=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10    | 9 | 8 | 7 | 6  | 5      | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|table jump
-3+|  001       2+|00       9+| index9                                2+| 00    | C.TBLJAL
-|=============================================================================================
+The 16-bit encoding is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc#tablejump16[here].
 
-The 16-bit encoding allows half of the `TBLJALENTRIES` to be accessed.
-
-== 32-bit Opcode Assignment
-
-[width="100%",options=header]
-|============================================================================
-|31:24  |23:15   |14:12 |11:7  |6:0     |name
-|xxxxxx |index10  |001   |xxxxx |xxxxxxx |TBLJAL
-|============================================================================
-
-The 32-bit encoding all of the `TBLJALENTRIES` to be accessed.
+The 32-bit encoding is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc#tablejump32[here].
 
 == CSRs
 
@@ -267,7 +252,7 @@ The two watermark fields are used to control which tables entries link to
 
 Depending upon the programming, table entries can all be allocated to 1, 2 or all 3 link registers.
 
-In the table MAX is `TBLJALENTRIES-1` (1023)
+In the table MAX is `TBLJALENTRIES-1`.
 
 [#MTBLJALCFG-table-watermark-end-conditions]
 .`MTBLJALCFG` watermarks
