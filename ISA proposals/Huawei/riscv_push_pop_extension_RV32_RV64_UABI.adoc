@@ -1,5 +1,5 @@
-= RISC-V Push/Pop Extension v0.1
-Version 0.1
+= RISC-V Push/Pop Extension v0.11
+Version 0.11
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -24,6 +24,13 @@ Future revisions may include:
 
 These instructions are to reduce the code-size of function prologues and epilogues by using a single encoding to replace a sequence of instructions. 
 They are designed to replace the most common function prologue/epilogue sequences, but will not replace all possible cases. 
+
+== Spec update history
+
+|===================================================================
+| version | change
+| 0.11    | Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
+|===================================================================
 
 == A brief example from Zephyr
 
@@ -413,14 +420,14 @@ The 32-bit encodings are https://github.com/riscv/riscv-code-size-reduction/blob
 The encoding takes the same behaviour as any floating point instruction if executed when disabled:
 
 * if `frcount>0` and `misa.F==0`
-* if `frcount>0` and `flen==1` and `misa.D==0`
-* if `frcount>0` and `flen==2` and `misa.Q==0`
+* if `frcount>0` and `fdq==1` and `misa.D==0`
+* if `frcount>0` and `fdq==2` and `misa.Q==0`
 
 The following cases do not decode as `PUSH*/POP*/POPRET*`
 
 * No registers are specified (`rcount, frcount` are both zero)
 * `rcount>14`
-* `flen=3`
+* `fdq=3`
 * `rcount==13` and `frcount>0` and the opcode doesn't have an `[fdq]` suffix
 
 ==== Rational: `rcount=13, frcount=0` saving all saved registers
@@ -850,7 +857,7 @@ ret
 push.f  {ra, s0-s4, fs0}, -64
 ----
 
-Encoding: ra=1, rcount=5, frcount=1, flen=0, spimm=2 (16-byte aligned)
+Encoding: ra=1, rcount=5, frcount=1, fdq=0, spimm=2 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -873,7 +880,7 @@ addi sp, sp, -64;
 push.d  {ra, s0-s4, fs0}, -64
 ----
 
-Encoding: ra=1, rcount=5, frcount=1, flen=1, spimm=0 (16-byte aligned)
+Encoding: ra=1, rcount=5, frcount=1, fdq=1, spimm=0 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -896,7 +903,7 @@ addi sp, sp, -64;
 push.d  {fs0-fs7}, -128
 ----
 
-Encoding: rcount=0, frcount=12, flen=2, spimm=2 (16-byte aligned)
+Encoding: rcount=0, frcount=12, fdq=2, spimm=2 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -953,7 +960,7 @@ addi sp, sp, 256
 popret.f   {ra, s0-s3, fs0-fs1}, 32
 ----
 
-Encoding: ra=1, rcount=4, frcount=2, flen=1, spimm=0 (16-byte aligned)
+Encoding: ra=1, rcount=4, frcount=2, fdq=1, spimm=0 (16-byte aligned)
 
 Micro operation sequence:
 

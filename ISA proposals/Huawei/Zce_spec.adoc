@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.1
-Version 0.1
+= RISC-V Zce code-size reduction extension proposal v0.11
+Version 0.11
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -11,6 +11,14 @@ Version 0.1
 :rarr: &#8658;
 
 This document describes the `Zce` extension to reduce code-size.
+
+== Spec update history
+
+|===================================================================
+| version | change
+| 0.11    | Add C.SEXT.W, C.ZEXT.W, MULI, MULIADDW, ADDIADDW, and change the C.[SZ]EXT.* encodings. 
+|         | Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
+|===================================================================
 
 == Issues
 
@@ -78,8 +86,10 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |*C.LBUSP*   | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.SEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.SEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.SEXT.W*  | |*Zcec*|	 |	✓|	✓|	C+*Zce*
 |100       |*C.ZEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.ZEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.ZEXT.W*  | |*Zcec*|	 |	✓|	✓|	C+*Zce*
 |100       |*C.LSBNOT*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.MUL*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.MVA01S07*| |*Zcec*|	✓|	✓|	✓|	C+*Zce*
@@ -120,7 +130,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |C.SRLI (RV32:NSE, nzuimm[5]=1)        |6|Zc32/Zc64	|✓	|✓	|	|C
 |100       |C.SRLI64 (RV32:HINT)                  |6|Zc128	|	|	|✓	|C
 |100       |C.SRAI (RV32:NSE, nzuimm[5]=1)        |7|Zc32/Zc64	|✓	|✓	|	|C
-|100       |C.SRAI64 ( RV32/64:HINT)              |7|Zc128	|	|	|✓       |C
+|100       |C.SRAI64 (RV32/64:HINT)               |7|Zc128	|	|	|✓       |C
 |100       |C.ANDI                                | |Zci	|✓	|✓	|✓	|C
 |100       |C.SUB                                 | |Zci	|✓	|✓	|✓	|C
 |100       |C.XOR                                 | |Zci	|✓	|✓	|✓	|C
@@ -203,12 +213,13 @@ Some spare encodings are noted in the tables below. The remaining unallocated sp
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  011       |0   |1  4+|xxxx         5+|00000              2+|01     | *reserved*
 17+|These three are RV32 only
-3+|  000       |1 10+|  xxxxx                                   2+| 10  | *reserved*
-3+|  100       |1   |0  9+| xxxx                                2+| 01  | *reserved*
-3+|  100       |1 2+|11 8+| xxxx                                2+| 00  | *reserved*
+3+|  000       |1 10+|  xxxxx                                 2+|10     | *reserved*
+3+|  100       |1   |0  9+| xxxx                              2+|01     | *reserved*
+3+|  100       |1 2+|11 8+| xxxx                              2+|00     | *reserved*
 17+|This conflicts with the D-extension
-3+|  001     11+|xxxx                                           2+| 10  | *reserved*
+3+|  001     11+|xxxx                                         2+|10     | *reserved*
 |================================================================================================
 
 == `Zces` definition
@@ -301,7 +312,7 @@ Assembly examples are https://github.com/riscv/riscv-code-size-reduction/blob/ma
 |=========================================================================================================================
 
 [NOTE]
-  bits [28:27] are the `flen` field
+  bits [26:25] are the `fdq` field
   `ra=1` for all `popret` encodings, it is not specified in the encoding
 
 The specification is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[here] and the 16-bit encoding is in <<pushpop16>>.
@@ -382,7 +393,6 @@ The generic move uses standard x register numbers, and so it more standard than 
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 3+|  100     3+|101    4+| rdp[4:1] 4+|  rsp[4:1]       2+| 00    | C.MVP
-3+|  001     3+|>0 8+|xxxx                              2+| 10 | *reserved*
 |================================================================================================
 
 [#mvp-semantics]
@@ -425,7 +435,7 @@ The specification is https://github.com/riscv/riscv-code-size-reduction/blob/mas
 The 32-bit encoding is in <<tablejump32>>.
 
 [#tbljal-16encoding]
-.C.TBLJAL 16-bit encodings
+.C.TBLJAL 16-bit encoding
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
@@ -461,13 +471,15 @@ These instructions are 16-bit versions of existing 32-bit instructions.
 17+|Single source/dest with room for 3 more encodings
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 000     2+| 00  | C.ZEXT.B
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 001     2+| 00  | C.ZEXT.H
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 010     2+| 00  | C.SEXT.B
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 011     2+| 00  | C.SEXT.H
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 100     2+| 00  | C.LSBNOT
-3+|  100       | 0  | 0  | 1 3+| xxx      | 0  | 0  3+| >=101   2+| 00  | *reserved*
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 010     2+| 00  | C.ZEXT.W
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 011     2+| 00  | C.SEXT.B
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 100     2+| 00  | C.SEXT.H
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 101     2+| 00  | C.SEXT.W
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 110     2+| 00  | C.LSBNOT
+3+|  100       | 0  | 0  | 1 3+| xxx      | 0  | 0  3+| 111     2+| 00  | *reserved*
 17+|Dyadic with room for 2 more encodings
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 1  3+| rs2'    2+| 00  | C.MUL
-3+|  100       | 0  | 0  | 1 3+| xxx    2+| 1x      3+| xxx     2+| 00  | *reserved*
+3+|  100       | 0  | 0  | 1 3+| xxx      | 1  | x  3+| xxx     2+| 00  | *reserved*
 |=============================================================================================
 
 [#monsemantics]
@@ -481,6 +493,9 @@ These instructions are 16-bit versions of existing 32-bit instructions.
 | C.SEXT.H      | rd' = sign_ext(rd'[15:0])
 | C.LSBNOT      | rd' = rd' XOR 1
 | C.MUL         | rd' = rd' * rs2'
+2+|RV64/RV128 only
+| C.ZEXT.W      | rd' = zero_ext(rd'[31:0])
+| C.SEXT.W      | rd' = sign_ext(rd'[31:0])
 |=======================================================================
 
 [#mon-32bit]
@@ -500,14 +515,20 @@ Assembly Examples
 
 [source,sourceCode,text]
 ----
-zext.b a5, a5;  # a5 = zero_ext(a5[7:0])
-zext.h a5, a5;  # a5 = zero_ext(a5[15:0])
-sext.b a5, a5;  # a5 = sign_ext(a5[7:0])
-sext.h a5, a5;  # a5 = sign_ext(a5[15:0])
+zext.b a5;  # a5 = zero_ext(a5[7:0])
+zext.h a5;  # a5 = zero_ext(a5[15:0])
+sext.b a5;  # a5 = sign_ext(a5[7:0])
+sext.h a5;  # a5 = sign_ext(a5[15:0])
 
 lsbnot a5;      # a5 = a5 XOR 1
 
 mul a5, a5, a6; # a5 = a5 * a6
+
+#RV64/RV128 only
+
+zext.w a5; # a5 = zero_ext(a5[31:0])
+sext.w a5; # a5 = sign_ext(a5[31:0])
+
 ----
 
 
@@ -713,8 +734,11 @@ Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing
 | 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
 18+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension]*
 8+|imm[11:0]                                          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULI
-7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULIADD
-7+|imm[11:0]                           |rs2'          |00 2+|rs1'   2+| 11101         3+| rd'       |0011011| ADDIADD
+8+|imm[11:0]                                          |10 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULIW
+7+|imm[8:0]                            |rs2'          |00 2+|rs1'   2+| 11100         3+| rd'       |0011111| MULIADD
+7+|imm[8:0]                            |rs2'          |10 2+|rs1'   2+| 11100         3+| rd'       |0011111| MULIADDW
+7+|imm[8:0]                            |rs2'          |00 2+|rs1'   2+| 11101         3+| rd'       |0011111| ADDIADD
+7+|imm[8:0]                            |rs2'          |10 2+|rs1'   2+| 11101         3+| rd'       |0011111| ADDIADDW
 |=========================================================================================================================
 
 [#arithmetic_semantics]
@@ -725,6 +749,10 @@ Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing
 |MULI           |rd' = rs1' * sign_ext(imm)
 |MULIADD        |rd' = rs1' + rs2' * sign_ext(imm)
 |ADDIADD        |rd' = rs1' + rs2' + sign_ext(imm)
+2+|RV64/RV128 only
+|MULIW          |rd' = sign_ext(rs1'[31:0] * sign_ext(imm))
+|MULIADDW       |rd' = sign_ext(rs1'[31:0] + rs2' * sign_ext(imm))
+|ADDIADDW       |rd' = sign_ext(rs1'[31:0] + rs2' + sign_ext(imm))
 |=======================================================================
 
 === BEQI, BNEI
@@ -757,7 +785,9 @@ Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing
 
 These reuse the encodings for `FLD/FSD`.
 
-`tp` is used as a second `gp` for systems which do not have thread local storage. `LWGP/SWGP` allow a larger offset than the normal `LW/SW` relative to `gp` or `tp`. This allows two 18-bit memory spaces to be within reach of a 32-bit load or store word instruction.
+`tp` is used as a second `gp` for systems which do not have thread local storage. `LWGP/SWGP` allow a larger offset than the normal `LW/SW` relative to `gp` or `tp`. This allows two 18-bit memory spaces to be within reach of a 32-bit load or store word instruction at any PC.
+
+Also the restrictions in the GCC toolchain mean that the full range of the `gp` cannot be used for the standard `LW/SW` instructions in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP/SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[see this githib issue].
 
 [zced-32bit-encodings]
 .proposed 32-bit encodings for `Zced`
