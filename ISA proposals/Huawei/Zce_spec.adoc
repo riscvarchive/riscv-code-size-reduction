@@ -43,10 +43,10 @@ The C-extension already reuses encodings between different architectures. `Zce` 
 
 For example:
 
-* C.FLD, C.LQ, and {C.LBU, C.DECBGEZ} share opcodes, so for different configurations the encodings represent:
-** `C.FLD` for `RV32CD/RV64CD`
-** `C.LQ`  for `RV128C`
-** `C.LBU` and `C.DECBGEZ` for `RV32C_Zce, RV64C_Zce`
+* `C.FSD`, `C.SQ`, and `{C.LBU, C.SB}` share opcodes, so for different configurations the encodings represent:
+** `C.FSD` for `RV32CD/RV64CD`
+** `C.SQ`  for `RV128C`
+** `{C.LBU, C.SB}` for `RV32C_Zce, RV64C_Zce`
 ** illegal encoding for `RV32C, RV64C`, as neither `D` nor `Zce` was specified
 
 The shared encoding column in the tables assigns an arbitrary number to show which encodings are grouped together (I can't find a better way of highlighting groups of cells in the table in adoc format). `Zce` instructions are in *bold*.
@@ -60,7 +60,6 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 
 |001       |C.FLD     |1|Zcd |✓|✓ |   |C+D
 |001       |C.LQ      |1|Zcq |  |  |✓  |C
-|001       |*C.LBU*     |1|*Zced*|✓|✓ |  |C+*Zce*
 |001       |*C.DECBGEZ* |1|*Zced*|✓|✓ |  |C+*Zce*
 
 |010       |C.LW      | |Zci |✓|✓ |✓  |C
@@ -90,6 +89,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |101       |C.FSD     |3|Zcd|✓|✓| |C+D
 |101       |C.SQ      |3|Zcq| | |✓|D
 |101       |*C.SB*      |3|*Zced*|✓|✓| |C+*Zce*
+|101       |*C.LBU*     |3|*Zced*|✓|✓ |  |C+*Zce*
 
 |110       |C.SW      | |Zci|✓|✓|✓|C
 
@@ -148,7 +148,6 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |000       |C.SLLI64 (RV32/64 or rd=0:HINT)	       | 8|Zc128	        |	|	|✓	|C
 |001       |C.FLDSP	                               | 9|Zcd	        |✓	|✓	|	|C+D
 |001       |C.LQSP (rd=0:RSV)	                     | 9|Zc128	        |	|	|✓	|C
-|001       |*C.LHU*	                               | 9|*Zced* 	|✓	|✓	| 	|C+*Zce*
 |001       |*unallocated*	                         | 9|*Zced* 	|✓	|✓	| 	|C+*Zce*
 |010       |C.LWSP (rd=0:RSV)	                     |  |Zci	        |✓	|✓	|✓	|C
 |011       |C.FLWSP	                               |10|Zcf	        |✓	|	|	|C+F
@@ -161,6 +160,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |101       |C.FSDSP	                               |11|Zcd	        |✓	|✓	|	|C+D
 |101       |C.SQSP	                               |11|Zc128		|       | 	|✓	|C
 |101       |*C.SH*	                               |11|*Zced**	|✓	|✓	| 	|C+*Zce*
+|101       |*C.LHU*	                               |11|*Zced* 	|✓	|✓	| 	|C+*Zce*
 |110       |C.SWSP	                               |  |Zci	        |✓	|✓	|✓	|C
 |111       |C.FSWSP	                               |12|Zcf	        |✓	|	|	|C+F
 |111       |C.SDSP	                               |12|Zc128	        |	|✓	|✓	|C
@@ -168,29 +168,29 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 
 == Allocation of new 16-bit encodings
 
-This section gives a short-hand lookup of exactly where the new encodings are allocated to make it easier to review the encoding space.
+This section gives a short-hand lookup of exactly where the new encodings are allocated to make it easier to review the encoding space. the first column is the group number from <<zce_quad0>>, <<zce_quad1>> and <<zce_quad2>>.
 
 |======================================
-|[15:13]|[12:10]|[1:0]|Instruction
+|Group|[15:13]|[12:10]|[1:0]|Instruction
 
-|100    |000    |00   |C.POP, C.POPRET, C.PUSH
-|100    |001    |00   |C.[SZ]EXT.[BH], C.LSBNOT, C.MUL
-|100    |01x    |00   |C.L[BH]USP, C.S[BH]SP
-|100    |100    |00   |C.MVA01S07, C.MVA23S07
-|100    |101    |00   |C.MVP
-|100    |11x    |00   |C.TBLJAL
+| |100    |000    |00   |C.POP, C.POPRET, C.PUSH
+| |100    |001    |00   |C.[SZ]EXT.[BH], C.LSBNOT, C.MUL
+| |100    |01x    |00   |C.L[BH]USP, C.S[BH]SP
+| |100    |100    |00   |C.MVA01S07, C.MVA23S07
+| |100    |101    |00   |C.MVP
+| |100    |11x    |00   |C.TBLJAL
 
-|001    |xxx    |00   |C.DECBGEZ
+|1|001    |xxx    |00   |C.DECBGEZ
 
-|101    |0xx    |00   |C.SB
-|101    |1xx    |00   |C.LBU
+|3|101    |0xx    |00   |C.SB
+|3|101    |1xx    |00   |C.LBU
 
-|011    |000    |00   |C.NOT
-|011    |001    |00   |C.NEG
+| |011    |000    |00   |C.NOT
+| |011    |001    |00   |C.NEG
 
 
-|101    |0xx    |10   |C.SH
-|101    |1xx    |10   |C.LHU
+|11|101   |0xx    |10   |C.SH
+|11|101   |1xx    |10   |C.LHU
 |======================================
 
 
@@ -208,7 +208,7 @@ Some spare encodings are noted in the tables below. The remaining unallocated sp
 3+|  100       |1   |0  9+| xxxx                                2+| 01  | *reserved*
 3+|  100       |1 2+|11 8+| xxxx                                2+| 00  | *reserved*
 17+|This conflicts with the D-extension
-3+|  001     11+|xxxx                                           2+| 10 | *reserved*
+3+|  001     11+|xxxx                                           2+| 10  | *reserved*
 |================================================================================================
 
 == `Zces` definition
@@ -608,50 +608,6 @@ The D-extension takes priority over these encodings.
 ==== C.DECBGEZ
 
 This instruction is a combined decrement and branch, used for inferring loops with an optionally scaled loop counter.
-
-This example is from /lib/riscv64-linux-gnu/libgcc_s.so.1 in the RV64 Debian distro
-
-[source,sourceCode,text]
-----
-    d124:	6094                	ld	a3,0(s1) ;# start of loop
-    d126:	01093783          	ld	a5,16(s2)
-    d12a:	8722                	mv	a4,s0
-    d12c:	00d93823          	sd	a3,16(s2)
-    d130:	e09c                	sd	a5,0(s1)
-    d132:	4681                	li	a3,0
-    d134:	864e                	mv	a2,s3
-    d136:	85d6                	mv	a1,s5
-    d138:	8552                	mv	a0,s4
-    d13a:	347d                	addiw	s0,s0,-1 ;# loop counter 1
-    d13c:	ef1ff0ef          	jal	ra,d02c <_Unwind_Backtrace@@GCC_3.3+0xf0>
-    d140:	14e1                	addi	s1,s1,-8 ;# loop counter 2
-    d142:	f06d                	bnez	s0,d124 <_Unwind_Backtrace@@GCC_3.3+0x1e8>
-----
-
-The instructions at PCs `d13a` and `d142` can be combined into a single 16-bit encoding.
-
-[source,sourceCode,text]
-----
-decbgez rd', 1, #offset; # executes as: rd' = rd' - 1; bge rd', zero, -#offset;
-----
-
-This reduces the loop by one 16-bit instruction to:
-
-[source,sourceCode,text]
-----
-    d124:	6094                	ld	a3,0(s1) ;# start of loop
-    d126:	01093783          	ld	a5,16(s2)
-    d12a:	8722                	mv	a4,s0
-    d12c:	00d93823          	sd	a3,16(s2)
-    d130:	e09c                	sd	a5,0(s1)
-    d132:	4681                	li	a3,0
-    d134:	864e                	mv	a2,s3
-    d136:	85d6                	mv	a1,s5
-    d138:	8552                	mv	a0,s4
-    d13c:	ef1ff0ef          	jal	ra,d02c <_Unwind_Backtrace@@GCC_3.3+0xf0>
-    d140:	14e1                	addi	s1,s1,-8 ;# loop counter 2
-    d142:	f06d                	decbgez	s0,1,d124 <_Unwind_Backtrace@@GCC_3.3+0x1e8>
-----
 
 [#proposed-16bit-encodings-dec_br]
 .proposed 16-bit encodings for dec-and-branch
