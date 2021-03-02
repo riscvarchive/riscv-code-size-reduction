@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.11
-Version 0.11
+= RISC-V Zce code-size reduction extension proposal v0.12
+Version 0.12
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.12    | reduce ret_val to 2-bits for POP/POPRET
 | 0.11    | Add C.SEXT.W, C.ZEXT.W, MULI, MULIADDW, ADDIADDW, and change the C.[SZ]EXT.* encodings. 
 |         | Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
 |===================================================================
@@ -300,12 +301,12 @@ Assembly examples are https://github.com/riscv/riscv-code-size-reduction/blob/ma
 4+|00000                     2+|10   2+|frcount     2+|rcount     |ra | 001   4+| spimm             |0001011| PUSH.D
 4+|00000                     2+|11   2+|frcount     2+|rcount     |ra | 001   4+| spimm             |0001011| PUSH.Q
 18+|`POP` encodings
-4+|00000                     2+|00   2+|ret_val     2+|rcount     |ra | 010   4+| spimm             |0001011| POP
+4+|00000                     2+|00   |0|ret_val     2+|rcount     |ra | 010   4+| spimm             |0001011| POP
 4+|00000                     2+|01   2+|frcount     2+|rcount     |ra | 010   4+| spimm             |0001011| POP.F
 4+|00000                     2+|10   2+|frcount     2+|rcount     |ra | 010   4+| spimm             |0001011| POP.D
 4+|00000                     2+|11   2+|frcount     2+|rcount     |ra | 010   4+| spimm             |0001011| POP.Q
 18+|`POPRET` encodings
-4+|00000                     2+|00   2+|ret_val     2+|rcount     |1  | 011   4+| spimm             |0001011| POPRET
+4+|00000                     2+|00   |0|ret_val     2+|rcount     |1  | 011   4+| spimm             |0001011| POPRET
 4+|00000                     2+|01   2+|frcount     2+|rcount     |1  | 011   4+| spimm             |0001011| POPRET.F
 4+|00000                     2+|10   2+|frcount     2+|rcount     |1  | 011   4+| spimm             |0001011| POPRET.D
 4+|00000                     2+|11   2+|frcount     2+|rcount     |1  | 011   4+| spimm             |0001011| POPRET.Q
