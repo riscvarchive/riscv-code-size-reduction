@@ -599,7 +599,7 @@ neg a5          # a5 = -a5 two's complement inversion
 |=======================================================================
 
 [#ldstbh_sprel_32bit]
-.load/store byte/half SP relative asswebmly syntax and 32-bit equivalent instructions
+.load/store byte/half SP relative assembly syntax and 32-bit equivalent instructions
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
@@ -787,7 +787,7 @@ These reuse the encodings for `FLD/FSD`.
 
 `tp` is used as a second `gp` for systems which do not have thread local storage. `LWGP/SWGP` allow a larger offset than the normal `LW/SW` relative to `gp` or `tp`. This allows two 18-bit memory spaces to be within reach of a 32-bit load or store word instruction at any PC.
 
-Also the restrictions in the GCC toolchain mean that the full range of the `gp` cannot be used for the standard `LW/SW` instructions in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP/SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[see this githib issue].
+Also the restrictions in the GCC toolchain mean that the full range of the `gp` cannot be used for the standard `LW/SW` instructions in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP/SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[see this github issue].
 
 [zced-32bit-encodings]
 .proposed 32-bit encodings for `Zced`
