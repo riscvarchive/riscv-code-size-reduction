@@ -28,7 +28,7 @@ Publicly available benchmarks
 
   - antecedents [BEEBS](https://github.com/mageec/beebs), [MiBench](http://vhosts.eecs.umich.edu/mibench/), [Mälardalen WCET benchmarks](https://drops.dagstuhl.de/opus/volltexte/2010/2833/pdf/15.pdf), [Hacker's Delight/A Hacker's Assistant](https://en.wikipedia.org/wiki/Hacker%27s_Delight)
 
-= [Hi3961 Huawei WiFi IoT platform](https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/Hi3861_WiFi_IoT)
+- [Hi3961 Huawei WiFi IoT platform](https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/Hi3861_WiFi_IoT)
 
 - [Code size benchmarks](http://szeged.github.io/csibe/)
 - [Opus codec](https://github.com/xiph/opus)
