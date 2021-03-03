@@ -178,7 +178,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 
 == Allocation of new 16-bit encodings
 
-This section gives a short-hand lookup of exactly where the new encodings are allocated to make it easier to review the encoding space. the first column is the group number from <<zce_quad0>>, <<zce_quad1>> and <<zce_quad2>>.
+This section gives a short-hand lookup of exactly where the new encodings are allocated to make it easier to review the encoding space. The first column is the group number from <<zce_quad0>>, <<zce_quad1>> and <<zce_quad2>>.
 
 |======================================
 |Group|[15:13]|[12:10]|[1:0]|Instruction
@@ -509,6 +509,9 @@ These instructions are 16-bit versions of existing 32-bit instructions.
 |C.SEXT.H    | sext.h rd             | all registers x8-x15, rd==rs1      | B-extension
 |C.LSBNOT    | lsbnot rd             | all registers x8-x15, rd==rs1      | I-extension
 |C.MUL       | mul    rd, rs1, rs2   | all registers x8-x15, rd==rs1      | I-extension
+2+|RV64/RV128 only
+|C.ZEXT.W    | zext.w rd             | all registers x8-x15, rd==rs1      | B-extension
+|C.SEXT.W    | sext.w rd             | all registers x8-x15, rd==rs1      | B-extension
 |======================================================================================================
 
 Assembly Examples
