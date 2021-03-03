@@ -24,6 +24,7 @@ The 32-bit instruction encoding will ensure that 64-bit sequences are unlikely t
 
 * confirm the table size for the 16 and 32-bit encodings on larger code bases
 ** we can have an 11-bit index in the 16-bit encoding if necessary
+* is a hypervisor version of `xTBLJALVEC` required?
 
 == Rationale
 
@@ -79,17 +80,21 @@ The 32-bit encoding is https://github.com/riscv/riscv-code-size-reduction/blob/m
 
 == CSRs
 
-The following set of CSRs is required to control the jump table.
+The following set of CSRs is required to control the jump table. 
+
+[NOTE]
+
+  The addresses are for custom CSRs, correct CSR addresses need to be specified.
 
 [#xTBLJALVEC-table]
 .`xTBLJALVEC` definition
 [width="100%",options=header]
-|=============================================================================================
-| XLEN-1:6       |5:2   | 1: 0  | CSR        | Permissions | Status
-| base[XLEN-1:6] |scale | mode  | MTBLJALVEC | MRW         | Required if jump table mode is implemented
-| base[XLEN-1:6] |scale | mode  | STBLJALVEC | MRW         | Required if S-mode is implemented
-| base[XLEN-1:6] |scale | mode  | UTBLJALVEC | MRW         | Optional
-|=============================================================================================
+|============================================================================================================
+|Address |XLEN-1:6       |5:2   | 1: 0  | CSR        | Permissions | Status
+|  0x7c0 |base[XLEN-1:6] |scale | mode  | MTBLJALVEC | MRW         | Required if jump table mode is implemented
+|  0xbc0 |base[XLEN-1:6] |scale | mode  | STBLJALVEC | MRW         | Required if S-mode is implemented
+|  0x800 |base[XLEN-1:6] |scale | mode  | UTBLJALVEC | MRW         | Optional
+|============================================================================================================
 
 * M-mode always uses `MTBLJALVEC.base`
 * S-mode always uses `STBLJALVEC.base`
