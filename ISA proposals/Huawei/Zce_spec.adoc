@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.12
-Version 0.12
+= RISC-V Zce code-size reduction extension proposal v0.13
+Version 0.13
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -18,8 +18,7 @@ This document describes the `Zce` extension to reduce code-size.
 | version | change
 | 0.13    | split LWGP/SWGP into LWGP/SWGP and LWTP/SWTP
 | 0.12    | reduce ret_val to 2-bits for POP/POPRET
-| 0.11    | Add C.SEXT.W, C.ZEXT.W, MULI, MULIADDW, ADDIADDW, and change the C.[SZ]EXT.* encodings. 
-|         | Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
+| 0.11    | Add C.SEXT.W, C.ZEXT.W, MULI, MULIADDW, ADDIADDW, and change the C.[SZ]EXT.* encodings. Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
 |===================================================================
 
 == Issues
