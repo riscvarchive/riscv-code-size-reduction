@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.13    | split LWGP/SWGP into LWGP/SWGP and LWTP/SWTP
 | 0.12    | reduce ret_val to 2-bits for POP/POPRET
 | 0.11    | Add C.SEXT.W, C.ZEXT.W, MULI, MULIADDW, ADDIADDW, and change the C.[SZ]EXT.* encodings. 
 |         | Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
@@ -26,6 +27,8 @@ This document describes the `Zce` extension to reduce code-size.
 * there are probably too many instructions listed, so we need to reduce the list
 ** we don't need `both c.mvp` and also `c.mvas*`
 * we need to check the sizes of the immediate fields, so we don't waste encoding space
+* `c.mvp` and `c.mvas*` don't have a sensible 32-bit alternative, as no code size would be saved (unless C isn't implemented), so is it ok to convert to a sequence of two 32-bit encodings? If not then we need to allocate pointless 32-bit encodings.
+* need to choose a B-extension subset to include
 
 == Zce proposal
 
@@ -288,7 +291,7 @@ Assembly examples are https://github.com/riscv/riscv-code-size-reduction/blob/ma
 
 [NOTE]
 
-  These encodings are in custom=0, as no official encodings have been allocated yet
+  These encodings are in custom-0, as no official encodings have been allocated yet
 
 
 .push/pop 32-bit encodings
@@ -448,7 +451,7 @@ The 32-bit encoding is in <<tablejump32>>.
 
 [NOTE]
 
-  This encoding is in custom=0, as no official encoding has been allocated yet
+  This encoding is in custom-0, as no official encoding has been allocated yet
 
 The 16-bit encoding is in <<tablejump16>> and the specification is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/table%20jump.adoc[here].
 
@@ -510,7 +513,7 @@ These instructions are 16-bit versions of existing 32-bit instructions.
 |C.SEXT.H    | sext.h rd             | all registers x8-x15, rd==rs1      | B-extension
 |C.LSBNOT    | lsbnot rd             | all registers x8-x15, rd==rs1      | I-extension
 |C.MUL       | mul    rd, rs1, rs2   | all registers x8-x15, rd==rs1      | I-extension
-2+|RV64/RV128 only
+4+|RV64/RV128 only
 |C.ZEXT.W    | zext.w rd             | all registers x8-x15, rd==rs1      | B-extension
 |C.SEXT.W    | sext.w rd             | all registers x8-x15, rd==rs1      | B-extension
 |======================================================================================================
@@ -785,30 +788,44 @@ Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing
 | BNEI          | if (rs1!=sign_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 |=======================================================================
 
-=== LWGP, SWGP
+=== LWGP, SWGP, LWTP, SWTP
 
 These reuse the encodings for `FLD/FSD`.
 
-`tp` is used as a second `gp` for systems which do not have thread local storage. `LWGP/SWGP` allow a larger offset than the normal `LW/SW` relative to `gp` or `tp`. This allows two 18-bit memory spaces to be within reach of a 32-bit load or store word instruction at any PC.
+`LWGP,SWGP` give a larger offset range than the standard `LW, SW` instructions by making the base register explicitly `gp`, allowing an 18-bit/256KB range of word aligned offsets, instead of a 12-bit/4KB range of byte aligned offsets.
 
-Also the restrictions in the GCC toolchain mean that the full range of the `gp` cannot be used for the standard `LW/SW` instructions in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP/SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[see this github issue].
+[NOTE]
+
+   Restrictions in the GCC toolchain mean that the full range of `gp` cannot be used for the standard `LW/SW` instructions, in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP, SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[See this github issue]. This issue means that with the current RISC-V ISA the full 4KB range cannot be accessed using `gp` using GCC so the benefit is lower than might be expected.
+
+`LWTP,SWTP` give an 18-bit/256KB offset range, which is larger than the standard `LW, SW` instructions by making the base register explicitly `tp`.
+
+[NOTE]
+
+  The intention is to allow the toolchain to use `tp` as a second global pointer, for systems which do not need thread local storage, giving two 256KB address spaces within reach of a single 32-bit load/store word instruction. Any ABI or toolchain implications from allowing this are not covered by this document. `LWTP, SWTP` can also be used to allow a larger range of thread local storage to be accessed with a 32-bit instruction.
+
+
 
 [zced-32bit-encodings]
-.proposed 32-bit encodings for `Zced`
+.proposed 32-bit encodings for `LWGP/SWGP/LWTP/SWTP`
 [width="100%",options=header]
 |=========================================================================================================================
 | 31 | 30:29   |28|27| 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
- 8+|imm[11:2, 17:16]                                2+|imm[15:12]|tp  | 011   4+| rd                |0000111| LWGP
- 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|tp  | 011   4+| imm[4:2, 17:16]   |0100111| SWGP
+ 8+|imm[11:2, 17:16]                                2+|imm[15:12]|0   | 011   4+| rd                |0000111| LWGP
+ 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|0   | 011   4+| imm[4:2, 17:16]   |0100111| SWGP
+ 8+|imm[11:2, 17:16]                                2+|imm[15:12]|1   | 011   4+| rd                |0000111| LWTP
+ 5+|imm[11:5]                3+| rs2                2+|imm[15:12]|1   | 011   4+| imm[4:2, 17:16]   |0100111| SWTP
 |=========================================================================================================================
 
 [#lwgp_semantics]
-.Load/store word GP relative semantics
+.Load/store word GP/TP relative semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| LWGP          | base=(tp==1)?tp:gp; rd=zero_ext(Memory[base+sign_ext(imm)][31:0]);
-| SWGP          | base=(tp==1)?tp:gp; Memory[base+sign_ext(imm)][31:0])=rs2[31:0];
+| LWGP          | rd=zero_ext(Memory[gp+sign_ext(imm)][31:0]);
+| SWGP          | Memory[gp+sign_ext(imm)][31:0])=rs2[31:0];
+| LWTP          | rd=zero_ext(Memory[tp+sign_ext(imm)][31:0]);
+| SWTP          | Memory[tp+sign_ext(imm)][31:0])=rs2[31:0];
 |=======================================================================
 
 
