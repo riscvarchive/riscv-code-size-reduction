@@ -1,56 +1,23 @@
 Hi3861 Huawei WiFi Iot SDK
 ---------------------------
 
+[On this page](https://device.harmonyos.com/en/docs/start/get-code/oem_sourcecode_guide-0000001050769927) click on full code base/site to download this file:
 
-First you need to create a login at hihope.org/login, the page is in Chinese.
+[Download this file](https://repo.huaweicloud.com/harmonyos/os/1.0/code-1.0.tar.gz)
 
-![login1](https://github.com/riscv/riscv-code-size-reduction/blob/master/benchmarks/Hi3861_WiFi_IoT/pic1.jpg)
+You can download HCC [here](https://gitee.com/hihopeorg/gcc_compiler_riscv)
 
-Click on the two yellow characters to get to the signup page
+HCC has support for the [Huawei Custom ISA extension](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/README.md)
 
-![login2](https://github.com/riscv/riscv-code-size-reduction/blob/master/benchmarks/Hi3861_WiFi_IoT/pic2.jpg)
+You can compile with GCC or HCC (or other compilers presumably, but we haven't tried that).
 
-Create a login and click on register, and then login on the previous page.
+1.	Put the compiler you wish to use in a directory called gcc_riscv32, and add the bin subdirectory of the compiler to the PATH variable
+-	We tried this with GCC10
 
+2.	Install any version of scons newer than 3.0.1 and install any version of python newer than 3.7 
+3.	Change the following files:
+-	build/scripts/scons_env_cfg.py: Line 82: self.gcc_ver_num = 'x.x.x' -> to the compiler version used
+-	vendor/hisi/hi3861/hi3861/build/link/link.ld.S: Line 78: Change ROM_TEXT_LEN to (280K - ROM_DATA0_LEN)
+-	-- the lack of custom ISA instructions means we have to change the linker script, as the section overflows
 
-And when that’s worked you can go to the download page
- 
-http://www.hihope.org/download/AllDocuments
- 
-![download1](https://github.com/riscv/riscv-code-size-reduction/blob/master/benchmarks/Hi3861_WiFi_IoT/pic3.png)
-
-Click on HI3861V100
-
-![download2](https://github.com/riscv/riscv-code-size-reduction/blob/master/benchmarks/Hi3861_WiFi_IoT/pic4.png)
-
-You can download HCC (you can see it in the picture) which has the Huawei custom instructions included, e.g. 48-bit L.LI so you can try them out (using –femit-lli)
-Download the release with the highest SPC number to get the latest version.
- 
-This link shows the custom instructions that we use:
-
-https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/README.md
- 
-Note that the current build scripts use –fldm-stm-optimize and –msave-restore. These arguments should be ideally be removed and replaced with –mpush-pop.
-The output elf is here:
-
-Hi3861/SDK/HiHope_WiFi-IoT_Hi3861SPC021/output/bin/Hi3861_demo.out
-
-Building in Linux
----------------------------
-To compile the source code in Linux:
-
-A) Place the compiler in a direcotry called hcc_riscv32, and add the bin subdirectory of the compiler the PATH variable
-B) Install any version of scons newer than 3.0.1 and install any version of python newer than 3.7 
-C) Change the following files:
-   1) build/scripts/scons_env_cfg.py:
-                                 env_path_param = os.environ['PATH'].split(';') to be changed to  env_path_param = os.environ['PATH'].split(':') 
-                                 compiler = os.path.join(param, 'riscv32-unknown-elf-gcc.exe') to compiler = os.path.join(param, 'riscv32-unknown-elf-gcc')
-   2) build/scripts/sconts_utils.py:
-                                 env_path_param = os.environ['PATH'].split(';') to be changed to  env_path_param = os.environ['PATH'].split(':') 
-                                 compiler = os.path.join(param, 'riscv32-unknown-elf-gcc.exe') to compiler = os.path.join(param, 'riscv32-unknown-elf-gcc')
-   3) tools/nvtools/build_nv.py:
-                                 g_nv_env.nv_tool=os.path.join(root_dir, 'tools', 'nv', 'cdbm.exe') to  g_nv_env.nv_tool=os.path.join(root_dir, 'tools', 'nv', 'cdbm')
-D) Run ./build.sh
-
-Note 2: to obtain identical results to the one reported, the optimization flag need to be changed from -O2 to -Os
-
+4.	Run ./vendor/hisi/hi3861/hi3861/build.sh wifiiot

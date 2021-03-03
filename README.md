@@ -3,16 +3,11 @@ Welcome to the RISC-V Code Size Reduction Group
 
 _If you can't measure it you can't improve it_
 
+This is the current proposal for reducing code size:
+
+- [Zce ISA proposal](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc)
+
 This will be the home for the all of the code size reduction proposals, analysis, results etc.
-
-The code-size reduction will analyse the benefit of instrucitons from v1.0 of the following ISA extension proposal documents (still very tentative at this stage)
-- [v1.0 16-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc)
-- [v1.0 32-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
-
-In the future we may extend the ISA extension to include instructions from v2.0 of the ISA extension proposal
-- [`Future` 16-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/16bit_encodings.adoc)
-- [`Future` 32-bit instructions from this document](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/32bit_encodings.adoc)
-- [48-bit encodings](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/48bit_encodings.adoc) which have longer immediates than 32-bit encodings
 
 Documentation of existing ISA extensions
 - [Existing ISA extensions to reduce code size](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/README.md)
@@ -32,6 +27,8 @@ Publicly available benchmarks
 - [Embench](https://github.com/embench/embench-iot)
 
   - antecedents [BEEBS](https://github.com/mageec/beebs), [MiBench](http://vhosts.eecs.umich.edu/mibench/), [Mälardalen WCET benchmarks](https://drops.dagstuhl.de/opus/volltexte/2010/2833/pdf/15.pdf), [Hacker's Delight/A Hacker's Assistant](https://en.wikipedia.org/wiki/Hacker%27s_Delight)
+
+- [Hi3961 Huawei WiFi IoT platform](https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/Hi3861_WiFi_IoT)
 
 - [Code size benchmarks](http://szeged.github.io/csibe/)
 - [Opus codec](https://github.com/xiph/opus)
@@ -136,13 +133,6 @@ Need a lot more detail for these, they're just placeholders at the moment
 - load/store multiple
   - specified as a register list, or as base register and register count?
   - what's best for the compiler? base + count could probably fit in a 16-bit encoding
-- additional 16-bit encodings representing common 32-bit instructions, for example
-  - load/store byte/half
-  - sign/zero extend byte/half (as suggested by Anders below)
-  - not (XOR rs, -1), neg (SUB rs, x0, rs) (suggested by B-extension).
-  - mul, and shift-then-or (rd|=ra<<n) with shift distances of 8/16/24 (useful for Huawei IoT code)
-  - store byte/half of zero to the stack pointer
-  - store byte/half/word of zero
 - ADD instruction(s) with a carry out for chaining into longer ADDs (Matteo)
   - add sl, xl, yl              -> implicitly save the carry bit
   - addH sh, xh, yh        <- implicitly add the carry bit
