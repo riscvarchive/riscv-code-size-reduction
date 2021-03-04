@@ -529,7 +529,7 @@ decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
 
 Some instructions will be reused from the B-extension and included in `Zcec`. 
 
-=== Pseudo-ops: ZEXT.B, ZEXT.H, ZEXT.W, ZEXT.D, SEXT.W
+==== Pseudo-ops: ZEXT.B, ZEXT.H, ZEXT.W, ZEXT.D, SEXT.W
 
 [#bextpseudoops]
 .B-extension pseudo-ops
