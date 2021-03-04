@@ -10,4 +10,4 @@ Version 0.11
 :le: &#8804;
 :rarr: &#8658;
 
-This document is now obselete: see https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc[this document] instead.
+This document is now obselete: see https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc#pushpoppopret[this document] instead.
