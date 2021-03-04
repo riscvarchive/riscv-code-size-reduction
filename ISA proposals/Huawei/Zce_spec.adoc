@@ -16,7 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.14    | BNEI/BEQI/MULI/MULIADD/ADDIADD moved from Zced to Zcec. Found encodings for B*I and DECBGEZ to allow Zced+ZDinx. Reduced cmpimm range for BNEI/BGEI to fit the encoding. Allocated provisional encodings for all 32-bit instructions. Fixed width of frcount, mv in PUSH/POP encodings.
+| 0.14    | BNEI/BEQI/MULI/MULIADD/ADDIADD moved from Zced to Zcec. Found encodings for B*I and DECBGEZ to allow Zced+ZDinx. Reduced cmpimm range for BNEI/BEQI to fit the encoding. Allocated provisional encodings for all 32-bit instructions. Fixed width of frcount, mv in PUSH/POP encodings.
 | 0.13    | split LWGP/SWGP into LWGP/SWGP and LWTP/SWTP
 | 0.12    | reduce ret_val to 2-bits for POP/POPRET
 | 0.11    | Add C.SEXT.W, C.ZEXT.W, MULI, MULIADDW, ADDIADDW, and change the C.[SZ]EXT.* encodings. Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
@@ -695,6 +695,16 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 | BLTUI         | if (rs1<~u~  zero_ext(zcmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 |=======================================================================
 
+Assembly Examples
+
+[source,sourceCode,text]
+----
+beq  a5, 1,offset # if(a5== 1) branch_to(PC+offset) # signed comparison
+bne  a5,-1,offset # if(a5!=-1) branch_to(PC+offset) # signed comparison
+bgeu a5, 1,offset # if(a5>= 1) branch_to(PC+offset) # unsigned comparison
+bltu a5, 1,offset # if(a5<  1) branch_to(PC+offset) # unsigned comparison
+----
+
 === DECBGEZ
 
 This reuses uses reserved encoding space adjacent to `BNEI` etc.
@@ -716,6 +726,12 @@ The 16-bit encoding and specification is in <<decbr16>>.
 |instruction    | definition
 | DECBGEZ       | rd = rd - (1<<scale); bge rd, zero, sign_ext(imm);
 |=======================================================================
+
+Assembly Example
+[source,sourceCode,text]
+----
+decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
+----
 
 == `Zced` definition
 
@@ -752,6 +768,11 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 |C.DECBGEZ   | decbgez, rd, imm, offset | rd is x8-x15, imm is [1248], offset is in range   | Zce
 |======================================================================================================
 
+Assembly Example
+[source,sourceCode,text]
+----
+decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
+----
 
 === C.LBU, C.LHU, C.SB, C.SH
 
@@ -790,6 +811,7 @@ The D-extension takes priority over these encodings
 |C.SH        | sh     rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
 |======================================================================================================
 
+Assembly Examples
 [source,sourceCode,text]
 ----
 lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0])
@@ -838,6 +860,14 @@ These reuse the encodings for `FLD/FSD`.
 | SWTP          | Memory[tp+sign_ext(imm)][31:0])=rs2[31:0];
 |=======================================================================
 
+Assembly Examples
+[source,sourceCode,text]
+----
+lw s0, 20(gp)
+sw s0, 20(gp)
+lw s0, 20(tp)
+sw s0, 20(tp)
+----
 
 == B-extension reuse
 
