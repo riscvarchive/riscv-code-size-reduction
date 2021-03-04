@@ -41,7 +41,7 @@ Zce is split into subsets. It includes
 ** 32-bit: `POP, POPRET, PUSH, POP.[FDQ], POPRET.[FDQ], PUSH.[FDQ]`
 * `Zced` instructions which conflict with the D-extension
 ** 16-bit: `C.LBU, C.LHU, C.SB, C.SH, C.DECBGEZ`
-** 32-bit: `LWGP, SWGP, LWTP, SWTP, DECBGEZ`
+** 32-bit: `LWGP, SWGP, LWTP, SWTP`
 * `Zcec` common instructions
 ** all others
 
@@ -301,22 +301,22 @@ Assembly examples are https://github.com/riscv/riscv-code-size-reduction/blob/ma
 .push/pop 32-bit encodings
 [options="header",width="100%"]
 |=========================================================================================================================
-| 31 | 30|29   |28|27| 26|25   |24 |23|22|21:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
-21+|`PUSH` encodings
-6+|0000000         2+|00         2+|00   |mv          2+|rcount     |ra | 001   4+| spimm             |1000011| PUSH
-6+|0000000         2+|00         2+|01   |frcount     2+|rcount     |ra | 001   4+| spimm             |1000011| PUSH.F
-6+|0000000         2+|00         2+|10   |frcount     2+|rcount     |ra | 001   4+| spimm             |1000011| PUSH.D
-6+|0000000         2+|00         2+|11   |frcount     2+|rcount     |ra | 001   4+| spimm             |1000011| PUSH.Q
-21+|`POP` encodings
-6+|0000000         2+|01         2+|00   |ret_val     2+|rcount     |ra | 010   4+| spimm             |1000011| POP
-6+|0000000         2+|01         2+|01   |frcount     2+|rcount     |ra | 010   4+| spimm             |1000011| POP.F
-6+|0000000         2+|01         2+|10   |frcount     2+|rcount     |ra | 010   4+| spimm             |1000011| POP.D
-6+|0000000         2+|01         2+|11   |frcount     2+|rcount     |ra | 010   4+| spimm             |1000011| POP.Q
-21+|`POPRET` encodings
-6+|0000000         2+|10         2+|00   |ret_val     2+|rcount     |1  | 011   4+| spimm             |1000011| POPRET
-6+|0000000         2+|10         2+|01   |frcount     2+|rcount     |1  | 011   4+| spimm             |1000011| POPRET.F
-6+|0000000         2+|10         2+|10   |frcount     2+|rcount     |1  | 011   4+| spimm             |1000011| POPRET.D
-6+|0000000         2+|10         2+|11   |frcount     2+|rcount     |1  | 011   4+| spimm             |1000011| POPRET.Q
+| 31 | 30|29   |28|27| 26|25   |24 |23|22|21:20         |19:18|17:16|15 | 14:12   | 11:10 |9: 7      | 6 : 0 | instruction
+19+|`PUSH` encodings
+6+|0000000         2+|00         2+|00   |mv          2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH
+6+|0000000         2+|00         2+|01   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.F
+6+|0000000         2+|00         2+|10   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.D
+6+|0000000         2+|00         2+|11   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.Q
+19+|`POP` encodings
+6+|0000000         2+|01         2+|00   |ret_val     2+|rcount     |ra | 010   2+| spimm             |1000011| POP
+6+|0000000         2+|01         2+|01   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.F
+6+|0000000         2+|01         2+|10   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.D
+6+|0000000         2+|01         2+|11   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.Q
+19+|`POPRET` encodings
+6+|0000000         2+|10         2+|00   |ret_val     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET
+6+|0000000         2+|10         2+|01   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.F
+6+|0000000         2+|10         2+|10   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.D
+6+|0000000         2+|10         2+|11   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.Q
 |=========================================================================================================================
 
 [NOTE]
@@ -463,8 +463,8 @@ The 16-bit encoding is in <<tablejump16>> and the specification is https://githu
 .*temporary* TBLJAL 32-bit encodings
 [width="100%",options=header]
 |=========================================================================================================================
-| 31 | 30|29   |28|27| 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
-9+|000000000                         5+|index13[12:5]                 | 000   4+| index13[4:0]      |1000011| TBLJAL
+| 31 | 30|29   |28|27| 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7 | 6 : 0 | instruction
+9+|000000000                         5+|index13[12:5]                 | 000   2+| index13[4:0]      |1000011| TBLJAL
 |=========================================================================================================================
 
 === C.[SZ]EXT.[BH], C.LSBNOT, C.MUL
@@ -639,14 +639,14 @@ Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing
 .arithmetic instructions 32-bit encodings
 [width="100%",options=header]
 |=========================================================================================================================
-| 31 | 30|29   |28|27| 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
-21+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension]*
-11+|imm[11:0]                                         |00 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULI
-11+|imm[11:0]                                         |10 2+|rs1'   2+| 11100         3+| rd'       |0011011| MULIW
-9+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11100         3+| rd'       |0011111| MULIADD
-9+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11100         3+| rd'       |0011111| MULIADDW
-9+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11101         3+| rd'       |0011111| ADDIADD
-9+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11101         3+| rd'       |0011111| ADDIADDW
+| 31 | 30|29   |28|27| 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
+19+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension]*
+11+|imm[11:0]                                         |00 2+|rs1'   2+| 11100           | rd'       |0011011| MULI
+11+|imm[11:0]                                         |10 2+|rs1'   2+| 11100           | rd'       |0011011| MULIW
+9+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADD
+9+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADDW
+9+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADD
+9+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADDW
 |=========================================================================================================================
 
 [#arithmetic_semantics]
@@ -677,11 +677,11 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 .proposed 32-bit encodings for `Zced`
 [width="100%",options=header]
 |=========================================================================================================================
-| 31:27              | 26:25  |24   |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
-| scmpimm[5:1]       |10      |scmpimm[0]  2+|  offset[9:6]  3+| rs1  | 000   4+| offset[5:1]       |1000011| BEQI
-| scmpimm[5:1]       |10      |scmpimm[0]  2+|  offset[9:6]  3+| rs1  | 001   4+| offset[5:1]       |1000011| BNEI
-| zcmpimm[5:1]       |10      |zcmpimm[0]  2+|  offset[9:6]  3+| rs1  | 010   4+| offset[5:1]       |1000011| BGEUI
-| zcmpimm[5:1]       |10      |zcmpimm[0]  2+|  offset[9:6]  3+| rs1  | 011   4+| offset[5:1]       |1000011| BLTUI
+| 31:27              | 26:25  |24   |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
+| scmpimm[5:1]       |10      |scmpimm[0]  2+|  offset[9:6]  3+| rs1  | 000   2+| offset[5:1]       |1000011| BEQI
+| scmpimm[5:1]       |10      |scmpimm[0]  2+|  offset[9:6]  3+| rs1  | 001   2+| offset[5:1]       |1000011| BNEI
+| zcmpimm[5:1]       |10      |zcmpimm[0]  2+|  offset[9:6]  3+| rs1  | 010   2+| offset[5:1]       |1000011| BGEUI
+| zcmpimm[5:1]       |10      |zcmpimm[0]  2+|  offset[9:6]  3+| rs1  | 011   2+| offset[5:1]       |1000011| BLTUI
 |=========================================================================================================================
 
 [#compare-immediate branch_semantics]
@@ -695,7 +695,7 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 | BLTUI         | if (rs1<~u~  zero_ext(zcmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 |=======================================================================
 
-==== DECBGEZ
+=== DECBGEZ
 
 This reuses uses reserved encoding space adjacent to `BNEI` etc.
 
@@ -705,8 +705,8 @@ The 16-bit encoding and specification is in <<decbr16>>.
 .proposed 32-bit encodings for arithmetic instructions
 [width="100%",options=header]
 |=========================================================================================================================
-| 31:27              | 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7 | 6 : 0 | instruction
-| imm[9:6]           |10     3+|imm[5:0]              |scale 2+| 000  | 100   4+| rd                |1010011| DECBGEZ
+| 31:27              | 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
+| imm[9:6]           |10     3+|imm[5:0]              |scale 2+| 000  | 100   2+| rd                |1010011| DECBGEZ
 |=========================================================================================================================
 
 [#decbgezsemantics32]
@@ -820,11 +820,11 @@ These reuse the encodings for `FLD/FSD`.
 .proposed 32-bit encodings for `LWGP/SWGP/LWTP/SWTP`
 [width="100%",options=header]
 |=========================================================================================================================
-| 31|30|29|28|27     | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9  | 8 | 7  | 6 : 0 | instruction
- 11+|imm[11:2, 17:16]                                2+|imm[15:12]|0   | 011   4+| rd                |0000111| LWGP
-  8+|imm[11:5]                3+| rs2                2+|imm[15:12]|0   | 011   4+| imm[4:2, 17:16]   |0100111| SWGP
- 11+|imm[11:2, 17:16]                                2+|imm[15:12]|1   | 011   4+| rd                |0000111| LWTP
-  8+|imm[11:5]                3+| rs2                2+|imm[15:12]|1   | 011   4+| imm[4:2, 17:16]   |0100111| SWTP
+| 31|30|29|28|27     | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7  | 6 : 0 | instruction
+ 11+|imm[11:2, 17:16]                                2+|imm[15:12]|0   | 011   2+| rd                |0000111| LWGP
+  8+|imm[11:5]                3+| rs2                2+|imm[15:12]|0   | 011   2+| imm[4:2, 17:16]   |0100111| SWGP
+ 11+|imm[11:2, 17:16]                                2+|imm[15:12]|1   | 011   2+| rd                |0000111| LWTP
+  8+|imm[11:5]                3+| rs2                2+|imm[15:12]|1   | 011   2+| imm[4:2, 17:16]   |0100111| SWTP
 |=========================================================================================================================
 
 [#lwgp_semantics]
