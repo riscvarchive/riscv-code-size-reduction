@@ -301,22 +301,22 @@ Assembly examples are https://github.com/riscv/riscv-code-size-reduction/blob/ma
 .push/pop 32-bit encodings
 [options="header",width="100%"]
 |=========================================================================================================================
-| 31 | 30|29   |28|27| 26|25   |24 |23|22|21:20         |19:18|17:16|15 | 14:12   | 11:10 |9: 7      | 6 : 0 | instruction
-19+|`PUSH` encodings
-6+|0000000         2+|00         2+|00   |mv          2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH
-6+|0000000         2+|00         2+|01   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.F
-6+|0000000         2+|00         2+|10   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.D
-6+|0000000         2+|00         2+|11   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.Q
-19+|`POP` encodings
-6+|0000000         2+|01         2+|00   |ret_val     2+|rcount     |ra | 010   2+| spimm             |1000011| POP
-6+|0000000         2+|01         2+|01   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.F
-6+|0000000         2+|01         2+|10   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.D
-6+|0000000         2+|01         2+|11   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.Q
-19+|`POPRET` encodings
-6+|0000000         2+|10         2+|00   |ret_val     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET
-6+|0000000         2+|10         2+|01   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.F
-6+|0000000         2+|10         2+|10   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.D
-6+|0000000         2+|10         2+|11   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.Q
+| 31:27              |26|25     |24 |23|22|21:20         |19:18|17:16|15 | 14:12   | 11:10 |9: 7      | 6 : 0 | instruction
+15+|`PUSH` encodings
+2+|0000000         2+|00         2+|00   |mv          2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH
+2+|0000000         2+|00         2+|01   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.F
+2+|0000000         2+|00         2+|10   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.D
+2+|0000000         2+|00         2+|11   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.Q
+15+|`POP` encodings
+2+|0000000         2+|01         2+|00   |ret_val     2+|rcount     |ra | 010   2+| spimm             |1000011| POP
+2+|0000000         2+|01         2+|01   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.F
+2+|0000000         2+|01         2+|10   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.D
+2+|0000000         2+|01         2+|11   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.Q
+15+|`POPRET` encodings
+2+|0000000         2+|10         2+|00   |ret_val     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET
+2+|0000000         2+|10         2+|01   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.F
+2+|0000000         2+|10         2+|10   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.D
+2+|0000000         2+|10         2+|11   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.Q
 |=========================================================================================================================
 
 [NOTE]
@@ -639,14 +639,14 @@ Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing
 .arithmetic instructions 32-bit encodings
 [width="100%",options=header]
 |=========================================================================================================================
-| 31 | 30|29   |28|27| 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
-19+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension]*
-11+|imm[11:0]                                         |00 2+|rs1'   2+| 11100           | rd'       |0011011| MULI
-11+|imm[11:0]                                         |10 2+|rs1'   2+| 11100           | rd'       |0011011| MULIW
-9+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADD
-9+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADDW
-9+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADD
-9+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADDW
+| 31:27              | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
+15+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension]*
+7+|imm[11:0]                                          |00 2+|rs1'   2+| 11100           | rd'       |0011011| MULI
+7+|imm[11:0]                                          |10 2+|rs1'   2+| 11100           | rd'       |0011011| MULIW
+5+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADD
+5+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADDW
+5+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADD
+5+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADDW
 |=========================================================================================================================
 
 [#arithmetic_semantics]
