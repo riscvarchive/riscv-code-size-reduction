@@ -32,7 +32,7 @@ This document describes the `Zce` extension to reduce code-size.
 ** maybe I can squeeze `c.decbgez` into `Zcec`, TBD, need to benchmark the size of the immediate range
 * need to choose a B-extension subset to include
 
-== Zce proposal
+== Zce configurations
 
 Zce is split into subsets. It includes 
 
@@ -45,13 +45,20 @@ Zce is split into subsets. It includes
 * `Zcec` common instructions
 ** all others
 
-If `Zce` is specified, and `D` is _not_ specified then `Zces_Zced_Zcec` are configured.
+=== Zce configuration options
 
-If `Zce` is specified, and `D` _is_  specified then `Zces_Zcec` are configured.
+. If `Zce` is specified, and `D` is _not_ specified then `C_Zces_Zced_Zcec` are configured.
 
-If `Zces` is not required then `Zcec` and optionally `Zced` must be specified.
+. If `Zce` is specified, and `D` _is_  specified then `C_Zces_Zcec` are configured.
 
-`Zce` is fully compatible with `ZDinx`, so if a core needs double precision arithmetic _and_ small code size then this is the correct configuration to choose.
+. If `Zce` is specified, and `ZDinx` is  specified then `C_Zces_Zced_Zcec` are configured, as there are no conflicts with `ZDinx`.
+.. Therefore if a core needs double precision arithmetic _and_ small code size then the correct configuration to choose is Zce_ZDinx.
+
+. If `Zces` is not required then `Zcec` and optionally `Zced` may be specified.
+
+. `Zced` and `Zces` both imply `Zcec`.
+
+. `Zcec` implies `C`.
 
 == C-extension subsets
 
