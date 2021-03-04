@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.15    | add B-ext pseudo-ops and pack/packw into Zcec for 32-bit forms of new instructions
 | 0.14    | BNEI/BEQI/MULI/MULIADD/ADDIADD moved from Zced to Zcec. Found encodings for B*I and DECBGEZ to allow Zced+ZDinx. Reduced cmpimm range for BNEI/BEQI to fit the encoding. Allocated provisional encodings for all 32-bit instructions. Fixed width of frcount, mv in PUSH/POP encodings.
 | 0.13    | split LWGP/SWGP into LWGP/SWGP and LWTP/SWTP
 | 0.12    | reduce ret_val to 2-bits for POP/POPRET
@@ -50,18 +51,20 @@ Zce is split into subsets. It includes
 
 === Zce configuration options
 
+. `Zcec` implies `C`.
+
+. `Zced` and `Zces` both imply `Zcec`.
+
 . If `Zce` is specified, and `D` is _not_ specified then `C_Zces_Zced_Zcec` are configured.
 
 . If `Zce` is specified, and `D` _is_  specified then `C_Zces_Zcec` are configured.
 
 . If `Zce` is specified, and `ZDinx` is  specified then `C_Zces_Zced_Zcec` are configured, as there are no conflicts with `ZDinx`.
-.. Therefore if a core needs double precision arithmetic _and_ small code size then the correct configuration to choose is Zce_ZDinx.
+.. Therefore if a core needs double precision arithmetic _and_ small code size then the correct configuration to choose is `Zce_ZDinx`.
 
 . If `Zces` is not required then `Zcec` and optionally `Zced` may be specified.
 
-. `Zced` and `Zces` both imply `Zcec`.
 
-. `Zcec` implies `C`.
 
 == C-extension subsets
 
@@ -256,11 +259,9 @@ The 16-bit encoding is in <<tbljal16bitencoding>>.
 
 The 32-bit encoding is in <<tbljal32bitencoding>>.
 
-[#tbljal32bitencoding]
-
 === C.[SZ]EXT.[BH], C.LSBNOT, C.MUL
 
-These instructions are 16-bit versions of existing 32-bit instructions.
+These instructions are 16-bit versions of existing 32-bit instructions, from either I or the B-extension.
 
 [#dyadic-16encodings]
 .simple instructions 16-bit encodings
@@ -528,7 +529,35 @@ decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
 
 Some instructions will be reused from the B-extension and included in `Zcec`. 
 
-No work has been done on which instructions to choose yet.....
+=== Pseudo-ops: ZEXT.B, ZEXT.H, ZEXT.W, ZEXT.D, SEXT.W
+
+[#bextpseudoops]
+.B-extension pseudo-ops
+[width="100%",options=header]
+|===================================================================
+| Pseudo-op         | RV32 | RV64 | RV128 | Real instruction
+| `zext.b rd, rs`   |   ✓  |  ✓   |   ✓   | `andi rd, rs, 255`
+| `zext.h rd, rs`   |   ✓  |      |       | `pack rd, rs, zero`
+| `zext.h rd, rs`   |      |  ✓   |   ✓   | `packw rd, rs, zero`
+| `zext.w rd, rs`   |      |  ✓   |       | `pack rd, rs, zero`
+| `zext.w rd, rs`   |      |      |   ✓   | `packd rd, rs, zero`
+| `zext.d rd, rs`   |      |      |   ✓   | `andi rd, rs, zero`
+| `sext.w rd, rs`   |      |  ✓   |       | `addiw rd, rs, 0`
+|===================================================================
+
+32-bit forms of `c.[sz]ext.[bh]` are required so it makes sense to include all `[sz]ext.*` pseudo-ops from the B-extension.
+
+[NOTE]
+
+  `packd` doesn't seem to be real - I'm checking.
+
+=== SEXT.B, SEXT.H
+
+`sext.b` and `sext.h` are required as 32-bit forms of `c.sext.b` and `c.sext.h`.
+
+=== PACK, PACKW, PACKD
+
+`pack`, `packw`, and possibly `packd` are required to allow the pseudo-ops from <<bextpseudoops>>.
 
 == `Zces` definition
 
