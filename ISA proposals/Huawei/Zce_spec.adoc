@@ -549,7 +549,7 @@ Some instructions will be reused from the B-extension and included in `Zcec`.
 
 [NOTE]
 
-  `packd` doesn't seem to be real - I'm checking.
+  `packd` may resolve to `add.uw` for RV128 only, TBD
 
 === SEXT.B, SEXT.H
 
@@ -563,6 +563,7 @@ Some instructions will be reused from the B-extension and included in `Zcec`.
 
 `Zces` is optional as cores may not want to build the sequencer to issue the instructions.
 
+[#pushpoppopret_heading]
 === PUSH/POP/POPRET
 
 See <<pushpoppopret>> for the specification.
