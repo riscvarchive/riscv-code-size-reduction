@@ -551,11 +551,11 @@ Some instructions will be reused from the B-extension and included in `Zcec`.
 
   `packd` may resolve to `add.uw` for RV128 only, TBD
 
-=== SEXT.B, SEXT.H
+==== SEXT.B, SEXT.H
 
 `sext.b` and `sext.h` are required as 32-bit forms of `c.sext.b` and `c.sext.h`.
 
-=== PACK, PACKW, PACKD
+==== PACK, PACKW, PACKD
 
 `pack`, `packw`, and possibly `packd` are required to allow the pseudo-ops from <<bextpseudoops>>.
 
