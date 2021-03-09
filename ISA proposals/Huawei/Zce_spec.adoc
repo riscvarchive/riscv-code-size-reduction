@@ -75,19 +75,22 @@ Zce is split into subsets. It includes
 . If `Zces` is not required then `Zcec` and optionally `Zced` may be specified.
 
 [#validconfigs]
-.Valid configurations: ✓ configured, O optional, ✗ incompatible
+.Valid configurations: ✓ configured, ✗ incompatible
 [width="100%",options=header]
 |===============================================================================
-| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | F | D | Q | ZDinx | Comment
-11+| `Zce` is configured, i.e. the maximum subset
-| ✓    | ✓   | ✓    | ✗    | ✗     | ✗     |✗ | ✗ | ✗| O     | `ZDinx` is optional if `F` is not configured
-| ✓    | ✓   | ✓    | ✓    | ✗     | ✗     |✓ | ✗ | ✗| ✗     | `ZDinx` is incompatible with `FDQ, Zcesf` implies `F`
-| ✓    | ✗   | ✓    | ✓    | ✓     | ✗     |✓ | ✓ | ✗| ✗     | `D` is incompatible with `Zced, Zcesd` implies `D`
-| ✓    | ✗   | ✓    | ✓    | ✓     | ✓     |✓ | ✓ | ✓| ✗     | `D` is incompatible with `Zced, Zcesq` implies `Q`
-11+| `Zcec` and optionally `Zced` are configured
-| ✓    | ✓   | ✗    | ✗    | ✗     | ✗     |✗ | ✗ | ✗| O     | `ZDinx` is optional if `D` is not configured
-| ✓    | ✓   | ✗    | ✗    | ✗     | ✗     |✓ | ✗ | ✗| ✗     | `ZDinx` is incompatible with `FDQ, Zcesf` implies `F`
-| ✓    | ✗   | ✗    | ✗    | ✗     | ✗     |✓ | ✓ | O | ✗     | `D` is incompatible with `Zced`
+| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | F | D | Q | ZDinx | Minimal config |Comment
+12+| `Zce` is configured, i.e. the maximum subset
+| ✓    | ✓   | ✓    |       |       |       |   |    |  |       | `Zce`      | basic configuration
+| ✓    | ✓   | ✓    | ✗    | ✗     | ✗     |✗ | ✗ | ✗| ✓     | `Zce_ZDinx`| `ZDinx` conflicts with `FDQ`
+| ✓    | ✓   | ✓    | ✓    |        |        |✓ |   |  | ✗     | `F_Zce`    | `F` support
+| ✓    | ✗   | ✓    | ✓    | ✓     |        |✓ | ✓ |  | ✗     | `D_Zce`    | `D` support conflicts with `Zced`
+| ✓    | ✗   | ✓    | ✓    | ✓     | ✓     |✓ | ✓ | ✓| ✗     | `Q_Zce`    | `Q` support implies conflict with `Zced`
+12+| `Zcec` and optionally `Zced` are configured
+| ✓    | ✓   |       |      |        |       |   |   |   |       |`Zcec_Zced` | basic configuration
+| ✓    | ✓   |       | ✗    | ✗      |✗     |✗  |✗ |✗  | ✓     |`Zcec_Zced_ZDinx` | `ZDinx` is optional if `D` is not configured
+| ✓    | ✓   | ✗     | ✗   | ✗      | ✗     |✓ | ✗ |✗  | ✗    |`F_Zcec_Zced` | `F`+`Zcec` but no `Zcesf`
+| ✓    | ✗   |       |       |        |       |✓ | ✓ |   | ✗    |`D_Zcec` | `D` is incompatible with `Zced`
+| ✓    | ✗   |       |       |        |       |✓ | ✓ | ✓ | ✗    |`Q_Zcec` | `D` is incompatible with `Zced`
 |===============================================================================
 
 == C-extension subsets
