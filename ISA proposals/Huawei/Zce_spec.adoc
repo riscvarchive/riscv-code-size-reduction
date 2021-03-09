@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.15
-Version 0.15
+= RISC-V Zce code-size reduction extension proposal v0.16
+Version 0.16
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.16    | Add Zces[fdq] subsets
 | 0.15    | add B-ext pseudo-ops and pack/packw into Zcec for 32-bit forms of new instructions
 | 0.14    | BNEI/BEQI/MULI/MULIADD/ADDIADD moved from Zced to Zcec. Found encodings for B*I and DECBGEZ to allow Zced+ZDinx. Reduced cmpimm range for BNEI/BEQI to fit the encoding. Allocated provisional encodings for all 32-bit instructions. Fixed width of frcount, mv in PUSH/POP encodings.
 | 0.13    | split LWGP/SWGP into LWGP/SWGP and LWTP/SWTP
@@ -41,8 +42,11 @@ This document describes the `Zce` extension to reduce code-size.
 Zce is split into subsets. It includes 
 
 * `Zces` sequenced instructions
-** 16-bit: `C.POP, C.POPRET, C.PUSH, C.MVA01S07, C.MVA23S07, C.MVP`     
-** 32-bit: `POP, POPRET, PUSH, POP.[FDQ], POPRET.[FDQ], PUSH.[FDQ]`
+** 16-bit: `C.PUSH, C.POP, C.POPRET, C.MVA01S07, C.MVA23S07, C.MVP`     
+** 32-bit: `POP, POPRET, PUSH` 
+** `Zcesf`: 32-bit: `PUSH.F, POP.F, POPRET.F`
+** `Zcesd`: 32-bit: `PUSH.D, POP.D, POPRET.D`
+** `Zcesq`: 32-bit: `PUSH.Q, POP.Q, POPRET.Q`
 * `Zced` instructions which conflict with the D-extension
 ** 16-bit: `C.LBU, C.LHU, C.SB, C.SH, C.DECBGEZ`
 ** 32-bit: `LWGP, SWGP, LWTP, SWTP`
@@ -55,16 +59,36 @@ Zce is split into subsets. It includes
 
 . `Zced` and `Zces` both imply `Zcec`.
 
+. `Zcesf` implies `Zces` and also `F`, `F` and `Zces` imply `Zcesf`
+
+. `Zcesd` implies `Zcesf` and also `D`, `D` and `Zces` imply `Zcesd`
+
+. `Zcesq` implies `Zced` and also `Q`, `Q` and `Zces` imply `Zcesq`
+
 . If `Zce` is specified, and `D` is _not_ specified then `C_Zces_Zced_Zcec` are configured.
 
-. If `Zce` is specified, and `D` _is_  specified then `C_Zces_Zcec` are configured.
+. If `Zce` is specified, and `D` _is_  specified then `C_Zces_Zcec_Zcesf_Zcesd` are configured.
 
 . If `Zce` is specified, and `ZDinx` is  specified then `C_Zces_Zced_Zcec` are configured, as there are no conflicts with `ZDinx`.
 .. Therefore if a core needs double precision arithmetic _and_ small code size then the correct configuration to choose is `Zce_ZDinx`.
 
 . If `Zces` is not required then `Zcec` and optionally `Zced` may be specified.
 
-
+[#validconfigs]
+.Valid configurations: ✓ configured, O optional, ✗ incompatible
+[width="100%",options=header]
+|===============================================================================
+| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | F | D | Q | ZDinx | Comment
+11+| `Zce` is configured, i.e. the maximum subset
+| ✓    | ✓   | ✓    | ✗    | ✗     | ✗     |✗ | ✗ | ✗| O     | `ZDinx` is optional if `F` is not configured
+| ✓    | ✓   | ✓    | ✓    | ✗     | ✗     |✓ | ✗ | ✗| ✗     | `ZDinx` is incompatible with `FDQ, Zcesf` implies `F`
+| ✓    | ✗   | ✓    | ✓    | ✓     | ✗     |✓ | ✓ | ✗| ✗     | `D` is incompatible with `Zced, Zcesd` implies `D`
+| ✓    | ✗   | ✓    | ✓    | ✓     | ✓     |✓ | ✓ | ✓| ✗     | `D` is incompatible with `Zced, Zcesq` implies `Q`
+11+| `Zcec` and optionally `Zced` are configured
+| ✓    | ✓   | ✗    | ✗    | ✗     | ✗     |✗ | ✗ | ✗| O     | `ZDinx` is optional if `D` is not configured
+| ✓    | ✓   | ✗    | ✗    | ✗     | ✗     |✓ | ✗ | ✗| ✗     | `ZDinx` is incompatible with `FDQ, Zcesf` implies `F`
+| ✓    | ✗   | ✗    | ✗    | ✗     | ✗     |✓ | ✓ | O | ✗     | `D` is incompatible with `Zced`
+|===============================================================================
 
 == C-extension subsets
 
@@ -75,7 +99,7 @@ For example:
 * `C.FSD`, `C.SQ`, and `{C.LBU, C.SB}` share opcodes, so for different configurations the encodings represent:
 ** `C.FSD` for `RV32CD/RV64CD`
 ** `C.SQ`  for `RV128C`
-** `{C.LBU, C.SB}` for `RV32C_Zce, RV64C_Zce`
+** `{C.LBU, C.SB}` for `RV32C_Zce, RV64C_Zce， RV32C_Zce_ZDinx, RV64C_Zce_ZDinx`
 ** illegal encoding for `RV32C, RV64C`, as neither `D` nor `Zce` was specified
 
 The shared encoding column in the tables assigns an arbitrary number to show which encodings are grouped together (I can't find a better way of highlighting groups of cells in the table in adoc format). `Zce` instructions are in *bold*.
@@ -432,7 +456,6 @@ Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing
 [width="100%",options=header]
 |=========================================================================================================================
 | 31:27              | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
-15+| *https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension]*
 7+|imm[11:0]                                          |00 2+|rs1'   2+| 11100           | rd'       |0011011| MULI
 7+|imm[11:0]                                          |10 2+|rs1'   2+| 11100           | rd'       |0011011| MULIW
 5+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADD
@@ -645,7 +668,7 @@ The generic move uses standard x register numbers, and so it more standard than 
 
 [NOTE]
 
-  These are optional as they require 2 register file write ports, or are sequenced.
+  These are optional (`Zces`) as they require 2 register file write ports, or are sequenced.
 
 [#mvp-encoding]
 .generic double move 16-bit encoding
@@ -694,12 +717,22 @@ The D-extension takes priority over these encodings.
 
 This instruction is a combined decrement and branch, used for inferring loops with an optionally scaled loop counter.
 
+[NOTE]
+
+  The 32-bit encoding has a signed offset. The 16-bit encoding has an unsigned offset, but it can only represent a backwards jump. 
+  Therefore to be legal syntax for the 16-bit encoding the offset is specified as a negative number but encoded as a positive offset.
+ 
+[NOTE]
+
+  The encoding is reserved if the offset is zero.
+
 [#proposed-16bit-encodings-dec_br]
 .proposed 16-bit encodings for dec-and-branch
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 3+|  001          3+|uimm[6:4] 3+| rd'  3+|uimm[3:1] 2+|scale 2+| 00 | C.DECBGEZ
+3+|  001          3+|000       3+| rd'  3+|000       2+|scale 2+| 00 | *reserved*
 |=============================================================================================
 
 [#deccmpbrsemantics]
@@ -715,13 +748,13 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembly syntax        | requirements for 16-bit encoding   | 32-bit extension
-|C.DECBGEZ   | decbgez, rd, imm, offset | rd is x8-x15, imm is [1248], offset is in range   | Zce
+|C.DECBGEZ   | decbgez, rd, imm, -offset | rd is x8-x15, imm is [1248], offset is in range   | Zce
 |======================================================================================================
 
 Assembly Example
 [source,sourceCode,text]
 ----
-decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
+decbgez s2, 1, -4 ;# s2-=1;if(s2>=0) branch_to(PC-4) encoded as scale=0, uimm=4 (not uimm=-4)
 ----
 
 === C.LBU, C.LHU, C.SB, C.SH
@@ -792,11 +825,11 @@ These reuse the encodings for `FLD/FSD`.
 .proposed 32-bit encodings for `LWGP/SWGP/LWTP/SWTP`
 [width="100%",options=header]
 |=========================================================================================================================
-| 31|30|29|28|27     | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7  | 6 : 0 | instruction
- 11+|imm[11:2, 17:16]                                2+|imm[15:12]|0   | 011   2+| rd                |0000111| LWGP
-  8+|imm[11:5]                3+| rs2                2+|imm[15:12]|0   | 011   2+| imm[4:2, 17:16]   |0100111| SWGP
- 11+|imm[11:2, 17:16]                                2+|imm[15:12]|1   | 011   2+| rd                |0000111| LWTP
-  8+|imm[11:5]                3+| rs2                2+|imm[15:12]|1   | 011   2+| imm[4:2, 17:16]   |0100111| SWTP
+| 31:27                     | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7  | 6 : 0 | instruction
+  7+|imm[11:2, 17:16]                                2+|imm[15:12]|0   | 011   2+| rd                |0000111| LWGP
+  4+|imm[11:5]                3+| rs2                2+|imm[15:12]|0   | 011   2+| imm[4:2, 17:16]   |0100111| SWGP
+  7+|imm[11:2, 17:16]                                2+|imm[15:12]|1   | 011   2+| rd                |0000111| LWTP
+  4+|imm[11:5]                3+| rs2                2+|imm[15:12]|1   | 011   2+| imm[4:2, 17:16]   |0100111| SWTP
 |=========================================================================================================================
 
 [#lwgp_semantics]
@@ -875,7 +908,7 @@ Table jump allows the linker to:
 
 * replace 32-bit `JAL` calls with 16-bit `C.TBLJAL`
 * replace 64-bit `AUIPC/JALR` calls to fixed locations with either a 16-bit `C.TBLJAL` or a 32-bit `TBLJAL` 
-** `[C.]TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically inferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the +/-1MB range.
+** `[C.]TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically inferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the ±1MB range.
 
 [NOTE]
 
@@ -901,8 +934,8 @@ The 32-bit instruction encoding will ensure that 64-bit sequences `AUIPC/JALR` a
 .TBLJAL 32-bit encoding
 [width="100%",options=header]
 |=========================================================================================================================
-| 31 | 30|29   |28|27| 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7 | 6 : 0 | instruction
-9+|000000000                         5+|index13[12:5]                 | 000   2+| index13[4:0]      |1000011| TBLJAL
+| 31:27|                      26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7 | 6 : 0 | instruction
+5+|000000000                         5+|index13[12:5]                 | 000   2+| index13[4:0]      |1000011| TBLJAL
 |=========================================================================================================================
 
 === CSRs
@@ -1013,7 +1046,7 @@ For improved performance, the implementation may cache the contents of the jump 
 
 Any write to `xTBLJALVEC`, even if the actual value is not updated, will indicate that any table caching must be flushed and refetched.
 
-Therefore if there are any updates to generated code in the table in vector mode, a write to `xTBLJALVEC` is required to ensure that any cached contents are not stale. This is not expected to be the common case, because in the absence of dynamically linked libraries, the jump table is static for a given executable. Therefore the recommendation is that it is set with eXecute only privileges, the same as the rest of the code. This is better for security to prevent code in the vector table being scanned for gadgets.
+Therefore if there are any updates to generated code in the table in vector mode, a write to `xTBLJALVEC` is required to ensure that any cached contents are not stale. This is not expected to be the common case, because in the absence of dynamically linked libraries, the jump table is static for a given executable. Therefore the recommendation is that it is set with eXecute only privileges, the same as the rest of the code. This is better for security to prevent code in the jump table being scanned for gadgets.
 
 ==== Power/performance of jump table mode
 
@@ -1021,10 +1054,7 @@ The instruction fetch unit could cache the most frequently accessed table jump t
 
 An alternative approach is to for the instruction fetch to cache a certain range of table jump indices, e.g. 0-31. The linker could be configured to place the most frequently used table jump indices into this range so that static caching can be used. For this to be successful the linker would need information about the dynamic call frequency of each function call.
 
-==== Benchmarking Jump Table Mode
-
-https://github.com/riscv/riscv-code-size-reduction/blob/master/meeting_minutes/code%20size%20meeting%20slides%2020210126.pdf[See this presentation, the "bigger benchmarks" slide]
-
+[#vector-table-mode]
 === Future Mode: Vector table mode (not for RVM22/RVA22)
 
 Vector table mode is very similar to vectored interrupt handling. The target address is a scaled offset from the base vector. Therefore in vector table mode, execution passes directly to the scaled offset from the base register, not via a jump table.
@@ -1307,7 +1337,7 @@ The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes w
   
 [NOTE]
 
-  The calls to `<riscv_save_0>/<riscv_restore_0>` become 64-bit when the target functions are out of the +/-1MB range, increasing the prologue/epilogue size to 22-bytes.
+  The calls to `<riscv_save_0>/<riscv_restore_0>` become 64-bit when the target functions are out of the ±1MB range, increasing the prologue/epilogue size to 22-bytes.
 
 === Assembler Syntax
 
@@ -1636,6 +1666,8 @@ NOTE]
 
 [NOTE]
   bits [23:22] are the `fdq` field
+  
+[NOTE]
   `ra=1` for all `popret` encodings, it is not specified in the encoding
 
 The specification is https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/riscv_push_pop_extension_RV32_RV64_UABI.adoc[here] and the 16-bit encoding is in <<pushpop16>>.
