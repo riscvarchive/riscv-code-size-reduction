@@ -37,9 +37,33 @@ This document describes the `Zce` extension to reduce code-size.
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
 
-== Zce configurations
+== `Zce` configurations
 
-Zce is split into subsets. It includes 
+`Zce` is designed to be compatible with all existing extensions. Specification of the `D` extension will cause some `Zce` instructions to be automatically excluded as they share the same encodings. `Zce` _can_ still be specified.
+
+`Zce` is compatible with `RV32`, `RV64` and `RV128`.
+
+All systems which implement `Zce` must also implement the `IMC` extensions.  A future version of this document will support `EMC`, but the EABI needs to be resolved before the `PUSH/POP/POPRET` instructions can support it.
+
+[NOTE]
+
+  Only `C.MUL` requires the `M` extension. It is simpler to specify that `M` is always required, but we may have to revisit this for tiny embedded cores.
+
+[#exampleconfigs]
+.Example configurations
+[width="100%",options=header]
+|===============================================================================
+|Config string | `Zce` subsets   | Comment
+| `IMC_Zce`    | all             | no exclusions
+| `IMCF_Zce`   | all             | no exclusions
+| `IMCD_Zce`   | `Zces_Zcec`     | `Zced` is excluded as it conflicts with `D`
+| `IMCQ_Zce`   | `Zces_Zcec`     | `Zced` is excluded as it conflicts with `D` which is implied by `Q`
+| `IMC_Zce_ZFinx` | all          | no exclusions
+| `IMC_Zce_ZDinx` | all          | no exclusions
+| `IMC_Zce_ZQinx` | all          | no exclusions
+|===============================================================================
+
+`Zce` is split into subsets. It includes 
 
 * `Zces` sequenced instructions
 ** 16-bit: `C.PUSH, C.POP, C.POPRET, C.MVA01S07, C.MVA23S07, C.MVP`     
@@ -53,46 +77,52 @@ Zce is split into subsets. It includes
 * `Zcec` common instructions
 ** all others
 
-=== Zce configuration options
+The reason for the `Zces` and `Zces[fdq]` subsets is to allow cores not to implement the sequencer. The sequencer is not so complex for single issue cores, but for more complex cores it can cause unnecessary complexity. 
 
-. `Zcec` implies `C`.
+[NOTE]
+
+  It's not possible to configure `Zce_not_Zces` i.e. `Zce` without the `Zces` subset, which would make the configuration much simpler to specify.
+
+=== Zce low level configuration options
+
+As stated above `Zce` or any subsets of `Zce` require `IMC`.
 
 . `Zced` and `Zces` both imply `Zcec`.
 
-. `Zcesf` implies `Zces` and also `F`, `F` and `Zces` imply `Zcesf`
+. The combination of `F` and `Zces` implies `Zcesf`
 
-. `Zcesd` implies `Zcesf` and also `D`, `D` and `Zces` imply `Zcesd`
+. The combination of `D` and `Zces` implies `Zcesd`
 
-. `Zcesq` implies `Zced` and also `Q`, `Q` and `Zces` imply `Zcesq`
+. The combination of `Q` and `Zces` implies `Zcesq`
 
-. If `Zce` is specified, and `D` is _not_ specified then `C_Zces_Zced_Zcec` are configured.
+<<simplevalidconfigs>> shows which subsets are specified from the simple configuration strings.
 
-. If `Zce` is specified, and `D` _is_  specified then `C_Zces_Zcec_Zcesf_Zcesd` are configured.
-
-. If `Zce` is specified, and `ZDinx` is  specified then `C_Zces_Zced_Zcec` are configured, as there are no conflicts with `ZDinx`.
-.. Therefore if a core needs double precision arithmetic _and_ small code size then the correct configuration to choose is `Zce_ZDinx`.
-
-. If `Zces` is not required then `Zcec` and optionally `Zced` may be specified.
-
-[#validconfigs]
-.Valid configurations: ✓ configured, ✗ incompatible
+[#simplevalidconfigs]
+.Simple valid configurations: ✓ configured
 [width="100%",options=header]
 |===============================================================================
-|#| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | F | D | Q | ZDinx | Minimal config |Comment
-13+| `Zce` is configured, i.e. the maximum subset. 
-13+|To go from 1 to 2-5 add one FP configuration
-|1| ✓    | ✓   | ✓    |       | ✗    | ✗      |  |✗   |✗ |      | `Zce`      | basic configuration
-|2| ✓    | ✓   | ✓    | ✗    | ✗     | ✗     |✗ | ✗ | ✗| ✓     | `Zce_ZDinx`| `ZDinx` conflicts with `FDQ`
-|3| ✓    | ✓   | ✓    | ✓    | ✗     | ✗     |✓ | ✗ |✗ | ✗     | `F_Zce`    | `F` is compatible with `Zced`
-|4| ✓    | ✗   | ✓    | ✓    | ✓     |        |✓ | ✓ |  | ✗     | `D_Zce`    | `D`  conflicts with `Zced`
-|5| ✓    | ✗   | ✓    | ✓    | ✓     | ✓     |✓ | ✓ | ✓| ✗     | `Q_Zce`    | `Q`  implies conflict with `Zced`
-13+| `Zcec` and optionally `Zced` are configured, so no sequenced instructions are included.
-13+|To go from 6 to 7-8, add `F` or `ZDinx` and retain `Zced`. To go from 6 to 9 or 10, add `D` or `Q` and remove `Zced`
-|6| ✓    | ✓   |       |      | ✗      | ✗     |  | ✗ |✗  |       |`Zcec_Zced` | basic configuration
-|7| ✓    | ✓   |       | ✗    | ✗      |✗     |✗  |✗ |✗  | ✓     |`Zcec_Zced_ZDinx` | `ZDinx` without `Zces`
-|8| ✓    | ✓   |       |       | ✗      | ✗     |✓ | ✗ |✗  | ✗    |`F_Zcec_Zced` | `F`+`Zcec` but no `Zcesf`
-|9| ✓    | ✗   |       |       |        |       |✓ | ✓ |   | ✗    |`D_Zcec` | `D`  conflicts with `Zced`
-|10| ✓    | ✗   |       |       |        |       |✓ | ✓ | ✓ | ✗    |`Q_Zcec` | `Q`  implies conflict with `Zced`
+|#| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq  | Minimal config string |Comment
+9+| `Zce` is configured, i.e. the maximum subset. 
+|1| ✓    | ✓   | ✓    |       |      |        | `IMC_Zce`      | basic configuration
+|2| ✓    | ✓   | ✓    |      |       |       | `IMC_Zce_ZDinx`| `ZDinx` is compatible with `Zced`
+|3| ✓    | ✓   | ✓    | ✓    |       |       | `IMCF_Zce`    | `F` is compatible with `Zced`
+|4| ✓    |     | ✓    | ✓    | ✓     |        | `IMCD_Zce`    | `D`  conflicts with `Zced`
+|5| ✓    |     | ✓    | ✓    | ✓     | ✓      | `IMCQ_Zce`    | `Q`  implies conflict with `Zced`
+|===============================================================================
+
+<<complexvalidconfigs>> shows which subsets are specified from the more complex configuration strings required to exclude `Zces`.
+
+[#complexvalidconfigs]
+.Valid configurations excluding `Zces`: ✓ configured
+[width="100%",options=header]
+|===============================================================================
+|#| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | Minimal config string |Comment
+9+| `Zcec` and optionally `Zced` are configured, so no sequenced instructions are included.
+|6| ✓    | ✓   |       |      |        |        |`IMC_Zcec_Zced` | basic configuration
+|7| ✓    | ✓   |       |      |        |       |`IMC_Zcec_Zced_ZDinx` | `ZDinx` without `Zces`
+|8| ✓    | ✓   |       |       |        |       |`IMCF_Zcec_Zced` | `F`+`Zcec` but no `Zcesf`
+|9| ✓    |     |       |       |        |       |`IMCD_Zcec` | `D`  conflicts with `Zced`
+|10| ✓    |     |       |       |        |       |`IMCQ_Zcec` | `Q`  implies conflict with `Zced`
 |===============================================================================
 
 == C-extension subsets
