@@ -80,17 +80,17 @@ Zce is split into subsets. It includes
 |===============================================================================
 | Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | F | D | Q | ZDinx | Minimal config |Comment
 12+| `Zce` is configured, i.e. the maximum subset
-| ✓    | ✓   | ✓    |       |       |       |   |    |  |       | `Zce`      | basic configuration
+| ✓    | ✓   | ✓    |       | ✗    | ✗      |  |✗   |✗ |      | `Zce`      | basic configuration
 | ✓    | ✓   | ✓    | ✗    | ✗     | ✗     |✗ | ✗ | ✗| ✓     | `Zce_ZDinx`| `ZDinx` conflicts with `FDQ`
-| ✓    | ✓   | ✓    | ✓    |        |        |✓ |   |  | ✗     | `F_Zce`    | `F` support
-| ✓    | ✗   | ✓    | ✓    | ✓     |        |✓ | ✓ |  | ✗     | `D_Zce`    | `D` support conflicts with `Zced`
-| ✓    | ✗   | ✓    | ✓    | ✓     | ✓     |✓ | ✓ | ✓| ✗     | `Q_Zce`    | `Q` support implies conflict with `Zced`
-12+| `Zcec` and optionally `Zced` are configured
-| ✓    | ✓   |       |      |        |       |   |   |   |       |`Zcec_Zced` | basic configuration
-| ✓    | ✓   |       | ✗    | ✗      |✗     |✗  |✗ |✗  | ✓     |`Zcec_Zced_ZDinx` | `ZDinx` is optional if `D` is not configured
-| ✓    | ✓   | ✗     | ✗   | ✗      | ✗     |✓ | ✗ |✗  | ✗    |`F_Zcec_Zced` | `F`+`Zcec` but no `Zcesf`
-| ✓    | ✗   |       |       |        |       |✓ | ✓ |   | ✗    |`D_Zcec` | `D` is incompatible with `Zced`
-| ✓    | ✗   |       |       |        |       |✓ | ✓ | ✓ | ✗    |`Q_Zcec` | `D` is incompatible with `Zced`
+| ✓    | ✓   | ✓    | ✓    | ✗     | ✗     |✓ | ✗ |✗ | ✗     | `F_Zce`    | `F` is compatible with `Zced`
+| ✓    | ✗   | ✓    | ✓    | ✓     |        |✓ | ✓ |  | ✗     | `D_Zce`    | `D`  conflicts with `Zced`
+| ✓    | ✗   | ✓    | ✓    | ✓     | ✓     |✓ | ✓ | ✓| ✗     | `Q_Zce`    | `Q`  implies conflict with `Zced`
+12+| `Zcec` and optionally `Zced` are configured, so no sequenced instructions are included
+| ✓    | ✓   |       |      | ✗      | ✗     |  | ✗ |✗  |       |`Zcec_Zced` | basic configuration
+| ✓    | ✓   |       | ✗    | ✗      |✗     |✗  |✗ |✗  | ✓     |`Zcec_Zced_ZDinx` | `ZDinx` without `Zces`
+| ✓    | ✓   |       |       | ✗      | ✗     |✓ | ✗ |✗  | ✗    |`F_Zcec_Zced` | `F`+`Zcec` but no `Zcesf`
+| ✓    | ✗   |       |       |        |       |✓ | ✓ |   | ✗    |`D_Zcec` | `D`  conflicts with `Zced`
+| ✓    | ✗   |       |       |        |       |✓ | ✓ | ✓ | ✗    |`Q_Zcec` | `Q`  implies conflict with `Zced`
 |===============================================================================
 
 == C-extension subsets
