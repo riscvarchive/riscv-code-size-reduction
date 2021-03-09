@@ -1,0 +1,34 @@
+= Code Size Reduction TG Meeting 9th March 2021
+
+Code-OPT SIG will continue the work that we are doing, just need to formalise it and find a chair / vice-chair.
+
+== Configuration strings
+
+Who defines the core strings to help me unravel how to specify it? Talk to Krste directly. Anders suggests we specify all_but_XYZ syntax? We'll work on a proposal and then talk to Krste.
+
+== ISA review
+
+It was pointed that that we can emulate in software via the trap handler, so we don't have to implement the tricky instructions. This is always the case, 
+and is quite relevant for PUSH/POP.
+
+Having TP as a second GP in the toolchain sounds reasonable.
+
+We don't need to implement the full set of branch-immediate instructions, the compiler is OK with just a subset.
+
+== Power estimation
+
+what about power estimation from code-size reduction? "watch" software might help but the results can be wildly inaccurate. 
+
+- Jeremy has voltage sampling boards for power measurement. 
+- Jeremy will present research on compiling for low power next week! 
+- Robert will present the IAR power analysis trace software next week, too
+
+The current problem is that in riscv there's no specific uarch so there's no knowledge of the cost of each instruction. ARM can compile for e.g. a CORTEX-M3 which has a power profile.
+
+== Resource
+
+Talk to wei wu about adding compiler resource for prototyping.
+
+CAS/ICT to do PoC, tell Arun and Krste about priorities
+
+
