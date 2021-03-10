@@ -60,7 +60,7 @@ All systems which implement `Zce` must also implement the `IMC` extensions.  A f
 *** `Zcesf`: 32-bit: `PUSH.F, POP.F, POPRET.F`
 *** `Zcesd`: 32-bit: `PUSH.D, POP.D, POPRET.D`
 *** `Zcesq`: 32-bit: `PUSH.Q, POP.Q, POPRET.Q`
-* `Zced` instructions which conflict with the D-extension
+* `Zced` instructions which conflict with the `D`-extension
 ** 16-bit: `C.LBU, C.LHU, C.SB, C.SH, C.DECBGEZ`
 ** 32-bit: `LWGP, SWGP, LWTP, SWTP`
 * `Zcec` common instructions
@@ -76,7 +76,7 @@ As stated above `Zce` or any subsets of `Zce` require `IMC`.
 
 . The combination of `Q` and `Zces` implies `Zcesq`
 
-<<simplevalidconfigs>> shows which subsets are enab,led from the simplest configuration strings.
+<<simplevalidconfigs>> shows which subsets are enabled from the simplest configuration strings.
 
 [#simplevalidconfigs]
 .Simple valid configurations
@@ -101,7 +101,7 @@ As stated above `Zce` or any subsets of `Zce` require `IMC`.
 8+| `Zcec` and optionally `Zced` are configured, so no sequenced instructions are included.
 | ✓    | ✓   |       |      |        |        |`IMC_Zcec_Zced` | basic configuration
 | ✓    | ✓   |       |      |        |       |`IMC_Zcec_Zced_ZDinx` | `ZDinx` without `Zces`
-| ✓    | ✓   |       |       |        |       |`IMCF_Zcec_Zced` | `F`+`Zcec` but no `Zcesf`
+| ✓    | ✓   |       |       |        |       |`IMCF_Zcec_Zced` | `F`+`Zcec` but no `Zces` or `Zcesf`
 | ✓    |     |       |       |        |       |`IMCD_Zcec` | `D`  conflicts with `Zced`
 | ✓    |     |       |       |        |       |`IMCQ_Zcec` | `Q`  implies `D` which conflicts with `Zced`
 |===============================================================================
