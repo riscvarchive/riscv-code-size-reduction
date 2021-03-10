@@ -91,6 +91,10 @@ As stated above `Zce` or any subsets of `Zce` require `IMC`.
 | ✓    |     | ✓    | ✓    | ✓     | ✓      | `IMCQ_Zce`    | `Q`  implies `D` which conflicts with `Zced`
 |===============================================================================
 
+[NOTE]
+
+  `Zces[fdq]` are never manually specified, they are always just implied by `[FDQ] + Zce`
+
 <<complexvalidconfigs>> shows which subsets are specified for the same set of configurations to exclude `Zces*`.
 
 [#complexvalidconfigs]
