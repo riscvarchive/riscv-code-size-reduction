@@ -602,6 +602,23 @@ Some instructions will be reused from the B-extension and included in `Zcec`.
 
 `pack`, `packw`, and possibly `packd` are required to allow the pseudo-ops from <<bextpseudoops>>.
 
+==== Preliminary: other B-extension instructions 
+
+These are inferred in Huawei IoT code by the Embecosm GCC10 port
+
+* `pack, packu`
+* `min[u], max[u]`
+* `andn, orn`
+* `grev[i]`
+* `clz, ctz`
+* `sbext[i]`
+
+These seem useful for address calculation:
+
+* `sh[123]add`
+
+no final decisions have been made about this subset
+
 == `Zces` definition
 
 `Zces` is optional as cores may not want to build the sequencer to issue the instructions.
