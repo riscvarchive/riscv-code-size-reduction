@@ -66,35 +66,34 @@ embench_ud.elf,650.0,650.0,0,0.00%
 .MVAxxSyy
 [options="header", format="csv"]
 |=======================
-Filename,Size,MVA01S07,MVA23S07,MVA01S03,MVA23S03,MVP_EO_EO_SN,MVP_E_EO_SN,MVP_E_E_SN,MVP_E_E_S,MVP_E_E_N
-huawei_iot_protocol.elf,963736,0.23%,0.07%,0.15%,0.04%,0.40%,0.34%,0.27%,0.07%,0.20%
-huawei_iot_application.elf,344742,0.31%,0.10%,0.22%,0.06%,0.56%,0.52%,0.45%,0.08%,0.37%
-zephyr_peripheral.elf,76246,0.43%,0.01%,0.32%,0.01%,0.58%,0.46%,0.34%,0.15%,0.19%
-fpmark-inner-product-mid-10k.elf,68454,0.81%,0.17%,0.53%,0.08%,1.57%,1.36%,1.12%,0.61%,0.51%
-fpmark-radix2-sml-2k.elf,62610,0.76%,0.26%,0.50%,0.13%,1.98%,1.74%,1.44%,0.77%,0.67%
-fpmark-xp1px-sml-c100n20.elf,59014,0.81%,0.28%,0.53%,0.15%,2.09%,1.83%,1.52%,0.82%,0.70%
-fpmark-atan-1M.elf,57820,0.70%,0.18%,0.49%,0.09%,1.65%,1.43%,1.17%,0.63%,0.54%
-zephyr_central.elf,43434,0.50%,0.01%,0.38%,0.01%,0.62%,0.49%,0.39%,0.19%,0.20%
-embench_nsichneu.elf,15020,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-embench_picojpeg.elf,7922,0.03%,0.00%,0.03%,0.00%,0.05%,0.05%,0.05%,0.03%,0.03%
-embench_qrduino.elf,5952,0.34%,0.00%,0.24%,0.00%,0.03%,0.00%,0.00%,0.00%,0.00%
-embench_nettle-sha256.elf,5564,0.11%,0.00%,0.11%,0.00%,0.04%,0.04%,0.04%,0.00%,0.04%
-embench_statemate.elf,4066,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-embench_wikisort.elf,4030,0.55%,0.15%,0.25%,0.00%,0.50%,0.25%,0.20%,0.15%,0.05%
-embench_nettle-aes.elf,2694,0.07%,0.00%,0.07%,0.00%,0.07%,0.07%,0.07%,0.07%,0.00%
-embench_slre.elf,2386,0.00%,0.08%,0.00%,0.00%,0.17%,0.08%,0.00%,0.00%,0.00%
-embench_sglib-combined.elf,2272,0.26%,0.00%,0.18%,0.00%,0.18%,0.18%,0.09%,0.09%,0.00%
-embench_cubic.elf,2088,0.19%,0.00%,0.00%,0.00%,0.29%,0.29%,0.29%,0.29%,0.00%
-embench_huffbench.elf,1608,0.37%,0.12%,0.00%,0.00%,0.25%,0.25%,0.00%,0.00%,0.00%
-embench_edn.elf,1428,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-embench_aha-mont64.elf,1028,0.19%,0.58%,0.00%,0.39%,4.28%,4.28%,4.28%,0.39%,3.89%
-embench_minver.elf,874,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-embench_ud.elf,650,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-embench_st.elf,586,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-embench_nbody.elf,532,0.00%,0.00%,0.00%,0.00%,0.75%,0.75%,0.75%,0.00%,0.75%
-embench_matmult-int.elf,398,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-embench_crc32.elf,212,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-
+Filename,Size,MVA01S07,MVA23S07,MVP_E_E_N
+huawei_iot_protocol.elf,963736,0.23%,0.07%,0.20%
+huawei_iot_application.elf,344742,0.31%,0.10%,0.37%
+zephyr_peripheral.elf,76246,0.43%,0.01%,0.19%
+fpmark-inner-product-mid-10k.elf,68454,0.81%,0.17%,0.51%
+fpmark-radix2-sml-2k.elf,62610,0.76%,0.26%,0.67%
+fpmark-xp1px-sml-c100n20.elf,59014,0.81%,0.28%,0.70%
+fpmark-atan-1M.elf,57820,0.70%,0.18%,0.54%
+zephyr_central.elf,43434,0.50%,0.01%,0.20%
+embench_nsichneu.elf,15020,0.00%,0.00%,0.00%
+embench_picojpeg.elf,7922,0.03%,0.00%,0.03%
+embench_qrduino.elf,5952,0.34%,0.00%,0.00%
+embench_nettle-sha256.elf,5564,0.11%,0.00%,0.04%
+embench_statemate.elf,4066,0.00%,0.00%,0.00%
+embench_wikisort.elf,4030,0.55%,0.15%,0.05%
+embench_nettle-aes.elf,2694,0.07%,0.00%,0.00%
+embench_slre.elf,2386,0.00%,0.08%,0.00%
+embench_sglib-combined.elf,2272,0.26%,0.00%,0.00%
+embench_cubic.elf,2088,0.19%,0.00%,0.00%
+embench_huffbench.elf,1608,0.37%,0.12%,0.00%
+embench_edn.elf,1428,0.00%,0.00%,0.00%
+embench_aha-mont64.elf,1028,0.19%,0.58%,3.89%
+embench_minver.elf,874,0.00%,0.00%,0.00%
+embench_ud.elf,650,0.00%,0.00%,0.00%
+embench_st.elf,586,0.00%,0.00%,0.00%
+embench_nbody.elf,532,0.00%,0.00%,0.75%
+embench_matmult-int.elf,398,0.00%,0.00%,0.00%
+embench_crc32.elf,212,0.00%,0.00%,0.00%
 |=======================
 
 ## C.SBSP and  C.LBUSP
@@ -114,7 +113,7 @@ embench_crc32.elf,212,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
 .SP Relative Store and Load
 [options="header", format="csv"]
 |=======================
-File name|C.LBU|C.LHU|C.SB|C.SH
+File name,File Size,C.LBU,C.LHU,C.SB,C.SH
 embench_crc32.elf,212,0.00%,0.00%,0.00%,0.00%
 embench_matmult-int.elf,398,0.00%,0.00%,0.00%,0.00%
 embench_nbody.elf,532,0.00%,0.00%,0.00%,0.00%
@@ -270,3 +269,39 @@ _rcount = { 0: ("ra",), 1: ("ra", "s0"),2: ("ra", "s0-s1"),3: ("ra", "s0-s2"),4:
 ## C.LHU
 	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
 
+
+
+# Other considered instructions 
+
+## Other variations of double move 
+[options="header", format="csv"]
+|=======================
+Filename,Size,MVA01S03,MVA23S03,MVP_EO_EO_SN,MVP_E_EO_SN,MVP_E_E_SN,MVP_E_E_S
+huawei_iot_protocol.elf,963736,0.15%,0.04%,0.40%,0.34%,0.27%,0.07%
+huawei_iot_application.elf,344742,0.22%,0.06%,0.56%,0.52%,0.45%,0.08%
+zephyr_peripheral.elf,76246,0.32%,0.01%,0.58%,0.46%,0.34%,0.15%
+fpmark-inner-product-mid-10k.elf,68454,0.53%,0.08%,1.57%,1.36%,1.12%,0.61%
+fpmark-radix2-sml-2k.elf,62610,0.50%,0.13%,1.98%,1.74%,1.44%,0.77%
+fpmark-xp1px-sml-c100n20.elf,59014,0.53%,0.15%,2.09%,1.83%,1.52%,0.82%
+fpmark-atan-1M.elf,57820,0.49%,0.09%,1.65%,1.43%,1.17%,0.63%
+zephyr_central.elf,43434,0.38%,0.01%,0.62%,0.49%,0.39%,0.19%
+embench_nsichneu.elf,15020,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_picojpeg.elf,7922,0.03%,0.00%,0.05%,0.05%,0.05%,0.03%
+embench_qrduino.elf,5952,0.24%,0.00%,0.03%,0.00%,0.00%,0.00%
+embench_nettle-sha256.elf,5564,0.11%,0.00%,0.04%,0.04%,0.04%,0.00%
+embench_statemate.elf,4066,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_wikisort.elf,4030,0.25%,0.00%,0.50%,0.25%,0.20%,0.15%
+embench_nettle-aes.elf,2694,0.07%,0.00%,0.07%,0.07%,0.07%,0.07%
+embench_slre.elf,2386,0.00%,0.00%,0.17%,0.08%,0.00%,0.00%
+embench_sglib-combined.elf,2272,0.18%,0.00%,0.18%,0.18%,0.09%,0.09%
+embench_cubic.elf,2088,0.00%,0.00%,0.29%,0.29%,0.29%,0.29%
+embench_huffbench.elf,1608,0.00%,0.00%,0.25%,0.25%,0.00%,0.00%
+embench_edn.elf,1428,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_aha-mont64.elf,1028,0.00%,0.39%,4.28%,4.28%,4.28%,0.39%
+embench_minver.elf,874,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_ud.elf,650,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_st.elf,586,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_nbody.elf,532,0.00%,0.00%,0.75%,0.75%,0.75%,0.00%
+embench_matmult-int.elf,398,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_crc32.elf,212,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+|=======================
