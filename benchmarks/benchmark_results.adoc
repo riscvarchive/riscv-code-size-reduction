@@ -12,7 +12,7 @@
 
 
 # Benchmarking Baground: 
-This document present benchmarking results for Zce extension, baseline files were compiled using gcc10.2.0-r4 with -Os. All results are generated from static analysis, and
+This document present benchmarking results for Zce extension, baseline files were compiled using gcc10.2.0-r4 with -Os and -masve-restore unless otherwise specified. All results are generated from static analysis, and
 file sizes are calculated based on parsed instruction sizes of the ELF files, and the optimized sizes are calculated based on parsed instruction with relevant Zce instructions. 
 
 
@@ -64,40 +64,37 @@ embench_ud.elf,650.0,650.0,0,0.00%
 .. Overwrite each multiple move that fit the replacement criteria  with the new moves instruction
 
 .MVAxxSyy
-[options="header,footer"]
+[options="header", format="csv"]
 |=======================
-|File Name|File Size|MVA01S07|MVA23S07|MVA01S03|MVA23S03
-|huawei_iot_protocol.elf|978958|0.22%|0.07%|0.13%|0.04%
-|huawei_iot_application.elf|344988|0.31%|0.09%|0.20%|0.06%
-|opus_demo_float.elf|215548|0.37%|0.12%|0.24%|0.05%
-|testfloat.elf|214658|0.30%|0.09%|0.14%|0.04%
-|opus_demo_fixed.elf|202084|0.25%|0.03%|0.17%|0.01%
-|fpmark-inner-product-mid-10k.elf|124838|0.71%|0.14%|0.47%|0.07%
-|fpmark-radix2-sml-2k.elf|118434|0.68%|0.16%|0.46%|0.07%
-|fpmark-xp1px-sml-c100n20.elf|114926|0.69%|0.17%|0.47%|0.07%
-|fpmark-atan-1M.elf|113424|0.64%|0.13%|0.45%|0.06%
-|zephry_peripheral.elf|76360|0.45%|0.01%|0.34%|0.01%
-|coremark.elf|54700|0.50%|0.04%|0.41%|0.03%
-|zephry_central.elf|43366|0.53%|0.01%|0.42%|0.01%
-|embench_nsichneu.elf|15046|0.00%|0.00%|0.00%|0.00%
-|embench_picojpeg.elf|8116|0.05%|0.00%|0.05%|0.00%
-|embench_qrduino.elf|6100|0.36%|0.00%|0.30%|0.00%
-|embench_nettle-sha256.elf|5558|0.11%|0.00%|0.07%|0.00%
-|embench_wikisort.elf|4140|0.24%|0.14%|0.19%|0.05%
-|embench_statemate.elf|3926|0.00%|0.00%|0.00%|0.00%
-|embench_nettle-aes.elf|2774|0.07%|0.00%|0.07%|0.00%
-|embench_slre.elf|2550|0.00%|0.24%|0.00%|0.16%
-|embench_sglib-combined.elf|2354|0.17%|0.00%|0.08%|0.00%
-|embench_cubic.elf|2270|0.35%|0.00%|0.35%|0.00%
-|embench_huffbench.elf|1658|0.24%|0.12%|0.00%|0.00%
-|embench_edn.elf|1344|0.00%|0.00%|0.00%|0.00%
-|embench_aha-mont64.elf|1062|0.56%|0.38%|0.00%|0.38%
-|embench_minver.elf|918|0.00%|0.00%|0.00%|0.00%
-|embench_ud.elf|692|0.00%|0.00%|0.00%|0.00%
-|embench_st.elf|630|0.00%|0.00%|0.00%|0.00%
-|embench_nbody.elf|566|0.00%|0.00%|0.00%|0.00%
-|embench_matmult-int.elf|420|0.00%|0.00%|0.00%|0.00%
-|embench_crc32.elf|234|0.00%|0.00%|0.00%|0.00%
+Filename,Size,MVA01S07,MVA23S07,MVA01S03,MVA23S03,MVP_EO_EO_SN,MVP_E_EO_SN,MVP_E_E_SN,MVP_E_E_S,MVP_E_E_N
+huawei_iot_protocol.elf,963736,0.23%,0.07%,0.15%,0.04%,0.40%,0.34%,0.27%,0.07%,0.20%
+huawei_iot_application.elf,344742,0.31%,0.10%,0.22%,0.06%,0.56%,0.52%,0.45%,0.08%,0.37%
+zephyr_peripheral.elf,76246,0.43%,0.01%,0.32%,0.01%,0.58%,0.46%,0.34%,0.15%,0.19%
+fpmark-inner-product-mid-10k.elf,68454,0.81%,0.17%,0.53%,0.08%,1.57%,1.36%,1.12%,0.61%,0.51%
+fpmark-radix2-sml-2k.elf,62610,0.76%,0.26%,0.50%,0.13%,1.98%,1.74%,1.44%,0.77%,0.67%
+fpmark-xp1px-sml-c100n20.elf,59014,0.81%,0.28%,0.53%,0.15%,2.09%,1.83%,1.52%,0.82%,0.70%
+fpmark-atan-1M.elf,57820,0.70%,0.18%,0.49%,0.09%,1.65%,1.43%,1.17%,0.63%,0.54%
+zephyr_central.elf,43434,0.50%,0.01%,0.38%,0.01%,0.62%,0.49%,0.39%,0.19%,0.20%
+embench_nsichneu.elf,15020,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_picojpeg.elf,7922,0.03%,0.00%,0.03%,0.00%,0.05%,0.05%,0.05%,0.03%,0.03%
+embench_qrduino.elf,5952,0.34%,0.00%,0.24%,0.00%,0.03%,0.00%,0.00%,0.00%,0.00%
+embench_nettle-sha256.elf,5564,0.11%,0.00%,0.11%,0.00%,0.04%,0.04%,0.04%,0.00%,0.04%
+embench_statemate.elf,4066,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_wikisort.elf,4030,0.55%,0.15%,0.25%,0.00%,0.50%,0.25%,0.20%,0.15%,0.05%
+embench_nettle-aes.elf,2694,0.07%,0.00%,0.07%,0.00%,0.07%,0.07%,0.07%,0.07%,0.00%
+embench_slre.elf,2386,0.00%,0.08%,0.00%,0.00%,0.17%,0.08%,0.00%,0.00%,0.00%
+embench_sglib-combined.elf,2272,0.26%,0.00%,0.18%,0.00%,0.18%,0.18%,0.09%,0.09%,0.00%
+embench_cubic.elf,2088,0.19%,0.00%,0.00%,0.00%,0.29%,0.29%,0.29%,0.29%,0.00%
+embench_huffbench.elf,1608,0.37%,0.12%,0.00%,0.00%,0.25%,0.25%,0.00%,0.00%,0.00%
+embench_edn.elf,1428,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_aha-mont64.elf,1028,0.19%,0.58%,0.00%,0.39%,4.28%,4.28%,4.28%,0.39%,3.89%
+embench_minver.elf,874,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_ud.elf,650,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_st.elf,586,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_nbody.elf,532,0.00%,0.00%,0.00%,0.00%,0.75%,0.75%,0.75%,0.00%,0.75%
+embench_matmult-int.elf,398,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+embench_crc32.elf,212,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+
 |=======================
 
 ## C.SBSP and  C.LBUSP
@@ -115,40 +112,36 @@ embench_ud.elf,650.0,650.0,0,0.00%
 ... Immediate <= 2^6 and Immediate%2 == 0
 
 .SP Relative Store and Load
-[options="header,footer"]
+[options="header", format="csv"]
 |=======================
-|File name|C.LBU|C.LHU|C.SB|C.SH
-|coremark.elf|0.00%|0.09%|0.00%|0.06%
-|embench_aha-mont64.elf|0.00%|0.00%|0.00%|0.00%
-|embench_crc32.elf|0.00%|0.00%|0.00%|0.00%
-|embench_cubic.elf|0.00%|0.00%|0.00%|0.00%
-|embench_edn.elf|0.00%|0.00%|0.00%|0.00%
-|embench_huffbench.elf|0.00%|0.00%|0.00%|0.00%
-|embench_matmult-int.elf|0.00%|0.00%|0.00%|0.00%
-|embench_minver.elf|0.00%|0.00%|0.00%|0.00%
-|embench_nbody.elf|0.00%|0.00%|0.00%|0.00%
-|embench_nettle-aes.elf|0.00%|0.00%|0.00%|0.00%
-|embench_nettle-sha256.elf|0.00%|0.00%|0.00%|0.00%
-|embench_nsichneu.elf|0.00%|0.00%|0.00%|0.00%
-|embench_picojpeg.elf|0.00%|0.00%|0.00%|0.00%
-|embench_qrduino.elf|0.00%|0.00%|0.00%|0.00%
-|embench_sglib-combined.elf|0.00%|0.00%|0.00%|0.00%
-|embench_slre.elf|0.00%|0.00%|0.00%|0.00%
-|embench_st.elf|0.00%|0.00%|0.00%|0.00%
-|embench_statemate.elf|0.00%|0.00%|0.05%|0.00%
-|embench_ud.elf|0.00%|0.00%|0.00%|0.00%
-|embench_wikisort.elf|0.00%|0.00%|0.00%|0.00%
-|fpmark-atan-1M.elf|0.00%|0.05%|0.01%|0.04%
-|fpmark-inner-product-mid-10k.elf|0.00%|0.04%|0.00%|0.03%
-|fpmark-radix2-sml-2k.elf|0.00%|0.04%|0.01%|0.04%
-|fpmark-xp1px-sml-c100n20.elf|0.00%|0.04%|0.00%|0.03%
-|huawei_iot_application.elf|0.13%|0.11%|0.20%|0.19%
-|huawei_iot_protocol.elf|0.14%|0.09%|0.21%|0.17%
-|opus_demo_fixed.elf|0.00%|0.03%|0.00%|0.01%
-|opus_demo_float.elf|0.00%|0.02%|0.00%|0.01%
-|testfloat.elf|0.06%|0.08%|0.30%|0.01%
-|zephry_central.elf|0.07%|0.04%|0.20%|0.19%
-|zephry_peripheral.elf|0.06%|0.02%|0.14%|0.14%
+File name|C.LBU|C.LHU|C.SB|C.SH
+embench_crc32.elf,212,0.00%,0.00%,0.00%,0.00%
+embench_matmult-int.elf,398,0.00%,0.00%,0.00%,0.00%
+embench_nbody.elf,532,0.00%,0.00%,0.00%,0.00%
+embench_st.elf,586,0.00%,0.00%,0.00%,0.00%
+embench_ud.elf,650,0.00%,0.00%,0.00%,0.00%
+embench_minver.elf,874,0.00%,0.00%,0.00%,0.00%
+embench_aha-mont64.elf,1028,0.00%,0.00%,0.00%,0.00%
+embench_edn.elf,1428,0.00%,0.00%,0.00%,0.00%
+embench_huffbench.elf,1608,0.00%,0.00%,0.00%,0.00%
+embench_cubic.elf,2088,0.00%,0.00%,0.00%,0.00%
+embench_sglib-combined.elf,2272,0.00%,0.00%,0.00%,0.00%
+embench_slre.elf,2386,0.00%,0.00%,0.00%,0.00%
+embench_nettle-aes.elf,2694,0.00%,0.00%,0.00%,0.00%
+embench_wikisort.elf,4030,0.00%,0.00%,0.00%,0.00%
+embench_statemate.elf,4066,0.00%,0.00%,0.00%,0.00%
+embench_nettle-sha256.elf,5564,0.00%,0.00%,0.00%,0.00%
+embench_qrduino.elf,5952,0.00%,0.00%,0.00%,0.00%
+embench_picojpeg.elf,7922,0.05%,0.00%,0.00%,0.00%
+embench_nsichneu.elf,15020,0.00%,0.00%,0.00%,0.00%
+zephyr_central.elf,43434,0.08%,0.04%,0.20%,0.19%
+fpmark-atan-1M.elf,57820,0.00%,0.01%,0.01%,0.03%
+fpmark-xp1px-sml-c100n20.elf,59014,0.00%,0.00%,0.01%,0.01%
+fpmark-radix2-sml-2k.elf,62610,0.00%,0.01%,0.01%,0.03%
+fpmark-inner-product-mid-10k.elf,68454,0.00%,0.01%,0.01%,0.03%
+zephyr_peripheral.elf,76246,0.06%,0.03%,0.15%,0.14%
+huawei_iot_application.elf,344742,0.13%,0.11%,0.18%,0.18%
+huawei_iot_protocol.elf,963736,0.14%,0.09%,0.20%,0.17%
 |=======================
 
 
