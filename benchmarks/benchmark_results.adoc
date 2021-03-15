@@ -31,8 +31,8 @@ file sizes are calculated based on parsed instruction sizes of the ELF files, an
 File , Size,Optimized Size, Table Length, Saving
 huawei_iot_application.elf,344742.0,314432.0,512,8.792082194800754%
 huawei_iot_protocol.elf,963736.0,895832.0,512,7.0459129886192855%
-zephry_peripheral.elf,83008.0,80102.0,213,3.5008673862760187%
-zephry_central.elf,47284.0,46038.0,120,2.6351408510278285%
+zephyr_peripheral.elf,76246.0,71232.0,221,6.576082679747131%
+zephyr_central.elf,43434.0,40900.0,133,5.834139153658424%
 embench_picojpeg.elf,8474.0,8312.0,9,1.9117299976398439%
 embench_wikisort.elf,4434.0,4416.0,4,0.4059539918809252%
 embench_qrduino.elf,6218.0,6212.0,2,0.09649404953361307%
