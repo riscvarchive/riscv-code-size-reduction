@@ -1,64 +1,61 @@
 ## Zce Code saving estimation criteria 
-:Version 0.1
-:doctype: book
-:encoding: utf-8
-:lang: en
-:toc: left
-:toclevels: 4
-:numbered:
-:xrefstyle: short
-:le: &#8804;
-:rarr: &#8658;
+// :Version 0.1
+// :doctype: book
+// :encoding: utf-8
+// :lang: en
+// :toc: left
+// :toclevels: 4
+// :numbered:
+// :xrefstyle: short
+// :le: &#8804;
+// :rarr: &#8658;
+
+
+# Benchmarking Baground: 
+This document present benchmarking results for Zce extension, baseline files were compiled using gcc10.2.0-r4 with -Os. All results are generated from static analysis, and
+file sizes are calculated based on parsed instruction sizes of the ELF files, and the optimized sizes are calculated based on parsed instruction with relevant Zce instructions. 
 
 
 # Zcec Subset: 
 
 ## C.TBLJAL
-.. Static Analysis (Passes through the code, get all function calls (JAL, JALR, J and JR), remove entries that we won't gain any code saving from substituting, (JAL,J) <  3
-.. Change the weight of JALR and JR entries to 3*Count 
-.. Get the top 512 entries
-.. Calculate the gains and compensate for the table size
-	** It currently still calculate the value rather than overwrite the instruction record, it will eventually overwrite the records with the correct sequences
+.. Find all (JAL, JALR, J and JR) instructions to be considered for replacement.
+.. Remove entries that we won't gain any code saving from substituting, When number of identical (JAL or J) <  3.
+.. Change the weight of JALR and JR entries to 3*Count (This would give them priority in selection, since their replacement results in more code saving).
+.. Get the top 512 entries.
+.. Replace the entries in instruction record with the TBLJAL entries, and calculate the gains and compensate for the table size.
 
 .TBLJAL 512 
-[options="header,footer"]
+[options="header", format="csv"]
 |=======================
-|File | Size|Optimized Size|Table Length|Saving
-|huawei_iot_application.elf|344988|309656|512|10.2%
-|huawei_iot_protocol.elf|978958|900328|512|8.0%
-|zephry_peripheral.elf|76360|70914|220|7.1%
-|zephry_central.elf|43366|40476|142|6.7%
-|testfloat.elf|214658|206902|185|3.6%
-|fpmark-radix2-sml-2k.elf|118434|114948|146|2.9%
-|fpmark-inner-product-mid-10k.elf|124838|121250|151|2.9%
-|fpmark-xp1px-sml-c100n20.elf|114926|111646|144|2.9%
-|fpmark-atan-1M.elf|113424|110288|147|2.8%
-|embench_picojpeg.elf|8116|7914|13|2.5%
-|embench_crc32.elf|234|230|1|1.7%
-|opus_demo_float.elf|215548|211928|150|1.7%
-|opus_demo_fixed.elf|202084|199184|139|1.4%
-|embench_matmult-int.elf|420|414|1|1.4%
-|embench_st.elf|630|622|1|1.3%
-|coremark.elf|54700|54036|53|1.2%
-|embench_slre.elf|2550|2522|2|1.1%
-|embench_wikisort.elf|4140|4102|8|0.9%
-|embench_nbody.elf|566|562|1|0.7%
-|embench_ud.elf|692|688|1|0.6%
-|embench_sglib-combined.elf|2354|2342|2|0.5%
-|embench_edn.elf|1344|1338|1|0.4%
-|embench_minver.elf|918|914|1|0.4%
-|embench_nettle-aes.elf|2774|2762|1|0.4%
-|embench_aha-mont64.elf|1062|1058|1|0.4%
-|embench_huffbench.elf|1658|1652|1|0.4%
-|embench_qrduino.elf|6100|6080|4|0.3%
-|embench_nettle-sha256.elf|5558|5548|2|0.2%
-|embench_cubic.elf|2270|2266|1|0.2%
-|embench_statemate.elf|3926|3920|1|0.2%
-|embench_nsichneu.elf|15046|15042|1|0.0%
+File , Size,Optimized Size, Table Length, Saving
+huawei_iot_application.elf,344742.0,314432.0,512,8.792082194800754%
+huawei_iot_protocol.elf,963736.0,895832.0,512,7.0459129886192855%
+zephry_peripheral.elf,83008.0,80102.0,213,3.5008673862760187%
+zephry_central.elf,47284.0,46038.0,120,2.6351408510278285%
+embench_picojpeg.elf,8474.0,8312.0,9,1.9117299976398439%
+embench_wikisort.elf,4434.0,4416.0,4,0.4059539918809252%
+embench_qrduino.elf,6218.0,6212.0,2,0.09649404953361307%
+embench_nettle-sha256.elf,5622.0,5618.0,1,0.07114905727498844%
+embench_ud.elf,686.0,686.0,0,0.0%
+embench_st.elf,618.0,618.0,0,0.0%
+embench_statemate.elf,4116.0,4116.0,0,0.0%
+embench_slre.elf,2582.0,2582.0,0,0.0%
+embench_sglib-combined.elf,2472.0,2472.0,0,0.0%
+embench_nsichneu.elf,15014.0,15014.0,0,0.0%
+embench_nettle-aes.elf,2810.0,2810.0,0,0.0%
+embench_nbody.elf,564.0,564.0,0,0.0%
+embench_minver.elf,942.0,942.0,0,0.0%
+embench_matmult-int.elf,446.0,446.0,0,0.0%
+embench_huffbench.elf,1674.0,1674.0,0,0.0%
+embench_edn.elf,1500.0,1500.0,0,0.0%
+embench_cubic.elf,2264.0,2264.0,0,0.0%
+embench_crc32.elf,228.0,228.0,0,0.0%
+embench_aha-mont64.elf,1080.0,1080.0,0,0.0%
 |=======================
 
 ## C.MVA01S07, C.MVA23S07 and C.MVP
-.. Find all moves conesquitive moves
+.. Find all moves consecutive moves
 .. Filter moves that fit the criteria for each of the proposed encoding
 .. Overwrite each multiple move that fit the replacement criteria  with the new moves instruction
 
