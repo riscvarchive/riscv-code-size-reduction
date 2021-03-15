@@ -29,29 +29,33 @@ file sizes are calculated based on parsed instruction sizes of the ELF files, an
 [options="header", format="csv"]
 |=======================
 File , Size,Optimized Size, Table Length, Saving
-huawei_iot_application.elf,344742.0,314432.0,512,8.792082194800754%
-huawei_iot_protocol.elf,963736.0,895832.0,512,7.0459129886192855%
-zephyr_peripheral.elf,76246.0,71232.0,221,6.576082679747131%
-zephyr_central.elf,43434.0,40900.0,133,5.834139153658424%
-embench_picojpeg.elf,8474.0,8312.0,9,1.9117299976398439%
-embench_wikisort.elf,4434.0,4416.0,4,0.4059539918809252%
-embench_qrduino.elf,6218.0,6212.0,2,0.09649404953361307%
-embench_nettle-sha256.elf,5622.0,5618.0,1,0.07114905727498844%
-embench_ud.elf,686.0,686.0,0,0.0%
-embench_st.elf,618.0,618.0,0,0.0%
-embench_statemate.elf,4116.0,4116.0,0,0.0%
-embench_slre.elf,2582.0,2582.0,0,0.0%
-embench_sglib-combined.elf,2472.0,2472.0,0,0.0%
-embench_nsichneu.elf,15014.0,15014.0,0,0.0%
-embench_nettle-aes.elf,2810.0,2810.0,0,0.0%
-embench_nbody.elf,564.0,564.0,0,0.0%
-embench_minver.elf,942.0,942.0,0,0.0%
-embench_matmult-int.elf,446.0,446.0,0,0.0%
-embench_huffbench.elf,1674.0,1674.0,0,0.0%
-embench_edn.elf,1500.0,1500.0,0,0.0%
-embench_cubic.elf,2264.0,2264.0,0,0.0%
-embench_crc32.elf,228.0,228.0,0,0.0%
-embench_aha-mont64.elf,1080.0,1080.0,0,0.0%
+huawei_iot_application.elf,344742.0,314432.0,512,8.79%
+huawei_iot_protocol.elf,963736.0,895832.0,512,7.05%
+zephyr_peripheral.elf,76246.0,71232.0,221,6.58%
+zephyr_central.elf,43434.0,40900.0,133,5.83%
+fpmark-radix2-sml-2k.elf,62610.0,60754.0,78,2.96%
+fpmark-inner-product-mid-10k.elf,68454.0,66504.0,82,2.85%
+fpmark-xp1px-sml-c100n20.elf,59014.0,57386.0,77,2.76%
+fpmark-atan-1M.elf,57820.0,56338.0,76,2.56%
+embench_picojpeg.elf,7922.0,7740.0,11,2.30%
+embench_wikisort.elf,4030.0,3996.0,7,0.84%
+embench_nettle-aes.elf,2694.0,2688.0,1,0.22%
+embench_qrduino.elf,5952.0,5940.0,4,0.20%
+embench_nettle-sha256.elf,5564.0,5560.0,1,0.07%
+embench_aha-mont64.elf,1028.0,1028.0,0,0.00%
+embench_crc32.elf,212.0,212.0,0,0.00%
+embench_cubic.elf,2088.0,2088.0,0,0.00%
+embench_edn.elf,1428.0,1428.0,0,0.00%
+embench_huffbench.elf,1608.0,1608.0,0,0.00%
+embench_matmult-int.elf,398.0,398.0,0,0.00%
+embench_minver.elf,874.0,874.0,0,0.00%
+embench_nbody.elf,532.0,532.0,0,0.00%
+embench_nsichneu.elf,15020.0,15020.0,0,0.00%
+embench_sglib-combined.elf,2272.0,2272.0,0,0.00%
+embench_slre.elf,2386.0,2386.0,0,0.00%
+embench_statemate.elf,4066.0,4066.0,0,0.00%
+embench_st.elf,586.0,586.0,0,0.00%
+embench_ud.elf,650.0,650.0,0,0.00%
 |=======================
 
 ## C.MVA01S07, C.MVA23S07 and C.MVP
@@ -160,40 +164,37 @@ embench_aha-mont64.elf,1080.0,1080.0,0,0.0%
 .. Find all XORI instructions and replace all  the ones that has immediate = 1 with C.LSBNOT  and change WoE to 16
 
 .C.LSBNOT
-[options="header,footer"]
+[options="header", format="csv"]
 |=======================
-|File name|File Size|Savings
-|huawei_iot_protocol.elf|1228248|0.02%
-|huawei_iot_application.elf|388912|0.01%
-|opus_demo_float.elf|215798|0.03%
-|testfloat.elf|214908|0.03%
-|opus_demo_fixed.elf|202334|0.03%
-|fpmark-inner-product-mid-10k.elf|125088|0.00%
-|fpmark-radix2-sml-2k.elf|118684|0.01%
-|fpmark-xp1px-sml-c100n20.elf|115176|0.01%
-|fpmark-atan-1M.elf|113674|0.01%
-|zephry_peripheral.elf|76982|0.01%
-|coremark.elf|54950|0.00%
-|zephry_central.elf|43988|0.00%
-|embench_nsichneu.elf|15046|0.00%
-|embench_picojpeg.elf|8116|0.00%
-|embench_qrduino.elf|6100|0.10%
-|embench_nettle-sha256.elf|5558|0.00%
-|embench_wikisort.elf|4140|0.00%
-|embench_statemate.elf|3926|0.00%
-|embench_nettle-aes.elf|2774|0.00%
-|embench_slre.elf|2550|0.08%
-|embench_sglib-combined.elf|2354|0.08%
-|embench_cubic.elf|2270|0.00%
-|embench_huffbench.elf|1658|0.00%
-|embench_edn.elf|1344|0.00%
-|embench_aha-mont64.elf|1062|0.19%
-|embench_minver.elf|918|0.00%
-|embench_ud.elf|692|0.00%
-|embench_st.elf|630|0.00%
-|embench_nbody.elf|566|0.00%
-|embench_matmult-int.elf|420|0.00%
-|embench_crc32.elf|234|0.00%
+File name,File Size,Optimized File,Savings
+embench_aha-mont64.elf,1028.0,1026.0,0.19%
+embench_crc32.elf,212.0,212.0,0.00%
+embench_cubic.elf,2088.0,2088.0,0.00%
+embench_edn.elf,1428.0,1428.0,0.00%
+embench_huffbench.elf,1608.0,1608.0,0.00%
+embench_matmult-int.elf,398.0,398.0,0.00%
+embench_minver.elf,874.0,874.0,0.00%
+embench_nbody.elf,532.0,532.0,0.00%
+embench_nettle-aes.elf,2694.0,2694.0,0.00%
+embench_nettle-sha256.elf,5564.0,5564.0,0.00%
+embench_nsichneu.elf,15020.0,15020.0,0.00%
+embench_picojpeg.elf,7922.0,7922.0,0.00%
+embench_qrduino.elf,5952.0,5946.0,0.10%
+embench_sglib-combined.elf,2272.0,2270.0,0.09%
+embench_slre.elf,2386.0,2382.0,0.17%
+embench_statemate.elf,4066.0,4066.0,0.00%
+embench_st.elf,586.0,586.0,0.00%
+embench_ud.elf,650.0,650.0,0.00%
+embench_wikisort.elf,4030.0,4030.0,0.00%
+fpmark-atan-1M.elf,57820.0,57806.0,0.02%
+fpmark-inner-product-mid-10k.elf,68454.0,68442.0,0.02%
+fpmark-radix2-sml-2k.elf,62610.0,62598.0,0.02%
+fpmark-xp1px-sml-c100n20.elf,59014.0,59002.0,0.02%
+huawei_iot_application.elf,344742.0,344700.0,0.01%
+huawei_iot_protocol.elf,963736.0,963498.0,0.02%
+zephyr_central.elf,43434.0,43428.0,0.01%
+zephyr_peripheral.elf,76246.0,76238.0,0.01%
+
 |=======================
 
 ## C.MUL
@@ -202,40 +203,35 @@ embench_aha-mont64.elf,1080.0,1080.0,0,0.0%
 ...  Dst and Src (Reg name > 7 and Reg name < 16)
 
 .C.MUL
-[options="header,footer"]
+[options="header", format="csv"]
 |=======================
-|File name|File Size|Savings
-|huawei_iot_protocol.elf|1228248|0.29%
-|huawei_iot_application.elf|388912|0.16%
-|opus_demo_float.elf|215798|0.52%
-|testfloat.elf|214908|0.04%
-|opus_demo_fixed.elf|202334|0.85%
-|fpmark-inner-product-mid-10k.elf|125088|0.06%
-|fpmark-radix2-sml-2k.elf|118684|0.06%
-|fpmark-xp1px-sml-c100n20.elf|115176|0.06%
-|fpmark-atan-1M.elf|113674|0.06%
-|zephry_peripheral.elf|76982|0.09%
-|coremark.elf|54950|0.12%
-|zephry_central.elf|43988|0.12%
-|embench_nsichneu.elf|15046|0.00%
-|embench_picojpeg.elf|8116|0.42%
-|embench_qrduino.elf|6100|0.82%
-|embench_nettle-sha256.elf|5558|0.04%
-|embench_wikisort.elf|4140|0.05%
-|embench_statemate.elf|3926|0.00%
-|embench_nettle-aes.elf|2774|0.00%
-|embench_slre.elf|2550|0.00%
-|embench_sglib-combined.elf|2354|0.00%
-|embench_cubic.elf|2270|0.00%
-|embench_huffbench.elf|1658|0.00%
-|embench_edn.elf|1344|1.34%
-|embench_aha-mont64.elf|1062|0.00%
-|embench_minver.elf|918|0.00%
-|embench_ud.elf|692|0.29%
-|embench_st.elf|630|0.32%
-|embench_nbody.elf|566|0.00%
-|embench_matmult-int.elf|420|0.48%
-|embench_crc32.elf|234|0.85%
+File name,File Size,Optimized File,Savings
+embench_crc32.elf,212.0,210.0,0.94%
+embench_cubic.elf,2088.0,2088.0,0.00%
+embench_edn.elf,1428.0,1398.0,2.10%
+embench_huffbench.elf,1608.0,1608.0,0.00%
+embench_matmult-int.elf,398.0,396.0,0.50%
+embench_minver.elf,874.0,874.0,0.00%
+embench_nbody.elf,532.0,532.0,0.00%
+embench_nettle-aes.elf,2694.0,2694.0,0.00%
+embench_nettle-sha256.elf,5564.0,5562.0,0.04%
+embench_nsichneu.elf,15020.0,15020.0,0.00%
+embench_picojpeg.elf,7922.0,7882.0,0.50%
+embench_qrduino.elf,5952.0,5894.0,0.97%
+embench_sglib-combined.elf,2272.0,2272.0,0.00%
+embench_slre.elf,2386.0,2386.0,0.00%
+embench_statemate.elf,4066.0,4066.0,0.00%
+embench_st.elf,586.0,584.0,0.34%
+embench_ud.elf,650.0,648.0,0.31%
+embench_wikisort.elf,4030.0,4028.0,0.05%
+fpmark-atan-1M.elf,57820.0,57776.0,0.08%
+fpmark-inner-product-mid-10k.elf,68454.0,68404.0,0.07%
+fpmark-radix2-sml-2k.elf,62610.0,62564.0,0.07%
+fpmark-xp1px-sml-c100n20.elf,59014.0,58972.0,0.07%
+huawei_iot_application.elf,344742.0,344202.0,0.16%
+huawei_iot_protocol.elf,963736.0,960968.0,0.29%
+zephyr_central.elf,43434.0,43378.0,0.13%
+zephyr_peripheral.elf,76246.0,76170.0,0.10%
 
 |=======================
 
