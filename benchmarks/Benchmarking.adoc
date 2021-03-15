@@ -1,0 +1,286 @@
+## Zce Code saving estimation criteria 
+:Version 0.1
+:doctype: book
+:encoding: utf-8
+:lang: en
+:toc: left
+:toclevels: 4
+:numbered:
+:xrefstyle: short
+:le: &#8804;
+:rarr: &#8658;
+
+
+# Zcec Subset: 
+
+## C.TBLJAL
+.. Static Analysis (Passes through the code, get all function calls (JAL, JALR, J and JR), remove entries that we won't gain any code saving from substituting, (JAL,J) <  3
+.. Change the weight of JALR and JR entries to 3*Count 
+.. Get the top 512 entries
+.. Calculate the gains and compensate for the table size
+	** It currently still calculate the value rather than overwrite the instruction record, it will eventually overwrite the records with the correct sequences
+
+.TBLJAL 512 
+[options="header,footer"]
+|=======================
+|File | Size|Optimized Size|Table Length|Saving
+|huawei_iot_application.elf|344988|309656|512|10.2%
+|huawei_iot_protocol.elf|978958|900328|512|8.0%
+|zephry_peripheral.elf|76360|70914|220|7.1%
+|zephry_central.elf|43366|40476|142|6.7%
+|testfloat.elf|214658|206902|185|3.6%
+|fpmark-radix2-sml-2k.elf|118434|114948|146|2.9%
+|fpmark-inner-product-mid-10k.elf|124838|121250|151|2.9%
+|fpmark-xp1px-sml-c100n20.elf|114926|111646|144|2.9%
+|fpmark-atan-1M.elf|113424|110288|147|2.8%
+|embench_picojpeg.elf|8116|7914|13|2.5%
+|embench_crc32.elf|234|230|1|1.7%
+|opus_demo_float.elf|215548|211928|150|1.7%
+|opus_demo_fixed.elf|202084|199184|139|1.4%
+|embench_matmult-int.elf|420|414|1|1.4%
+|embench_st.elf|630|622|1|1.3%
+|coremark.elf|54700|54036|53|1.2%
+|embench_slre.elf|2550|2522|2|1.1%
+|embench_wikisort.elf|4140|4102|8|0.9%
+|embench_nbody.elf|566|562|1|0.7%
+|embench_ud.elf|692|688|1|0.6%
+|embench_sglib-combined.elf|2354|2342|2|0.5%
+|embench_edn.elf|1344|1338|1|0.4%
+|embench_minver.elf|918|914|1|0.4%
+|embench_nettle-aes.elf|2774|2762|1|0.4%
+|embench_aha-mont64.elf|1062|1058|1|0.4%
+|embench_huffbench.elf|1658|1652|1|0.4%
+|embench_qrduino.elf|6100|6080|4|0.3%
+|embench_nettle-sha256.elf|5558|5548|2|0.2%
+|embench_cubic.elf|2270|2266|1|0.2%
+|embench_statemate.elf|3926|3920|1|0.2%
+|embench_nsichneu.elf|15046|15042|1|0.0%
+|=======================
+
+## C.MVA01S07, C.MVA23S07 and C.MVP
+.. Find all moves conesquitive moves
+.. Filter moves that fit the criteria for each of the proposed encoding
+.. Overwrite each multiple move that fit the replacement criteria  with the new moves instruction
+
+.MVAxxSyy
+[options="header,footer"]
+|=======================
+|File Name|File Size|MVA01S07|MVA23S07|MVA01S03|MVA23S03
+|huawei_iot_protocol.elf|978958|0.22%|0.07%|0.13%|0.04%
+|huawei_iot_application.elf|344988|0.31%|0.09%|0.20%|0.06%
+|opus_demo_float.elf|215548|0.37%|0.12%|0.24%|0.05%
+|testfloat.elf|214658|0.30%|0.09%|0.14%|0.04%
+|opus_demo_fixed.elf|202084|0.25%|0.03%|0.17%|0.01%
+|fpmark-inner-product-mid-10k.elf|124838|0.71%|0.14%|0.47%|0.07%
+|fpmark-radix2-sml-2k.elf|118434|0.68%|0.16%|0.46%|0.07%
+|fpmark-xp1px-sml-c100n20.elf|114926|0.69%|0.17%|0.47%|0.07%
+|fpmark-atan-1M.elf|113424|0.64%|0.13%|0.45%|0.06%
+|zephry_peripheral.elf|76360|0.45%|0.01%|0.34%|0.01%
+|coremark.elf|54700|0.50%|0.04%|0.41%|0.03%
+|zephry_central.elf|43366|0.53%|0.01%|0.42%|0.01%
+|embench_nsichneu.elf|15046|0.00%|0.00%|0.00%|0.00%
+|embench_picojpeg.elf|8116|0.05%|0.00%|0.05%|0.00%
+|embench_qrduino.elf|6100|0.36%|0.00%|0.30%|0.00%
+|embench_nettle-sha256.elf|5558|0.11%|0.00%|0.07%|0.00%
+|embench_wikisort.elf|4140|0.24%|0.14%|0.19%|0.05%
+|embench_statemate.elf|3926|0.00%|0.00%|0.00%|0.00%
+|embench_nettle-aes.elf|2774|0.07%|0.00%|0.07%|0.00%
+|embench_slre.elf|2550|0.00%|0.24%|0.00%|0.16%
+|embench_sglib-combined.elf|2354|0.17%|0.00%|0.08%|0.00%
+|embench_cubic.elf|2270|0.35%|0.00%|0.35%|0.00%
+|embench_huffbench.elf|1658|0.24%|0.12%|0.00%|0.00%
+|embench_edn.elf|1344|0.00%|0.00%|0.00%|0.00%
+|embench_aha-mont64.elf|1062|0.56%|0.38%|0.00%|0.38%
+|embench_minver.elf|918|0.00%|0.00%|0.00%|0.00%
+|embench_ud.elf|692|0.00%|0.00%|0.00%|0.00%
+|embench_st.elf|630|0.00%|0.00%|0.00%|0.00%
+|embench_nbody.elf|566|0.00%|0.00%|0.00%|0.00%
+|embench_matmult-int.elf|420|0.00%|0.00%|0.00%|0.00%
+|embench_crc32.elf|234|0.00%|0.00%|0.00%|0.00%
+|=======================
+
+## C.SBSP and  C.LBUSP
+.. Find all SB / LBU instructions
+.. Replace all the ones that match the following criteria with the proposed compressed instruction
+... Stack relative
+... Reg name > 7 and Reg name < 16
+... Immediate <= 2^5
+
+## C.SHSP and C.LHUSP
+.. Find all SH/ LHU instructions
+.. Replace all the ones that match the following criteria with the proposed compressed instruction
+... Stack relative
+... Reg name > 7 and Reg name < 16
+... Immediate <= 2^6 and Immediate%2 == 0
+
+.SP Relative Store and Load
+[options="header,footer"]
+|=======================
+|File name|C.LBU|C.LHU|C.SB|C.SH
+|coremark.elf|0.00%|0.09%|0.00%|0.06%
+|embench_aha-mont64.elf|0.00%|0.00%|0.00%|0.00%
+|embench_crc32.elf|0.00%|0.00%|0.00%|0.00%
+|embench_cubic.elf|0.00%|0.00%|0.00%|0.00%
+|embench_edn.elf|0.00%|0.00%|0.00%|0.00%
+|embench_huffbench.elf|0.00%|0.00%|0.00%|0.00%
+|embench_matmult-int.elf|0.00%|0.00%|0.00%|0.00%
+|embench_minver.elf|0.00%|0.00%|0.00%|0.00%
+|embench_nbody.elf|0.00%|0.00%|0.00%|0.00%
+|embench_nettle-aes.elf|0.00%|0.00%|0.00%|0.00%
+|embench_nettle-sha256.elf|0.00%|0.00%|0.00%|0.00%
+|embench_nsichneu.elf|0.00%|0.00%|0.00%|0.00%
+|embench_picojpeg.elf|0.00%|0.00%|0.00%|0.00%
+|embench_qrduino.elf|0.00%|0.00%|0.00%|0.00%
+|embench_sglib-combined.elf|0.00%|0.00%|0.00%|0.00%
+|embench_slre.elf|0.00%|0.00%|0.00%|0.00%
+|embench_st.elf|0.00%|0.00%|0.00%|0.00%
+|embench_statemate.elf|0.00%|0.00%|0.05%|0.00%
+|embench_ud.elf|0.00%|0.00%|0.00%|0.00%
+|embench_wikisort.elf|0.00%|0.00%|0.00%|0.00%
+|fpmark-atan-1M.elf|0.00%|0.05%|0.01%|0.04%
+|fpmark-inner-product-mid-10k.elf|0.00%|0.04%|0.00%|0.03%
+|fpmark-radix2-sml-2k.elf|0.00%|0.04%|0.01%|0.04%
+|fpmark-xp1px-sml-c100n20.elf|0.00%|0.04%|0.00%|0.03%
+|huawei_iot_application.elf|0.13%|0.11%|0.20%|0.19%
+|huawei_iot_protocol.elf|0.14%|0.09%|0.21%|0.17%
+|opus_demo_fixed.elf|0.00%|0.03%|0.00%|0.01%
+|opus_demo_float.elf|0.00%|0.02%|0.00%|0.01%
+|testfloat.elf|0.06%|0.08%|0.30%|0.01%
+|zephry_central.elf|0.07%|0.04%|0.20%|0.19%
+|zephry_peripheral.elf|0.06%|0.02%|0.14%|0.14%
+|=======================
+
+
+## C.SEXT.B C.SEXT.H 
+.. Find all srai instructions dependent on slli
+.. Replace the ones that match the replacement cratiera
+
+## C.ZEXT.B C.ZEXT.H C
+.. Find all stli instructions dependent on slli
+.. Replace the ones that match the replacement cratiera
+
+## C.LSBNOT 
+.. Find all XORI instructions and replace all  the ones that has immediate = 1 with C.LSBNOT  and change WoE to 16
+
+.C.LSBNOT
+[options="header,footer"]
+|=======================
+|File name|File Size|Savings
+|huawei_iot_protocol.elf|1228248|0.02%
+|huawei_iot_application.elf|388912|0.01%
+|opus_demo_float.elf|215798|0.03%
+|testfloat.elf|214908|0.03%
+|opus_demo_fixed.elf|202334|0.03%
+|fpmark-inner-product-mid-10k.elf|125088|0.00%
+|fpmark-radix2-sml-2k.elf|118684|0.01%
+|fpmark-xp1px-sml-c100n20.elf|115176|0.01%
+|fpmark-atan-1M.elf|113674|0.01%
+|zephry_peripheral.elf|76982|0.01%
+|coremark.elf|54950|0.00%
+|zephry_central.elf|43988|0.00%
+|embench_nsichneu.elf|15046|0.00%
+|embench_picojpeg.elf|8116|0.00%
+|embench_qrduino.elf|6100|0.10%
+|embench_nettle-sha256.elf|5558|0.00%
+|embench_wikisort.elf|4140|0.00%
+|embench_statemate.elf|3926|0.00%
+|embench_nettle-aes.elf|2774|0.00%
+|embench_slre.elf|2550|0.08%
+|embench_sglib-combined.elf|2354|0.08%
+|embench_cubic.elf|2270|0.00%
+|embench_huffbench.elf|1658|0.00%
+|embench_edn.elf|1344|0.00%
+|embench_aha-mont64.elf|1062|0.19%
+|embench_minver.elf|918|0.00%
+|embench_ud.elf|692|0.00%
+|embench_st.elf|630|0.00%
+|embench_nbody.elf|566|0.00%
+|embench_matmult-int.elf|420|0.00%
+|embench_crc32.elf|234|0.00%
+|=======================
+
+## C.MUL
+.. Find all multiplication instructions
+.. Replace all the ones that match the following criteria with the C.MUL and overwrite WoE to 16 
+...  Dst and Src (Reg name > 7 and Reg name < 16)
+
+.C.MUL
+[options="header,footer"]
+|=======================
+|File name|File Size|Savings
+|huawei_iot_protocol.elf|1228248|0.29%
+|huawei_iot_application.elf|388912|0.16%
+|opus_demo_float.elf|215798|0.52%
+|testfloat.elf|214908|0.04%
+|opus_demo_fixed.elf|202334|0.85%
+|fpmark-inner-product-mid-10k.elf|125088|0.06%
+|fpmark-radix2-sml-2k.elf|118684|0.06%
+|fpmark-xp1px-sml-c100n20.elf|115176|0.06%
+|fpmark-atan-1M.elf|113674|0.06%
+|zephry_peripheral.elf|76982|0.09%
+|coremark.elf|54950|0.12%
+|zephry_central.elf|43988|0.12%
+|embench_nsichneu.elf|15046|0.00%
+|embench_picojpeg.elf|8116|0.42%
+|embench_qrduino.elf|6100|0.82%
+|embench_nettle-sha256.elf|5558|0.04%
+|embench_wikisort.elf|4140|0.05%
+|embench_statemate.elf|3926|0.00%
+|embench_nettle-aes.elf|2774|0.00%
+|embench_slre.elf|2550|0.00%
+|embench_sglib-combined.elf|2354|0.00%
+|embench_cubic.elf|2270|0.00%
+|embench_huffbench.elf|1658|0.00%
+|embench_edn.elf|1344|1.34%
+|embench_aha-mont64.elf|1062|0.00%
+|embench_minver.elf|918|0.00%
+|embench_ud.elf|692|0.29%
+|embench_st.elf|630|0.32%
+|embench_nbody.elf|566|0.00%
+|embench_matmult-int.elf|420|0.48%
+|embench_crc32.elf|234|0.85%
+
+|=======================
+
+## C.SEXT.W and C.ZEXT.W  (No logic yet !!)
+
+
+# Zces Subset: 
+
+## C.PUSH
+.. Traverse functions prologue 
+.. Find negative stack adjustments
+.. Find all stack relative store that has a negative offset and fits within the range 
+_(abs(int(current_entry["Immediate"])+int(stack_adj_push[-1]["Adj"]["Immediate"])) < 60)_
+
+.. Stop search at HOBs 
+.. Check what is the maximum number of registers that we can fit in our replacement criteria
+_rcount = { 0: ("ra",), 1: ("ra", "s0"),2: ("ra", "s0-s1"),3: ("ra", "s0-s2"),4:("ra", "s0-s3"),5: ("ra", "s0-s5"),6: ("ra", "s0-s8"),7: ("ra", "s0-s11")}_
+
+.. Replace all instructions that fit the replacement criteria with the correct push instruction 
+
+## C.POP and C.POPRET 
+.. Traverse functions in reverse starting from epilogue
+.. Find positive stack adjustments 
+.. Find all stack relative  Load words that has positive offsets and fit within the range 
+.. Stop search at HOBs 
+.. Check what is the maximum number of registers that we can fit in our replacement criteria
+.. Replace all instructions that fit the replacement criteria with the correct POP/POPRET instruction 
+
+# Zced Subset: 
+
+## C.DECBGEZ 
+	. NO LOGIC YET
+
+## C.SB 
+	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
+
+## C.LBU 
+	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
+
+## C.SH 
+	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
+
+## C.LHU
+	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
+
