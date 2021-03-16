@@ -1,0 +1,16 @@
+= Meeting minutes
+
+== Jeremy - compiling for energy efficiency
+
+The talk Jeremy and Kerstin and gave at FOSDEM is https://archive.fosdem.org/2014/schedule/event/who_ate_my_battery/[here]
+The slides presented are https://github.com/riscv/riscv-code-size-reduction/blob/master/meeting_minutes/riscv-energy-optimization-16-mar-21.pdf[here]
+
+
+== Robert - IAR IDE
+
+IAR trace probe delivers power and measures it. It also does PC sampling.
+It shows that executing a loop from flash to a non-32-bit aligned start address costs more power than an identical loop to a 32-bit aligned start address.
+
+Robert's slides will be uploaded in due course
+
+
