@@ -257,21 +257,44 @@ _rcount = { 0: ("ra",), 1: ("ra", "s0"),2: ("ra", "s0-s1"),3: ("ra", "s0-s2"),4:
 ## C.DECBGEZ 
 	. NO LOGIC YET
 
-## C.SB 
+## C.SB & C.LBU & C.SH and C.LHU
 	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
 
-## C.LBU 
-	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
+.C.MUL
+[options="header", format="csv"]
+|=======================
+Filename,Size,c.lbu,c.lhu,clwsw.sb,c.sh
+embench_crc32.elf,212,0.00%,0.00%,0.00%,0.00%
+embench_matmult-int.elf,398,0.00%,0.00%,0.00%,0.00%
+embench_nbody.elf,532,0.00%,0.00%,0.00%,0.00%
+embench_st.elf,586,0.00%,0.00%,0.00%,0.00%
+embench_ud.elf,650,0.00%,0.00%,0.00%,0.00%
+embench_minver.elf,874,0.00%,0.00%,0.00%,0.00%
+embench_aha-mont64.elf,1028,0.00%,0.00%,0.00%,0.00%
+embench_edn.elf,1428,0.00%,0.98%,0.00%,1.96%
+embench_huffbench.elf,1608,1.00%,0.00%,0.87%,0.00%
+embench_cubic.elf,2088,0.00%,0.00%,0.00%,0.00%
+embench_sglib-combined.elf,2272,1.41%,0.00%,1.06%,0.00%
+embench_slre.elf,2386,3.44%,0.00%,0.00%,0.00%
+embench_nettle-aes.elf,2694,6.01%,0.00%,2.38%,0.00%
+embench_wikisort.elf,4030,0.00%,0.00%,0.00%,0.00%
+embench_statemate.elf,4066,9.20%,0.00%,12.64%,0.05%
+embench_nettle-sha256.elf,5564,0.25%,0.04%,0.25%,0.00%
+embench_qrduino.elf,5952,7.36%,0.00%,2.49%,0.00%
+embench_picojpeg.elf,7922,2.75%,0.68%,3.13%,1.34%
+embench_nsichneu.elf,15020,0.00%,0.00%,0.00%,0.00%
+zephyr_central.elf,43434,2.19%,0.57%,1.52%,0.38%
+fpmark-atan-1M.elf,57820,0.55%,0.22%,0.19%,0.23%
+fpmark-xp1px-sml-c100n20.elf,59014,0.53%,0.21%,0.18%,0.21%
+fpmark-radix2-sml-2k.elf,62610,0.50%,0.20%,0.18%,0.21%
+fpmark-inner-product-mid-10k.elf,68454,0.46%,0.19%,0.16%,0.19%
+zephyr_peripheral.elf,76246,1.92%,0.41%,1.09%,0.26%
+huawei_iot_application.elf,344742,1.34%,0.58%,0.92%,0.37%
+huawei_iot_protocol.elf,963736,1.87%,0.67%,1.37%,0.49%
+|=======================
 
-## C.SH 
-	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
 
-## C.LHU
-	. Initial implementation and filtering to select best encoding, yet to adapt to replace entries.
-
-
-
-# Other considered instructions 
+# Appendix:
 
 ## Other variations of double move 
 [options="header", format="csv"]
