@@ -1,0 +1,51 @@
+= Open Source Benchmarks
+
+== Huawei WiFi-IoT stack
+
+See the instructions https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/Hi3861_WiFi_IoT[here].
+
+Also the development board is available in China https://item.taobao.com/item.htm?spm=a1z10.3-c.w4002-18447093278.24.46a24c57weAWXH&id=622343426064[on Taobao].
+
+== Zephyr
+
+See the instructions https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/zephyr[here].
+
+== Google v8
+
+There's a RISC-V run script https://github.com/v8-riscv/v8-riscv-tools/blob/main/init_v8_all_in_one.sh[here].
+
+Sometimes it needs a patch so hopefully the script has an up-to-date one. Note that it needs a linux rv64 toolchain to build.
+
+issues can be submitted https://github.com/v8-riscv/v8/issues[here].
+
+== Debian distro
+
+Precompiled Debian distro is available https://wiki.debian.org/RISC-V[here].
+
+I downloaded https://people.debian.org/~mafm/debian-riscv64-tarball-20180418.tar.gz[this specific file].
+
+== Opus codec
+
+Downloadable https://opus-codec.org/downloads/[here].
+
+We compile the floating point and fixed point versions, and analyse `opus_demo.elf`.
+
+== Softfloat/testfloat
+
+http://www.jhauser.us/arithmetic/SoftFloat.html[Softfloat-3e].
+http://www.jhauser.us/arithmetic/TestFloat.html[Testfloat-3e].
+
+Testfloat is really used to link to Softfloat.
+
+== Embench IoT
+
+Embench IoT is available https://github.com/embench/embench-iot[here].
+
+= EEMBC benchmarks (not open source)
+
+== FPMark 
+
+== Coremark 
+
+
+
