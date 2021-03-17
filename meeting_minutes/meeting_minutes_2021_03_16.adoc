@@ -11,6 +11,7 @@ The slides presented are https://github.com/riscv/riscv-code-size-reduction/blob
 IAR trace probe delivers power and measures it. It also does PC sampling.
 It shows that executing a loop from flash to a non-32-bit aligned start address costs more power than an identical loop to a 32-bit aligned start address.
 
-Robert's slides will be uploaded in due course
+Robert's slides are https://github.com/riscv/riscv-code-size-reduction/blob/master/meeting_minutes/Power-Debug-RISC-V-Robert-Chyla-2021-03-16.pdf[here]
+
 
 
