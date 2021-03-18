@@ -43,7 +43,7 @@ Embench IoT is available https://github.com/embench/embench-iot[here].
 
 == CSiBE
 
-Available http://www.csibe.org/old/download.php[here]. Very old, and the scripts odn't work. I managed to get some of them to build but not all.
+Available https://github.com/szeged/csibe[here].
 
 = EEMBC benchmarks (not open source)
 
