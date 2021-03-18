@@ -41,6 +41,10 @@ Testfloat is really used to link to Softfloat.
 
 Embench IoT is available https://github.com/embench/embench-iot[here].
 
+== CSiBE
+
+Available http://www.csibe.org/old/download.php[here]. Very old, and the scripts odn't work. I managed to get some of them to build but not all.
+
 = EEMBC benchmarks (not open source)
 
 == FPMark 
