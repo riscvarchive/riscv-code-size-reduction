@@ -351,6 +351,17 @@ _(abs(int(current_entry["Immediate"])+int(stack_adj_push[-1]["Adj"]["Immediate"]
 .. Check what is the maximum number of registers that we can fit in our replacement criteria
 _rcount = { 0: ("ra",), 1: ("ra", "s0"),2: ("ra", "s0-s1"),3: ("ra", "s0-s2"),4:("ra", "s0-s3"),5: ("ra", "s0-s5"),6: ("ra", "s0-s8"),7: ("ra", "s0-s11")}_
 
+.. Replace all instructions that fit the replacement criteria with the correct push instruction 
+
+## C.POP and C.POPRET 
+.. Traverse functions in reverse starting from epilogue
+.. Find positive stack adjustments 
+.. Find all stack relative  Load words that has positive offsets and fit within the range 
+.. Stop search at HOBs 
+.. Check what is the maximum number of registers that we can fit in our replacement criteria
+.. Replace all instructions that fit the replacement criteria with the correct POP/POPRET instruction 
+
+
 .PUSH_POP
 [options="header", format="csv"]
 |=======================
@@ -387,15 +398,6 @@ embench_nsichneu,15020.0,14992.0,0.19%
 |=======================
 
 
-.. Replace all instructions that fit the replacement criteria with the correct push instruction 
-
-## C.POP and C.POPRET 
-.. Traverse functions in reverse starting from epilogue
-.. Find positive stack adjustments 
-.. Find all stack relative  Load words that has positive offsets and fit within the range 
-.. Stop search at HOBs 
-.. Check what is the maximum number of registers that we can fit in our replacement criteria
-.. Replace all instructions that fit the replacement criteria with the correct POP/POPRET instruction 
 
 # Zced Subset: 
 
