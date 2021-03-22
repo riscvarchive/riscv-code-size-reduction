@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.17    | Add Zbb and possibly Zba (open issue)
 | 0.16    | Add Zces[fdq] subsets
 | 0.15    | add B-ext pseudo-ops and pack/packw into Zcec for 32-bit forms of new instructions
 | 0.14    | BNEI/BEQI/MULI/MULIADD/ADDIADD moved from Zced to Zcec. Found encodings for B*I and DECBGEZ to allow Zced+ZDinx. Reduced cmpimm range for BNEI/BEQI to fit the encoding. Allocated provisional encodings for all 32-bit instructions. Fixed width of frcount, mv in PUSH/POP encodings.
@@ -32,7 +33,7 @@ This document describes the `Zce` extension to reduce code-size.
 * `c.mvp` and `c.mvas*` don't have a sensible 32-bit alternative, as no code size would be saved (unless C isn't implemented), so is it ok to convert to a sequence of two 32-bit encodings? If not then we need to allocate pointless 32-bit encodings.
 * `decbgez` doesn't need to be in `Zced`, but `c.decbgez` does
 ** maybe I can squeeze `c.decbgez` into `Zcec`, TBD, need to benchmark the size of the immediate range
-* need to choose a B-extension subset to include
+* should we include Zba from the B-extension?
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
@@ -48,6 +49,8 @@ All systems which implement `Zce` must also implement the `IMC` extensions.  A f
   Only `C.MUL` requires the `M` extension. It is simpler to specify that `M` is always required, but we may have to revisit this for tiny embedded cores.
 
 `Zce` is compatible with `RV32IMC`, `RV64IMC` and `RV128IMC`.
+
+`Zce` implies the `B`-extension subset `Zbb`. Therefore `RV32IMC_Zce` is equivalent to `RV32IMC_Zce_Zbb`.
 
 === `Zce` subsets
 
@@ -68,6 +71,8 @@ All systems which implement `Zce` must also implement the `IMC` extensions.  A f
 
 As stated above `Zce` or any subsets of `Zce` require `IMC`.
 
+. `Zce` implies `Zbb`
+
 . `Zced` and `Zces` both imply `Zcec`.
 
 . The combination of `F` and `Zces` implies `Zcesf`
@@ -82,32 +87,32 @@ As stated above `Zce` or any subsets of `Zce` require `IMC`.
 .Simple valid configurations
 [width="100%",options=header]
 |===============================================================================
-| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq  | Minimal config string |Comment
-8+| `Zce` is configured, i.e. the maximum subset. 
-| ✓    | ✓   | ✓    |       |      |        | `IMC_Zce`      | basic configuration
-| ✓    | ✓   | ✓    |      |       |       | `IMC_Zce_Z[FDQ]inx`| `Z[FDQ]inx` are compatible with `Zced`
-| ✓    | ✓   | ✓    | ✓    |       |       | `IMCF_Zce`    | `F` is compatible with `Zced`
-| ✓    |     | ✓    | ✓    | ✓     |        | `IMCD_Zce`    | `D`  conflicts with `Zced`
-| ✓    |     | ✓    | ✓    | ✓     | ✓      | `IMCQ_Zce`    | `Q`  implies `D` which conflicts with `Zced`
+| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq  | Zbb | Minimal config string |Comment
+9+| `Zce` is configured, i.e. the maximum subset. 
+| ✓    | ✓   | ✓    |       |      |         | ✓   | `IMC_Zce`      | basic configuration
+| ✓    | ✓   | ✓    |      |       |         | ✓   | `IMC_Zce_Z[FDQ]inx`| `Z[FDQ]inx` are compatible with `Zced`
+| ✓    | ✓   | ✓    | ✓    |       |         | ✓   | `IMCF_Zce`    | `F` is compatible with `Zced`
+| ✓    |     | ✓    | ✓    | ✓     |        |  ✓   | `IMCD_Zce`    | `D`  conflicts with `Zced`
+| ✓    |     | ✓    | ✓    | ✓     | ✓      |  ✓   |`IMCQ_Zce`    | `Q`  implies `D` which conflicts with `Zced`
 |===============================================================================
 
 [NOTE]
 
   `Zces[fdq]` are never manually specified, they are always just implied by `[FDQ] + Zce`
 
-<<complexvalidconfigs>> shows which subsets are specified for the same set of configurations to exclude `Zces*`.
+<<complexvalidconfigs>> shows which subsets are specified for the same set of configurations to exclude `Zces*`. Because `Zce` isn't directly specified, `Zbb` now becomes optional and needs to be added to the configuration string if it's required.
 
 [#complexvalidconfigs]
 .Valid configurations excluding `Zces*`
 [width="100%",options=header]
 |===============================================================================
-| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | Minimal config string |Comment
-8+| `Zcec` and optionally `Zced` are configured, so no sequenced instructions are included.
-| ✓    | ✓   |       |      |        |        |`IMC_Zcec_Zced` | basic configuration
-| ✓    | ✓   |       |      |        |       |`IMC_Zcec_Zced_ZDinx` | `ZDinx` without `Zces`
-| ✓    | ✓   |       |       |        |       |`IMCF_Zcec_Zced` | `F`+`Zcec` but no `Zces` or `Zcesf`
-| ✓    |     |       |       |        |       |`IMCD_Zcec` | `D`  conflicts with `Zced`
-| ✓    |     |       |       |        |       |`IMCQ_Zcec` | `Q`  implies `D` which conflicts with `Zced`
+| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | Zbb | Minimal config string |Comment
+9+| `Zcec` and optionally `Zced` are configured, so no sequenced instructions are included, and Zbb is optional
+| ✓    | ✓   |       |      |        |        | ?   |`IMC_Zcec_Zced{_Zbb}` | basic configuration
+| ✓    | ✓   |       |      |        |       |  ?  |`IMC_Zcec_Zced_ZDinx{_Zbb}` | `ZDinx` without `Zces`
+| ✓    | ✓   |       |       |        |       | ?   |`IMCF_Zcec_Zced{_Zbb}` | `F`+`Zcec` but no `Zces` or `Zcesf`
+| ✓    |     |       |       |        |       | ?   |`IMCD_Zcec{_Zbb}` | `D`  conflicts with `Zced`
+| ✓    |     |       |       |        |       | ?   |`IMCQ_Zcec{_Zbb}` | `Q`  implies `D` which conflicts with `Zced`
 |===============================================================================
 
 == C-extension subsets
@@ -570,54 +575,15 @@ decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
 
 === B-extension reuse
 
-Some instructions will be reused from the B-extension and included in `Zcec`. 
+Some instructions will be reused from the B-extension and are implied by `Zce`. 
 
-==== Pseudo-ops: ZEXT.B, ZEXT.H, ZEXT.W, ZEXT.D, SEXT.W
+==== `Zbb` required
 
-[#bextpseudoops]
-.B-extension pseudo-ops
-[width="100%",options=header]
-|===================================================================
-| Pseudo-op         | RV32 | RV64 | RV128 | Real instruction
-| `zext.b rd, rs`   |   ✓  |  ✓   |   ✓   | `andi rd, rs, 255`
-| `zext.h rd, rs`   |   ✓  |      |       | `pack rd, rs, zero`
-| `zext.h rd, rs`   |      |  ✓   |   ✓   | `packw rd, rs, zero`
-| `zext.w rd, rs`   |      |  ✓   |       | `pack rd, rs, zero`
-| `zext.w rd, rs`   |      |      |   ✓   | `packd rd, rs, zero`
-| `zext.d rd, rs`   |      |      |   ✓   | `andi rd, rs, zero`
-| `sext.w rd, rs`   |      |  ✓   |       | `addiw rd, rs, 0`
-|===================================================================
-
-32-bit forms of `c.[sz]ext.[bh]` are required so it makes sense to include all `[sz]ext.*` pseudo-ops from the B-extension.
+`Zbb` is required for 32-bit encodings for `c.[sz]ext.[bh]`, which may be pseudo-ops. It is simpler to take the whole `Zbb` subset as it also contains useful instructions like rotate (`rori, ror, rol`), byte reverse (`rev8`) and count-leading-zeroes (`clz`).
 
 [NOTE]
 
-  `packd` may resolve to `add.uw` for RV128 only, TBD
-
-==== SEXT.B, SEXT.H
-
-`sext.b` and `sext.h` are required as 32-bit forms of `c.sext.b` and `c.sext.h`.
-
-==== PACK, PACKW, PACKD
-
-`pack`, `packw`, and possibly `packd` are required to allow the pseudo-ops from <<bextpseudoops>>.
-
-==== Preliminary: other B-extension instructions 
-
-These are inferred in Huawei IoT code by the Embecosm GCC10 port
-
-* `pack, packu`
-* `min[u], max[u]`
-* `andn, orn`
-* `grev[i]`
-* `clz, ctz`
-* `sbext[i]`
-
-These seem useful for address calculation:
-
-* `sh[123]add`
-
-no final decisions have been made about this subset
+  `Zbp` is *not* implied by `Zce` as instructions like `grev[i]` and `shfl[i]` seem too heavyweight for small embedded cores. 
 
 == `Zces` definition
 
