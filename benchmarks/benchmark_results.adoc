@@ -354,6 +354,36 @@ _rcount = { 0: ("ra",), 1: ("ra", "s0"),2: ("ra", "s0-s1"),3: ("ra", "s0-s2"),4:
 .PUSH_POP
 [options="header", format="csv"]
 |=======================
+File name,File Size,Optimised File,Savings
+embench_crc32,212.0,190.0,10.38%
+coremark,11944.0,10902.0,8.72%
+embench_matmult-int,398.0,366.0,8.04%
+embench_st,586.0,544.0,7.17%
+fpmark-xp1px-sml-c100n20,59014.0,54960.0,6.87%
+fpmark-radix2-sml-2k,62610.0,58352.0,6.80%
+fpmark-atan-1M,57820.0,53914.0,6.76%
+fpmark-inner-product-mid-10k,68454.0,64194.0,6.22%
+embench_nbody,532.0,502.0,5.64%
+embench_ud,650.0,616.0,5.23%
+embench_edn,1428.0,1354.0,5.18%
+testsoftfloat,129060.0,122504.0,5.08%
+huawei_iot_application,344742.0,329914.0,4.30%
+zephyr_central,43434.0,42058.0,3.17%
+embench_minver,874.0,848.0,2.97%
+zephyr_peripheral,76246.0,74018.0,2.92%
+embench_aha-mont64,1028.0,998.0,2.92%
+huawei_iot_protocol,963736.0,938382.0,2.63%
+embench_nettle-aes,2694.0,2628.0,2.45%
+embench_slre,2386.0,2332.0,2.26%
+embench_wikisort,4030.0,3940.0,2.23%
+embench_sglib-combined,2272.0,2222.0,2.20%
+embench_nettle-sha256,5564.0,5472.0,1.65%
+embench_huffbench,1608.0,1582.0,1.62%
+embench_cubic,2088.0,2058.0,1.44%
+embench_picojpeg,7922.0,7820.0,1.29%
+embench_qrduino,5952.0,5878.0,1.24%
+embench_statemate,4066.0,4036.0,0.74%
+embench_nsichneu,15020.0,14992.0,0.19%
 |=======================
 
 
