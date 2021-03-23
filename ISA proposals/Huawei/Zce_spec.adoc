@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.17
-Version 0.17
+= RISC-V Zce code-size reduction extension proposal v0.18
+Version 0.18
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.18    | Separate C.MUL into Zcecm to avoid the dependancy on M, so Zcec has one subset (but is still the same ratification group)
 | 0.17    | Add Zbb and possibly Zba (open issue)
 | 0.16    | Add Zces[fdq] subsets
 | 0.15    | add B-ext pseudo-ops and pack/packw into Zcec for 32-bit forms of new instructions
@@ -42,15 +43,13 @@ This document describes the `Zce` extension to reduce code-size.
 
 `Zce` is designed to be compatible with all existing extensions. Specification of the `D` extension will cause some `Zce` instructions to be automatically excluded as they share the same encodings. `Zce` _can_ still be specified.
 
-All systems which implement `Zce` must also implement the `IMC` extensions.  A future version of this document will support `EMC`, but the EABI specification needs to be ratified before the `PUSH/POP/POPRET` instructions can support it.
+All systems which implement `Zce` must also implement the `IC` extensions.  A future version of this document will support `EC`, but the EABI specification needs to be ratified before the `PUSH/POP/POPRET` instructions can support it.
 
-[NOTE]
+`Zce` is compatible with `RV32IC`, `RV64IC` and `RV128IC`.
 
-  Only `C.MUL` requires the `M` extension. It is simpler to specify that `M` is always required, but we may have to revisit this for tiny embedded cores.
+`Zce` implies the `B`-extension subset `Zbb`. Therefore `RV32IC_Zce` is equivalent to `RV32IC_Zce_Zbb`.
 
-`Zce` is compatible with `RV32IMC`, `RV64IMC` and `RV128IMC`.
-
-`Zce` implies the `B`-extension subset `Zbb`. Therefore `RV32IMC_Zce` is equivalent to `RV32IMC_Zce_Zbb`.
+`RV32IMC_Zce, RV64IMC_Zce` also include the `C.MUL` instruction.
 
 === `Zce` subsets
 
@@ -66,10 +65,11 @@ All systems which implement `Zce` must also implement the `IMC` extensions.  A f
 * `Zced` instructions which conflict with the `D`-extension
 ** 16-bit: `C.LBU, C.LHU, C.SB, C.SH, C.DECBGEZ`
 ** 32-bit: `LWGP, SWGP, LWTP, SWTP`
-* `Zcec` common instructions
+* `Zcec` common instructions, which includes one subset
+** `Zcecm`: 16-bit `C.MUL` which is only inferred if `M` is configured
 ** all others
 
-As stated above `Zce` or any subsets of `Zce` require `IMC`.
+As stated above `Zce` or any subsets of `Zce` require `IC`.
 
 . `Zce` implies `Zbb`
 
@@ -81,24 +81,31 @@ As stated above `Zce` or any subsets of `Zce` require `IMC`.
 
 . The combination of `Q` and `Zces` implies `Zcesq`
 
+. The combination of `M` and `Zcec` implies `Zcecm`
+
 <<simplevalidconfigs>> shows which subsets are enabled from the simplest configuration strings.
 
 [#simplevalidconfigs]
 .Simple valid configurations
 [width="100%",options=header]
 |===============================================================================
-| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq  | Zbb | Minimal config string |Comment
-9+| `Zce` is configured, i.e. the maximum subset. 
-| ✓    | ✓   | ✓    |       |      |         | ✓   | `IMC_Zce`      | basic configuration
-| ✓    | ✓   | ✓    |      |       |         | ✓   | `IMC_Zce_Z[FDQ]inx`| `Z[FDQ]inx` are compatible with `Zced`
-| ✓    | ✓   | ✓    | ✓    |       |         | ✓   | `IMCF_Zce`    | `F` is compatible with `Zced`
-| ✓    |     | ✓    | ✓    | ✓     |        |  ✓   | `IMCD_Zce`    | `D`  conflicts with `Zced`
-| ✓    |     | ✓    | ✓    | ✓     | ✓      |  ✓   |`IMCQ_Zce`    | `Q`  implies `D` which conflicts with `Zced`
+| Zcec | Zcecm| Zced | Zces | Zcesf | Zcesd | Zcesq  | Zbb | Minimal config string |Comment
+10+| `Zce` is configured, i.e. the maximum subset. 
+| ✓    |     | ✓   | ✓    |       |      |         | ✓   | `IC_Zce`       | basic configuration
+| ✓    | ✓   | ✓   | ✓    |       |      |         | ✓   | `IMC_Zce`      | basic configuration including `M`
+| ✓    | ✓   | ✓   | ✓    |      |       |         | ✓   | `IMC_Zce_Z[FDQ]inx`| `Z[FDQ]inx` are compatible with `Zced`
+| ✓    | ✓   | ✓   | ✓    | ✓    |       |         | ✓   | `IMCF_Zce`    | `F` is compatible with `Zced`
+| ✓    | ✓   |     | ✓    | ✓    | ✓     |        |  ✓   | `IMCD_Zce`    | `D`  conflicts with `Zced`
+| ✓    | ✓   |     | ✓    | ✓    | ✓     | ✓      |  ✓   |`IMCQ_Zce`    | `Q`  implies `D` which conflicts with `Zced`
 |===============================================================================
 
 [NOTE]
 
-  `Zces[fdq]` are never manually specified, they are always just implied by `[FDQ] + Zce`
+  `Zces[fdq]` are not manually specified, they are implied by `[FDQ] + Zce` or `[FDQ] + Zces`
+
+[NOTE]
+
+  `Zcecm` is not manually specified, it is implied by `M + Zce` or `M + Zcec`
 
 <<complexvalidconfigs>> shows which subsets are specified for the same set of configurations to exclude `Zces*`. Because `Zce` isn't directly specified, `Zbb` now becomes optional and needs to be added to the configuration string if it's required.
 
@@ -106,13 +113,14 @@ As stated above `Zce` or any subsets of `Zce` require `IMC`.
 .Valid configurations excluding `Zces*`
 [width="100%",options=header]
 |===============================================================================
-| Zcec | Zced | Zces | Zcesf | Zcesd | Zcesq | Zbb | Minimal config string |Comment
-9+| `Zcec` and optionally `Zced` are configured, so no sequenced instructions are included, and Zbb is optional
-| ✓    | ✓   |       |      |        |        | ?   |`IMC_Zcec_Zced{_Zbb}` | basic configuration
-| ✓    | ✓   |       |      |        |       |  ?  |`IMC_Zcec_Zced_ZDinx{_Zbb}` | `ZDinx` without `Zces`
-| ✓    | ✓   |       |       |        |       | ?   |`IMCF_Zcec_Zced{_Zbb}` | `F`+`Zcec` but no `Zces` or `Zcesf`
-| ✓    |     |       |       |        |       | ?   |`IMCD_Zcec{_Zbb}` | `D`  conflicts with `Zced`
-| ✓    |     |       |       |        |       | ?   |`IMCQ_Zcec{_Zbb}` | `Q`  implies `D` which conflicts with `Zced`
+| Zcec | Zcecm |Zced | Zces | Zcesf | Zcesd | Zcesq | Zbb | Minimal config string |Comment
+10+| `Zcec` and optionally `Zced` are configured, so no sequenced instructions are included, and Zbb is optional
+| ✓    |     | ✓   |       |      |        |        | ?   |`IC_Zcec_Zced{_Zbb}` | basic configuration
+| ✓    | ✓   | ✓   |       |      |        |        | ?   |`IMC_Zcec_Zced{_Zbb}` | basic configuration including `M`
+| ✓    | ✓   | ✓   |       |      |        |        |  ?  |`IMC_Zcec_Zced_ZDinx{_Zbb}` | `ZDinx` without `Zces`
+| ✓    | ✓   | ✓   |       |       |        |       | ?   |`IMCF_Zcec_Zced{_Zbb}` | `F`+`Zcec` but no `Zces` or `Zcesf`
+| ✓    | ✓   |     |       |       |        |       | ?   |`IMCD_Zcec{_Zbb}` | `D`  conflicts with `Zced`
+| ✓    | ✓   |     |       |       |        |       | ?   |`IMCQ_Zcec{_Zbb}` | `Q`  implies `D` which conflicts with `Zced`
 |===============================================================================
 
 == C-extension subsets
