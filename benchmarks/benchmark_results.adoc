@@ -437,6 +437,7 @@ embench_statemate,4066.0,4036.0,0.74%
 embench_nsichneu,15020.0,14992.0,0.19%
 |=======================
 
+'*_Please note that the results above do not contain the savings from embedded moves for push pop yet_*'
 
 # Zced Subset: 
 
