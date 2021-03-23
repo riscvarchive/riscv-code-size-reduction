@@ -362,7 +362,47 @@ _rcount = { 0: ("ra",), 1: ("ra", "s0"),2: ("ra", "s0-s1"),3: ("ra", "s0-s2"),4:
 .. Replace all instructions that fit the replacement criteria with the correct POP/POPRET instruction 
 
 
-.PUSH_POP
+For this to work, we need to run the script across files compiled without msave-restore, so it can find the actual stack adjustments, loads and stores instead of calls to msave-restore routines. The results from such are shown in the table below:
+
+.PUSH POP results referenced to without msave-restore
+[options="header", format="csv"]
+|=======================
+File name,File Size,Optimised File,Savings
+embench_matmult-int,446.0,366.0,17.94%
+embench_crc32,228.0,190.0,16.67%
+embench_st,618.0,544.0,11.97%
+testsoftfloat,138598.0,122504.0,11.61%
+zephyr_central,47542.0,42058.0,11.54%
+embench_wikisort,4434.0,3940.0,11.14%
+zephyr_peripheral,83266.0,74018.0,11.11%
+embench_nbody,564.0,502.0,10.99%
+coremark,12202.0,10902.0,10.65%
+embench_ud,686.0,616.0,10.20%
+embench_sglib-combined,2472.0,2222.0,10.11%
+embench_minver,942.0,848.0,9.98%
+embench_edn,1500.0,1354.0,9.73%
+embench_slre,2582.0,2332.0,9.68%
+fpmark-inner-product-mid-10k,70888.0,64194.0,9.44%
+huawei_iot_application,363338.0,329914.0,9.20%
+embench_cubic,2264.0,2058.0,9.10%
+fpmark-atan-1M,59312.0,53914.0,9.10%
+fpmark-radix2-sml-2k,64130.0,58352.0,9.01%
+fpmark-xp1px-sml-c100n20,60208.0,54960.0,8.72%
+huawei_iot_protocol,1025568.0,938382.0,8.50%
+embench_picojpeg,8474.0,7820.0,7.72%
+embench_aha-mont64,1080.0,998.0,7.59%
+embench_nettle-aes,2810.0,2628.0,6.48%
+opus_demo_float,178234.0,168010.0,5.74%
+opus_demo_fixed,169932.0,160348.0,5.64%
+embench_huffbench,1674.0,1582.0,5.50%
+embench_qrduino,6218.0,5878.0,5.47%
+embench_nettle-sha256,5622.0,5472.0,2.67%
+embench_statemate,4116.0,4036.0,1.94%
+embench_nsichneu,15014.0,14992.0,0.15%
+|=======================
+
+However, for fair reporting, we need to refernce these results to the file sizes from file compiled with msave-restore, as shown below: 
+.PUSH POP results referenced to msave-restore
 [options="header", format="csv"]
 |=======================
 File name,File Size,Optimised File,Savings
@@ -396,7 +436,6 @@ embench_qrduino,5952.0,5878.0,1.24%
 embench_statemate,4066.0,4036.0,0.74%
 embench_nsichneu,15020.0,14992.0,0.19%
 |=======================
-
 
 
 # Zced Subset: 
