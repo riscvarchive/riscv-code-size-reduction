@@ -38,6 +38,7 @@ This document describes the `Zce` extension to reduce code-size.
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
+* for `C.PUSH` confirm that the auto-included register moves are optimal (give teh right balance between saving code-size and not wasting performance)
 
 == `Zce` configurations
 
