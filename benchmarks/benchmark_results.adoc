@@ -362,7 +362,8 @@ _rcount = { 0: ("ra",), 1: ("ra", "s0"),2: ("ra", "s0-s1"),3: ("ra", "s0-s2"),4:
 .. Replace all instructions that fit the replacement criteria with the correct POP/POPRET instruction 
 
 
-For this to work, we need to run the script across files compiled without msave-restore, so it can find the actual stack adjustments, loads and stores instead of calls to msave-restore routines. The results from such are shown in the table below:
+For this to work, we need to run the script across files compiled without msave-restore, so it can find the actual stack adjustments, loads and stores instead of calls to msave-restore routines.
+The results from such are shown in the table below:
 
 .PUSH POP results referenced to without msave-restore
 [options="header", format="csv"]
@@ -401,7 +402,8 @@ embench_statemate,4116.0,4036.0,1.94%
 embench_nsichneu,15014.0,14992.0,0.15%
 |=======================
 
-However, for fair reporting, we need to refernce these results to the file sizes from file compiled with msave-restore, as shown below: 
+However, for fair reporting, we need to reference these results to the file sizes compiled with msave-restore, as shown below: 
+
 .PUSH POP results referenced to msave-restore
 [options="header", format="csv"]
 |=======================
