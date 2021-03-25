@@ -2,7 +2,7 @@
 
 
 # Benchmarking Background: 
-This document present benchmarking results for Zce extension, baseline files were compiled using https://buildbot.embecosm.com/job/riscv32-gcc-ubuntu1804-release/5/artifact/riscv32-embecosm-ubuntu1804-gcc10.2.0-r4.tar.gz[gcc10.2.0-r4] with -Os and -msave-restore unless otherwise specified. All results are generated from static analysis, and file sizes are calculated based on parsed instruction sizes of the ELF files, and the optimised sizes are calculated based on parsed instruction with relevant Zce instructions. 
+This document present benchmarking results for Zce extension, baseline files were compiled using https://buildbot.embecosm.com/job/riscv32-gcc-ubuntu1804-release/5/artifact/riscv32-embecosm-ubuntu1804-gcc10.2.0-r4.tar.gz[gcc10.2.0-r4] with -march=rv32imc, -Os and -msave-restore unless otherwise specified. All results are generated from static analysis, and file sizes are calculated based on parsed instruction sizes of the ELF files, and the optimised sizes are calculated based on parsed instruction with relevant Zce instructions. 
 
 List of benchmarks used: 
 
@@ -29,24 +29,24 @@ It worth noting that all of the optimisations listed below, with the exception o
 [options="header", format="csv"]
 |=======================
 File , Size,Optimised Size, Table Length, Saving
-GCC10_huawei_iot_application,344742.0,314432.0,512,8.79%
-GCC10_huawei_iot_protocol,963736.0,895832.0,512,7.05%
+GCC10_huawei_iot_application,340728.0,311630.0,512,8.54%
+GCC10_huawei_iot_protocol,961724.0,893928.0,512,7.05%
 GCC10_zephyr_peripheral,76246.0,71232.0,221,6.58%
 GCC10_zephyr_central,43434.0,40900.0,133,5.83%
 GCC10_opus_demo_float,206210.0,197216.0,182,4.36%
 GCC10_testsoftfloat,135738.0,129992.0,195,4.23%
-GCC10_fpmark-inner-product-mid-10k,74418.0,71668.0,85,3.70%
-GCC10_fpmark-radix2-sml-2k,65344.0,63282.0,80,3.16%
-GCC10_fpmark-xp1px-sml-c100n20,59668.0,57888.0,77,2.98%
-GCC10_fpmark-atan-1M,60302.0,58644.0,78,2.75%
+GCC10_fpmark-inner-product-mid-10k,94838.0,91732.0,156,3.28%
+GCC10_fpmark-radix2-sml-2k,87132.0,84706.0,154,2.78%
+GCC10_fpmark-xp1px-sml-c100n20,80950.0,78834.0,146,2.61%
 GCC10_embench_cubic,45632.0,44452.0,67,2.59%
+GCC10_fpmark-atan-1M,80278.0,78266.0,148,2.51%
 GCC10_embench_picojpeg,8164.0,7968.0,13,2.40%
 GCC10_opus_demo_fixed,173248.0,170698.0,143,1.47%
+GCC10_coremark,19360.0,19088.0,33,1.40%
 GCC10_embench_nbody,10026.0,9888.0,27,1.38%
 GCC10_embench_wikisort,13776.0,13594.0,37,1.32%
 GCC10_embench_st,10228.0,10096.0,27,1.29%
 GCC10_embench_minver,8944.0,8830.0,27,1.27%
-GCC10_coremark,11944.0,11798.0,13,1.22%
 GCC10_embench_ud,3522.0,3494.0,10,0.80%
 GCC10_embench_crc32,388.0,386.0,1,0.52%
 GCC10_embench_nettle-aes,3290.0,3274.0,3,0.49%
@@ -72,19 +72,19 @@ GCC10_embench_nsichneu,15208.0,15208.0,0,0.00%
 |=======================
 File name,File Size,Savings
 GCC10_embench_aha-mont64,1204.0,3.32%
-GCC10_fpmark-inner-product-mid-10k,74418.0,0.91%
-GCC10_fpmark-xp1px-sml-c100n20,59668.0,0.84%
-GCC10_fpmark-radix2-sml-2k,65344.0,0.81%
-GCC10_fpmark-atan-1M,60302.0,0.66%
 GCC10_embench_nbody,10026.0,0.50%
-GCC10_huawei_iot_application,344742.0,0.37%
-GCC10_coremark,11944.0,0.25%
+GCC10_fpmark-inner-product-mid-10k,94838.0,0.39%
+GCC10_huawei_iot_application,340728.0,0.37%
 GCC10_embench_st,10228.0,0.25%
-GCC10_huawei_iot_protocol,963736.0,0.20%
+GCC10_huawei_iot_protocol,961724.0,0.20%
 GCC10_zephyr_central,43434.0,0.20%
 GCC10_zephyr_peripheral,76246.0,0.19%
 GCC10_opus_demo_float,206210.0,0.18%
+GCC10_fpmark-radix2-sml-2k,87132.0,0.17%
+GCC10_fpmark-atan-1M,80278.0,0.15%
+GCC10_fpmark-xp1px-sml-c100n20,80950.0,0.15%
 GCC10_testsoftfloat,135738.0,0.15%
+GCC10_coremark,19360.0,0.12%
 GCC10_embench_minver,8944.0,0.07%
 GCC10_embench_cubic,45632.0,0.06%
 GCC10_embench_ud,3522.0,0.06%
@@ -104,29 +104,29 @@ GCC10_embench_slre,2672.0,0.00%
 GCC10_embench_statemate,4312.0,0.00%
 |=======================
 
-.MVAxxSyy
+.MVAxxS07
 [options="header", format="csv"]
 |=======================
 ,Size,MVA01S07,MVA23S07,Total
-GCC10_fpmark-xp1px-sml-c100n20,59668,0.87%,0.33%,1.20%
-GCC10_fpmark-inner-product-mid-10k,74418,0.87%,0.27%,1.14%
-GCC10_fpmark-radix2-sml-2k,65344,0.82%,0.31%,1.13%
-GCC10_fpmark-atan-1M,60302,0.73%,0.22%,0.95%
 GCC10_embench_aha-mont64,1204,0.17%,0.50%,0.67%
-GCC10_coremark,11944,0.52%,0.10%,0.62%
 GCC10_zephyr_central,43434,0.50%,0.01%,0.51%
 GCC10_testsoftfloat,135738,0.32%,0.13%,0.45%
 GCC10_zephyr_peripheral,76246,0.43%,0.01%,0.44%
 GCC10_embench_huffbench,1888,0.32%,0.11%,0.43%
-GCC10_huawei_iot_application,344742,0.31%,0.10%,0.41%
+GCC10_huawei_iot_application,340728,0.32%,0.10%,0.42%
 GCC10_opus_demo_float,206210,0.36%,0.05%,0.41%
+GCC10_fpmark-inner-product-mid-10k,94838,0.28%,0.10%,0.38%
 GCC10_embench_qrduino,6314,0.32%,0.00%,0.32%
-GCC10_huawei_iot_protocol,963736,0.23%,0.07%,0.30%
+GCC10_huawei_iot_protocol,961724,0.23%,0.07%,0.30%
 GCC10_embench_st,10228,0.18%,0.10%,0.28%
 GCC10_embench_nbody,10026,0.12%,0.12%,0.24%
 GCC10_embench_sglib-combined,2542,0.24%,0.00%,0.24%
 GCC10_embench_wikisort,13776,0.17%,0.01%,0.18%
+GCC10_coremark,19360,0.12%,0.05%,0.17%
+GCC10_fpmark-radix2-sml-2k,87132,0.12%,0.05%,0.17%
 GCC10_opus_demo_fixed,173248,0.14%,0.02%,0.16%
+GCC10_fpmark-atan-1M,80278,0.11%,0.04%,0.15%
+GCC10_fpmark-xp1px-sml-c100n20,80950,0.11%,0.04%,0.15%
 GCC10_embench_nettle-sha256,6120,0.10%,0.00%,0.10%
 GCC10_embench_minver,8944,0.02%,0.07%,0.09%
 GCC10_embench_cubic,45632,0.04%,0.04%,0.08%
@@ -153,19 +153,19 @@ GCC10_embench_ud,3522,0.00%,0.00%,0.00%
 .SP Relative Store and Load
 [options="header", format="csv"]
 |=======================
-,Size,sp_lbu,sp_sb,sp_lhu,sp_sh,Total
-GCC10_huawei_iot_protocol,963736,0.14%,0.20%,0.09%,0.17%,0.60%
-GCC10_huawei_iot_application,344742,0.13%,0.18%,0.11%,0.18%,0.60%
+,Size,C.LBUSP,C.SBSP,C.LHUSP,C.SHSP,Total
+GCC10_huawei_iot_application,340728,0.14%,0.19%,0.12%,0.19%,0.64%
+GCC10_huawei_iot_protocol,961724,0.14%,0.21%,0.08%,0.18%,0.61%
 GCC10_zephyr_central,43434,0.08%,0.20%,0.04%,0.19%,0.51%
 GCC10_zephyr_peripheral,76246,0.06%,0.15%,0.03%,0.14%,0.38%
-GCC10_coremark,11944,0.00%,0.02%,0.00%,0.18%,0.20%
+GCC10_coremark,19360,0.00%,0.01%,0.00%,0.11%,0.12%
 GCC10_testsoftfloat,135738,0.06%,0.01%,0.00%,0.00%,0.07%
-GCC10_fpmark-radix2-sml-2k,65344,0.00%,0.01%,0.01%,0.03%,0.05%
 GCC10_embench_picojpeg,8164,0.05%,0.00%,0.00%,0.00%,0.05%
-GCC10_fpmark-atan-1M,60302,0.00%,0.01%,0.01%,0.03%,0.05%
-GCC10_fpmark-inner-product-mid-10k,74418,0.00%,0.01%,0.01%,0.02%,0.04%
+GCC10_fpmark-radix2-sml-2k,87132,0.00%,0.01%,0.00%,0.02%,0.03%
+GCC10_fpmark-atan-1M,80278,0.00%,0.01%,0.00%,0.02%,0.03%
+GCC10_fpmark-inner-product-mid-10k,94838,0.00%,0.01%,0.00%,0.02%,0.03%
 GCC10_embench_cubic,45632,0.00%,0.00%,0.00%,0.03%,0.03%
-GCC10_fpmark-xp1px-sml-c100n20,59668,0.00%,0.01%,0.00%,0.01%,0.02%
+GCC10_fpmark-xp1px-sml-c100n20,80950,0.00%,0.00%,0.00%,0.01%,0.01%
 GCC10_embench_sglib-combined,2542,0.00%,0.00%,0.00%,0.00%,0.00%
 GCC10_embench_wikisort,13776,0.00%,0.00%,0.00%,0.00%,0.00%
 GCC10_embench_ud,3522,0.00%,0.00%,0.00%,0.00%,0.00%
@@ -194,35 +194,35 @@ GCC10_opus_demo_float,206210,0.00%,0.00%,0.00%,0.00%,0.00%
 
 [options="header", format="csv"]
 |=======================
-,Size,sext_B,sext_H,Total
+,Size,C.SEXT.B,C.SEXT.H,Total
 GCC10_embench_edn,1696,1.42%,1.77%,3.19%
 GCC10_embench_picojpeg,8164,0.73%,1.67%,2.40%
 GCC10_opus_demo_fixed,173248,0.60%,1.22%,1.82%
 GCC10_opus_demo_float,206210,0.24%,0.44%,0.68%
-GCC10_coremark,11944,0.15%,0.28%,0.43%
+GCC10_coremark,19360,0.12%,0.20%,0.32%
 GCC10_embench_qrduino,6314,0.13%,0.13%,0.26%
 GCC10_testsoftfloat,135738,0.01%,0.09%,0.10%
 GCC10_embench_sglib-combined,2542,0.00%,0.08%,0.08%
-GCC10_huawei_iot_protocol,963736,0.01%,0.03%,0.04%
-GCC10_huawei_iot_application,344742,0.01%,0.02%,0.03%
+GCC10_huawei_iot_protocol,961724,0.01%,0.03%,0.04%
+GCC10_huawei_iot_application,340728,0.01%,0.02%,0.03%
+GCC10_fpmark-radix2-sml-2k,87132,0.01%,0.01%,0.02%
+GCC10_fpmark-xp1px-sml-c100n20,80950,0.01%,0.01%,0.02%
+GCC10_fpmark-inner-product-mid-10k,94838,0.01%,0.01%,0.02%
+GCC10_fpmark-atan-1M,80278,0.01%,0.01%,0.02%
+GCC10_embench_nsichneu,15208,0.00%,0.00%,0.00%
 GCC10_zephyr_central,43434,0.00%,0.00%,0.00%
-GCC10_embench_slre,2672,0.00%,0.00%,0.00%
-GCC10_fpmark-radix2-sml-2k,65344,0.00%,0.00%,0.00%
-GCC10_fpmark-inner-product-mid-10k,74418,0.00%,0.00%,0.00%
-GCC10_fpmark-atan-1M,60302,0.00%,0.00%,0.00%
 GCC10_embench_wikisort,13776,0.00%,0.00%,0.00%
 GCC10_embench_ud,3522,0.00%,0.00%,0.00%
 GCC10_embench_st,10228,0.00%,0.00%,0.00%
 GCC10_embench_statemate,4312,0.00%,0.00%,0.00%
-GCC10_fpmark-xp1px-sml-c100n20,59668,0.00%,0.00%,0.00%
-GCC10_embench_nbody,10026,0.00%,0.00%,0.00%
-GCC10_embench_nsichneu,15208,0.00%,0.00%,0.00%
+GCC10_embench_slre,2672,0.00%,0.00%,0.00%
+GCC10_embench_cubic,45632,0.00%,0.00%,0.00%
 GCC10_embench_nettle-sha256,6120,0.00%,0.00%,0.00%
 GCC10_embench_nettle-aes,3290,0.00%,0.00%,0.00%
+GCC10_embench_nbody,10026,0.00%,0.00%,0.00%
 GCC10_embench_minver,8944,0.00%,0.00%,0.00%
 GCC10_embench_matmult-int,652,0.00%,0.00%,0.00%
 GCC10_embench_huffbench,1888,0.00%,0.00%,0.00%
-GCC10_embench_cubic,45632,0.00%,0.00%,0.00%
 GCC10_embench_crc32,388,0.00%,0.00%,0.00%
 GCC10_embench_aha-mont64,1204,0.00%,0.00%,0.00%
 GCC10_zephyr_peripheral,76246,0.00%,0.00%,0.00%
@@ -235,7 +235,7 @@ GCC10_zephyr_peripheral,76246,0.00%,0.00%,0.00%
 
 [options="header", format="csv"]
 |=======================
-,Size,zext_B,zext_H,Total
+,Size,C.ZEXT.B,C.ZEXT.H,Total
 GCC10_embench_ud,3522,2.73%,2.73%,5.46%
 GCC10_embench_st,10228,2.60%,2.60%,5.20%
 GCC10_embench_nbody,10026,2.57%,2.57%,5.14%
@@ -244,27 +244,27 @@ GCC10_embench_wikisort,13776,1.93%,1.93%,3.86%
 GCC10_embench_edn,1696,1.30%,2.24%,3.54%
 GCC10_embench_picojpeg,8164,1.10%,1.91%,3.01%
 GCC10_embench_cubic,45632,1.06%,1.06%,2.12%
-GCC10_coremark,11944,0.15%,0.67%,0.82%
+GCC10_coremark,19360,0.52%,0.67%,1.19%
+GCC10_fpmark-atan-1M,80278,0.62%,0.28%,0.90%
+GCC10_fpmark-radix2-sml-2k,87132,0.61%,0.28%,0.89%
+GCC10_fpmark-xp1px-sml-c100n20,80950,0.60%,0.25%,0.85%
 GCC10_testsoftfloat,135738,0.26%,0.53%,0.79%
-GCC10_huawei_iot_application,344742,0.17%,0.59%,0.76%
+GCC10_fpmark-inner-product-mid-10k,94838,0.55%,0.24%,0.79%
+GCC10_huawei_iot_application,340728,0.17%,0.59%,0.76%
 GCC10_opus_demo_fixed,173248,0.28%,0.46%,0.74%
 GCC10_opus_demo_float,206210,0.28%,0.32%,0.60%
 GCC10_zephyr_central,43434,0.15%,0.39%,0.54%
-GCC10_huawei_iot_protocol,963736,0.09%,0.43%,0.52%
-GCC10_fpmark-atan-1M,60302,0.23%,0.28%,0.51%
-GCC10_fpmark-radix2-sml-2k,65344,0.23%,0.28%,0.51%
-GCC10_fpmark-inner-product-mid-10k,74418,0.20%,0.24%,0.44%
-GCC10_fpmark-xp1px-sml-c100n20,59668,0.19%,0.25%,0.44%
+GCC10_huawei_iot_protocol,961724,0.09%,0.43%,0.52%
 GCC10_zephyr_peripheral,76246,0.11%,0.26%,0.37%
 GCC10_embench_nettle-sha256,6120,0.00%,0.03%,0.03%
 GCC10_embench_slre,2672,0.00%,0.00%,0.00%
 GCC10_embench_sglib-combined,2542,0.00%,0.00%,0.00%
 GCC10_embench_qrduino,6314,0.00%,0.00%,0.00%
 GCC10_embench_nsichneu,15208,0.00%,0.00%,0.00%
-GCC10_embench_crc32,388,0.00%,0.00%,0.00%
+GCC10_embench_huffbench,1888,0.00%,0.00%,0.00%
 GCC10_embench_nettle-aes,3290,0.00%,0.00%,0.00%
 GCC10_embench_matmult-int,652,0.00%,0.00%,0.00%
-GCC10_embench_huffbench,1888,0.00%,0.00%,0.00%
+GCC10_embench_crc32,388,0.00%,0.00%,0.00%
 GCC10_embench_aha-mont64,1204,0.00%,0.00%,0.00%
 GCC10_embench_statemate,4312,0.00%,0.00%,0.00%
 |=======================
@@ -289,15 +289,15 @@ GCC10_opus_demo_fixed,173248.0,0.03%
 GCC10_opus_demo_float,206210.0,0.03%
 GCC10_embench_cubic,45632.0,0.02%
 GCC10_embench_minver,8944.0,0.02%
-GCC10_fpmark-atan-1M,60302.0,0.02%
-GCC10_fpmark-inner-product-mid-10k,74418.0,0.02%
-GCC10_fpmark-radix2-sml-2k,65344.0,0.02%
-GCC10_fpmark-xp1px-sml-c100n20,59668.0,0.02%
-GCC10_huawei_iot_protocol,963736.0,0.02%
-GCC10_huawei_iot_application,344742.0,0.01%
+GCC10_fpmark-atan-1M,80278.0,0.02%
+GCC10_huawei_iot_protocol,961724.0,0.02%
+GCC10_coremark,19360.0,0.01%
+GCC10_fpmark-inner-product-mid-10k,94838.0,0.01%
+GCC10_fpmark-radix2-sml-2k,87132.0,0.01%
+GCC10_fpmark-xp1px-sml-c100n20,80950.0,0.01%
+GCC10_huawei_iot_application,340728.0,0.01%
 GCC10_zephyr_central,43434.0,0.01%
 GCC10_zephyr_peripheral,76246.0,0.01%
-GCC10_coremark,11944.0,0.00%
 GCC10_embench_crc32,388.0,0.00%
 GCC10_embench_edn,1696.0,0.00%
 GCC10_embench_huffbench,1888.0,0.00%
@@ -331,15 +331,15 @@ GCC10_opus_demo_fixed,173248.0,0.03%
 GCC10_opus_demo_float,206210.0,0.03%
 GCC10_embench_cubic,45632.0,0.02%
 GCC10_embench_minver,8944.0,0.02%
-GCC10_fpmark-atan-1M,60302.0,0.02%
-GCC10_fpmark-inner-product-mid-10k,74418.0,0.02%
-GCC10_fpmark-radix2-sml-2k,65344.0,0.02%
-GCC10_fpmark-xp1px-sml-c100n20,59668.0,0.02%
-GCC10_huawei_iot_protocol,963736.0,0.02%
-GCC10_huawei_iot_application,344742.0,0.01%
+GCC10_fpmark-atan-1M,80278.0,0.02%
+GCC10_huawei_iot_protocol,961724.0,0.02%
+GCC10_coremark,19360.0,0.01%
+GCC10_fpmark-inner-product-mid-10k,94838.0,0.01%
+GCC10_fpmark-radix2-sml-2k,87132.0,0.01%
+GCC10_fpmark-xp1px-sml-c100n20,80950.0,0.01%
+GCC10_huawei_iot_application,340728.0,0.01%
 GCC10_zephyr_central,43434.0,0.01%
 GCC10_zephyr_peripheral,76246.0,0.01%
-GCC10_coremark,11944.0,0.00%
 GCC10_embench_crc32,388.0,0.00%
 GCC10_embench_edn,1696.0,0.00%
 GCC10_embench_huffbench,1888.0,0.00%
@@ -387,35 +387,35 @@ In the table below, the potential saving from running the script across files wi
 |=======================
 File name,NO_MSR_File Size,NO_MSR_Savings,MSR File Size,Saving W.R.T MSR
 GCC10_embench_crc32,228.0,17.54%,388.0,51.54%
+GCC10_coremark,12202.0,11.21%,19360.0,44.04%
 GCC10_embench_matmult-int,524.0,15.65%,652.0,32.21%
+GCC10_fpmark-xp1px-sml-c100n20,60988.0,9.10%,80950.0,31.52%
+GCC10_fpmark-radix2-sml-2k,67058.0,9.30%,87132.0,30.20%
+GCC10_fpmark-atan-1M,61928.0,9.41%,80278.0,30.12%
+GCC10_fpmark-inner-product-mid-10k,77470.0,9.72%,94838.0,26.25%
 GCC10_opus_demo_float,178234.0,5.85%,206210.0,18.62%
 GCC10_embench_aha-mont64,1080.0,7.59%,1204.0,17.11%
 GCC10_embench_edn,1588.0,9.19%,1696.0,14.97%
 GCC10_embench_huffbench,1778.0,5.29%,1888.0,10.81%
 GCC10_embench_nettle-aes,3238.0,9.20%,3290.0,10.64%
 GCC10_testsoftfloat,138598.0,11.72%,135738.0,9.86%
-GCC10_coremark,12202.0,11.21%,11944.0,9.29%
 GCC10_embench_sglib-combined,2580.0,10.08%,2542.0,8.74%
 GCC10_embench_ud,3398.0,5.18%,3522.0,8.52%
 GCC10_embench_slre,2700.0,9.33%,2672.0,8.38%
 GCC10_opus_demo_fixed,169932.0,5.76%,173248.0,7.56%
-GCC10_fpmark-xp1px-sml-c100n20,60988.0,9.10%,59668.0,7.09%
-GCC10_fpmark-atan-1M,61928.0,9.41%,60302.0,6.97%
-GCC10_fpmark-radix2-sml-2k,67058.0,9.30%,65344.0,6.92%
 GCC10_embench_nettle-sha256,6010.0,4.53%,6120.0,6.25%
 GCC10_embench_st,10196.0,5.77%,10228.0,6.06%
-GCC10_fpmark-inner-product-mid-10k,77470.0,9.72%,74418.0,6.02%
 GCC10_embench_minver,8916.0,5.43%,8944.0,5.73%
 GCC10_embench_nbody,9998.0,5.26%,10026.0,5.52%
 GCC10_embench_statemate,4186.0,1.96%,4312.0,4.82%
 GCC10_embench_cubic,45664.0,4.76%,45632.0,4.69%
-GCC10_huawei_iot_application,363338.0,9.50%,344742.0,4.62%
 GCC10_embench_wikisort,14026.0,6.30%,13776.0,4.60%
 GCC10_embench_qrduino,6416.0,5.36%,6314.0,3.83%
 GCC10_zephyr_central,47542.0,11.96%,43434.0,3.63%
+GCC10_huawei_iot_application,363338.0,9.50%,340728.0,3.49%
 GCC10_zephyr_peripheral,83266.0,11.52%,76246.0,3.37%
 GCC10_embench_picojpeg,8554.0,7.69%,8164.0,3.28%
-GCC10_huawei_iot_protocol,1025568.0,8.81%,963736.0,2.96%
+GCC10_huawei_iot_protocol,1025568.0,8.81%,961724.0,2.76%
 GCC10_embench_nsichneu,15014.0,0.15%,15208.0,1.42%
 |=======================
 
@@ -436,26 +436,26 @@ GCC10_embench_nsichneu,15014.0,0.15%,15208.0,1.42%
 .C.LBU et al
 [options="header", format="csv"]
 |=======================
-,Size,clwsw_lbu,clwsw_lhu,clwsw_sb,clwsw_sh,Total
+,Size,C.LBU,C.LHU,C.SB,C.SH,Total
 GCC10_embench_statemate,4312,4.13%,0.00%,5.98%,0.05%,10.16%
 GCC10_embench_qrduino,6314,4.09%,0.00%,2.03%,0.00%,6.12%
 GCC10_embench_picojpeg,8164,2.08%,0.51%,1.67%,1.05%,5.31%
 GCC10_embench_nettle-aes,3290,4.86%,0.00%,0.00%,0.00%,4.86%
 GCC10_zephyr_central,43434,2.13%,0.56%,1.47%,0.37%,4.53%
-GCC10_huawei_iot_protocol,963736,1.67%,0.63%,1.18%,0.45%,3.93%
+GCC10_huawei_iot_protocol,961724,1.68%,0.63%,1.19%,0.45%,3.95%
 GCC10_zephyr_peripheral,76246,1.85%,0.40%,1.02%,0.25%,3.52%
 GCC10_embench_slre,2672,3.22%,0.00%,0.00%,0.00%,3.22%
-GCC10_huawei_iot_application,344742,1.29%,0.57%,0.77%,0.36%,2.99%
+GCC10_huawei_iot_application,340728,1.30%,0.58%,0.79%,0.35%,3.02%
 GCC10_embench_edn,1696,0.12%,0.83%,0.12%,1.65%,2.72%
 GCC10_embench_sglib-combined,2542,1.34%,0.00%,1.10%,0.00%,2.44%
-GCC10_coremark,11944,0.45%,0.57%,0.25%,0.67%,1.94%
 GCC10_embench_huffbench,1888,0.85%,0.00%,0.85%,0.00%,1.70%
-GCC10_fpmark-atan-1M,60302,0.49%,0.20%,0.14%,0.22%,1.05%
-GCC10_fpmark-xp1px-sml-c100n20,59668,0.49%,0.20%,0.13%,0.21%,1.03%
-GCC10_fpmark-radix2-sml-2k,65344,0.45%,0.19%,0.13%,0.20%,0.97%
-GCC10_fpmark-inner-product-mid-10k,74418,0.40%,0.16%,0.11%,0.17%,0.84%
+GCC10_coremark,19360,0.32%,0.35%,0.15%,0.41%,1.23%
+GCC10_fpmark-atan-1M,80278,0.37%,0.15%,0.10%,0.16%,0.78%
+GCC10_fpmark-xp1px-sml-c100n20,80950,0.36%,0.15%,0.10%,0.15%,0.76%
 GCC10_testsoftfloat,135738,0.33%,0.14%,0.16%,0.10%,0.73%
+GCC10_fpmark-radix2-sml-2k,87132,0.34%,0.14%,0.09%,0.15%,0.72%
 GCC10_opus_demo_fixed,173248,0.14%,0.15%,0.10%,0.33%,0.72%
+GCC10_fpmark-inner-product-mid-10k,94838,0.31%,0.13%,0.09%,0.14%,0.67%
 GCC10_embench_matmult-int,652,0.31%,0.00%,0.31%,0.00%,0.62%
 GCC10_opus_demo_float,206210,0.12%,0.05%,0.09%,0.13%,0.39%
 GCC10_embench_ud,3522,0.28%,0.00%,0.06%,0.00%,0.34%
@@ -478,19 +478,19 @@ GCC10_embench_nsichneu,15208,0.00%,0.00%,0.00%,0.00%,0.00%
 |=======================
 ,Size,MVA01S03,MVA23S03,MVP_EO_EO_SN,MVP_E_EO_SN,MVP_E_E_SN,MVP_E_E_S
 GCC10_embench_aha-mont64,1204,0.00%,0.33%,3.65%,3.65%,3.65%,0.33%
-GCC10_fpmark-xp1px-sml-c100n20,59668,0.58%,0.18%,2.35%,2.09%,1.77%,0.92%
-GCC10_fpmark-radix2-sml-2k,65344,0.52%,0.15%,2.25%,2.01%,1.70%,0.89%
-GCC10_fpmark-inner-product-mid-10k,74418,0.55%,0.13%,2.21%,1.99%,1.71%,0.81%
-GCC10_fpmark-atan-1M,60302,0.51%,0.11%,1.85%,1.64%,1.37%,0.71%
-GCC10_coremark,11944,0.47%,0.05%,0.69%,0.57%,0.47%,0.22%
 GCC10_embench_st,10228,0.10%,0.08%,0.72%,0.68%,0.57%,0.31%
+GCC10_fpmark-inner-product-mid-10k,94838,0.15%,0.04%,0.75%,0.67%,0.59%,0.20%
 GCC10_zephyr_central,43434,0.38%,0.01%,0.62%,0.49%,0.39%,0.19%
 GCC10_embench_nbody,10026,0.10%,0.00%,0.62%,0.60%,0.60%,0.10%
 GCC10_testsoftfloat,135738,0.16%,0.07%,0.70%,0.47%,0.35%,0.20%
-GCC10_huawei_iot_application,344742,0.22%,0.06%,0.56%,0.52%,0.45%,0.08%
+GCC10_huawei_iot_application,340728,0.22%,0.06%,0.57%,0.53%,0.45%,0.08%
 GCC10_zephyr_peripheral,76246,0.32%,0.01%,0.58%,0.46%,0.34%,0.15%
 GCC10_opus_demo_float,206210,0.13%,0.02%,0.48%,0.40%,0.27%,0.09%
-GCC10_huawei_iot_protocol,963736,0.15%,0.04%,0.40%,0.34%,0.27%,0.07%
+GCC10_huawei_iot_protocol,961724,0.15%,0.04%,0.40%,0.34%,0.27%,0.07%
+GCC10_fpmark-radix2-sml-2k,87132,0.08%,0.02%,0.39%,0.33%,0.29%,0.12%
+GCC10_fpmark-xp1px-sml-c100n20,80950,0.10%,0.03%,0.33%,0.27%,0.24%,0.09%
+GCC10_fpmark-atan-1M,80278,0.09%,0.02%,0.34%,0.28%,0.24%,0.09%
+GCC10_coremark,19360,0.11%,0.02%,0.19%,0.17%,0.17%,0.04%
 GCC10_embench_cubic,45632,0.01%,0.01%,0.25%,0.21%,0.14%,0.08%
 GCC10_embench_wikisort,13776,0.10%,0.00%,0.20%,0.15%,0.13%,0.07%
 GCC10_embench_sglib-combined,2542,0.16%,0.00%,0.16%,0.16%,0.08%,0.08%
@@ -503,11 +503,11 @@ GCC10_embench_slre,2672,0.00%,0.00%,0.15%,0.07%,0.00%,0.00%
 GCC10_embench_picojpeg,8164,0.02%,0.00%,0.05%,0.05%,0.05%,0.02%
 GCC10_embench_nettle-sha256,6120,0.10%,0.00%,0.03%,0.03%,0.03%,0.00%
 GCC10_embench_ud,3522,0.00%,0.00%,0.06%,0.06%,0.06%,0.00%
-GCC10_embench_edn,1696,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
 GCC10_embench_matmult-int,652,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
-GCC10_embench_crc32,388,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
 GCC10_embench_nsichneu,15208,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+GCC10_embench_edn,1696,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
 GCC10_embench_statemate,4312,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
+GCC10_embench_crc32,388,0.00%,0.00%,0.00%,0.00%,0.00%,0.00%
 |=======================
 
 ## Shorter table length for TBLJAL
