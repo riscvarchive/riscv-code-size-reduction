@@ -228,7 +228,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 
 | |100    |000    |00   |C.POP, C.POPRET, C.PUSH
 | |100    |001    |00   |C.[SZ]EXT.[BH], C.MUL
-| |100    |11x    |00   |C.TBLJAL
+| |100    |110    |00   |C.TBLJAL
 
 |1|001    |xxx    |00   |C.DECBGEZ
 
