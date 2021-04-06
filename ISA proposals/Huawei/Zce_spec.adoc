@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.21
-Version 0.21
+= RISC-V Zce code-size reduction extension proposal v0.22
+Version 0.22
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.22    | group encodings closer together to hopefully allocate 16-bit encoding space to Zce. Put code points numbers into the tables
 | 0.21    | remove SEXT.W as it's an existing pseudo-instruction, and also remove ZEXT.W as it requires Zbp (which is otherwise is *not* required). 
 |         | Remove C.LSBKEEP as it's the same as C.ANDI, rs, 1. Postpone C.LSBSET. 
 |         | Tidy up encodings of C.[SX]EXT.[BH] so we don't leave gaps
@@ -136,7 +137,8 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |*C.SEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.ZEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.ZEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.LSBSET*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.NOT*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.NEG*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.MUL*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 
 |101       |C.FSD     |3|Zcd|✓|✓| |C+D
@@ -227,7 +229,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 |Group|[15:13]|[12:10]|[1:0]|Instruction
 
 | |100    |000    |00   |C.POP, C.POPRET, C.PUSH
-| |100    |001    |00   |C.[SZ]EXT.[BH], C.MUL
+| |100    |001    |00   |C.[SZ]EXT.[BH], C.NOT, C.NEG, C.MUL
 | |100    |110    |00   |C.TBLJAL
 
 |1|001    |xxx    |00   |C.DECBGEZ
@@ -235,67 +237,69 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 |3|101    |0xx    |00   |C.SB
 |3|101    |1xx    |00   |C.LBU
 
-| |011    |000    |00   |C.NOT
-| |011    |001    |00   |C.NEG
-
-
 |11|101   |0xx    |10   |C.SH
 |11|101   |1xx    |10   |C.LHU
 |======================================
 
 
-=== Spare 16-bit encodings
+=== 16-bit encoding code-points
 
-Some spare encodings are noted in the tables below. The remaining unallocated space is listed here:
+All previously reserved 16-bit encodings are in the tables below, showing how many are allcoated to `Zce`.
 
 [#spare encodings RV32/RV64]
 .spare 16-bit encodings for RV32/RV64
 [width="100%",options=header]
 |================================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100    11+|xxxx                                          2+|00     | *reserved*
-3+|  011       | 0 5+|xxxxx             5+|11111              2+|01   | *reserved*
-3+|  100     3+|111  3+|xxx   |1  4+|xxx                      2+| 01  | *reserved*
-3+|  000       | 1  10+| non-zero                             2+| 10  | *reserved*  
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension
+18+|Some of these spare encodings may be allocated to EABI versions of `C.PUSH/C.POP/C.POPRET`
+3+|  100     3+|000        8+|xxxx                            2+| 00    |200/256 | `Zces`
+3+|  100     3+|001        8+|xxxx                            2+| 00    |112/256 | `Zcec`
+3+|  100     3+|010        8+|xxxx                            2+| 00    |256/256 | `Zcec`
+3+|  100     3+|011        8+|xxxx                            2+| 00    |0/256   | *reserved*
+3+|  100     3+|1xx        8+|xxxx                            2+| 00    |0/1024  | *reserved*
+3+|  011       | 0 5+|xxxxx             5+|11111              2+| 01    |0/32    | *reserved*
+3+|  100     3+|111  3+|xxx   |1  4+|xxx                      2+| 01    |0/128   | *reserved*
+3+|  100     6+|000000                  5+|non-zero           2+| 10    |0/31    | *reserved*
 |================================================================================================
 
 [#spare encodings RV32]
 .spare 16-bit encodings for RV32 only (mainly out of range shifts)
 [width="100%",options=header]
 |================================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100     2+|10  9+|xxx                                      2+| 01  | *reserved*
-3+|  100     3+|111  3+|xxx   |0  4+|xxx                        2+| 01  | *reserved*
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension         
+3+|  100     2+|10  9+|xxx                                      2+| 01  |0/512  | *reserved*
+3+|  100     3+|111  3+|xxx   |0  4+|xxx                        2+| 01  |0/128  | *reserved*
+3+|  000       | 1   5+| non-zero            5+|xxx             2+| 10  |0/992  | *reserved*  
 |================================================================================================
 
 [#spare encodings RV64]
 .spare 16-bit encodings for RV64 only (ADDIW with zero destination)
 [width="100%",options=header]
 |================================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction 
-3+| 001        | x 5+|00000             5+| xxxxx             2+|01     | *reserved*       
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension  
+3+| 001        | x 5+|00000             5+| xxxxx             2+|01     |0/64 | *reserved*
 |================================================================================================
 
 [#spare encodings D]
 .spare 16-bit encodings reused fromthe D-extension
 [width="100%",options=header]
 |================================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction 
-3+| 001        11+|xxx                                        2+|00     | *reserved*       
-3+| 101        11+|xxx                                        2+|00     | *reserved*       
-3+| 001        11+|xxx                                        2+|10     | *reserved*       
-3+| 101        11+|xxx                                        2+|10     | *reserved*       
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points|sub-extension  
+3+| 001        11+|xxx                                        2+|00     |2048/2048| `Zced`
+3+| 101        11+|xxx                                        2+|00     |2048/2048| `Zced`
+3+| 001        11+|xxx                                        2+|10     |   0/2048| *reserved*       
+3+| 101        11+|xxx                                        2+|10     |2048/2048| `Zced`
 |================================================================================================
 
 In total in the existing RVC (16-bit) encoding space:
 
-. RV32C has 2878 code points available, 568 are used (19.7%)
+. RV32C has 3871 code points available, 568 are used (14.7%)
 . RV64C has 2303 code points available, 568 are used (24.7%)
 . RV32CD (i.e. the C.FSD,C.FLD, C.FSDSP, C.FLDSP encodings) has 8192 code points available, 6144 are used (75.0%)
 
 == `Zcec` definition
 
-=== C.[SZ]EXT.[BH], C.MUL
+=== C.[SZ]EXT.[BH], C.MUL, C.NOT, C.NEG
 
 These instructions are 16-bit versions of existing 32-bit instructions, from either I or the B-extension.
 
@@ -309,7 +313,9 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 001     2+| 00  | C.ZEXT.H
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 010     2+| 00  | C.SEXT.B
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 011     2+| 00  | C.SEXT.H
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 1xx     2+| 00  | *reserved*
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 100     2+| 00  | C.NOT
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 101     2+| 00  | C.NEG
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 11x     2+| 00  | *reserved*
 17+|Dyadic with room for 1 more encoding
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 1  3+| rs2'    2+| 00  | C.MUL
 3+|  100       | 0  | 0  | 1 3+| xxx      | 1  | x  3+| xxx     2+| 00  | *reserved*
@@ -324,6 +330,8 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 | C.ZEXT.H      | rd' = zero_ext(rd'[15:0])
 | C.SEXT.B      | rd' = sign_ext(rd'[ 7:0])
 | C.SEXT.H      | rd' = sign_ext(rd'[15:0])
+| C.NOT         | rd' = ~rd' / rd' = rd' XOR -1
+| C.NEG         | rd' = -rd'
 | C.MUL         | rd' = rd' * rs2'
 |=======================================================================
 
@@ -336,6 +344,8 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 |C.ZEXT.H    | zext.h rd             | rd x8-x15                          | B-extension
 |C.SEXT.B    | sext.b rd             | rd x8-x15                          | B-extension
 |C.SEXT.H    | sext.h rd             | rd x8-x15                          | B-extension
+|C.NOT       | not    rd             | rd x8-x15                          | I-extension
+|C.NEG       | neg    rd             | rd x8-x15                          | I-extension
 |C.MUL       | mul    rd, rs1, rs2   | rd x8-x15                          | I-extension
 |======================================================================================================
 
@@ -348,12 +358,10 @@ zext.h a5;  # a5 = zero_ext(a5[15:0])
 sext.b a5;  # a5 = sign_ext(a5[7:0])
 sext.h a5;  # a5 = sign_ext(a5[15:0])
 
+not a5          # a5 = ~a5 bitwise inversion
+neg a5          # a5 = -a5 two's complement inversion
+
 mul a5, a5, a6; # a5 = a5 * a6
-
-#RV64/RV128 only
-
-zext.w a5; # a5 = zero_ext(a5[31:0])
-sext.w a5; # a5 = sign_ext(a5[31:0])
 
 ----
 
