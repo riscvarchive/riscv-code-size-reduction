@@ -246,7 +246,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 
 All previously reserved 16-bit encodings are in the tables below, showing how many are allcoated to `Zce`.
 
-[#spare encodings RV32/RV64]
+[#spare16encodings]
 .spare 16-bit encodings for RV32/RV64
 [width="100%",options=header]
 |================================================================================================
@@ -254,7 +254,7 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 18+|Some of these spare encodings may be allocated to EABI versions of `C.PUSH/C.POP/C.POPRET`
 3+|  100     3+|000        8+|xxxx                            2+| 00    |200/256 | `Zces`
 3+|  100     3+|001        8+|xxxx                            2+| 00    |112/256 | `Zcec`
-3+|  100     3+|010        8+|xxxx                            2+| 00    |256/256 | `Zcec`
+3+|  100     3+|010        8+|xxxx                            2+| 00    |256/256 | `Zces`
 3+|  100     3+|011        8+|xxxx                            2+| 00    |0/256   | *reserved*
 3+|  100     3+|1xx        8+|xxxx                            2+| 00    |0/1024  | *reserved*
 3+|  011       | 0 5+|xxxxx             5+|11111              2+| 01    |0/32    | *reserved*
@@ -296,6 +296,10 @@ In total in the existing RVC (16-bit) encoding space:
 . RV32C has 3871 code points available, 568 are used (14.7%)
 . RV64C has 2303 code points available, 568 are used (24.7%)
 . RV32CD (i.e. the C.FSD,C.FLD, C.FSDSP, C.FLDSP encodings) has 8192 code points available, 6144 are used (75.0%)
+
+. if the partially allocated encoding groups from <<spare16encodings>> are fully allocated to Zce the figures become
+.. RV32C has 3871 code points available, 768 are used (19.8%)
+.. RV64C has 2303 code points available, 768 are used (33.3%)
 
 == `Zcec` definition
 
