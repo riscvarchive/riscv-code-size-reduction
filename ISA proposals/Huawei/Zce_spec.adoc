@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.20
-Version 0.20
+= RISC-V Zce code-size reduction extension proposal v0.21
+Version 0.21
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,10 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.21    | remove SEXT.W as it's an existing pseudo-instruction, and also remove ZEXT.W as it requires Zbp (which is otherwise is *not* required). 
+|         | Remove C.LSBKEEP as it's the same as C.ANDI, rs, 1. Postpone C.LSBSET. 
+|         | Tidy up encodings of C.[SX]EXT.[BH] so we don't leave gaps
+|         | Add code-point information
 | 0.20    | Put MULI[W]/MULIADD[W] into Zcecm
 |         | POSTPONE PUSH.[FDQ]/POP.[FDQ]/POPRET.[FDQ]. 
 |         | Replace C.LSBNOT with C.LSBSET and also add C.LSBKEEP. 
@@ -130,12 +134,9 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |*C.TBLJAL*  | |*Zces*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.SEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.SEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.SEXT.W*  | |*Zcec*|	 |	✓|	✓|	C+*Zce*
 |100       |*C.ZEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.ZEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.ZEXT.W*  | |*Zcec*|	 |	✓|	✓|	C+*Zce*
 |100       |*C.LSBSET*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.LSBKEEP* | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.MUL*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 
 |101       |C.FSD     |3|Zcd|✓|✓| |C+D
@@ -226,7 +227,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 |Group|[15:13]|[12:10]|[1:0]|Instruction
 
 | |100    |000    |00   |C.POP, C.POPRET, C.PUSH
-| |100    |001    |00   |C.[SZ]EXT.[BHW], C.LSBSET, C.LSBKEEP, C.MUL
+| |100    |001    |00   |C.[SZ]EXT.[BH], C.MUL
 | |100    |11x    |00   |C.TBLJAL
 
 |1|001    |xxx    |00   |C.DECBGEZ
@@ -247,33 +248,54 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 
 Some spare encodings are noted in the tables below. The remaining unallocated space is listed here:
 
-[#spare encodings]
-.spare 16-bit encodings
+[#spare encodings RV32/RV64]
+.spare 16-bit encodings for RV32/RV64
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100       |1   |0   |1 8+| xxxx                          2+|00     | *was allocated to C.MVP*
-3+|  100       |1   |0   | 0  | 0 7+|xxx                      2+|00     | *was allocated to C.MVA*S07*
-3+|  100       | 0  | 0  | 1 3+| xxx      | 1  | x  3+| xxx   2+|00     | *reserved*
-3+|  100       | 0  | 1 9+|xxx                                2+|00     | *was C.LBUSP etc.*
-3+|  100       | 1  | 1  | 1 8+|xxx                           2+|00     | *reserved*
-3+|100  |0  |0  |0  |1 2+|xx         |0 |0 3+|xxx           2+| 00  |*reserved*
-3+|100  |0  |0  |0 3+|xxx            |0 |0 2+|!=00| x       2+| 00  |*reserved*
-3+|100  |0  |0  |0   |1 2+|xxx        |x|1 |1 2+|xx         2+| 00  |*reserved*
-3+|100  |0  |0  |0   |1 2+|xx      |1 |0   |1 2+|xx         2+| 00  |*reserved*
-3+|  011       |0   |1  4+|xxxx         5+|00000              2+|01     | *reserved*
-3+|  001       |0   |0   |0       3+| rd'  3+|000    2+|scale 2+|00     | *reserved*
-17+|These three are RV32 only
-3+|  000       |1 10+|  xxxxx                                 2+|10     | *reserved*
-3+|  100       |1   |0  9+| xxxx                              2+|01     | *reserved*
-3+|  100       |1 2+|11 8+| xxxx                              2+|00     | *reserved*
-17+|This conflicts with the D-extension
-3+|  001     11+|xxxx                                         2+|10     | *reserved*
+3+|  100    11+|xxxx                                          2+|00     | *reserved*
+3+|  011       | 0 5+|xxxxx             5+|11111              2+|01   | *reserved*
+3+|  100     3+|111  3+|xxx   |1  4+|xxx                      2+| 01  | *reserved*
+3+|  000       | 1  10+| non-zero                             2+| 10  | *reserved*  
 |================================================================================================
+
+[#spare encodings RV32]
+.spare 16-bit encodings for RV32 only (mainly out of range shifts)
+[width="100%",options=header]
+|================================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  100     2+|10  9+|xxx                                      2+| 01  | *reserved*
+3+|  100     3+|111  3+|xxx   |0  4+|xxx                        2+| 01  | *reserved*
+|================================================================================================
+
+[#spare encodings RV64]
+.spare 16-bit encodings for RV64 only (ADDIW with zero destination)
+[width="100%",options=header]
+|================================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction 
+3+| 001        | x 5+|00000             5+| xxxxx             2+|01     | *reserved*       
+|================================================================================================
+
+[#spare encodings D]
+.spare 16-bit encodings reused fromthe D-extension
+[width="100%",options=header]
+|================================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction 
+3+| 001        11+|xxx                                        2+|00     | *reserved*       
+3+| 101        11+|xxx                                        2+|00     | *reserved*       
+3+| 001        11+|xxx                                        2+|10     | *reserved*       
+3+| 101        11+|xxx                                        2+|10     | *reserved*       
+|================================================================================================
+
+In total:
+
+. RV32 has 2878 code points available, 568 are used (19.7%)
+. RV64 has 2303 code points available, 568 are used (24.7%)
+. The D-extension has 8192 code points available, 6144 are used (75.0%)
 
 == `Zcec` definition
 
-=== C.[SZ]EXT.[BHW], C.LSBSET, C.LSBKEEP, C.MUL
+=== C.[SZ]EXT.[BH], C.MUL
 
 These instructions are 16-bit versions of existing 32-bit instructions, from either I or the B-extension.
 
@@ -285,12 +307,9 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 17+|monadic with single source/dest 
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 000     2+| 00  | C.ZEXT.B
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 001     2+| 00  | C.ZEXT.H
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 010     2+| 00  | C.ZEXT.W
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 011     2+| 00  | C.SEXT.B
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 100     2+| 00  | C.SEXT.H
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 101     2+| 00  | C.SEXT.W
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 110     2+| 00  | C.LSBSET
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 111     2+| 00  | C.LSBKEEP
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 010     2+| 00  | C.SEXT.B
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 011     2+| 00  | C.SEXT.H
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 1xx     2+| 00  | *reserved*
 17+|Dyadic with room for 1 more encoding
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 1  3+| rs2'    2+| 00  | C.MUL
 3+|  100       | 0  | 0  | 1 3+| xxx      | 1  | x  3+| xxx     2+| 00  | *reserved*
@@ -305,12 +324,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 | C.ZEXT.H      | rd' = zero_ext(rd'[15:0])
 | C.SEXT.B      | rd' = sign_ext(rd'[ 7:0])
 | C.SEXT.H      | rd' = sign_ext(rd'[15:0])
-| C.LSBSET      | rd' = rd' OR 1
-| C.LSBKEEP     | rd' = rd' AND 1
 | C.MUL         | rd' = rd' * rs2'
-2+|RV64/RV128 only
-| C.ZEXT.W      | rd' = zero_ext(rd'[31:0])
-| C.SEXT.W      | rd' = sign_ext(rd'[31:0])
 |=======================================================================
 
 [#mon-32bit]
@@ -322,12 +336,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 |C.ZEXT.H    | zext.h rd             | rd x8-x15                          | B-extension
 |C.SEXT.B    | sext.b rd             | rd x8-x15                          | B-extension
 |C.SEXT.H    | sext.h rd             | rd x8-x15                          | B-extension
-|C.LSBSET    | lsbset rd             | rd x8-x15                          | I-extension
-|C.LSBKEEP   | lsbkeep rd            | rd x8-x15                          | I-extension
 |C.MUL       | mul    rd, rs1, rs2   | rd x8-x15                          | I-extension
-4+|RV64/RV128 only
-|C.ZEXT.W    | zext.w rd             | rd x8-x15                          | B-extension
-|C.SEXT.W    | sext.w rd             | rd x8-x15                          | B-extension
 |======================================================================================================
 
 Assembly Examples
@@ -338,9 +347,6 @@ zext.b a5;  # a5 = zero_ext(a5[7:0])
 zext.h a5;  # a5 = zero_ext(a5[15:0])
 sext.b a5;  # a5 = sign_ext(a5[7:0])
 sext.h a5;  # a5 = sign_ext(a5[15:0])
-
-lsbset  a5;      # a5 = a5 OR 1
-lsbkeep a5;      # a5 = a5 AND 1
 
 mul a5, a5, a6; # a5 = a5 * a6
 
@@ -610,10 +616,10 @@ The D-extension takes priority over these encodings
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  101       |1 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.LBU
-3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LHU
 3+|  101       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SB
+3+|  101       |1 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.LBU
 3+|  101       |0 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.SH
+3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LHU
 |=============================================================================================
 
 [#ldstbhsemantics]
@@ -1872,6 +1878,23 @@ If the target memory is non-idempotent then see <<non-idem-mem>> for additional 
 
 = Rejected and postponed instructions
 
+== No 32-bit equivalent: C.ZEXT.W
+
+`C.ZEXT.W` and `C.ZEXT.D` are inthe B-extension specification.
+The B-extension will not ratify any 16-bit encodings, so I'm listing them here.
+
+`C.ZEXT.W` may be useful for RV64 code. `C.ZEXT.D` is RV128 only so is unlkely to be ratified any time soon.
+
+[#czextw-encoding]
+.Postponed encodings for C.ZEXT.W, C.ZEXT.D
+[width="100%",options=header]
+|================================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|source/dest with one other source operand, stack pointer relative
+3+|  011       | 0  | 1  |0 3+| rs1'/rd'  5+|0                2+| 01     | C.ZEXT.W
+3+|  011       | 0  | 1  |1 3+| rs1'/rd'  5+|0                2+| 01     | C.ZEXT.D
+|================================================================================================
+
 == Not benchmarked: PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]
 
 Please read <<pushpoppopret>> before reading this section.
@@ -2338,17 +2361,17 @@ sb  a5,20(sp)   # Memory(sp+20)[ 7:0] = a5[ 7:0]
 sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0]   
 ----
 
-=== C.LSBNOT
+=== C.LSBNOT / C.LSBSET
 
-This encoding is cheap, but the benefit is lower than `C.LSBNOT` and `C.LSBKEEP`. We may find a better use for it in future.
+The encodings are cheap, but the benefit is low.
 
 [#dyadic-16encodings]
 .simple instructions 16-bit encodings
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|note - the encoding has been reused by `C.LSBKEEP`
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 110     2+| 00  | C.LSBNOT
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 111     2+| 00  | C.LSBSET
 |=============================================================================================
 
 [#monsemantics]
@@ -2357,6 +2380,7 @@ This encoding is cheap, but the benefit is lower than `C.LSBNOT` and `C.LSBKEEP`
 |=======================================================================
 |instruction    | definition
 | C.LSBNOT      | rd' = rd' XOR 1
+| C.LSBSET      | rd' = rd' OR 1
 |=======================================================================
 
 [#mon-32bit]
@@ -2365,7 +2389,8 @@ This encoding is cheap, but the benefit is lower than `C.LSBNOT` and `C.LSBKEEP`
 |======================================================================================================
 |instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
 |C.LSBNOT    | lsbnot rd             | all registers x8-x15, rd==rs1      | I-extension
-|======================================================================================================
+|C.LSBKEEP   | lsbset rd             | all registers x8-x15, rd==rs1      | I-extension
+======================================================================================================
 
 Assembly Examples
 
