@@ -287,11 +287,11 @@ Some spare encodings are noted in the tables below. The remaining unallocated sp
 3+| 101        11+|xxx                                        2+|10     | *reserved*       
 |================================================================================================
 
-In total:
+In total in the existing RVC (16-bit) encoding space:
 
-. RV32 has 2878 code points available, 568 are used (19.7%)
-. RV64 has 2303 code points available, 568 are used (24.7%)
-. The D-extension has 8192 code points available, 6144 are used (75.0%)
+. RV32C has 2878 code points available, 568 are used (19.7%)
+. RV64C has 2303 code points available, 568 are used (24.7%)
+. RV32CD (i.e. the C.FSD,C.FLD, C.FSDSP, C.FLDSP encodings) has 8192 code points available, 6144 are used (75.0%)
 
 == `Zcec` definition
 
