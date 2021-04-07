@@ -230,7 +230,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 |Group|[15:13]|[12:10]|[1:0]|Instruction
 
 | |100    |000    |00   |C.POP, C.POPRET, C.PUSH
-| |100    |001    |00   |C.[SZ]EXT.[BH], C.NOT, C.NEG, C.MUL
+| |100    |001    |00   |C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H, C.ZEXT.W, C.NOT, C.NEG, C.MUL
 | |100    |110    |00   |C.TBLJAL
 
 |1|001    |xxx    |00   |C.DECBGEZ
@@ -304,7 +304,7 @@ In total in the existing RVC (16-bit) encoding space:
 
 == `Zcec` definition
 
-=== C.[SZ]EXT.[BH], C.MUL, C.NOT, C.NEG
+=== C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H, C.ZEXT.W, C.MUL, C.NOT, C.NEG
 
 These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
@@ -497,7 +497,7 @@ Some instructions will be reused from the B-extension and are implied by `Zce`.
 
 `Zba` is require for the 32-bit encoding for `c.zext.w`. The `sh[123]add` instructions are also useful for code-size reduction, as they are used for address calculations.
 
-`Zbb` is required for 32-bit encodings for `c.[sz]ext.[bh]`. It is simpler to take the whole `Zbb` subset as it also contains useful instructions like rotate (`rori, ror, rol`), byte reverse (`rev8`) and count-leading-zeroes (`clz`).
+`Zbb` is required for 32-bit encodings for `c.sext.b, c.sext.h, c.zext.b, c.zext.h`. It is simpler to take the whole `Zbb` subset as it also contains useful instructions like rotate (`rori, ror, rol`), byte reverse (`rev8`) and count-leading-zeroes (`clz`).
 
 [NOTE]
 
