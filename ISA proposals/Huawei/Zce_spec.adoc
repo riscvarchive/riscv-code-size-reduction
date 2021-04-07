@@ -50,7 +50,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 `Zce` is designed to be compatible with all existing extensions. Specification of the `D` extension will cause some `Zce` instructions to be automatically excluded as they share the same encodings. `Zce` _can_ still be specified.
 
-`Zce` is also compatible with both the `I` and `E` extensions.  Some register lists from `PUSH/POP/POPRET` instructions cannot be executed on `E` cores, see <<pushpoppopret>> for details, in the future specific EABI versions are likely to be added to cover the cases which are currently not supported, which will only be posible after the EABI spec is frozen.
+`Zce` is also compatible with both the `I` and `E` extensions.  Some register lists from `PUSH/POP/POPRET` instructions cannot be executed on `E` cores, see <<pushpoppopret>> for details. A future version of `Zce` is likely to add specific EABI versions to cover the cases which are currently not supported, which will only be posible after the EABI spec is frozen.
 
 All systems which implement `Zce` must also implement the `C` extension. 
 
@@ -139,7 +139,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |*C.ZEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.NOT*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
 |100       |*C.NEG*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.MUL*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.MUL*     | |*Zcec*|	✓|	✓|	✓|	M+C+*Zce*
 
 |101       |C.FSD     |3|Zcd|✓|✓| |C+D
 |101       |C.SQ      |3|Zcq| | |✓|D
@@ -244,7 +244,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 
 === 16-bit encoding code-points
 
-All previously reserved 16-bit encodings are in the tables below, showing how many are allcoated to `Zce`.
+All previously reserved 16-bit encodings are in the tables below, showing how many are allocated to `Zce`.
 
 [#spare16encodings]
 .spare 16-bit encodings for RV32/RV64
@@ -281,7 +281,7 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 |================================================================================================
 
 [#spare encodings D]
-.spare 16-bit encodings reused fromthe D-extension
+.spare 16-bit encodings reused from the D-extension
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points|sub-extension  
@@ -305,7 +305,9 @@ In total in the existing RVC (16-bit) encoding space:
 
 === C.[SZ]EXT.[BH], C.MUL, C.NOT, C.NEG
 
-These instructions are 16-bit versions of existing 32-bit instructions, from either I or the B-extension.
+These instructions have no conflicts with other extensions, they use previously reserved encodings.
+
+These instructions are 16-bit versions of existing 32-bit instructions, from either I or the Zbb-extension.
 
 [#dyadic-16encodings]
 .simple instructions 16-bit encodings
@@ -344,13 +346,13 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
-|C.ZEXT.B    | zext.b rd             | rd x8-x15                          | I-extension
-|C.ZEXT.H    | zext.h rd             | rd x8-x15                          | B-extension
-|C.SEXT.B    | sext.b rd             | rd x8-x15                          | B-extension
-|C.SEXT.H    | sext.h rd             | rd x8-x15                          | B-extension
-|C.NOT       | not    rd             | rd x8-x15                          | I-extension
-|C.NEG       | neg    rd             | rd x8-x15                          | I-extension
-|C.MUL       | mul    rd, rs1, rs2   | rd x8-x15                          | I-extension
+|C.ZEXT.B    | zext.b rd             | rd x8-x15                          | I or E
+|C.ZEXT.H    | zext.h rd             | rd x8-x15                          | Zbb
+|C.SEXT.B    | sext.b rd             | rd x8-x15                          | Zbb
+|C.SEXT.H    | sext.h rd             | rd x8-x15                          | Zbb
+|C.NOT       | not    rd             | rd x8-x15                          | I or E
+|C.NEG       | neg    rd             | rd x8-x15                          | I or E
+|C.MUL       | mul    rd, rs1, rs2   | rd x8-x15                          | I or E
 |======================================================================================================
 
 Assembly Examples
@@ -370,6 +372,8 @@ mul a5, a5, a6; # a5 = a5 * a6
 ----
 
 === MULI, MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
+
+These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
 See https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension].
 Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[this document], which is implemented on silicon.
@@ -417,16 +421,12 @@ addiaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 + 2)
 [#cmpimmbr]
 === BEQI, BNEI
 
-These allocate reserved encodings.
+These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
 The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
 
-[NOTE]
-
-  The full set of comparisons would include `BGEI, BLTI` but these are rarely inferred by the compiler, so are not implemented. See https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_condbr_imm_extension.rst[this document], which is implemented on silicon.
-
-[zced-32bit-encodings]
-.proposed 32-bit encodings for `Zced`
+[compare-immediate-branch_encodings]
+.proposed 32-bit encodings for `BEQI/BNEI`
 [width="100%",options=header]
 |=========================================================================================================================
 | 31:27              | 26:25  |24   |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
@@ -453,7 +453,7 @@ bne  a5,-1,offset # if(a5!=-1) branch_to(PC+offset) # signed comparison
 
 === DECBGEZ
 
-This reuses uses reserved encoding space adjacent to `BNEI` etc.
+This instruction has no conflicts with other extensions, it uses a previously reserved encoding.
 
 The 16-bit encoding and specification is in <<decbr16>>.
 
@@ -536,6 +536,8 @@ The D-extension takes priority over these encodings.
 [[decbr16]]
 ==== C.DECBGEZ
 
+This instruction conflicts with the `D`-extension. If `D` is implemented, this instruction will not be available. It is compatible with `ZDinx`.
+
 This instruction is a combined decrement and branch, used for inferring loops with an optionally scaled loop counter.
 
 [NOTE]
@@ -580,7 +582,9 @@ decbgez s2, 1, -4 ;# s2-=1;if(s2>=0) branch_to(PC-4) encoded as scale=0, uimm=4 
 
 === C.LBU, C.LHU, C.SB, C.SH
 
-The D-extension takes priority over these encodings
+These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
+
+These instructions reuse the encodings for `FLD/FSD`.
 
 [#ldstbh]
 .proposed 16-bit encodings for load/store byte/half
@@ -626,7 +630,9 @@ sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
 
 === LWGP, SWGP, LWTP, SWTP
 
-These reuse the encodings for `FLD/FSD`.
+These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
+
+These instructions reuse the encodings for `FLD/FSD`.
 
 `LWGP,SWGP` give a larger offset range than the standard `LW, SW` instructions by making the base register explicitly `gp`, allowing an 18-bit/256KB range of word aligned offsets, instead of a 12-bit/4KB range of byte aligned offsets.
 
@@ -743,13 +749,14 @@ The 32-bit instruction encoding will ensure that 64-bit sequences `AUIPC/JALR` a
 
 === Encoding
 
+These instructions have no conflicts with other extensions, they use previously reserved encodings.
+
 [#tbljal16bitencoding]
 .C.TBLJAL 16-bit encoding
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10  | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 3+|  100       | 1  | 1  | 0 8+|index8                         2+| 00    | C.TBLJAL
-3+|  100       | 1  | 1  | 1 8+|xxx                            2+| 00    | *reserved*
 |=============================================================================================
 
 [#tbljal32bitencoding]
@@ -1307,7 +1314,9 @@ The pseudo-code shows the memory and architectural state updates of the whole in
 [source,sourceCode,text]
 ----
 //sp must be correctly aligned
-if (sp[3:0])     {take_illegal_instruction_exception();}
+if (sp[3:0])            {take_illegal_instruction_exception();}
+if (rcount>12)          {take_illegal_instruction_exception();}
+if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -1349,7 +1358,9 @@ The pseudo-code shows the architectural state updates of the whole instruction w
 [source,sourceCode,text]
 ----
 //sp must be correctly aligned
-if (sp[3:0])     {take_illegal_instruction_exception();}
+if (sp[3:0])            {take_illegal_instruction_exception();}
+if (rcount>12)          {take_illegal_instruction_exception();}
+if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -1391,6 +1402,7 @@ if (opcode == "POPRET") {
 
   These encodings are provisional.
 
+These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
 .push/pop 32-bit encodings
 [options="header",width="100%"]
@@ -1405,11 +1417,14 @@ if (opcode == "POPRET") {
   `ra=1` for all `popret` encodings, it is not specified in the encoding
 
 
-==== Illegal instructions for the 32-bit encodings
+==== Illegal instructions
 
-The following case does not decode as `PUSH/POP/POPRET`
+The following cases do not decode as `PUSH/POP/POPRET`
 
-* `rcount>12`
+* `rcount>12` for `I` cores
+* `rcount>2` for `E` cores
+
+Also if `sp` is not 16-byte aligned then take an illegal instruction exception.
 
 [#pushpoppopret16bitencodings]
 === 16-bit Encodings
@@ -1417,6 +1432,8 @@ The following case does not decode as `PUSH/POP/POPRET`
 [NOTE]
 
   The reserved 16-bit encodings could be used for EABI versions in the future.
+
+These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
 [#proposed-16bit-encodings-1]
 .PUSH/POP 16-bit encodings
@@ -1437,7 +1454,6 @@ The following case does not decode as `PUSH/POP/POPRET`
 
   * For `C.POPRET`, `ret_val[0]=ret0` as specified in the encoding, `ret_val[1]=0`. 
   * For `C.POP` `ret_val[1:0]=0`.
-  * Some encodings remain *reserved* for the time being so we can add them later if they can be justified
   ** For `C.POP`, `rcount[2]=1` is reserved
   ** For `C.POP`, `spimm > 1` is reserved
   ** For `C.PUSH/C.POPRET`, `rcount[2]=1 && spimm[2]=1` is reserved
@@ -1937,7 +1953,9 @@ The pseudo-code shows the memory and architectural state updates of the whole in
 [source,sourceCode,text]
 ----
 //sp must be correctly aligned
-if (sp[3:0])     {take_illegal_instruction_exception();}
+if (sp[3:0])            {take_illegal_instruction_exception();}
+if (rcount>12)          {take_illegal_instruction_exception();}
+if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -1987,6 +2005,8 @@ The pseudo-code shows the architectural state updates of the whole instruction w
 ----
 //sp must be correctly aligned
 if (sp[3:0])     {take_illegal_instruction_exception();}
+if (rcount>12)          {take_illegal_instruction_exception();}
+if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -2254,7 +2274,7 @@ addi sp, sp, -128;
 
 == Benchmarking results too low
 
-=== `BGEUI, BLTUI`
+=== BGEUI, BLTUI
 
 These allocate reserved encodings, and are similar to <<cmpimmbr>> but have lower value. It's possible that future use of these instructions will be found in later versions of `Zce`.
 
