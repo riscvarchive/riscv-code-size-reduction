@@ -369,47 +369,6 @@ mul a5, a5, a6; # a5 = a5 * a6
 
 ----
 
-
-=== C.NOT, C.NEG
-
-These instructions are 16-bit versions of existing 32-bit instructions.
-
-[#monadic-16encodings]
-.B-extension monadic instructions 16-bit encodings
-[width="100%",options=header]
-|=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|These are taken from the B-extension draft specification
-3+|  011       |0   | 0  | 0 3+| rs1'/rd'  5+| 00000            2+| 01  | C.NOT
-3+|  011       |0   | 0  | 1 3+| rs1'/rd'  5+| 00000            2+| 01  | C.NEG
-|=============================================================================================
-
-[#monadic-semantics]
-.B-extension monadic semantics
-[width="100%",options=header]
-|=======================================================================
-|instruction    | definition
-| C.NOT         | rd' = ~rd' / rd' = rd' XOR -1
-| C.NEG         | rd' = -rd'
-|=======================================================================
-
-[#monadic-32bit]
-.B-extension monadic instructions 32-bit equivalent instructions/pseudo-instructions
-[width="100%",options=header]
-|======================================================================================================
-|instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
-|C.NOT       | not    rd             | rd x8-x15                          | I-extension
-|C.NEG       | neg    rd             | rd x8-x15                          | I-extension
-|======================================================================================================
-
-Assembly Examples
-
-[source,sourceCode,text]
-----
-not a5          # a5 = ~a5 bitwise inversion
-neg a5          # a5 = -a5 two's complement inversion
-----
-
 === MULI, MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
 
 See https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension].
