@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.24
-Version 0.24
+= RISC-V Zce code-size reduction extension proposal v0.25
+Version 0.25
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.25    | Add Zcee for inclusion in RVA22
 | 0.24    | add illegal combinations of mv and rcount into PUSH spec
 |         | added verification notes
 | 0.23    | add C.ZEXT.W and Zba for the 32-bit version 
