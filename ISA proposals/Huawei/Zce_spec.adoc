@@ -101,6 +101,13 @@ As stated above `Zce` or any subsets of `Zce` require the `C` extension.
 
   `Zcecm` is not manually specified, it is implied by `M + Zce`, `M + Zcec`, `Zmmul + Zce` or `Zmmul + Zcec`
 
+==== `Zcee` for RVA22
+
+`Zcee` is a subset of `Zcec` and is the subset _required_ for RVA22. It only includes the sign/zero extension instructions:
+
+. `C.SEXT.B, C.SEXT.H`
+. `C.ZEXT.B, C.ZEXT.H, C.ZEXT.W`
+
 == C-extension subsets
 
 The C-extension already reuses encodings between different architectures. `Zce` extends this concept further. <<zce_quad0>>, <<zce_quad1>> and <<zce_quad2>> show how each encoding is allocated for different architectures or for different combinations of extensions.
