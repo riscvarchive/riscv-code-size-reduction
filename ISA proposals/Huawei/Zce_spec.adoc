@@ -64,6 +64,8 @@ If `M` or `Zmmul` is specified then `Zce` also includes the `C.MUL, MULI, MULIAD
 
 === `Zce` subsets
 
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets.png[Zce subsets]
+
 `Zce` is split into subsets. It includes 
 
 * `Zces` instructions requiring special micro-architectural features
