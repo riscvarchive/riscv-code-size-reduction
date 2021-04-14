@@ -46,6 +46,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 == Issues
 
+* need 32-bit instruction formats for Zcea (I've only done Zceb)
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
@@ -53,7 +54,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 == `Zce` configurations
 
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets_simplified2.png[Zce subsets]
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified2.png[Zce subsets]
 
 `Zce` is split into two main subsets
 
@@ -103,21 +104,21 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |===============================================================================
 |Instruction|RV32|RV64|RV128|Extension|Notes
 6+| 16-bit encodings
-|C.DECBGEZ|✓|✓|✓|Zcea|
-|C.LBU|✓|✓|✓|Zcea|
-|C.LHU|✓|✓|✓|Zcea|
-|C.SB|✓|✓|✓|Zcea|
-|C.SH|✓|✓|✓|Zcea|
+|C.DECBGEZ|✓|✓|✓|Zceb|incompatible with D
+|C.LBU|✓|✓|✓|Zceb|incompatible with D
+|C.LHU|✓|✓|✓|Zceb|incompatible with D
+|C.SB|✓|✓|✓|Zceb|incompatible with D
+|C.SH|✓|✓|✓|Zceb|incompatible with D
 6+| 32-bit encodings
-|DECBGEZ|✓|✓|✓|Zcea|
-|LWGP|✓|✓|✓|Zcea|
-|LWTP|✓|✓|✓|Zcea|
-|SWGP|✓|✓|✓|Zcea|
-|SWTP|✓|✓|✓|Zcea|
-|LDGP| |✓|✓|Zcea|
-|LDTP| |✓|✓|Zcea|
-|SDGP| |✓|✓|Zcea|
-|SDTP| |✓|✓|Zcea|
+|DECBGEZ|✓|✓|✓|Zceb|incompatible with D
+|LWGP|✓|✓|✓|Zceb|incompatible with D
+|LWTP|✓|✓|✓|Zceb|incompatible with D
+|SWGP|✓|✓|✓|Zceb|incompatible with D
+|SWTP|✓|✓|✓|Zceb|incompatible with D
+|LDGP| |✓|✓|Zceb|incompatible with D
+|LDTP| |✓|✓|Zceb|incompatible with D
+|SDGP| |✓|✓|Zceb|incompatible with D
+|SDTP| |✓|✓|Zceb|incompatible with D
 |===============================================================================
 
 `Zcea/Zceb` are compatible with both the `I` and `E` extensions.  Some register lists from `PUSH/POP/POPRET` instructions cannot be executed on `E` cores, see <<pushpoppopret>> for details. A future version of `Zcea` will add specific EABI versions to cover the cases which are currently not supported, which will only be posible after the EABI spec is stable.
@@ -233,7 +234,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |000       |C.SLLI64 (RV32/64 or rd=0:HINT)	       | 8|Zc128	        |	|	|✓	|C
 |001       |C.FLDSP	                               | 9|Zcd	        |✓	|✓	|	|C+D
 |001       |C.LQSP (rd=0:RSV)	                     | 9|Zc128	        |	|	|✓	|C
-|001       |*unallocated*	                         | 9|*Zceb* 	|✓	|✓	| 	|C+*Zce?*
+|001       |*unallocated*	                         | 9|N/A 	|✓	|✓	| 	|C+*??*
 |010       |C.LWSP (rd=0:RSV)	                     |  |Zci	        |✓	|✓	|✓	|C
 |011       |C.FLWSP	                               |10|Zcf	        |✓	|	|	|C+F
 |011       |C.LDSP (rd=0:HINT)	                   |10|Zc64/Zc128	|	|✓	|✓	|C
@@ -390,9 +391,6 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 |C.ZEXT.W    | zext.h rd             | rd x8-x15                          | Zba
 |======================================================================================================
 
-[NOTE]
-
-  `C.SEXT.W` is an existing pseudo-instruction
 
 Assembly Examples
 
@@ -418,7 +416,7 @@ mul a5, a5, a6; # a5 = a5 * a6
 
 These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
-See https://github.com/clairexen/riscv-fanfic/blob/master/riscv-rcfmt/riscv-rcfmt.md[Clare's proposal from the B-extension].
+See https://github.com/clairexen/riscv-fanfic/blob/master/riscv-cfmt/riscv-cfmt.md[Clare's proposal from the B-extension].
 Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[this document], which is implemented on silicon.
 
 [zcec-32bit-encodings-arithmetic]
@@ -641,7 +639,7 @@ These instructions conflict with the `D`-extension. If `D` is implemented, these
 
 These instructions reuse the encodings for `FLD/FSD`.
 
-`LWGP,SWGP` give a larger offset range than the standard `LW, SW` instructions by making the base register explicitly `gp`, allowing an 18-bit/256KB range of word aligned offsets, instead of a 12-bit/4KB range of byte aligned offsets.
+`LWGP,SWGP` give a larger offset range than the standard `LW, SW` instructions by making the base register explicitly `gp`, allowing a 16-bit/64KB range of word aligned offsets, instead of a 12-bit/4KB range of byte aligned offsets.
 
 [NOTE]
 
