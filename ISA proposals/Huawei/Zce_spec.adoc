@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.26
-Version 0.26
+= RISC-V Zce code-size reduction extension proposal v0.27
+Version 0.27
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.27    | add tentative versions of C.PUSH/POP/POPRET.E, need to review them
 | 0.26    | simplify and rename subsets. Re-encode LWGP/SWGP etc. Add LDWP/SDGP etc. Re-encode DECBGEZ. Re-encode C.SEXT.B, C.SEXT.H, C.NOT, C.NEG following Greg Favor's recommendation
 | 0.25    | Add Zcee for inclusion in RVA22
 | 0.24    | add illegal combinations of mv and rcount into PUSH spec
@@ -1503,38 +1504,112 @@ The following cases cause an illegal instruction exception for `PUSH`.
 * `rcount<2 && mv>1`
 * `rcount<3 && mv>2`
 
-[#pushpoppopret16bitencodings]
+[#pushpoppopret16bitIencodings]
 === 16-bit Encodings
-
-[NOTE]
-
-  The reserved 16-bit encodings could be used for EABI versions in the future.
 
 These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
-[#proposed-16bit-encodings-1]
-.PUSH/POP 16-bit encodings
+This specification is currently assuming that:
+
+* {ra, s0-s1} map to the same X-registers in the UABI and EABI
+* s2 is the highest numbered saved register in the EABI
+
+If either of these assumptions are wrong I'll update the specification (I'm looking at https://github.com/riscv/riscv-eabi-spec/blob/master/EABI.adoc[this document]).
+
+If compiling/disassembling for the UABI, the instructions _without_ the .E suffix should be used.
+
+If compiling/disassembling for the EABI, the instructions _with_ the .E suffix should be used.
+
+Sometimes the .E form is a pseudo-instruction for the non .E form, e.g. C.POP {ra}, C.POP.E {ra} share an encoding.
+
+Where the register list maps to different X registers a different encoding is required, for example for C.POP.E {ra, s0-s2}
+
+It is possible for the EABI versions to be used on an I (32-register) core.  The use of EABI would need to be denoted in the ELF header so the the dissasembler and dynamic ELF loaders know how the ELF was compiled.
+
+It is not possible to use the UABI versions on an E (16-register) core. In this case, for example C.POP {ra, s0-s2} would decode as an illegal isntruction.
+
+
+[#proposed-16bit-encodingsI-1]
+.PUSH/POP 16-bit encodings for I
 [width="100%",options=header]
 |===============================================================================
-|15 |14 |13 |12 |11 |10  |9 |8  |7 |6   |5 |4 |3 |2           |1 |0 |instruction
+|15 |14 |13 |12 |11 |10  |9 |8  |7 |6   |5 |4 |3 |2           |1 |0 |instruction and register list
 17+|`C.POP` and reserved values of rcount/spimm to save encoding space
-3+|100  |0  |0  |0  |0 2+|rcount[1:0]|0 |0 2+|00 | spimm[0] 2+| 00  |C.POP
-3+|100  |0  |0  |0  |1 2+|xx         |0 |0 3+|xxx           2+| 00  |*reserved*
+3+|100  |0  |0  |0  |0 2+|00         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP[.E] {ra}      
+3+|100  |0  |0  |0  |0 2+|01         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP[.E] {ra, s0}  
+3+|100  |0  |0  |0  |0 2+|10         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP[.E] {ra, s0-s1}
+3+|100  |0  |0  |0  |0 2+|11         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP     {ra, s0-s2}
+3+|100  |0  |0  |0  |1 2+|00         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP.E   {ra, s0-s2}
+3+|100  |0  |0  |0  |1 2+|>00        |0 |0 3+|xxx           2+| 00  |*reserved*
 3+|100  |0  |0  |0 3+|xxx            |0 |0 2+|!=00| x       2+| 00  |*reserved*
-17+|`C.POPRET` and reserved values of rcount/spimm to save encoding space
-3+|100  |0  |0  |0 3+|rcount[2:0]  |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET
-3+|100  |0  |0  |0   |1 2+|xxx        |x|1 |1 2+|xx         2+| 00  |*reserved*
-17+|`C.PUSH` and reserved values of rcount/spimm to save encoding space
-3+|100  |0  |0  |0 3+|rcount[2:0]  |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH
-3+|100  |0  |0  |0   |1 2+|xx      |1 |0   |1 2+|xx         2+| 00  |*reserved*
+17+|`C.POPRET` and `C.POPRET.E`
+3+|100  |0  |0  |0 3+|000          |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET[.E] {ra}      
+3+|100  |0  |0  |0 3+|001          |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET[.E] {ra, s0}  
+3+|100  |0  |0  |0 3+|010          |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET[.E] {ra, s0-s1}
+3+|100  |0  |0  |0 3+|011          |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET     {ra, s0-s2}
+3+|100  |0  |0  |0 3+|100          |ret0|1 |0 2+|spimm[1:0] 2+| 00  |C.POPRET     {ra, s0-s3}
+3+|100  |0  |0  |0 3+|101          |ret0|1 |0 2+|spimm[1:0] 2+| 00  |C.POPRET     {ra, s0-s5}
+3+|100  |0  |0  |0 3+|110          |ret0|1 |0 2+|spimm[1:0] 2+| 00  |C.POPRET     {ra, s0-s8}
+3+|100  |0  |0  |0 3+|111          |ret0|1 |0 2+|spimm[1:0] 2+| 00  |C.POPRET     {ra, s0-s11}
+3+|100  |0  |0  |0 3+|100          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s2}
+3+|100  |0  |0  |0 3+|101          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s3}
+3+|100  |0  |0  |0 3+|110          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s4}
+3+|100  |0  |0  |0 3+|111          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |*reserved*
+17+|`C.PUSH` and `C.PUSH.E`
+3+|100  |0  |0  |0 3+|000          |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH[.E] {ra}   
+3+|100  |0  |0  |0 3+|001          |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH[.E] {ra, s0}
+3+|100  |0  |0  |0 3+|010          |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH[.E] {ra, s0-s1}
+3+|100  |0  |0  |0 3+|011          |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH     {ra, s0-s2}
+3+|100  |0  |0  |0 3+|100          |1 |0   |0 2+|spimm[1:0] 2+| 00  |C.PUSH     {ra, s0-s3}
+3+|100  |0  |0  |0 3+|101          |1 |0   |0 2+|spimm[1:0] 2+| 00  |C.PUSH     {ra, s0-s5}
+3+|100  |0  |0  |0 3+|110          |1 |0   |0 2+|spimm[1:0] 2+| 00  |C.PUSH     {ra, s0-s8}
+3+|100  |0  |0  |0 3+|111          |1 |0   |0 2+|spimm[1:0] 2+| 00  |C.PUSH     {ra, s0-s11}
+3+|100  |0  |0  |0 3+|100          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s2}
+3+|100  |0  |0  |0 3+|101          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s3}
+3+|100  |0  |0  |0 3+|110          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s4}
+3+|100  |0  |0  |0 3+|111          |1 |0   |1 2+|xx         2+| 00  |*reserved*
 |===============================================================================
 
   * For `C.POPRET`, `ret_val[0]=ret0` as specified in the encoding, `ret_val[1]=0`. 
   * For `C.POP` `ret_val[1:0]=0`.
-  ** For `C.POP`, `rcount[2]=1` is reserved
-  ** For `C.POP`, `spimm > 1` is reserved
-  ** For `C.PUSH/C.POPRET`, `rcount[2]=1 && spimm[2]=1` is reserved
 
+[dissassembleUABIEABI_PUSHPOP]
+.PUSH/POP behaviour for different ABIs and cores
+[width="100%",options=header]
+|===============================================================================
+| Instruction           | UABI dissasembly | EABI dissasembly      | RVI-core behaviour | RVE-core behaviour
+5+| C.POP[.E]
+| C.POP[.E] {ra}        | C.POP {ra}       | C.POP.E {ra}        2+| POP {x1}
+| C.POP[.E] {ra, s0}    | C.POP {ra, s0}   | C.POP.E {ra, s0}    2+| POP {x1, x8}
+| C.POP[.E] {ra, s0}    | C.POP {ra, s0}   | C.POP.E {ra, s0}    2+| POP {x1, x8}
+| C.POP[.E] {ra, s0-s1} | C.POP {ra, s0-s1}| C.POP.E {ra, s0-s1} 2+| POP {x1, x8-x9}
+| C.POP     {ra, s0-s2} | C.POP {ra, s0-s2}| *reserved*            | POP {x1, x8-x9, x18} | *illegal instruction*
+| C.POP.E   {ra, s0-s2} | *reserved*       | C.POP.E {ra, s0-s2} 2+| POP {x1, x8-x9, x14}
+5+| C.POPRET[.E]
+| C.POPRET[.E] {ra}        | C.POPRET {ra}       | C.POPRET.E {ra}        2+| POPRET {x1}
+| C.POPRET[.E] {ra, s0}    | C.POPRET {ra, s0}   | C.POPRET.E {ra, s0}    2+| POPRET {x1, x8}
+| C.POPRET[.E] {ra, s0-s1} | C.POPRET {ra, s0-s1}| C.POPRET.E {ra, s0-s1} 2+| POPRET {x1, x8-x9}
+| C.POPRET     {ra, s0-s2} | C.POPRET {ra, s0-s2}| *reserved*               | POPRET {x1, x8-x9, x18} | *illegal instruction*
+| C.POPRET     {ra, s0-s3} | C.POPRET {ra, s0-s3}| *reserved*               | POPRET {x1, x8-x9, x19} | *illegal instruction*
+| C.POPRET     {ra, s0-s4} | C.POPRET {ra, s0-s4}| *reserved*               | POPRET {x1, x8-x9, x20} | *illegal instruction*
+| C.POPRET.E   {ra, s0-s2} | *reserved*          | C.POPRET.E {ra, s0-s2} 2+| POPRET {x1, x8-x9, x14} 
+| C.POPRET.E   {ra, s0-s3} | *reserved*          | C.POPRET.E {ra, s0-s3} 2+| POPRET {x1, x8-x9, x14, x6} 
+| C.POPRET.E   {ra, s0-s4} | *reserved*          | C.POPRET.E {ra, s0-s4} 2+| POPRET {x1, x8-x9, x14, x6-x7} 
+5+| C.PUSH[.E]
+| C.PUSH[.E] {ra}        | C.PUSH {ra}       | C.PUSH.E {ra}        2+| PUSH {x1}
+| C.PUSH[.E] {ra, s0}    | C.PUSH {ra, s0}   | C.PUSH.E {ra, s0}    2+| PUSH {x1, x8}
+| C.PUSH[.E] {ra, s0-s1} | C.PUSH {ra, s0-s1}| C.PUSH.E {ra, s0-s1} 2+| PUSH {x1, x8-x9}
+| C.PUSH     {ra, s0-s2} | C.PUSH {ra, s0-s2}| *reserved*               | PUSH {x1, x8-x9, x18} | *illegal instruction*
+| C.PUSH     {ra, s0-s3} | C.PUSH {ra, s0-s3}| *reserved*               | PUSH {x1, x8-x9, x19} | *illegal instruction*
+| C.PUSH     {ra, s0-s4} | C.PUSH {ra, s0-s4}| *reserved*               | PUSH {x1, x8-x9, x20} | *illegal instruction*
+| C.PUSH.E   {ra, s0-s2} | *reserved*          | C.PUSH.E {ra, s0-s2} 2+| PUSH {x1, x8-x9, x14} 
+| C.PUSH.E   {ra, s0-s3} | *reserved*          | C.PUSH.E {ra, s0-s3} 2+| PUSH {x1, x8-x9, x14, x6} 
+| C.PUSH.E   {ra, s0-s4} | *reserved*          | C.PUSH.E {ra, s0-s4} 2+| PUSH {x1, x8-x9, x14, x6-x7} 
+|===============================================================================
+
+[NOTE]
+
+  RVI cores can support either ABI, so will execute all of the instructions. The RVI core does now know which ABI is in use.
 
 === Encoding Fields
 
