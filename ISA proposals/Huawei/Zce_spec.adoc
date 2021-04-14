@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.25
-Version 0.25
+= RISC-V Zce code-size reduction extension proposal v0.26
+Version 0.26
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.26    | simplify and rename subsets. Re-encode LWGP/SWGP etc. Add LDWP/SDGP etc. Re-encode DECBGEZ. Re-encode C.SEXT.B, C.SEXT.H, C.NOT, C.NEG following Greg Favor's recommendation
 | 0.25    | Add Zcee for inclusion in RVA22
 | 0.24    | add illegal combinations of mv and rcount into PUSH spec
 |         | added verification notes
@@ -52,64 +53,80 @@ This document describes the `Zce` extension to reduce code-size.
 
 == `Zce` configurations
 
-`Zce` is designed to be compatible with all existing extensions. Specification of the `D` extension will cause some `Zce` instructions to be automatically excluded as they share the same encodings. `Zce` _can_ still be specified.
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets_simplified2.png[Zce subsets]
 
-`Zce` is also compatible with both the `I` and `E` extensions.  Some register lists from `PUSH/POP/POPRET` instructions cannot be executed on `E` cores, see <<pushpoppopret>> for details. A future version of `Zce` is likely to add specific EABI versions to cover the cases which are currently not supported, which will only be posible after the EABI spec is frozen.
+`Zce` is split into two main subsets
 
-All systems which implement `Zce` must also implement the `C` extension. 
+* `Zcea` is required in RVM22, is compatible with all existing standard extensions
+** `Zcee` is a subset of `Zcea` which required in RVA22
+** `Zcea/Zcee` imply `Zba/Zba` to get the 32-bit versions of the sign/zero-extension encodings
+* `Zceb` is optional for in RVM22 _because it conflicts with the D-extension_
+** `Zceb` is fully compatible with `ZDinx`
 
-If `M` or `Zmmul` is specified then `Zce` also includes the `C.MUL, MULI, MULIADD` instructions, and `MULIW, MULIADDW` for RV64/RV128.
-
-`Zce` implies the `B`-extension subsets `Zba` and `Zbb`. Therefore `RV32IC_Zce` is equivalent to `RV32IC_Zce_Zba_Zbb`.
-
-=== `Zce` subsets
-
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets2.png[Zce subsets]
-
-`Zce` is split into subsets. It includes 
-
-* `Zces` instructions requiring special micro-architectural features
-** 16-bit: `C.PUSH, C.POP, C.POPRET, C.TBLJAL`     
-** 32-bit: `PUSH, POP, POPRET, TBLJAL` 
-* `Zced` instructions which conflict with the `D`-extension
-** 16-bit: `C.LBU, C.LHU, C.SB, C.SH, C.DECBGEZ`
-** 32-bit: `LWGP, SWGP, LWTP, SWTP`
-* `Zcec` common instructions, which includes one subset
-** `Zcecm`: `C.MUL, MULI, MULIADD, MULIW, MULIADDW` which are only inferred if `M` or `Zmmul` is configured
-** all others
-
-As stated above `Zce` or any subsets of `Zce` require the `C` extension.
-
-. `Zce` implies `Zba` and `Zbb`
-
-. `Zced` and `Zces` both imply `Zcec`.
-
-<<simplevalidconfigs>> shows which subsets are enabled from the simple configuration strings.
-
-[#simplevalidconfigs]
-.Simple valid configurations
+[#zcea]
+.Zcea extension
 [width="100%",options=header]
 |===============================================================================
-| Zcec | Zcecm| Zced | Zces | Zba,Zbb | Minimal config string |Comment
-7+| `Zce` is configured, i.e. the maximum subset. 
-| ✓    |     | ✓   | ✓    | ✓   | `IC_Zce`       | basic configuration
-| ✓    | ✓   | ✓   | ✓    | ✓   | `IMC_Zce`      | basic configuration including `M`
-| ✓    | ✓   | ✓   | ✓    | ✓   | `IMC_Zce_Z[FDQ]inx`| `Z[FDQ]inx` are compatible with `Zced`
-| ✓    | ✓   | ✓   | ✓    | ✓   | `IMCF_Zce`    | `F` is compatible with `Zced`
-| ✓    | ✓   |     | ✓    |  ✓   | `IMCD_Zce`    | `D`  conflicts with `Zced`
-| ✓    | ✓   |     | ✓    |  ✓   |`IMCQ_Zce`    | `Q`  implies `D` which conflicts with `Zced`
+|Instruction|RV32|RV64|RV128|Extension|Notes
+6+|Zcee subset
+|C.SEXT.B|✓|✓|✓|Zcea/Zcee|
+|C.SEXT.H|✓|✓|✓|Zcea/Zcee|
+|C.SEXT.W| |✓|✓|Zcea/Zcee|pseudo-instruction
+|C.ZEXT.B|✓|✓|✓|Zcea/Zcee|
+|C.ZEXT.H|✓|✓|✓|Zcea/Zcee|
+|C.ZEXT.W| |✓|✓|Zcea/Zcee|
+6+|Require M or Zmmul to be inferred
+|C.MUL|✓|✓|✓|Zcea|requires M or Zmmul
+|MULI|✓|✓|✓|Zcea|requires M or Zmmul
+|MULIADD|✓|✓|✓|Zcea|requires M or Zmmul
+|MULIW| |✓|✓|Zcea|requires M or Zmmul
+|MULIADDW| |✓|✓|Zcea|requires M or Zmmul
+6+|other 16-bit encodings
+|C.NOT|✓|✓|✓|Zcea|
+|C.NEG|✓|✓|✓|Zcea|
+|C.TBLJAL|✓|✓|✓|Zcea|
+|C.PUSH|✓|✓|✓|Zcea|
+|C.POP|✓|✓|✓|Zcea|
+|C.POPRET|✓|✓|✓|Zcea|
+6+|other 32-bit encodings
+|ADDIADD|✓|✓|✓|Zcea|
+|ADDIADDW| |✓|✓|Zcea|
+|TBLJAL|✓|✓|✓|Zcea|
+|PUSH|✓|✓|✓|Zcea|
+|POP|✓|✓|✓|Zcea|
+|POPRET|✓|✓|✓|Zcea|
 |===============================================================================
 
-[NOTE]
+[#zceb]
+.Zceb extension, incompatible with D, compatible with ZDinx
+[width="100%",options=header]
+|===============================================================================
+|Instruction|RV32|RV64|RV128|Extension|Notes
+6+| 16-bit encodings
+|C.DECBGEZ|✓|✓|✓|Zcea|
+|C.LBU|✓|✓|✓|Zcea|
+|C.LHU|✓|✓|✓|Zcea|
+|C.SB|✓|✓|✓|Zcea|
+|C.SH|✓|✓|✓|Zcea|
+6+| 32-bit encodings
+|DECBGEZ|✓|✓|✓|Zcea|
+|LWGP|✓|✓|✓|Zcea|
+|LWTP|✓|✓|✓|Zcea|
+|SWGP|✓|✓|✓|Zcea|
+|SWTP|✓|✓|✓|Zcea|
+|LDGP| |✓|✓|Zcea|
+|LDTP| |✓|✓|Zcea|
+|SDGP| |✓|✓|Zcea|
+|SDTP| |✓|✓|Zcea|
+|===============================================================================
 
-  `Zcecm` is not manually specified, it is implied by `M + Zce`, `M + Zcec`, `Zmmul + Zce` or `Zmmul + Zcec`
+`Zcea/Zceb` are compatible with both the `I` and `E` extensions.  Some register lists from `PUSH/POP/POPRET` instructions cannot be executed on `E` cores, see <<pushpoppopret>> for details. A future version of `Zcea` will add specific EABI versions to cover the cases which are currently not supported, which will only be posible after the EABI spec is stable.
 
-==== `Zcee` for RVA22
+All systems which implement `Zcea/Zceb` must also implement the `C` extension. 
 
-`Zcee` is a subset of `Zcec` and is the subset _required_ for RVA22. It only includes the sign/zero extension instructions:
+If `M` or `Zmmul` is specified then `Zcea` also includes the `C.MUL, MULI, MULIADD` instructions, and `MULIW, MULIADDW` for RV64/RV128.
 
-. `C.SEXT.B, C.SEXT.H`
-. `C.ZEXT.B, C.ZEXT.H, C.ZEXT.W`
+`Zcea` implies the `B`-extension subsets `Zba` and `Zbb`. Therefore `RV32IC_Zcea` is equivalent to `RV32IC_Zcea_Zba_Zbb`.
 
 == C-extension subsets
 
@@ -134,30 +151,30 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 
 |001       |C.FLD     |1|Zcd |✓|✓ |   |C+D
 |001       |C.LQ      |1|Zcq |  |  |✓  |C
-|001       |*C.DECBGEZ* |1|*Zced*|✓|✓ |  |C+*Zce*
+|001       |*C.DECBGEZ* |1|*Zceb*|✓|✓ |  |C+*Zceb*
 
 |010       |C.LW      | |Zci |✓|✓ |✓  |C
 
 |011       |C.FLW     |2|Zcf |✓|   |   |C+F
 |011       |C.LD      |2|Zc64/Zc128| |✓|✓|C
 
-|100       |*C.POP*     | |*Zces*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.POPRET*  | |*Zces*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.PUSH*    | |*Zces*|	✓|	✓|	✓|	C+*Zce*
+|100       |*C.POP*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.POPRET*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.PUSH*    | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 
-|100       |*C.TBLJAL*  | |*Zces*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.SEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.SEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.ZEXT.B*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.ZEXT.H*  | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.NOT*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.NEG*     | |*Zcec*|	✓|	✓|	✓|	C+*Zce*
-|100       |*C.MUL*     | |*Zcec*|	✓|	✓|	✓|	M+C+*Zce*
+|100       |*C.TBLJAL*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.SEXT.B*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.SEXT.H*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.ZEXT.B*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.ZEXT.H*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.NOT*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.NEG*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.MUL*     | |*Zcea*|	✓|	✓|	✓|	M+C+*Zcea*
 
 |101       |C.FSD     |3|Zcd|✓|✓| |C+D
 |101       |C.SQ      |3|Zcq| | |✓|D
-|101       |*C.SB*      |3|*Zced*|✓|✓| |C+*Zce*
-|101       |*C.LBU*     |3|*Zced*|✓|✓ |  |C+*Zce*
+|101       |*C.SB*      |3|*Zceb*|✓|✓| |C+*Zceb*
+|101       |*C.LBU*     |3|*Zceb*|✓|✓ |  |C+*Zceb*
 
 |110       |C.SW      | |Zci|✓|✓|✓|C
 
@@ -216,7 +233,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |000       |C.SLLI64 (RV32/64 or rd=0:HINT)	       | 8|Zc128	        |	|	|✓	|C
 |001       |C.FLDSP	                               | 9|Zcd	        |✓	|✓	|	|C+D
 |001       |C.LQSP (rd=0:RSV)	                     | 9|Zc128	        |	|	|✓	|C
-|001       |*unallocated*	                         | 9|*Zced* 	|✓	|✓	| 	|C+*Zce*
+|001       |*unallocated*	                         | 9|*Zceb* 	|✓	|✓	| 	|C+*Zce?*
 |010       |C.LWSP (rd=0:RSV)	                     |  |Zci	        |✓	|✓	|✓	|C
 |011       |C.FLWSP	                               |10|Zcf	        |✓	|	|	|C+F
 |011       |C.LDSP (rd=0:HINT)	                   |10|Zc64/Zc128	|	|✓	|✓	|C
@@ -227,8 +244,8 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |C.ADD (rd=0:HINT)	                     |  |Zci   	|✓	|✓	|✓	|C
 |101       |C.FSDSP	                               |11|Zcd	        |✓	|✓	|	|C+D
 |101       |C.SQSP	                               |11|Zc128		|       | 	|✓	|C
-|101       |*C.SH*	                               |11|*Zced**	|✓	|✓	| 	|C+*Zce*
-|101       |*C.LHU*	                               |11|*Zced* 	|✓	|✓	| 	|C+*Zce*
+|101       |*C.SH*	                               |11|*Zceb*	|✓	|✓	| 	|C+*Zceb*
+|101       |*C.LHU*	                               |11|*Zceb* 	|✓	|✓	| 	|C+*Zceb*
 |110       |C.SWSP	                               |  |Zci	        |✓	|✓	|✓	|C
 |111       |C.FSWSP	                               |12|Zcf	        |✓	|	|	|C+F
 |111       |C.SDSP	                               |12|Zc128	        |	|✓	|✓	|C
@@ -265,9 +282,9 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension
 18+|Some of these spare encodings may be allocated to EABI versions of `C.PUSH/C.POP/C.POPRET`
-3+|  100     3+|000        8+|xxxx                            2+| 00    |200/256 | `Zces`
-3+|  100     3+|001        8+|xxxx                            2+| 00    |120/256 | `Zcec`
-3+|  100     3+|010        8+|xxxx                            2+| 00    |256/256 | `Zces`
+3+|  100     3+|000        8+|xxxx                            2+| 00    |200/256 | `Zcea`
+3+|  100     3+|001        8+|xxxx                            2+| 00    |120/256 | `Zcea`
+3+|  100     3+|010        8+|xxxx                            2+| 00    |256/256 | `Zcea`
 3+|  100     3+|011        8+|xxxx                            2+| 00    |0/256   | *reserved*
 3+|  100     3+|1xx        8+|xxxx                            2+| 00    |0/1024  | *reserved*
 3+|  011       | 0 5+|xxxxx             5+|11111              2+| 01    |0/32    | *reserved*
@@ -298,10 +315,10 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points|sub-extension  
-3+| 001        11+|xxx                                        2+|00     |2047/2048| `Zced`
-3+| 101        11+|xxx                                        2+|00     |2048/2048| `Zced`
+3+| 001        11+|xxx                                        2+|00     |2047/2048| `Zceb`
+3+| 101        11+|xxx                                        2+|00     |2048/2048| `Zceb`
 3+| 001        11+|xxx                                        2+|10     |   0/2048| *reserved*       
-3+| 101        11+|xxx                                        2+|10     |2048/2048| `Zced`
+3+| 101        11+|xxx                                        2+|10     |2048/2048| `Zceb`
 |================================================================================================
 
 In total in the existing RVC (16-bit) encoding space:
@@ -314,7 +331,7 @@ In total in the existing RVC (16-bit) encoding space:
 .. RV32C has 3871 code points available, 768 are used (19.8%)
 .. RV64C has 2303 code points available, 768 are used (33.3%)
 
-== `Zcec` definition
+== `Zcea` definition
 
 === C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H, C.ZEXT.W, C.MUL, C.NOT, C.NEG
 
@@ -331,11 +348,11 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 000     2+| 00  | C.ZEXT.B
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 001     2+| 00  | C.ZEXT.H
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 010     2+| 00  | C.ZEXT.W
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 011     2+| 00  | C.SEXT.B
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 100     2+| 00  | C.SEXT.H
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 101     2+| 00  | C.NOT
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 110     2+| 00  | C.NEG
-3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 111     2+| 00  | *reserved*
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 011     2+| 00  | *reserved*
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 100     2+| 00  | C.SEXT.B
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 101     2+| 00  | C.SEXT.H
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 110     2+| 00  | C.NOT
+3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 111     2+| 00  | C.NEG
 17+|Dyadic with room for 2 more encodings
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 1  3+| rs2'    2+| 00  | C.MUL
 3+|  100       | 0  | 0  | 1 3+| xxx      | 1  | x  3+| xxx     2+| 00  | *reserved*
@@ -392,6 +409,10 @@ neg a5          # a5 = -a5 two's complement inversion
 mul a5, a5, a6; # a5 = a5 * a6
 
 ----
+
+=== C.SEXT.W
+
+`C.SEXT.W` is added as a pseudo-instruction for `C.ADDIW rd, rd, 0`
 
 === MULI, MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
 
@@ -473,52 +494,6 @@ beq  a5, 1,offset # if(a5== 1) branch_to(PC+offset) # signed comparison
 bne  a5,-1,offset # if(a5!=-1) branch_to(PC+offset) # signed comparison
 ----
 
-=== DECBGEZ
-
-This instruction has no conflicts with other extensions, it uses a previously reserved encoding.
-
-The 16-bit encoding and specification is in <<decbr16>>.
-
-[decbgez-32bit-encodings]
-.proposed 32-bit encodings for arithmetic instructions
-[width="100%",options=header]
-|=========================================================================================================================
-| 31:27              | 26:25   |24  |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
-| imm[9:6]           |10     3+|imm[5:0]              |scale 2+| 000  | 100   2+| rd                |1010011| DECBGEZ
-|=========================================================================================================================
-
-[#decbgezsemantics32]
-.decrement, compare and branch 32-bit semantics
-[width="100%",options=header]
-|=======================================================================
-|instruction    | definition
-| DECBGEZ       | rd = rd - (1<<scale); bge rd, zero, sign_ext(imm);
-|=======================================================================
-
-Assembly Example
-[source,sourceCode,text]
-----
-decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
-----
-
-=== B-extension reuse
-
-Some instructions will be reused from the B-extension and are implied by `Zce`. 
-
-==== Zba, Zbb required
-
-`Zba` is require for the 32-bit encoding for `c.zext.w`. The `sh[123]add` instructions are also useful for code-size reduction, as they are used for address calculations.
-
-`Zbb` is required for 32-bit encodings for `c.sext.b, c.sext.h, c.zext.b, c.zext.h`. It is simpler to take the whole `Zbb` subset as it also contains useful instructions like rotate (`rori, ror, rol`), byte reverse (`rev8`) and count-leading-zeroes (`clz`).
-
-[NOTE]
-
-  `Zbp` is *not* implied by `Zce` as instructions like `grev[i]` and `shfl[i]` seem too heavyweight for small embedded cores. 
-
-== `Zces` definition
-
-`Zces` is optional as cores may not want to build the sequencer to issue the instructions, or to build the mechanism for table jump.
-
 === Table Jump
 
 The specification is in <<tablejump>>.
@@ -549,11 +524,38 @@ See <<pushpoppopret32bitencodings>> for the encodings.
 See <<pushpoppopret16bitencodings>> for the encodings.
 
 
+=== B-extension reuse
+
+Some instructions will be reused from the B-extension and are implied by `Zce`. 
+
+==== Zba, Zbb required
+
+`Zba` is require for the 32-bit encoding for `c.zext.w`. The `sh[123]add` instructions are also useful for code-size reduction, as they are used for address calculations.
+
+`Zbb` is required for 32-bit encodings for `c.sext.b, c.sext.h, c.zext.b, c.zext.h`. It is simpler to take the whole `Zbb` subset as it also contains useful instructions like rotate (`rori, ror, rol`), byte reverse (`rev8`) and count-leading-zeroes (`clz`).
+
+[NOTE]
+
+  `Zbp` is *not* implied by `Zce` as instructions like `grev[i]` and `shfl[i]` seem too heavyweight for small embedded cores. 
 
 
-== `Zced` definition
+== `Zceb` definition
 
 The D-extension takes priority over these encodings.
+
+[Zceb-32bit-formats]
+.proposed 32-bit formats
+[width="100%",options=header]
+|=========================================================================================================================
+| 31:29    |28:25                  |24:20            |19:18|17:15       |14:12   | 11:7             | 6 : 0 | instruction
+9+|These formats are designed for maximum overlap immediate with I-type and S-type
+|funct3a 2+|imm[8:2,10:9]                          2+|imm[15:11]  | funct3 | rd               |opcode | LW16-type
+|funct3a   |imm[8:5]               | rs2           2+|imm[15:11]  | funct3 | imm[4:2, 10:9]   |opcode | SW16-type
+|funct3a 2+|imm[8:3,16,10:9]                       2+|imm[15:11]  | funct3 | rd               |opcode | LD16-type
+|funct3a   |imm[8:5]               | rs2           2+|imm[15:11]  | funct3 | imm[4:3,16,10:9] |opcode | SD16-type
+9+|This format is only for DECBGEZ, designed for maximum immediate overlap with B-type and LW16-type
+|funct3a 2+|imm[8:2,10:9]                          |scale|imm[1,12:11]  | funct3 | rd         |opcode | DECB-type
+|=========================================================================================================================
 
 === Decrement and branch
 
@@ -604,6 +606,100 @@ Assembly Example
 decbgez s2, 1, -4 ;# s2-=1;if(s2>=0) branch_to(PC-4) encoded as scale=0, uimm=4 (not uimm=-4)
 ----
 
+==== DECBGEZ
+
+This instruction conflicts with the `D`-extension. If `D` is implemented, this instruction will not be available. It is compatible with `ZDinx`. It uses a DECB-type encoding.
+
+The 16-bit encoding and specification is in <<decbr16>>.
+
+[decbgez-32bit-encodings]
+.proposed 32-bit encoding `DECBGEZ`
+[width="100%",options=header]
+|=========================================================================================================================
+| 31:29    |28:25                  |24:20            |19:18|17:15       |14:12   | 11:7             | 6 : 0 | instruction
+|100     2+|imm[8:2,10:9]                            |scale|imm[1,12:11]  | 011 | rd                |0000111 | DECBGEZ
+|=========================================================================================================================
+
+[#decbgezsemantics32]
+.decrement, compare and branch 32-bit semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| DECBGEZ       | rd = rd - (1<<scale); bge rd, zero, sign_ext(imm);
+|=======================================================================
+
+Assembly Example
+[source,sourceCode,text]
+----
+decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
+----
+
+
+=== LWGP, SWGP, LWTP, SWTP
+
+These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
+
+These instructions reuse the encodings for `FLD/FSD`.
+
+`LWGP,SWGP` give a larger offset range than the standard `LW, SW` instructions by making the base register explicitly `gp`, allowing an 18-bit/256KB range of word aligned offsets, instead of a 12-bit/4KB range of byte aligned offsets.
+
+[NOTE]
+
+   Restrictions in the GCC toolchain mean that the full range of `gp` cannot be used for the standard `LW/SW` instructions, in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP, SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[See this github issue]. This issue means that with the current RISC-V ISA the full 4KB range cannot be accessed using `gp` using GCC so the benefit is lower than might be expected.
+
+`LWTP,SWTP` give an 18-bit/256KB offset range, which is larger than the standard `LW, SW` instructions by making the base register explicitly `tp`.
+
+[NOTE]
+
+  The intention is to allow the toolchain to use `tp` as a second global pointer, for systems which do not need thread local storage, giving two 256KB address spaces within reach of a single 32-bit load/store word instruction. Any ABI or toolchain implications from allowing this are not covered by this document. `LWTP, SWTP` can also be used to allow a larger range of thread local storage to be accessed with a 32-bit instruction.
+
+[Zceb-32bit-encodings]
+.proposed 32-bit encodings for `LWGP/SWGP/LWTP/SWTP` and `LDGP/SDGP/LDTP/SDTP`
+[width="100%",options=header]
+|=========================================================================================================================
+| 31:29|28:25   |24:20      |19:15 | 14:12   | 11:7  | 6 : 0 | instruction
+|000 2+|imm[8:2,10:9]                                |imm[15:11]  | 011   | rd                |0000111| LWGP
+|001 2+|imm[8:2,10:9]                                |imm[15:11]  | 011   | rd                |0000111| LWTP
+|000   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:2, 10:9]    |0100111| SWGP
+|001   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:2, 10:9]    |0100111| SWTP
+8+|RV64/RV128 only
+|000 2+|imm[8:3,16,10:9]                             |imm[15:11]  | 011   | rd                |0000111| LDGP
+|001 2+|imm[8:3,16,10:9]                             |imm[15:11]  | 011   | rd                |0000111| LDTP
+|000   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDGP
+|001   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDTP
+|=========================================================================================================================
+
+[#lwgp_semantics]
+.Load/store word/double GP/TP relative semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| LWGP          | rd=sign_ext(Memory[gp+sign_ext(imm)][31:0]);
+| SWGP          | Memory[gp+sign_ext(imm)][31:0])=rs2[31:0];
+| LWTP          | rd=sign_ext(Memory[tp+sign_ext(imm)][31:0]);
+| SWTP          | Memory[tp+sign_ext(imm)][31:0])=rs2[31:0];
+2+|RV64/RV128 only
+| LDGP          | rd=sign_ext(Memory[gp+sign_ext(imm)][63:0]);
+| SDGP          | Memory[gp+sign_ext(imm)][63:0])=rs2[63:0];
+| LDTP          | rd=sign_ext(Memory[tp+sign_ext(imm)][63:0]);
+| SDTP          | Memory[tp+sign_ext(imm)][63:0])=rs2[63:0];
+|=======================================================================
+
+Assembly Examples
+[source,sourceCode,text]
+----
+lw s0, 20(gp)
+sw s0, 20(gp)
+lw s0, 20(tp)
+sw s0, 20(tp)
+
+//RV64/RV128 only
+ld s0, 20(gp)
+sd s0, 20(gp)
+ld s0, 20(tp)
+sd s0, 20(tp)
+----
+
 === C.LBU, C.LHU, C.SB, C.SH
 
 These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
@@ -651,58 +747,6 @@ lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0])
 sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0]
 sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
 ----
-
-=== LWGP, SWGP, LWTP, SWTP
-
-These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
-
-These instructions reuse the encodings for `FLD/FSD`.
-
-`LWGP,SWGP` give a larger offset range than the standard `LW, SW` instructions by making the base register explicitly `gp`, allowing an 18-bit/256KB range of word aligned offsets, instead of a 12-bit/4KB range of byte aligned offsets.
-
-[NOTE]
-
-   Restrictions in the GCC toolchain mean that the full range of `gp` cannot be used for the standard `LW/SW` instructions, in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP, SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[See this github issue]. This issue means that with the current RISC-V ISA the full 4KB range cannot be accessed using `gp` using GCC so the benefit is lower than might be expected.
-
-`LWTP,SWTP` give an 18-bit/256KB offset range, which is larger than the standard `LW, SW` instructions by making the base register explicitly `tp`.
-
-[NOTE]
-
-  The intention is to allow the toolchain to use `tp` as a second global pointer, for systems which do not need thread local storage, giving two 256KB address spaces within reach of a single 32-bit load/store word instruction. Any ABI or toolchain implications from allowing this are not covered by this document. `LWTP, SWTP` can also be used to allow a larger range of thread local storage to be accessed with a 32-bit instruction.
-
-
-
-[zced-32bit-encodings]
-.proposed 32-bit encodings for `LWGP/SWGP/LWTP/SWTP`
-[width="100%",options=header]
-|=========================================================================================================================
-| 31:27                     | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7  | 6 : 0 | instruction
-  7+|imm[11:2, 17:16]                                2+|imm[15:12]|0   | 011   2+| rd                |0000111| LWGP
-  4+|imm[11:5]                3+| rs2                2+|imm[15:12]|0   | 011   2+| imm[4:2, 17:16]   |0100111| SWGP
-  7+|imm[11:2, 17:16]                                2+|imm[15:12]|1   | 011   2+| rd                |0000111| LWTP
-  4+|imm[11:5]                3+| rs2                2+|imm[15:12]|1   | 011   2+| imm[4:2, 17:16]   |0100111| SWTP
-|=========================================================================================================================
-
-[#lwgp_semantics]
-.Load/store word GP/TP relative semantics
-[width="100%",options=header]
-|=======================================================================
-|instruction    | definition
-| LWGP          | rd=zero_ext(Memory[gp+sign_ext(imm)][31:0]);
-| SWGP          | Memory[gp+sign_ext(imm)][31:0])=rs2[31:0];
-| LWTP          | rd=zero_ext(Memory[tp+sign_ext(imm)][31:0]);
-| SWTP          | Memory[tp+sign_ext(imm)][31:0])=rs2[31:0];
-|=======================================================================
-
-Assembly Examples
-[source,sourceCode,text]
-----
-lw s0, 20(gp)
-sw s0, 20(gp)
-lw s0, 20(tp)
-sw s0, 20(tp)
-----
-
 
 [#tablejump]
 == Table Jump 
@@ -1904,7 +1948,7 @@ If the target memory is non-idempotent then see <<non-idem-mem>> for additional 
 == Existing functionality
 
 Many of the instructions are 16-bit encodings of existing 32-bit instructions, therefore the verification should be a simple extension to existing tests and coverage. Additionally, the instructions are all very simple.
-. C.SEXT.B, C.SEXT.H
+. C.SEXT.B, C.SEXT.H, (C.SEXT.W is a pseudo-instruction)
 . C.ZEXT.B, C.ZEXT.H, C.ZEXT.W
 . C.MUL, C.NOT, C.NEG
 . C.LBU, C.LHU, C.SB, C.SH
