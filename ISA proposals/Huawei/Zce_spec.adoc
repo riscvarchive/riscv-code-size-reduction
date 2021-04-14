@@ -2609,7 +2609,8 @@ The encodings are cheap, but the benefit is low.
 |instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
 |C.LSBNOT    | lsbnot rd             | all registers x8-x15, rd==rs1      | I-extension
 |C.LSBKEEP   | lsbset rd             | all registers x8-x15, rd==rs1      | I-extension
-======================================================================================================
+|======================================================================================================
+
 
 Assembly Examples
 
@@ -2696,6 +2697,7 @@ Register moves are the most common in GCC output in both the benchmark suite and
 [NOTE]
 
   These are optional (`Zces`) as they require 2 register file write ports, or are sequenced.
+
 
 [#proposed-16bit-encodings-4]
 .`C.MV01S07, C.MV23S07` 16-bit encoding
