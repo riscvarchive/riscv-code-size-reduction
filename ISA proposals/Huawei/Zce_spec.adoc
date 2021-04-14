@@ -47,6 +47,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 == Issues
 
+* need EABI versions of PUSH/POP/POPRET
 * need 32-bit instruction formats for Zcea (I've only done Zceb)
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
@@ -122,7 +123,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |SDTP| |✓|✓|Zceb|incompatible with D
 |===============================================================================
 
-`Zcea/Zceb` are compatible with both the `I` and `E` extensions.  Some register lists from `PUSH/POP/POPRET` instructions cannot be executed on `E` cores, see <<pushpoppopret>> for details. A future version of `Zcea` will add specific EABI versions to cover the cases which are currently not supported, which will only be posible after the EABI spec is stable.
+`Zcea/Zceb` are compatible with both the `I` and `E` extensions. 
 
 All systems which implement `Zcea/Zceb` must also implement the `C` extension. 
 
@@ -283,8 +284,7 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension
-18+|Some of these spare encodings may be allocated to EABI versions of `C.PUSH/C.POP/C.POPRET`
-3+|  100     3+|000        8+|xxxx                            2+| 00    |200/256 | `Zcea`
+3+|  100     3+|000        8+|xxxx                            2+| 00    |226/256 | `Zcea`
 3+|  100     3+|001        8+|xxxx                            2+| 00    |120/256 | `Zcea`
 3+|  100     3+|010        8+|xxxx                            2+| 00    |256/256 | `Zcea`
 3+|  100     3+|011        8+|xxxx                            2+| 00    |0/256   | *reserved*
@@ -1160,8 +1160,6 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 
 `PUSH/POP/POPRET` are used to reduce the size of function prologues and epilogues.
 
-These instructions have limited compatibility the EABI as they use UABI register mappings, see <<pushpoppopreteabi>>.
-
 === A brief example from Zephyr
 
 This example gives a nice illustration of what `PUSH/POP/POPRET` are trying to achieve.
@@ -1339,15 +1337,6 @@ To be a legal encoding:
 5.  For `POPRET`, `reg_list` must include `ra`
 6.  For `POP` and `POPRET`, `areg_list` must not be included 
 
-
-[#pushpoppopreteabi]
-=== EABI limitations
-
-At the time of writing only `{ra,s0-1}` map to the same `X` register numbers in the UABI and EABI. Therefore `reglist` must _not_ contain any registers outside this set. If it does, the core takes an illegal instruction exception.
-
-[NOTE]
-
-  Once the EABI has been frozen, a future version of this specification may include EABI specific encodings allowing longer register lists.
 
 === Determining XLEN to decode and execute the instructions
 
