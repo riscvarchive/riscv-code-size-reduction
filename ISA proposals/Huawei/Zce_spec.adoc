@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.27
-Version 0.27
+= RISC-V Zce code-size reduction extension proposal v0.28
+Version 0.28
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,7 +16,8 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.27    | add tentative versions of C.PUSH/POP/POPRET.E, need to review them
+| 0.28    | change alignment check of all non FP forms of PUSH/POP/POPRET to 8-byte not 16-byte to allow EABI compatibility. SPIMM still allocates blocks of 16-bytes.
+| 0.27    | add tentative versions of C.PUSH.E/C.POP.E/C.POPRET.E, need to review them
 | 0.26    | simplify and rename subsets. Re-encode LWGP/SWGP etc. Add LDWP/SDGP etc. Re-encode DECBGEZ. Re-encode C.SEXT.B, C.SEXT.H, C.NOT, C.NEG following Greg Favor's recommendation
 | 0.25    | Add Zcee for inclusion in RVA22
 | 0.24    | add illegal combinations of mv and rcount into PUSH spec
@@ -642,11 +643,14 @@ These instructions reuse the encodings for `FLD/FSD`.
 
 `LWGP,SWGP` give a larger offset range than the standard `LW, SW` instructions by making the base register explicitly `gp`, allowing a 16-bit/64KB range of word aligned offsets, instead of a 12-bit/4KB range of byte aligned offsets.
 
+`LDGP,SDGP` require double word alignment, and so have an increased range of 17-bit/128KB offsets relative to `gp`.
+
 [NOTE]
 
    Restrictions in the GCC toolchain mean that the full range of `gp` cannot be used for the standard `LW/SW` instructions, in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP, SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[See this github issue]. This issue means that with the current RISC-V ISA the full 4KB range cannot be accessed using `gp` using GCC so the benefit is lower than might be expected.
 
-`LWTP,SWTP` give an 18-bit/256KB offset range, which is larger than the standard `LW, SW` instructions by making the base register explicitly `tp`.
+`LWTP,SWTP` give an 16-bit/128KB offset range, which is larger than the standard `LW, SW` instructions by making the base register explicitly `tp`. `LDTP,SDTP` have a 17-bit/128KB range relative to `tp`.
+
 
 [NOTE]
 
@@ -1373,10 +1377,11 @@ The pseudo-code shows the memory and architectural state updates of the whole in
 
 [source,sourceCode,text]
 ----
-//sp must be correctly aligned
-if (sp[3:0])            {take_illegal_instruction_exception();}
-if (rcount>12)          {take_illegal_instruction_exception();}
-if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
+//RV64/RV128 must have a 16-byte aligned sp
+if (misa.MXL>=2 && sp[3:0]) {take_illegal_instruction_exception();}
+//RV32I might be using the EABI (8-byte alignment) or UABI (16-byte alignment, so in hardware we can only check for 8)
+if (misa.MXL==1 && sp[2:0]) {take_illegal_instruction_exception();}
+
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -1417,10 +1422,11 @@ The pseudo-code shows the architectural state updates of the whole instruction w
 
 [source,sourceCode,text]
 ----
-//sp must be correctly aligned
-if (sp[3:0])            {take_illegal_instruction_exception();}
-if (rcount>12)          {take_illegal_instruction_exception();}
-if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
+//RV64/RV128 must have a 16-byte aligned sp
+if (misa.MXL>=2 && sp[3:0]) {take_illegal_instruction_exception();}
+//RV32I might be using the EABI (8-byte alignment) or UABI (16-byte alignment, so in hardware we can only check for 8)
+if (misa.MXL==1 && sp[2:0]) {take_illegal_instruction_exception();}
+
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -1482,16 +1488,22 @@ These instructions have no conflicts with other extensions, they use previously 
 
 The following cases cause an illegal instruction exception for `PUSH/POP/POPRET`.
 
-* `rcount>12` for `I` cores
-* `rcount>2` for `E` cores
+If `sp` is not 8-byte aligned and `XLEN=32` then take an illegal instruction exception for `PUSH/POP/POPRET`.
+If `sp` is not 16-byte aligned and `XLEN>32` then take an illegal instruction exception for `PUSH/POP/POPRET`.
 
-If `sp` is not 16-byte aligned then take an illegal instruction exception for `PUSH/POP/POPRET`.
+[NOTE]
 
-The following cases cause an illegal instruction exception for `PUSH`.
+  RV32I may use eith the UABI or EABI, so we can only check the EABI minimum alignment.
 
-* `rcount<1 && mv>0`
-* `rcount<2 && mv>1`
-* `rcount<3 && mv>2`
+The following case causes an illegal instruction exception for `PUSH`.
+
+* `rcount<mv`
+
+This rule enumerates to the following 6 illegal encodings:
+
+* `mv=1 && rcount<1`
+* `mv=2 && rcount<2`
+* `mv=3 && rcount<3`
 
 [#pushpoppopret16bitIencodings]
 === 16-bit Encodings
@@ -1500,8 +1512,8 @@ These instructions have no conflicts with other extensions, they use previously 
 
 This specification is currently assuming that:
 
-* {ra, s0-s1} map to the same X-registers in the UABI and EABI
-* s2 is the highest numbered saved register in the EABI
+* {ra, s0-s1} map to the same `X` registers in the UABI and EABI
+* s4 is the highest numbered saved register in the EABI
 
 If either of these assumptions are wrong I'll update the specification (I'm looking at https://github.com/riscv/riscv-eabi-spec/blob/master/EABI.adoc[this document]).
 
@@ -1509,13 +1521,13 @@ If compiling/disassembling for the UABI, the instructions _without_ the .E suffi
 
 If compiling/disassembling for the EABI, the instructions _with_ the .E suffix should be used.
 
-Sometimes the .E form is a pseudo-instruction for the non .E form, e.g. C.POP {ra}, C.POP.E {ra} share an encoding.
+Sometimes the .E form is a pseudo-instruction for the non .E form, e.g. `C.POP {ra}` and `C.POP.E {ra}` share an encoding.
 
-Where the register list maps to different X registers a different encoding is required, for example for C.POP.E {ra, s0-s2}
+Where the register list maps to different `X` registers a different encoding is required, for example `C.POP.E {ra, s0-s2}`.
 
-It is possible for the EABI versions to be used on an I (32-register) core.  The use of EABI would need to be denoted in the ELF header so the the dissasembler and dynamic ELF loaders know how the ELF was compiled.
+It is possible for the EABI versions to be used on an RVI (32-register) core.  The use of EABI would need to be denoted in the ELF header so the the dissasembler and dynamic ELF loaders know how the ELF was compiled.
 
-It is not possible to use the UABI versions on an E (16-register) core. In this case, for example C.POP {ra, s0-s2} would decode as an illegal isntruction.
+It is not possible to use the UABI versions on an RVE (16-register) core. In this case, for example `C.POP {ra, s0-s2}` would decode as an illegal instruction.
 
 
 [#proposed-16bit-encodingsI-1]
@@ -1621,9 +1633,6 @@ It is not possible to use the UABI versions on an E (16-register) core. In this 
 | C.PUSH.E   {ra, s0-s4} | *reserved*          | C.PUSH.E {ra, s0-s4}   | PUSH {x1, x8-x9, x14, x6-x7} | same as RVI
 |===============================================================================
 
-[NOTE]
-
-  RVI cores can support either ABI, so will execute all of the instructions. The RVI core does not know which ABI is in use. The intention is that when disassembling for the UABI `C.PUSH/C.POP/C.POPRET` will be used, and when disassembling for the EABI `C.PUSH.E/C.POP.E/C.POPRET.E` will be used.
 
 === Encoding Fields
 
@@ -1639,6 +1648,10 @@ total_register_bytes = number_of_registers_in_reg_list * XLEN/8 + padding + numb
 stack_adjustment = Align16(total_register_bytes) + 16*spimm;
 
 The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up to 3-bits), and the 32-bit encoding allows up to 31.
+
+[NOTE]
+
+  `spimm` represents 16-byte blocks even on RV32E where the stack is 8-byte aligned. This is for simplicity.
 
 ==== mv, ret_val, ra, rcount for the 32-bit encodings
 
@@ -2321,7 +2334,7 @@ The pseudo-code shows the architectural state updates of the whole instruction w
 [source,sourceCode,text]
 ----
 //sp must be correctly aligned
-if (sp[3:0])     {take_illegal_instruction_exception();}
+if (sp[3:0])            {take_illegal_instruction_exception();}
 if (rcount>12)          {take_illegal_instruction_exception();}
 if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
