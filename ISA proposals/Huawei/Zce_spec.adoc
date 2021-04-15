@@ -1562,43 +1562,68 @@ It is not possible to use the UABI versions on an E (16-register) core. In this 
   * For `C.POPRET`, `ret_val[0]=ret0` as specified in the encoding, `ret_val[1]=0`. 
   * For `C.POP` `ret_val[1:0]=0`.
 
-[dissassembleUABIEABI_PUSHPOP]
-.PUSH/POP behaviour for different ABIs and cores
+[dissassembleUABIEABI_POP]
+.C.POP[.E] behaviour for different ABIs and cores
 [width="100%",options=header]
 |===============================================================================
-| Instruction           | UABI dissasembly | EABI dissasembly      | RVI-core behaviour | RVE-core behaviour
-5+| C.POP[.E]
-| C.POP[.E] {ra}        | C.POP {ra}       | C.POP.E {ra}        2+| POP {x1}
-| C.POP[.E] {ra, s0}    | C.POP {ra, s0}   | C.POP.E {ra, s0}    2+| POP {x1, x8}
-| C.POP[.E] {ra, s0}    | C.POP {ra, s0}   | C.POP.E {ra, s0}    2+| POP {x1, x8}
-| C.POP[.E] {ra, s0-s1} | C.POP {ra, s0-s1}| C.POP.E {ra, s0-s1} 2+| POP {x1, x8-x9}
+| Instruction           | UABI dissasembly | EABI dissasembly      | RVI-core behaviour   | RVE-core behaviour
+5+| These forms of `C.POP.E` are pseudo-instructions for `C.POP` as the `X` register lists match
+| C.POP[.E] {ra}        | C.POP {ra}       | C.POP.E {ra}          | POP {x1}             | same as RVI
+| C.POP[.E] {ra, s0}    | C.POP {ra, s0}   | C.POP.E {ra, s0}      | POP {x1, x8}         | same as RVI
+| C.POP[.E] {ra, s0}    | C.POP {ra, s0}   | C.POP.E {ra, s0}      | POP {x1, x8}         | same as RVI
+| C.POP[.E] {ra, s0-s1} | C.POP {ra, s0-s1}| C.POP.E {ra, s0-s1}   | POP {x1, x8-x9}      | same as RVI
+5+| This encoding of `C.POP` has an out-of-range `X` register for RVE
 | C.POP     {ra, s0-s2} | C.POP {ra, s0-s2}| *reserved*            | POP {x1, x8-x9, x18} | *illegal instruction*
-| C.POP.E   {ra, s0-s2} | *reserved*       | C.POP.E {ra, s0-s2} 2+| POP {x1, x8-x9, x14}
-5+| C.POPRET[.E]
-| C.POPRET[.E] {ra}        | C.POPRET {ra}       | C.POPRET.E {ra}        2+| POPRET {x1}
-| C.POPRET[.E] {ra, s0}    | C.POPRET {ra, s0}   | C.POPRET.E {ra, s0}    2+| POPRET {x1, x8}
-| C.POPRET[.E] {ra, s0-s1} | C.POPRET {ra, s0-s1}| C.POPRET.E {ra, s0-s1} 2+| POPRET {x1, x8-x9}
+5+| This encoding of `C.POP.E` has a different `S` to `X` register mapping from the UABI
+| C.POP.E   {ra, s0-s2} | *reserved*       | C.POP.E {ra, s0-s2}   | POP {x1, x8-x9, x14} | same as RVI
+|===============================================================================
+
+
+[dissassembleUABIEABI_POPRET]
+.C.POPRET[.E] behaviour for different ABIs and cores
+[width="100%",options=header]
+|===============================================================================
+| Instruction           | UABI dissasembly | EABI dissasembly      | RVI-core behaviour   | RVE-core behaviour
+5+| These forms of `C.POPRET.E` are pseudo-instructions for `C.POPRET` as the `X` register lists match
+| C.POPRET[.E] {ra}        | C.POPRET {ra}       | C.POPRET.E {ra}          | POPRET {x1}| same as RVI
+| C.POPRET[.E] {ra, s0}    | C.POPRET {ra, s0}   | C.POPRET.E {ra, s0}      | POPRET {x1, x8}| same as RVI
+| C.POPRET[.E] {ra, s0-s1} | C.POPRET {ra, s0-s1}| C.POPRET.E {ra, s0-s1}   | POPRET {x1, x8-x9}| same as RVI
+5+| These encodings of `C.POPRET` have out-of-range `X` registers for RVE
 | C.POPRET     {ra, s0-s2} | C.POPRET {ra, s0-s2}| *reserved*               | POPRET {x1, x8-x9, x18} | *illegal instruction*
-| C.POPRET     {ra, s0-s3} | C.POPRET {ra, s0-s3}| *reserved*               | POPRET {x1, x8-x9, x19} | *illegal instruction*
-| C.POPRET     {ra, s0-s4} | C.POPRET {ra, s0-s4}| *reserved*               | POPRET {x1, x8-x9, x20} | *illegal instruction*
-| C.POPRET.E   {ra, s0-s2} | *reserved*          | C.POPRET.E {ra, s0-s2} 2+| POPRET {x1, x8-x9, x14} 
-| C.POPRET.E   {ra, s0-s3} | *reserved*          | C.POPRET.E {ra, s0-s3} 2+| POPRET {x1, x8-x9, x14, x6} 
-| C.POPRET.E   {ra, s0-s4} | *reserved*          | C.POPRET.E {ra, s0-s4} 2+| POPRET {x1, x8-x9, x14, x6-x7} 
-5+| C.PUSH[.E]
-| C.PUSH[.E] {ra}        | C.PUSH {ra}       | C.PUSH.E {ra}        2+| PUSH {x1}
-| C.PUSH[.E] {ra, s0}    | C.PUSH {ra, s0}   | C.PUSH.E {ra, s0}    2+| PUSH {x1, x8}
-| C.PUSH[.E] {ra, s0-s1} | C.PUSH {ra, s0-s1}| C.PUSH.E {ra, s0-s1} 2+| PUSH {x1, x8-x9}
+| C.POPRET     {ra, s0-s3} | C.POPRET {ra, s0-s3}| *reserved*               | POPRET {x1, x8-x9, x18-x19} | *illegal instruction*
+| C.POPRET     {ra, s0-s5} | C.POPRET {ra, s0-s5}| *reserved*               | POPRET {x1, x8-x9, x18-x21} | *illegal instruction*
+| C.POPRET     {ra, s0-s8} | C.POPRET {ra, s0-s8}| *reserved*               | POPRET {x1, x8-x9, x18-x24} | *illegal instruction*
+| C.POPRET     {ra, s0-s11}| C.POPRET {ra, s0-s11}|*reserved*               | POPRET {x1, x8-x9, x18-x27} | *illegal instruction*
+5+| These encodings of `C.POPRET.E` have different `S` to `X` register mappings from the UABI
+| C.POPRET.E   {ra, s0-s2} | *reserved*          | C.POPRET.E {ra, s0-s2}   | POPRET {x1, x8-x9, x14} | same as RVI
+| C.POPRET.E   {ra, s0-s3} | *reserved*          | C.POPRET.E {ra, s0-s3}   | POPRET {x1, x8-x9, x14, x6} | same as RVI
+| C.POPRET.E   {ra, s0-s4} | *reserved*          | C.POPRET.E {ra, s0-s4}   | POPRET {x1, x8-x9, x14, x6-x7} | same as RVI
+|===============================================================================
+
+[dissassembleUABIEABI_PUSH]
+.C.PUSH[.E] behaviour for different ABIs and cores
+[width="100%",options=header]
+|===============================================================================
+| Instruction           | UABI dissasembly | EABI dissasembly      | RVI-core behaviour   | RVE-core behaviour
+5+| These forms of `C.POPRET.E` are pseudo-instructions for `C.POPRET` as the `X` register lists match
+| C.PUSH[.E] {ra}        | C.PUSH {ra}       | C.PUSH.E {ra}            | PUSH {x1}| same as RVI
+| C.PUSH[.E] {ra, s0}    | C.PUSH {ra, s0}   | C.PUSH.E {ra, s0}        | PUSH {x1, x8}| same as RVI
+| C.PUSH[.E] {ra, s0-s1} | C.PUSH {ra, s0-s1}| C.PUSH.E {ra, s0-s1}     | PUSH {x1, x8-x9}| same as RVI
+5+| These encodings of `C.POPRET` have out-of-range `X` registers for RVE
 | C.PUSH     {ra, s0-s2} | C.PUSH {ra, s0-s2}| *reserved*               | PUSH {x1, x8-x9, x18} | *illegal instruction*
-| C.PUSH     {ra, s0-s3} | C.PUSH {ra, s0-s3}| *reserved*               | PUSH {x1, x8-x9, x19} | *illegal instruction*
-| C.PUSH     {ra, s0-s4} | C.PUSH {ra, s0-s4}| *reserved*               | PUSH {x1, x8-x9, x20} | *illegal instruction*
-| C.PUSH.E   {ra, s0-s2} | *reserved*          | C.PUSH.E {ra, s0-s2} 2+| PUSH {x1, x8-x9, x14} 
-| C.PUSH.E   {ra, s0-s3} | *reserved*          | C.PUSH.E {ra, s0-s3} 2+| PUSH {x1, x8-x9, x14, x6} 
-| C.PUSH.E   {ra, s0-s4} | *reserved*          | C.PUSH.E {ra, s0-s4} 2+| PUSH {x1, x8-x9, x14, x6-x7} 
+| C.PUSH     {ra, s0-s3} | C.PUSH {ra, s0-s3}| *reserved*               | PUSH {x1, x8-x9, x18-x19} | *illegal instruction*
+| C.PUSH     {ra, s0-s5} | C.PUSH {ra, s0-s5}| *reserved*               | PUSH {x1, x8-x9, x18-x21} | *illegal instruction*
+| C.PUSH     {ra, s0-s8} | C.PUSH {ra, s0-s8}| *reserved*               | PUSH {x1, x8-x9, x18-x24} | *illegal instruction*
+| C.PUSH     {ra, s0-s11}| C.PUSH {ra, s0-s11}|*reserved*               | PUSH {x1, x8-x9, x18-x27} | *illegal instruction*
+5+| These encodings of `C.POPRET.E` have different `S` to `X` register mappings from the UABI
+| C.PUSH.E   {ra, s0-s2} | *reserved*          | C.PUSH.E {ra, s0-s2}   | PUSH {x1, x8-x9, x14} | same as RVI
+| C.PUSH.E   {ra, s0-s3} | *reserved*          | C.PUSH.E {ra, s0-s3}   | PUSH {x1, x8-x9, x14, x6} | same as RVI
+| C.PUSH.E   {ra, s0-s4} | *reserved*          | C.PUSH.E {ra, s0-s4}   | PUSH {x1, x8-x9, x14, x6-x7} | same as RVI
 |===============================================================================
 
 [NOTE]
 
-  RVI cores can support either ABI, so will execute all of the instructions. The RVI core does now know which ABI is in use.
+  RVI cores can support either ABI, so will execute all of the instructions. The RVI core does not know which ABI is in use. The intention is that when disassembling for the UABI `C.PUSH/C.POP/C.POPRET` will be used, and when disassembling for the EABI `C.PUSH.E/C.POP.E/C.POPRET.E` will be used.
 
 === Encoding Fields
 
