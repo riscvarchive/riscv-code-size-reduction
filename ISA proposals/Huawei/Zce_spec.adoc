@@ -1180,7 +1180,7 @@ J xTBLJALVEC.base
 image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump4.PNG[all three modes]
 
 [#pushpoppopret]
-== PUSH and PUSH
+== PUSH and POP
 
 `PUSH, POP, POPRET` and `PUSH.E, POP.E, POPRET.E` along with the 16-bit forms are used to reduce the size of function prologues and epilogues.
 
