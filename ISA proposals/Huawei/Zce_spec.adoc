@@ -57,7 +57,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 == `Zce` configurations
 
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified2.png[Zce subsets]
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified3.png[Zce subsets]
 
 `Zce` is split into two main subsets
 
@@ -90,21 +90,21 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.NEG|✓|✓|✓|Zcea|
 |C.TBLJAL|✓|✓|✓|Zcea|
 |C.PUSH|✓|✓|✓|Zcea|
-|C.PUSH.E|✓|✓|✓|Zcea|
 |C.POP|✓|✓|✓|Zcea|
-|C.POP.E|✓|✓|✓|Zcea|
 |C.POPRET|✓|✓|✓|Zcea|
-|C.POPRET.E|✓|✓|✓|Zcea|
+|C.PUSH.E|✓| | |Zcea|
+|C.POP.E|✓| | |Zcea|
+|C.POPRET.E|✓| | |Zcea|
 6+|other 32-bit encodings
 |ADDIADD|✓|✓|✓|Zcea|
 |ADDIADDW| |✓|✓|Zcea|
 |TBLJAL|✓|✓|✓|Zcea|
 |PUSH|✓|✓|✓|Zcea|
-|PUSH.E|✓|✓|✓|Zcea|
 |POP|✓|✓|✓|Zcea|
-|POP.E|✓|✓|✓|Zcea|
 |POPRET|✓|✓|✓|Zcea|
-|POPRET.E|✓|✓|✓|Zcea|
+|PUSH.E|✓| | |Zcea|
+|POP.E|✓| | |Zcea|
+|POPRET.E|✓| | |Zcea|
 |===============================================================================
 
 [#zceb]
