@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.28
-Version 0.28
+= RISC-V Zce code-size reduction extension proposal v0.29
+Version 0.29
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.29    | Add EABI versions of 32-bit encodings of PUSH/POP/POPRET, and move encodings of PUSH/POP/POPRET/BEQI/BNEI to custom-0 as I chose bad encodings
 | 0.28    | change alignment check of all non FP forms of PUSH/POP/POPRET to 8-byte not 16-byte to allow EABI compatibility. SPIMM still allocates blocks of 16-bytes.
 | 0.27    | add tentative versions of C.PUSH.E/C.POP.E/C.POPRET.E, need to review them
 | 0.26    | simplify and rename subsets. Re-encode LWGP/SWGP etc. Add LDWP/SDGP etc. Re-encode DECBGEZ. Re-encode C.SEXT.B, C.SEXT.H, C.NOT, C.NEG following Greg Favor's recommendation
@@ -48,7 +49,6 @@ This document describes the `Zce` extension to reduce code-size.
 
 == Issues
 
-* need EABI versions of PUSH/POP/POPRET
 * need 32-bit instruction formats for Zcea (I've only done Zceb)
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
@@ -90,15 +90,21 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.NEG|✓|✓|✓|Zcea|
 |C.TBLJAL|✓|✓|✓|Zcea|
 |C.PUSH|✓|✓|✓|Zcea|
+|C.PUSH.E|✓|✓|✓|Zcea|
 |C.POP|✓|✓|✓|Zcea|
+|C.POP.E|✓|✓|✓|Zcea|
 |C.POPRET|✓|✓|✓|Zcea|
+|C.POPRET.E|✓|✓|✓|Zcea|
 6+|other 32-bit encodings
 |ADDIADD|✓|✓|✓|Zcea|
 |ADDIADDW| |✓|✓|Zcea|
 |TBLJAL|✓|✓|✓|Zcea|
 |PUSH|✓|✓|✓|Zcea|
+|PUSH.E|✓|✓|✓|Zcea|
 |POP|✓|✓|✓|Zcea|
+|POP.E|✓|✓|✓|Zcea|
 |POPRET|✓|✓|✓|Zcea|
+|POPRET.E|✓|✓|✓|Zcea|
 |===============================================================================
 
 [#zceb]
@@ -165,6 +171,10 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |*C.POP*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.POPRET*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.PUSH*    | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+
+|100       |*C.POP.E*   | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.POPRET.E*| |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.PUSH.E*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 
 |100       |*C.TBLJAL*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.SEXT.B*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
@@ -262,7 +272,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 |======================================
 |Group|[15:13]|[12:10]|[1:0]|Instruction
 
-| |100    |000    |00   |C.POP, C.POPRET, C.PUSH
+| |100    |000    |00   |C.POP, C.POPRET, C.PUSH, C.POP.E, C.POPRET.E, C.PUSH.E
 | |100    |001    |00   |C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H, C.ZEXT.W, C.NOT, C.NEG, C.MUL
 | |100    |110    |00   |C.TBLJAL
 
@@ -464,7 +474,9 @@ addiaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 + 2)
 [#cmpimmbr]
 === BEQI, BNEI
 
-These instructions have no conflicts with other extensions, they use previously reserved encodings.
+[NOTE]
+
+  these encodings are in custom-0 space pending allocation
 
 The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
 
@@ -472,9 +484,9 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 .proposed 32-bit encodings for `BEQI/BNEI`
 [width="100%",options=header]
 |=========================================================================================================================
-| 31:27              | 26:25  |24   |23|22:20         |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
-| scmpimm[5:1]       |10      |scmpimm[0]  2+|  offset[9:6]  3+| rs1  | 000   2+| offset[5:1]       |1000011| BEQI
-| scmpimm[5:1]       |10      |scmpimm[0]  2+|  offset[9:6]  3+| rs1  | 001   2+| offset[5:1]       |1000011| BNEI
+| 31:30 |  29:24        |23:20            |19:15 | 14:12   | 11:7              | 6 : 0 | instruction
+| 00    | scmpimm[5:0]  |  offset[9:6]    | rs1  | 000     | offset[5:1]       |0001011| BEQI
+| 00    | scmpimm[5:0]  |  offset[9:6]    | rs1  | 001     | offset[5:1]       |0001011| BNEI
 |=========================================================================================================================
 
 [#compare-immediate branch_semantics]
@@ -509,17 +521,17 @@ The 16-bit encoding is in <<tbljal16bitencoding>>.
 The 32-bit encoding is in <<tbljal32bitencoding>>.
 
 [#pushpoppopret_heading]
-=== PUSH/POP/POPRET
+=== PUSH and POP
 
 See <<pushpoppopret>> for the specification.
 
 [[pushpop32]]
-==== PUSH, POP, POPRET
+==== PUSH, POP, POPRET, PUSH.E, POP.E, POPRET.E
 
 See <<pushpoppopret32bitencodings>> for the encodings.
 
 [[pushpop16]]
-==== C.PUSH, C.POP, C.POPRET
+==== C.PUSH, C.POP, C.POPRET, C.PUSH.E, C.POP.E, C.POPRET.E
 
 See <<pushpoppopret16bitencodings>> for the encodings.
 
@@ -1168,13 +1180,13 @@ J xTBLJALVEC.base
 image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump4.PNG[all three modes]
 
 [#pushpoppopret]
-== PUSH/POP/POPRET
+== PUSH and PUSH
 
-`PUSH/POP/POPRET` are used to reduce the size of function prologues and epilogues.
+`PUSH, POP, POPRET` and `PUSH.E, POP.E, POPRET.E` along with the 16-bit forms are used to reduce the size of function prologues and epilogues.
 
 === A brief example from Zephyr
 
-This example gives a nice illustration of what `PUSH/POP/POPRET` are trying to achieve.
+This example gives a nice illustration of what `PUSH, POP, POPRET` are trying to achieve.
 
 [source,sourceCode,text]
 ----
@@ -1237,11 +1249,50 @@ with `PUSH/POPRET` this reduces to
 
 ----
 
-The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes with `-msave-restore`, and to to 8-bytes with `PUSH/POP`, which will also improve the performance.
+The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes with `-msave-restore`, and to to 8-bytes with `PUSH, POP, POPRET`, which will also improve the performance.
   
 [NOTE]
 
   The calls to `<riscv_save_0>/<riscv_restore_0>` become 64-bit when the target functions are out of the ±1MB range, increasing the prologue/epilogue size to 22-bytes.
+
+=== UABI and EABI support
+
+The UABI is available on all RVI cores. The EABI is optional on RV32I and required on RV32E.
+
+The UABI supports saved registers `s0-s11`, the EABI supports saved registers `s0-s4` only but `s2-s4` are mapped to _different_ `X` registers.
+
+Therefore encodings which support register lists which include up to `s1` can be used for both ABIs. As soon as the list includes `s2` then a different encoding is required.
+
+This specification for the EABI is taken from https://github.com/riscv/riscv-eabi-spec/blob/master/EABI.adoc[this document].
+
+The `PUSH/POP/POPRET` instructions support the UABI. The `PUSH.E/POP.E/POPRET.E` instructions support the EABI.
+
+Where the register list is the same for both ABIs the EABI version is a pseudo-instruction mapping to the UABI version. For example:
+
+* `c.pop.e {ra, s0}, 32` is a pseudo-instruction for `c.pop {ra, s0}, 32`
+
+If the register list includes `s2` or a higher numbered `s` register then the encoding is different, as the mapping to `X` registers is different. Therefore:
+
+* `c.pop.e {ra, s0-s2}, 32` has a different encoding to `c.pop {ra, s0-s2}, 32`
+
+It is recommended that:
+
+* when compiling/disassembling for the UABI, the pseudo-instructions with the `.E` suffix _should not_ be used.
+* when compiling/disassembling for the EABI, the pseudo-instructions with the `.E` suffix _should_ be used.
+
+The `.E` forms are not available on RV64I or RV128I. Any encodings with a `.E` suffix are reserved on those base architectures.
+
+[#ABI-on-base-arch]
+.ABIs on different base architectures
+[width="100%",options=header]
+|=========================================================================================================================
+| Base architecture | UABI | EABI | Notes
+| RV32I             | ✓    | ✓   | Full support of both ABIs required
+| RV32E             |       | ✓   | Binary can execute on RV32I
+| RV64I             | ✓    |      | No EABI support on RV64I
+|=========================================================================================================================
+
+Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for RV32E may be executed on an RV32I core. 
 
 === Assembler Syntax
 
@@ -1294,7 +1345,7 @@ For the 16-bit encodings
 .. `if sreg_list={ra,s0-sN}: areg_list={a0-a2} where N=5,8,11`
 . The `stack_adjustment` must be no more than the total memory required for `reg_list`, rounded up to a multiple of 16-bytes, plus an additional (0..7)*16-bytes.
 
-Examples of valid 16-bit encodings for RV32 or RV64:
+Examples of valid 16-bit encodings for RV32I or RV64I using the UABI:
 
 [source,sourceCode,text]
 ----
@@ -1320,9 +1371,11 @@ popret {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128; jump to ra
 [NOTE]
   To save encoding space, for `c.push`, `areg_list` is automatically determined from the `reg_list` value based on analysing usage in the benchmark suite .
 
-
 [NOTE]
   To save encoding space some opcodes do not allow the full range of `spimm` or `reg_list` which reduces the possible `stack adjustment` range further, see <<#pushpoppopret16bitencodings>>
+
+[NOTE]
+  For the EABI the encodings, or pseudo-instructions all have a `.E` suffix and the highest `s` register is limited to `s4`.
 
 For the 32-bit encodings
 
@@ -1342,7 +1395,7 @@ For example
 
 To be a legal encoding:
 
-1.  The stack adjustment must be negative for all `PUSH` variants and positive for all `POP/POPRET` variants
+1.  The stack adjustment must be negative for `PUSH` and positive for `POP/POPRET`
 2.  The stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register lists must be valid (see above)
 4.  For `PUSH`, `areg_list` must not overwrite an `s` register which is not listed in `reg_list`
@@ -1373,9 +1426,9 @@ Note that every architectural state update in the pseudo-code can be executed as
 
 Because the pseudo-code includes load or store operations, they may take any fault caused by executing loads or stores. See <<fault-handling>> for more details.
 
-==== PUSH Pseudo-code
+==== PUSH/PUSH.E Pseudo-code
 
-The `PUSH` instruction store the set of registers from `reg_list` to consecutive memory locations, and decrements the stack pointer.
+The `PUSH/PUSH.E` instruction store the set of registers from `reg_list` to consecutive memory locations, and decrements the stack pointer.
 The pseudo-code uses assembly inserts so that it can use `sw/sd` etc.
 
 The pseudo-code shows the memory and architectural state updates of the whole instruction which has completed without faults, debug halts or interrupts. See <<fault-handling>> and <<software-view>> for more information.
@@ -1418,9 +1471,9 @@ if (areg_list) {
 sp+=stack_adjustment; //decrement
 ----
 
-==== POP/POPRET Pseudo-code
+==== POP/POP.E/POPRET/POPRET.E Pseudo-code
 
-A `POP/POPRET` instruction loads the set of registers from `reg_list` from consecutive memory locations, and then increments the stack pointer. 
+A `POP/POP.E/POPRET/POPRET.E` instruction loads the set of registers from `reg_list` from consecutive memory locations, and then increments the stack pointer. 
 The pseudo-code uses assembly inserts so that it can use `lw/ld/ret` etc.
 
 The pseudo-code shows the architectural state updates of the whole instruction which has completed without faults, debug halts or interrupts. See <<fault-handling>> and <<software-view>> for more information.
@@ -1464,7 +1517,7 @@ if (ret_val) {
    }
 }
 sp+=stack_adjustment; //increment
-if (opcode == "POPRET") { 
+if (opcode == "POPRET" or opcode == "POPRET.E") { 
    asm("ret");
 }
 ----
@@ -1474,119 +1527,127 @@ if (opcode == "POPRET") {
 
 [NOTE]
 
-  These encodings are provisional.
-
-These instructions have no conflicts with other extensions, they use previously reserved encodings.
+  These encodings are in custom-0, correct encodings need to be allocated.
 
 .push/pop 32-bit encodings
 [options="header",width="100%"]
-|=========================================================================================================================
-| 31:27              |26|25     |24 |23|22|21:20         |19:18|17:16|15 | 14:12   | 11:10 |9: 7      | 6 : 0 | instruction
-2+|0000000         2+|00         2+|00   |mv          2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH
-2+|0000000         2+|01         2+|00   |ret_val     2+|rcount     |ra | 010   2+| spimm             |1000011| POP
-2+|0000000         2+|10         2+|00   |ret_val     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET
+|========================================================================================================================
+| 31:23          |22:20   |19:16        |15 | 14:12   | 11: 7      | 6 : 0 | instruction
+|00000000000     |mv      |rlist (0-12) |ra | 100     | spimm      |0010011| PUSH
+|00000000000     |mv      |rlist (13-15)|ra | 100     | spimm      |0010011| PUSH.E
+|00000000000     |ret_val |rlist (0-12) |ra | 101     | spimm      |0010011| POP
+|00000000000     |ret_val |rlist (13-15)|ra | 101     | spimm      |0010011| POP.E
+|00000000000     |ret_val |rlist (0-12) |1  | 110     | spimm      |0010011| POPRET
+|00000000000     |ret_val |rlist (13-15)|1  | 110     | spimm      |0010011| POPRET.E
 |=========================================================================================================================
   
 [NOTE]
+
+  `rlist>12` gives register lists which only map to the EABI because the `X` register mapping is different for `s2-s4`, hence the `.E` suffix
+
+[NOTE]
   `ra=1` for all `popret` encodings, it is not specified in the encoding
-  Not all cases of `mv` and `rcount` are legal for `PUSH`, see below.
+  Not all cases of `mv` and `rlist` are legal for `PUSH`, see below.
 
-
-==== Illegal instructions
-
-The following cases cause an illegal instruction exception for `PUSH/POP/POPRET`.
-
-If `sp` is not 8-byte aligned and `XLEN=32` then take an illegal instruction exception for `PUSH/POP/POPRET`.
-If `sp` is not 16-byte aligned and `XLEN>32` then take an illegal instruction exception for `PUSH/POP/POPRET`.
+[#proposed-32bit-encodingsI-2]
+.PUSH/POP/POPRET 32-bit encoding validity on RV32I/RV32E/RV64I/RV128I
+[width="100%",options=header]
+|=========================================================================================================================
+|instruction                    | RV32I | RV32E | RV64I/RV128I
+|POP          {ra}              | ✓ | ✓ | ✓
+|POP          {[ra,] s0}        | ✓ | ✓ | ✓
+|POP          {[ra,] s0-s1}     | ✓ | ✓ | ✓
+|POP          {[ra,] s0-s2}     | ✓ |   | ✓
+|POP.E        {[ra,] s0-s2}     | ✓ | ✓ | 
+|POPRET       {ra}              | ✓ | ✓ | ✓ 
+|POPRET       {[ra,] s0}        | ✓ | ✓ | ✓
+|POPRET       {[ra,] s0-s1}     | ✓ | ✓ | ✓
+|POPRET       {[ra,] s0- _sN_}  | ✓ |   | ✓
+|POPRET.E     {[ra,] s0-s2}     | ✓ | ✓ | 
+|POPRET.E     {[ra,] s0-s3}     | ✓ | ✓ | 
+|POPRET.E     {[ra,] s0-s4}     | ✓ | ✓ | 
+|PUSH         {ra}              | ✓ | ✓ | ✓ 
+|PUSH         {[ra,] s0}        | ✓ | ✓ | ✓ 
+|PUSH         {[ra,] s0-s1}     | ✓ | ✓ | ✓ 
+|PUSH         {[ra,] s0- _sN_}  | ✓ |   | ✓ 
+|PUSH.E       {[ra,] s0-s2}     | ✓ | ✓ |   
+|PUSH.E       {[ra,] s0-s3}     | ✓ | ✓ |  
+|PUSH.E       {[ra,] s0-s4}     | ✓ | ✓ |   
+|=========================================================================================================================
 
 [NOTE]
 
-  RV32I may use eith the UABI or EABI, so we can only check the EABI minimum alignment.
+  _sN_ = (s2,s3,..,s11) 
+
+[NOTE]
+
+  If there is no ✓ in a cell then the encoding is *reserved* on that architecture
+
+[#proposed-32bit-encodings-pseudo]
+.PUSH/POP/POPRET 32-bit encoding pseudo-instructions
+[width="100%",options=header]
+|=========================================================================================================================
+| Pseudo-instruction      | Resolves to             | RV32I | RV32E | RV64I/RV128I
+| POP.E {ra}              | POP {ra}                | ✓     |  ✓    |
+| POP.E {[ra,] s0}        | POP {[ra,] s0}          | ✓     |  ✓    |
+| POP.E {[ra,] s0-s1}     | POP {[ra,] s0-s1}       | ✓     |  ✓    |
+| POPRET.E {ra}           | POPRET {ra}             | ✓     |  ✓    |
+| POPRET.E {[ra,] s0}     | POPRET {[ra,] s0}       | ✓     |  ✓    |
+| POPRET.E {[ra,] s0-s1}  | POPRET {[ra,] s0-s1}    | ✓     |  ✓    |
+| PUSH.E {ra}             | PUSH {ra}               | ✓     |  ✓    |
+| PUSH.E {[ra,] s0}       | PUSH {[ra,] s0}         | ✓     |  ✓    |
+| PUSH.E {[ra,] s0-s1}    | PUSH {[ra,] s0-s1}      | ✓     |  ✓    |
+|=========================================================================================================================
+
+[NOTE]
+
+  All the pseudo-instructions are valid for `RV32I/RV32E`, none are valid for `RV64I/RV128I`
+
+==== Illegal instructions
+
+The following cases cause illegal instruction exceptions:
+
+* If `sp` is not 8-byte aligned and `XLEN=32`
+* If `sp` is not 16-byte aligned and `XLEN>32`
+
+[NOTE]
+
+  RV32I may use either the UABI or EABI, so we can only check the EABI minimum alignment.
 
 The following case causes an illegal instruction exception for `PUSH`.
 
-* `rcount<mv`
+* `rlist<mv`
 
 This rule enumerates to the following 6 illegal encodings:
 
-* `mv=1 && rcount<1`
-* `mv=2 && rcount<2`
-* `mv=3 && rcount<3`
+* `mv=1 && rlist<1`
+* `mv=2 && rlist<2`
+* `mv=3 && rlist<3`
 
 [#pushpoppopret16bitIencodings]
 === 16-bit Encodings
 
 These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
-This specification is currently assuming that:
-
-* `{ra, s0-s1}`` map to the same `X` registers in the UABI and EABI
-* `s4` is the highest numbered saved register in the EABI
-
-If either of these assumptions are wrong I'll update the specification (I'm looking at https://github.com/riscv/riscv-eabi-spec/blob/master/EABI.adoc[this document]).
-
-If compiling/disassembling for the UABI, the instructions _without_ the .E suffix should be used.
-
-If compiling/disassembling for the EABI, the instructions or pseudo-instructions _with_ the .E suffix should be used.
-
-Sometimes the .E form is a pseudo-instruction for the non .E form, e.g. `C.POP {ra}` and `C.POP.E {ra}` share an encoding.
-
-Where the register list maps to different `X` registers a different encoding is required, for example `C.POP.E {ra, s0-s2}`.
-
-[#ABI-on-base-arch]
-.ABIs on different base architectures
-[width="100%",options=header]
-|=========================================================================================================================
-| Base architecture | UABI | EABI | Notes
-| RV32I             | ✓    | ✓   | Full support of both ABIs required
-| RV32E             |       | ✓   | Binary can execute on RV32I
-| RV64I             | ✓    |      | No EABI support on RV64I
-|=========================================================================================================================
-
-
-Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for RV32E may be executed on an RV32I core. 
-
-It is possible for the EABI versions to be used on an RV32I core.  The use of EABI would need to be denoted in the ELF header so the the dissasembler and dynamic ELF loaders know how the ELF was compiled.
-
-It is not possible to use the UABI versions on an RV32E core. In this case, for example `C.POP {ra, s0-s2}` would decode as an illegal instruction.
-
-RV32I can execute RV32E binaries, therefore RV32I supports all the .E forms.
 
 [#proposed-16bit-encodingsI-1]
 .PUSH/POP/POPRET 16-bit encodings 
 [width="100%",options=header]
 |=========================================================================================================================
 |15 |14 |13 |12 |11 |10  |9 |8  |7 |6   |5 |4 |3 |2           |1 |0 |instruction           
-17+|`C.POP` and reserved values of rcount/spimm to save encoding space
-3+|100  |0  |0  |0  |0 2+|00         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP     {ra}        
-3+|100  |0  |0  |0  |0 2+|01         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP     {ra, s0}    
-3+|100  |0  |0  |0  |0 2+|10         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP     {ra, s0-s1} 
-3+|100  |0  |0  |0  |0 2+|11         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP     {ra, s0-s2} 
+17+|`C.POP` and reserved values of rlist/spimm to save encoding space
+3+|100  |0  |0  |0  |0 2+|rlist[1:0]|0 |0 2+|00 | spimm[0] 2+| 00  |C.POP
 3+|100  |0  |0  |0  |1 2+|00         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP.E   {ra, s0-s2} 
 3+|100  |0  |0  |0  |1 2+|>00        |0 |0 3+|xxx           2+| 00  |*reserved*
 3+|100  |0  |0  |0 3+|xxx            |0 |0 2+|!=00| x       2+| 00  |*reserved*
 17+|`C.POPRET` and `C.POPRET.E`
-3+|100  |0  |0  |0 3+|000          |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET     {ra}        
-3+|100  |0  |0  |0 3+|001          |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET     {ra, s0}    
-3+|100  |0  |0  |0 3+|010          |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET     {ra, s0-s1} 
-3+|100  |0  |0  |0 3+|011          |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET     {ra, s0-s2} 
-3+|100  |0  |0  |0 3+|100          |ret0|1 |0 2+|spimm[1:0] 2+| 00  |C.POPRET     {ra, s0-s3} 
-3+|100  |0  |0  |0 3+|101          |ret0|1 |0 2+|spimm[1:0] 2+| 00  |C.POPRET     {ra, s0-s5} 
-3+|100  |0  |0  |0 3+|110          |ret0|1 |0 2+|spimm[1:0] 2+| 00  |C.POPRET     {ra, s0-s8} 
-3+|100  |0  |0  |0 3+|111          |ret0|1 |0 2+|spimm[1:0] 2+| 00  |C.POPRET     {ra, s0-s11}
+3+|100  |0  |0  |0 3+|rlist       |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET
 3+|100  |0  |0  |0 3+|100          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s2} 
 3+|100  |0  |0  |0 3+|101          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s3} 
 3+|100  |0  |0  |0 3+|110          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s4} 
 3+|100  |0  |0  |0 3+|111          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |*reserved*
 17+|`C.PUSH` and `C.PUSH.E`
-3+|100  |0  |0  |0 3+|000          |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH     {ra}         
-3+|100  |0  |0  |0 3+|001          |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH     {ra, s0}     
-3+|100  |0  |0  |0 3+|010          |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH     {ra, s0-s1}  
-3+|100  |0  |0  |0 3+|011          |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH     {ra, s0-s2}  
-3+|100  |0  |0  |0 3+|100          |1 |0   |0 2+|spimm[1:0] 2+| 00  |C.PUSH     {ra, s0-s3}  
-3+|100  |0  |0  |0 3+|101          |1 |0   |0 2+|spimm[1:0] 2+| 00  |C.PUSH     {ra, s0-s5}  
-3+|100  |0  |0  |0 3+|110          |1 |0   |0 2+|spimm[1:0] 2+| 00  |C.PUSH     {ra, s0-s8}  
-3+|100  |0  |0  |0 3+|111          |1 |0   |0 2+|spimm[1:0] 2+| 00  |C.PUSH     {ra, s0-s11} 
+3+|100  |0  |0  |0 3+|rlist       |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH              
 3+|100  |0  |0  |0 3+|100          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s2}  
 3+|100  |0  |0  |0 3+|101          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s3}  
 3+|100  |0  |0  |0 3+|110          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s4}  
@@ -1596,8 +1657,9 @@ RV32I can execute RV32E binaries, therefore RV32I supports all the .E forms.
   * For `C.POPRET`, `ret_val[0]=ret0` as specified in the encoding, `ret_val[1]=0`. 
   * For `C.POP` `ret_val[1:0]=0`.
 
+
 [#proposed-16bit-encodingsI-2]
-.PUSH/POP/POPRET 16-bit validity on RV32I/RV32E/RV64I/RV128I
+.PUSH/POP/POPRET 16-bit encoding validity on RV32I/RV32E/RV64I/RV128I
 [width="100%",options=header]
 |=========================================================================================================================
 |instruction               | RV32I | RV32E | RV64I/RV128I
@@ -1609,22 +1671,14 @@ RV32I can execute RV32E binaries, therefore RV32I supports all the .E forms.
 |C.POPRET     {ra}         | ✓ | ✓ | ✓ 
 |C.POPRET     {ra, s0}     | ✓ | ✓ | ✓
 |C.POPRET     {ra, s0-s1}  | ✓ | ✓ | ✓
-|C.POPRET     {ra, s0-s2}  | ✓ |    | ✓
-|C.POPRET     {ra, s0-s3}  | ✓ |   | ✓
-|C.POPRET     {ra, s0-s5}  | ✓ |   | ✓
-|C.POPRET     {ra, s0-s8}  | ✓ |   | ✓
-|C.POPRET     {ra, s0-s11} | ✓ |   | ✓
+|C.POPRET     {ra, s0- _sN_}  | ✓ |    | ✓
 |C.POPRET.E   {ra, s0-s2}  | ✓ | ✓ | 
 |C.POPRET.E   {ra, s0-s3}  | ✓ | ✓ | 
 |C.POPRET.E   {ra, s0-s4}  | ✓ | ✓ | 
 |C.PUSH       {ra}         | ✓ | ✓ | ✓ 
 |C.PUSH       {ra, s0}     | ✓ | ✓ | ✓ 
 |C.PUSH       {ra, s0-s1}  | ✓ | ✓ | ✓ 
-|C.PUSH       {ra, s0-s2}  | ✓ |   | ✓ 
-|C.PUSH       {ra, s0-s3}  | ✓ |   | ✓ 
-|C.PUSH       {ra, s0-s5}  | ✓ |   | ✓ 
-|C.PUSH       {ra, s0-s8}  | ✓ |   | ✓ 
-|C.PUSH       {ra, s0-s11} | ✓ |   | ✓ 
+|C.PUSH       {ra, s0- _sN_}  | ✓ |   | ✓ 
 |C.PUSH.E     {ra, s0-s2}  | ✓ | ✓ |   
 |C.PUSH.E     {ra, s0-s3}  | ✓ | ✓ |  
 |C.PUSH.E     {ra, s0-s4}  | ✓ | ✓ |   
@@ -1632,7 +1686,12 @@ RV32I can execute RV32E binaries, therefore RV32I supports all the .E forms.
 
 [NOTE]
 
+  _sN_ = (s2,s3,s5,s8,s11) 
+
+[NOTE]
+
   If there is no ✓ in a cell then the encoding is *reserved* on that architecture
+
 
 [#proposed-16bit-encodings-pseudo]
 .PUSH/POP/POPRET 16-bit encoding pseudo-instructions
@@ -1671,7 +1730,7 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 
   `spimm` represents 16-byte blocks even on RV32E where the stack is 8-byte aligned. This is for simplicity.
 
-==== mv, ret_val, ra, rcount for the 32-bit encodings
+==== mv, ret_val, ra, rlist for the 32-bit encodings
 
 The registers in the `reg_list` are controlled by these fields
 
@@ -1708,35 +1767,39 @@ Note that `mv` and `ret_val` are in the same location in the encoding.
 | 1      |ra
 |=========================================
 
-[#32bit-rcount]
-.`rcount` field values for the 32-bit encodings
+[#32bit-rlist]
+.`rlist` field values for the 32-bit encodings
 [options="header"]
 |==========================
-|rcount  | ABI names      
-| 0      |none       
-| 1      |s0
-| 2      |s0-s1
-| 3      |s0-s2
-| 4      |s0-s3
-| 5      |s0-s4
-| 6      |s0-s5
-| 7      |s0-s6
-| 8      |s0-s7
-| 9      |s0-s8
-| 10     |s0-s9
-| 11     |s0-s10
-| 12     |s0-s11
-2+|these values could be used for interrupt save/restore
-| 13-15  | *reserved*
+|rlist  | ABI names | ABI                
+3+|`s0-s1` are the same for the UABI or EABI so the encoding is the same
+| 0      |none       | both           
+| 1      |s0         | both  
+| 2      |s0-s1      | both     
+| 3      |s0-s2      | UABI     
+3+|`s2+` is different
+| 4      |s0-s3      | UABI      
+| 5      |s0-s4      | UABI      
+| 6      |s0-s5      | UABI      
+| 7      |s0-s6      | UABI      
+| 8      |s0-s7      | UABI      
+| 9      |s0-s8      | UABI      
+| 10     |s0-s9      | UABI      
+| 11     |s0-s10     | UABI       
+| 12     |s0-s11     | UABI       
+3+|EABI has `s2-s4` differently mapped
+| 13     |s0-s2      | EABI     
+| 14     |s0-s3      | EABI     
+| 15     |s0-s4      | EABI      
 |==========================
 
-==== `rcount`, `ret_val` for the 16-bit encodings
+==== `rlist`, `ret_val` for the 16-bit encodings
 
-[#rcount-table]
-.`rcount` values for the 16-bit encodings
+[#rlist-table]
+.`rlist` values for the 16-bit encodings
 [options="header",width=100%]
 |============================
-|rcount| ABI names
+|rlist| ABI names
 |0     |ra
 |1     |ra, s0
 |2     |ra, s0-s1
@@ -1903,7 +1966,7 @@ It is possible for implementations to follow these restricted rules and to safel
 c.push  {ra, s0-s5}, {a0-a2}, -64
 ----
 
-Encoding: rcount=5, spimm=2
+Encoding: rlist=5, spimm=2
 
 Equivalent sequence:
 
@@ -1929,7 +1992,7 @@ addi sp, sp, -64;
 c.push {ra, s0-s1}, {a0-a1} -32
 ----
 
-Encoding: rcount=2, spimm=1
+Encoding: rlist=2, spimm=1
 
 Equivalent sequence:
 
@@ -1950,7 +2013,7 @@ addi sp, sp, -32;
 c.pop   {ra, s0-s7}, 160
 ----
 
-Encoding: rcount=6, spimm=7 
+Encoding: rlist=6, spimm=7 
 
 Equivalent sequence:
 
@@ -1977,7 +2040,7 @@ addi sp, sp, 160
 c.pop   {ra, s0-s7},{s0}, 160
 ----
 
-Encoding: rcount=6, spimm=7 
+Encoding: rlist=6, spimm=7 
 
 Equivalent sequence:
 
@@ -2005,7 +2068,7 @@ ret
 pop   {ra, s0-s9}, {s0}, 256
 ----
 
-Encoding: ra=1, rcount=10, frcount=0, spimm=13 (16-byte aligned)
+Encoding: ra=1, rlist=10, frlist=0, spimm=13 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -2154,19 +2217,19 @@ Therefore the coverage is the same as for `ADDI/BGEZ` combined, noting the limit
 
 === Cover all possible sets of operands
 
-`mv, rcount, ra, spimm` are all fields in the encoding.
+`mv, rlist, ra, spimm` are all fields in the encoding.
 
 [#32pushpopsourcecoverage]
 .Coverage for PUSH/POP/POPRET source operands
 [options="header",width=100%]
 |==============================================================================
 |Instruction|Variables                                        | Coverage bins
-| PUSH (`mv`=0) | `rcount`(0 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 416
-| PUSH (`mv`=1) | `rcount`(1 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 384
-| PUSH (`mv`=2) | `rcount`(2 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 352
-| PUSH (`mv`=3) | `rcount`(3 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 288
-| POP         | `rcount`(0 to 12) x `ret_val` (0 to 3) x `ra` (0 to 1) x `spimm` (0 to 15) | 1664
-| POPRET      | `rcount`(0 to 12) x `ret_val` (0 to 3) x `spimm` (0 to 15) | 834
+| PUSH (`mv`=0) | `rlist`(0 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 416
+| PUSH (`mv`=1) | `rlist`(1 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 384
+| PUSH (`mv`=2) | `rlist`(2 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 352
+| PUSH (`mv`=3) | `rlist`(3 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 288
+| POP         | `rlist`(0 to 12) x `ret_val` (0 to 3) x `ra` (0 to 1) x `spimm` (0 to 15) | 1664
+| POPRET      | `rlist`(0 to 12) x `ret_val` (0 to 3) x `spimm` (0 to 15) | 834
 |==============================================================================
 
 The 16-bit encodings have ffar ewer coverage bins:
@@ -2176,9 +2239,9 @@ The 16-bit encodings have ffar ewer coverage bins:
 [options="header",width=100%]
 |==============================================================================
 |Instruction|Variables                                        | Coverage bins
-| C.PUSH      | `rcount`(0 to 7) x `spimm` (0 to 7) | 64
-| C.POP       | `rcount`(0 to 3) x `spimm` (0 to 1) | 8
-| C.POPRET    | `rcount`(0 to 7) x `ret_val` (0 to 1) x `spimm` (0 to 7) | 128
+| C.PUSH      | `rlist`(0 to 7) x `spimm` (0 to 7) | 64
+| C.POP       | `rlist`(0 to 3) x `spimm` (0 to 1) | 8
+| C.POPRET    | `rlist`(0 to 7) x `ret_val` (0 to 1) x `spimm` (0 to 7) | 128
 |==============================================================================
 
 === Test the functionality
@@ -2302,8 +2365,8 @@ The pseudo-code shows the memory and architectural state updates of the whole in
 ----
 //sp must be correctly aligned
 if (sp[3:0])            {take_illegal_instruction_exception();}
-if (rcount>12)          {take_illegal_instruction_exception();}
-if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
+if (rlist>12)          {take_illegal_instruction_exception();}
+if (rlist>2 && misa.E) {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -2353,8 +2416,8 @@ The pseudo-code shows the architectural state updates of the whole instruction w
 ----
 //sp must be correctly aligned
 if (sp[3:0])            {take_illegal_instruction_exception();}
-if (rcount>12)          {take_illegal_instruction_exception();}
-if (rcount>2 && misa.E) {take_illegal_instruction_exception();}
+if (rlist>12)          {take_illegal_instruction_exception();}
+if (rlist>2 && misa.E) {take_illegal_instruction_exception();}
 if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
@@ -2407,17 +2470,17 @@ if (opcode == "POPRET") {
 |=========================================================================================================================
 | 31:27              |26|25     |24 |23|22|21:20         |19:18|17:16|15 | 14:12   | 11:10 |9: 7      | 6 : 0 | instruction
 15+|`PUSH.[FDQ]` encodings
-2+|0000000         2+|00         2+|01   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.F
-2+|0000000         2+|00         2+|10   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.D
-2+|0000000         2+|00         2+|11   |frcount     2+|rcount     |ra | 001   2+| spimm             |1000011| PUSH.Q
+2+|0000000         2+|00         2+|01   |frlist     2+|rlist     |ra | 001   2+| spimm             |1000011| PUSH.F
+2+|0000000         2+|00         2+|10   |frlist     2+|rlist     |ra | 001   2+| spimm             |1000011| PUSH.D
+2+|0000000         2+|00         2+|11   |frlist     2+|rlist     |ra | 001   2+| spimm             |1000011| PUSH.Q
 15+|`POP.[FDQ]` encodings
-2+|0000000         2+|01         2+|01   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.F
-2+|0000000         2+|01         2+|10   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.D
-2+|0000000         2+|01         2+|11   |frcount     2+|rcount     |ra | 010   2+| spimm             |1000011| POP.Q
+2+|0000000         2+|01         2+|01   |frlist     2+|rlist     |ra | 010   2+| spimm             |1000011| POP.F
+2+|0000000         2+|01         2+|10   |frlist     2+|rlist     |ra | 010   2+| spimm             |1000011| POP.D
+2+|0000000         2+|01         2+|11   |frlist     2+|rlist     |ra | 010   2+| spimm             |1000011| POP.Q
 15+|`POPRET.[FDQ]` encodings
-2+|0000000         2+|10         2+|01   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.F
-2+|0000000         2+|10         2+|10   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.D
-2+|0000000         2+|10         2+|11   |frcount     2+|rcount     |1  | 011   2+| spimm             |1000011| POPRET.Q
+2+|0000000         2+|10         2+|01   |frlist     2+|rlist     |1  | 011   2+| spimm             |1000011| POPRET.F
+2+|0000000         2+|10         2+|10   |frlist     2+|rlist     |1  | 011   2+| spimm             |1000011| POPRET.D
+2+|0000000         2+|10         2+|11   |frlist     2+|rlist     |1  | 011   2+| spimm             |1000011| POPRET.Q
 |=========================================================================================================================
 
 [NOTE]
@@ -2431,22 +2494,22 @@ if (opcode == "POPRET") {
 
 The encoding takes the same behaviour as any floating point instruction if executed when disabled:
 
-* if `frcount>0` and `misa.F==0`
-* if `frcount>0` and `fdq==1` and `misa.D==0`
-* if `frcount>0` and `fdq==2` and `misa.Q==0`
+* if `frlist>0` and `misa.F==0`
+* if `frlist>0` and `fdq==1` and `misa.D==0`
+* if `frlist>0` and `fdq==2` and `misa.Q==0`
 
 The following cases do not decode as `PUSH*/POP*/POPRET*`
 
-* No registers are specified (`rcount, frcount` are both zero)
-* `rcount>14`
+* No registers are specified (`rlist, frlist` are both zero)
+* `rlist>14`
 * `fdq=3`
-* `rcount==13` and `frcount>0` and the opcode doesn't have an `[fdq]` suffix
+* `rlist==13` and `frlist>0` and the opcode doesn't have an `[fdq]` suffix
 
-==== Rational: `rcount=13, frcount=0` saving all saved registers
+==== Rational: `rlist=13, frlist=0` saving all saved registers
 
 The debian distro does save all `s` and `fs` registers on a few occasions, so there is a special encoding for this case. I saw no justification for saving all `fs` registers *without* saving all `s` registers. It seems useful to have a form which saves all saved registers.
 
-The programmable range for `frcount` doesn't save many `fs` registers as `FPMark` only saves one or two and Debian rarely saves more than that.
+The programmable range for `frlist` doesn't save many `fs` registers as `FPMark` only saves one or two and Debian rarely saves more than that.
 
 === Encoding Fields
 
@@ -2499,18 +2562,18 @@ The bytes required for padding is simple - if FLEN==XLEN it's always zero. If FL
 | 4n+3   |12-bytes
 |====================================
 
-==== `mv, ret_val, ra, frcount, rcount` for the 32-bit encodings
+==== `mv, ret_val, ra, frlist, rlist` for the 32-bit encodings
 
 The registers in the `reg_list` are controlled by these fields
 
-Note that `frcount`, `mv` and `ret_val` are in the same location in the encoding.
+Note that `frlist`, `mv` and `ret_val` are in the same location in the encoding.
 
-[#32bit-frcount]
-.`frcount` values for the 32-bit encodings for `PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]`
+[#32bit-frlist]
+.`frlist` values for the 32-bit encodings for `PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]`
 [options="header"]
 |=====================
-|frcount | ABI names  
-| 0      |none or `fs0-fs11` (see `rcount=13`)
+|frlist | ABI names  
+| 0      |none or `fs0-fs11` (see `rlist=13`)
 | 1      |fs0         
 | 2      |fs0-fs1
 | 3      |fs0-fs5
@@ -2520,11 +2583,11 @@ See <<32bit-mv>> for `mv`.
 
 See <<32bit-ra>> for `ra`.
 
-[#32bit-frcount]
-.`rcount` field values for PUSH.[FDQ]/POP.[FDQ]/POPRET.[FDQ]
+[#32bit-frlist]
+.`rlist` field values for PUSH.[FDQ]/POP.[FDQ]/POPRET.[FDQ]
 [options="header"]
 |==========================
-|rcount  | ABI names      
+|rlist  | ABI names      
 | 0      |none       
 | 1      |s0
 | 2      |s0-s1
@@ -2538,7 +2601,7 @@ See <<32bit-ra>> for `ra`.
 | 10     |s0-s9
 | 11     |s0-s10
 | 12     |s0-s11
-2+|  `rcount=13` is valid if `frcount=0` for `[.fdq]` opcodes
+2+|  `rlist=13` is valid if `frlist=0` for `[.fdq]` opcodes
 | 13     |s0-s11,fs0-fs11
 2+|these values could be used for interrupt save/restore
 | 14-15  | *reserved*
@@ -2553,7 +2616,7 @@ See <<32bit-ra>> for `ra`.
 push.f  {ra, s0-s4, fs0}, -64
 ----
 
-Encoding: ra=1, rcount=5, frcount=1, fdq=0, spimm=2 (16-byte aligned)
+Encoding: ra=1, rlist=5, frlist=1, fdq=0, spimm=2 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -2576,7 +2639,7 @@ addi sp, sp, -64;
 push.d  {ra, s0-s4, fs0}, -64
 ----
 
-Encoding: ra=1, rcount=5, frcount=1, fdq=1, spimm=0 (16-byte aligned)
+Encoding: ra=1, rlist=5, frlist=1, fdq=1, spimm=0 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -2599,7 +2662,7 @@ addi sp, sp, -64;
 push.d  {fs0-fs7}, -128
 ----
 
-Encoding: rcount=0, frcount=12, fdq=2, spimm=2 (16-byte aligned)
+Encoding: rlist=0, frlist=12, fdq=2, spimm=2 (16-byte aligned)
 
 Micro operation sequence:
 
