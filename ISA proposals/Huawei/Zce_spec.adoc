@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.29
-Version 0.29
+= RISC-V Zce code-size reduction extension proposal v0.29.1
+Version 0.29.1
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.29.1  | Add ZCE-type format for push/pop/popret and tbljal
 | 0.29    | Add EABI versions of 32-bit encodings of PUSH/POP/POPRET, and move encodings of PUSH/POP/POPRET/BEQI/BNEI to custom-0 as I chose bad encodings
 | 0.28    | change alignment check of all non FP forms of PUSH/POP/POPRET to 8-byte not 16-byte to allow EABI compatibility. SPIMM still allocates blocks of 16-bytes.
 | 0.27    | add tentative versions of C.PUSH.E/C.POP.E/C.POPRET.E, need to review them
@@ -53,6 +54,8 @@ This document describes the `Zce` extension to reduce code-size.
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
+* EABI spec is not frozen - so it's not clear which formats of PUSH.E etc that I need
+** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s8, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
 * for `C.PUSH` confirm that the auto-included register moves are optimal (give the right balance between saving code-size and not wasting performance)
 
 == `Zce` configurations
@@ -436,8 +439,10 @@ Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing
 [width="100%",options=header]
 |=========================================================================================================================
 | 31:27              | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
+15+|C2-type from Claire's proposal
 7+|imm[11:0]                                          |00 2+|rs1'   2+| 11100           | rd'       |0011011| MULI
 7+|imm[11:0]                                          |10 2+|rs1'   2+| 11100           | rd'       |0011011| MULIW
+15+|C3-type from Claire's proposal
 5+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADD
 5+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADDW
 5+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADD
@@ -855,11 +860,11 @@ These instructions have no conflicts with other extensions, they use previously 
 |=============================================================================================
 
 [#tbljal32bitencoding]
-.TBLJAL 32-bit encoding
+.TBLJAL 32-bit encoding, ZCE-type encoding
 [width="100%",options=header]
 |=========================================================================================================================
-| 31:27|                      26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7 | 6 : 0 | instruction
-5+|000000000                         5+|index13[12:5]                 | 000   2+| index13[4:0]      |1000011| TBLJAL
+| 31:23   |22:15         | 14:12   | 11:7         | 6 : 0 | instruction
+|00000000 |index13[12:5] | 000   2+| index13[4:0] |1000011| TBLJAL
 |=========================================================================================================================
 
 === CSRs
@@ -1271,7 +1276,7 @@ This specification for the EABI is taken from https://github.com/riscv/riscv-eab
 
 The `PUSH/POP/POPRET` instructions support the UABI. The `PUSH.E/POP.E/POPRET.E` instructions support the EABI.
 
-Where the register list is the same for both ABIs the EABI version is a pseudo-instruction mapping to the UABI version. For example:
+Where the `X` register list is the same for both ABIs the EABI version is a pseudo-instruction mapping to the UABI version. For example:
 
 * `c.pop.e {ra, s0}, 32` is a pseudo-instruction for `c.pop {ra, s0}, 32`
 
@@ -1293,7 +1298,7 @@ The `.E` forms are not available on RV64I or RV128I. Any encodings with a `.E` s
 | Base architecture | UABI | EABI | Notes
 | RV32I             | ✓    | ✓   | Full support of both ABIs required
 | RV32E             |       | ✓   | Binary can execute on RV32I
-| RV64I             | ✓    |      | No EABI support on RV64I
+| RV64I/RV128I             | ✓    |      | No EABI support on RV64I/RV128I
 |=========================================================================================================================
 
 Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for RV32E may be executed on an RV32I core. 
@@ -1348,6 +1353,10 @@ For the 16-bit encodings
 .. `if sreg_list={ra,s0-sN}: areg_list={a0-a1} where N=1,2,3`
 .. `if sreg_list={ra,s0-sN}: areg_list={a0-a2} where N=5,8,11`
 . The `stack_adjustment` must be no more than the total memory required for `reg_list`, rounded up to a multiple of 16-bytes, plus an additional (0..7)*16-bytes.
+
+[NOTE]
+
+  Depending on the EABI definition - the `.E` forms *may* support {ra,s0-s4}, TBD
 
 Examples of valid 16-bit encodings for RV32I or RV64I using the UABI:
 
@@ -1533,16 +1542,23 @@ if (opcode == "POPRET" or opcode == "POPRET.E") {
 
   These encodings are in custom-0, correct encodings need to be allocated.
 
-.push/pop 32-bit encodings
+.push/pop/popret 32-bit format PPP-type
+[options="header",width="100%"]
+|================================================================================================
+| 31:23 |22:20   |19:16  |15     | 14:12   | 11: 7      | 6 : 0 | type
+|funct9 |field4  |field3 |field2 | funct3  | field1     |opcode | ZCE-type
+|================================================================================================
+
+.push/pop/popret 32-bit encodings
 [options="header",width="100%"]
 |================================================================================================
 | 31:23          |22:20   |19:16        |15 | 14:12   | 11: 7      | 6 : 0 | instruction
-|00000000000     |mv      |rlist (0-12) |ra | 100     | spimm      |0010011| PUSH
-|00000000000     |mv      |rlist (13-15)|ra | 100     | spimm      |0010011| PUSH.E
-|00000000000     |ret_val |rlist (0-12) |ra | 101     | spimm      |0010011| POP
-|00000000000     |ret_val |rlist (13-15)|ra | 101     | spimm      |0010011| POP.E
-|00000000000     |ret_val |rlist (0-12) |1  | 110     | spimm      |0010011| POPRET
-|00000000000     |ret_val |rlist (13-15)|1  | 110     | spimm      |0010011| POPRET.E
+|000000000       |mv      |rlist (0-12) |ra | 100     | spimm      |0010011| PUSH
+|000000000       |mv      |rlist (13-15)|ra | 100     | spimm      |0010011| PUSH.E
+|000000000       |ret_val |rlist (0-12) |ra | 101     | spimm      |0010011| POP
+|000000000       |ret_val |rlist (13-15)|ra | 101     | spimm      |0010011| POP.E
+|000000000       |ret_val |rlist (0-12) |1  | 110     | spimm      |0010011| POPRET
+|000000000       |ret_val |rlist (13-15)|1  | 110     | spimm      |0010011| POPRET.E
 |================================================================================================
   
 [NOTE]
