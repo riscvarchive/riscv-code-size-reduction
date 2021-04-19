@@ -476,7 +476,11 @@ addiaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 + 2)
 
 [NOTE]
 
-  these encodings are in custom-0 space pending allocation
+  These encodings are in custom-0 space pending allocation
+
+[NOTE]
+
+  These encodings could go in the `BRANCH` major opcode, with `funct3=01x`, if not otherwise allocated?
 
 The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
 
