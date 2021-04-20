@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.29.1
-Version 0.29.1
+= RISC-V Zce code-size reduction extension proposal v0.29.2
+Version 0.29.2
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,8 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.29.2  | change SPIMM definiton so the encoding sets bits [8:4] not [4:0] to make it obvious it's a multiple of 16
+|         | fixed C.PUSH/C.POP etc. encodings as they overlapped
 | 0.29.1  | Add ZCE-type format for push/pop/popret and tbljal
 | 0.29    | Add EABI versions of 32-bit encodings of PUSH/POP/POPRET, and move encodings of PUSH/POP/POPRET/BEQI/BNEI to custom-0 as I chose bad encodings
 | 0.28    | change alignment check of all non FP forms of PUSH/POP/POPRET to 8-byte not 16-byte to allow EABI compatibility. SPIMM still allocates blocks of 16-bytes.
@@ -1561,12 +1563,12 @@ if (opcode == "POPRET" or opcode == "POPRET.E") {
 [options="header",width="100%"]
 |================================================================================================
 | 31:23          |22:20   |19:16        |15 | 14:12   | 11: 7      | 6 : 0 | instruction
-|000000000       |mv      |rlist (0-12) |ra | 100     | spimm      |0010011| PUSH
-|000000000       |mv      |rlist (13-15)|ra | 100     | spimm      |0010011| PUSH.E
-|000000000       |ret_val |rlist (0-12) |ra | 101     | spimm      |0010011| POP
-|000000000       |ret_val |rlist (13-15)|ra | 101     | spimm      |0010011| POP.E
-|000000000       |ret_val |rlist (0-12) |1  | 110     | spimm      |0010011| POPRET
-|000000000       |ret_val |rlist (13-15)|1  | 110     | spimm      |0010011| POPRET.E
+|000000000       |mv      |rlist (0-12) |ra | 100     | spimm[8:4] |0010011| PUSH
+|000000000       |mv      |rlist (13-15)|ra | 100     | spimm[8:4] |0010011| PUSH.E
+|000000000       |ret_val |rlist (0-12) |ra | 101     | spimm[8:4] |0010011| POP
+|000000000       |ret_val |rlist (13-15)|ra | 101     | spimm[8:4] |0010011| POP.E
+|000000000       |ret_val |rlist (0-12) |1  | 110     | spimm[8:4] |0010011| POPRET
+|000000000       |ret_val |rlist (13-15)|1  | 110     | spimm[8:4] |0010011| POPRET.E
 |================================================================================================
   
 [NOTE]
@@ -1662,24 +1664,26 @@ These instructions have no conflicts with other extensions, they use previously 
 .PUSH/POP/POPRET 16-bit encodings 
 [width="100%",options=header]
 |=========================================================================================================================
-|15 |14 |13 |12 |11 |10  |9 |8  |7 |6   |5 |4 |3 |2           |1 |0 |instruction           
-17+|`C.POP` and reserved values of rlist/spimm to save encoding space
-3+|100  |0  |0  |0  |0 2+|rlist[1:0]|0 |0 2+|00 | spimm[0] 2+| 00  |C.POP
-3+|100  |0  |0  |0  |1 2+|00         |0 |0 2+|00 | spimm[0] 2+| 00  |C.POP.E   {ra, s0-s2} 
-3+|100  |0  |0  |0  |1 2+|>00        |0 |0 3+|xxx           2+| 00  |*reserved*
-3+|100  |0  |0  |0 3+|xxx            |0 |0 2+|!=00| x       2+| 00  |*reserved*
-17+|`C.POPRET` and `C.POPRET.E`
-3+|100  |0  |0  |0 3+|rlist       |ret0|1 3+|spimm[2:0]    2+| 00  |C.POPRET
-3+|100  |0  |0  |0 3+|100          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s2} 
-3+|100  |0  |0  |0 3+|101          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s3} 
-3+|100  |0  |0  |0 3+|110          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |C.POPRET.E   {ra, s0-s4} 
-3+|100  |0  |0  |0 3+|111          |ret0|1 |1 2+|spimm[1:0] 2+| 00  |*reserved*
-17+|`C.PUSH` and `C.PUSH.E`
-3+|100  |0  |0  |0 3+|rlist       |1 |0 3+|spimm[2:0]      2+| 00  |C.PUSH              
-3+|100  |0  |0  |0 3+|100          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s2}  
-3+|100  |0  |0  |0 3+|101          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s3}  
-3+|100  |0  |0  |0 3+|110          |1 |0   |1 2+|spimm[1:0] 2+| 00  |C.PUSH.E   {ra, s0-s4}  
-3+|100  |0  |0  |0 3+|111          |1 |0   |1 2+|xx         2+| 00  |*reserved*
+|15 |14 |13 |12 |11 |10  |9 |8     |7|6   |5   |4 |3 |2           |1 |0 |instruction    | code-points       
+
+3+|100    3+|000       3+|rlist[2:0] |ret0|0 3+|spimm[6:4]      2+| 00  |C.POPRET       | 128
+
+3+|100    3+|000       3+|rlist[2:0] |0   |1 3+|spimm[6:4]      2+| 00  |C.PUSH         | 64
+
+3+|100    3+|000       3+|000-010    |1   |1   |0 2+|spimm[5:4] 2+| 00  |*reserved*     | 12
+3+|100    3+|000       3+|011        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s2}   | 4
+3+|100    3+|000       3+|100        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s3}   | 4
+3+|100    3+|000       3+|101        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s4}   | 4
+3+|100    3+|000       2+|11 |rlist[1] |1   |1   |0 |rlist[0] |spimm[4] 2+|00  |C.POP     | 8
+
+3+|100    3+|000       |ret0 2+|00   |1   |1   |1 2+|spimm[5:4] 2+| 00  |C.POPRET.E   {ra, s0-s2}   | 8
+3+|100    3+|000       |ret0 2+|01   |1   |1   |1 2+|spimm[5:4] 2+| 00  |C.POPRET.E   {ra, s0-s3}   | 8
+3+|100    3+|000       |ret0 2+|10   |1   |1   |1 2+|spimm[5:4] 2+| 00  |C.POPRET.E   {ra, s0-s4}   | 8
+3+|100    3+|000       |0    2+|11   |1   |1   |1 |0 |spimm[4] 2+| 00  |C.POP.E {ra, s0-s2}     | 2
+3+|100    3+|000       |1    2+|11   |1   |1   |1 |0 |spimm[4] 2+| 00  |*reserved*     | 2
+3+|100    3+|000       |0    2+|11   |1   |1   |1 |1 |spimm[4] 2+| 00  |*reserved*     | 2
+3+|100    3+|000       |1    2+|11   |1   |1   |1 |1 |spimm[4] 2+| 00  |*reserved*     | 2
+
 |=========================================================================================================================
 
   * For `C.POPRET`, `ret_val[0]=ret0` as specified in the encoding, `ret_val[1]=0`. 
@@ -1751,9 +1755,9 @@ The `stack_adjustment` field in the assembly syntax comprises of two components:
 
 [source,sourceCode,text]
 ----
-function Align16(i): return (i>>4)<<4; // make i 16-byte aligned
+function Align16(i): return (i>>4)<<4; // make it 16-byte aligned
 total_register_bytes = number_of_registers_in_reg_list * XLEN/8;
-stack_adjustment = Align16(total_register_bytes) + 16*spimm;
+stack_adjustment = Align16(total_register_bytes) + spimm;
 ----
 
 The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up to 3-bits), and the 32-bit encoding allows up to 31.
@@ -1827,7 +1831,7 @@ Additional benefits of the 32-bit encoding are:
 
 * more accurate register lists improving performance and memory usage (so that superfluous `s` registers aren't saved/restored)
 * direct control of the `mv` instructions (`PUSH`) improving performance (so that superfluous register moves aren't executed)
-* better control over the return value (`POP/POPRET`) improving code-size
+* better control over the return value (`POP/POPRET`) improving code-size.
 
 ==== mv, ret_val, ra, rlist for the 32-bit encodings
 
@@ -2065,7 +2069,7 @@ It is possible for implementations to follow these restricted rules and to safel
 c.push  {ra, s0-s5}, {a0-a2}, -64
 ----
 
-Encoding: rlist=5, spimm=2
+Encoding: rlist=5, spimm=32
 
 Equivalent sequence:
 
@@ -2091,7 +2095,7 @@ addi sp, sp, -64;
 c.push {ra, s0-s1}, {a0-a1} -32
 ----
 
-Encoding: rlist=2, spimm=1
+Encoding: rlist=2, spimm=16
 
 Equivalent sequence:
 
@@ -2112,7 +2116,7 @@ addi sp, sp, -32;
 c.pop   {ra, s0-s7}, 160
 ----
 
-Encoding: rlist=6, spimm=7 
+Encoding: rlist=6, spimm=112 
 
 Equivalent sequence:
 
@@ -2139,7 +2143,7 @@ addi sp, sp, 160
 c.pop   {ra, s0-s7},{s0}, 160
 ----
 
-Encoding: rlist=6, spimm=7 
+Encoding: rlist=6, spimm=112 
 
 Equivalent sequence:
 
@@ -2167,7 +2171,7 @@ ret
 pop   {ra, s0-s9}, {s0}, 256
 ----
 
-Encoding: ra=1, rlist=10, frlist=0, spimm=13 (16-byte aligned)
+Encoding: ra=1, rlist=10, frlist=0, spimm=128 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -2569,17 +2573,17 @@ if (opcode == "POPRET") {
 |=========================================================================================================================
 | 31:27              |26|25     |24 |23|22|21:20         |19:18|17:16|15 | 14:12   | 11:10 |9: 7      | 6 : 0 | instruction
 15+|`PUSH.[FDQ]` encodings
-2+|0000000         2+|00         2+|01   |frlist     2+|rlist     |ra | 001   2+| spimm             |1000011| PUSH.F
-2+|0000000         2+|00         2+|10   |frlist     2+|rlist     |ra | 001   2+| spimm             |1000011| PUSH.D
-2+|0000000         2+|00         2+|11   |frlist     2+|rlist     |ra | 001   2+| spimm             |1000011| PUSH.Q
+2+|0000000         2+|00         2+|01   |frlist     2+|rlist     |ra | 001   2+| spimm[8:4]        |1000011| PUSH.F
+2+|0000000         2+|00         2+|10   |frlist     2+|rlist     |ra | 001   2+| spimm[8:4]        |1000011| PUSH.D
+2+|0000000         2+|00         2+|11   |frlist     2+|rlist     |ra | 001   2+| spimm[8:4]        |1000011| PUSH.Q
 15+|`POP.[FDQ]` encodings
-2+|0000000         2+|01         2+|01   |frlist     2+|rlist     |ra | 010   2+| spimm             |1000011| POP.F
-2+|0000000         2+|01         2+|10   |frlist     2+|rlist     |ra | 010   2+| spimm             |1000011| POP.D
-2+|0000000         2+|01         2+|11   |frlist     2+|rlist     |ra | 010   2+| spimm             |1000011| POP.Q
+2+|0000000         2+|01         2+|01   |frlist     2+|rlist     |ra | 010   2+| spimm[8:4]        |1000011| POP.F
+2+|0000000         2+|01         2+|10   |frlist     2+|rlist     |ra | 010   2+| spimm[8:4]        |1000011| POP.D
+2+|0000000         2+|01         2+|11   |frlist     2+|rlist     |ra | 010   2+| spimm[8:4]        |1000011| POP.Q
 15+|`POPRET.[FDQ]` encodings
-2+|0000000         2+|10         2+|01   |frlist     2+|rlist     |1  | 011   2+| spimm             |1000011| POPRET.F
-2+|0000000         2+|10         2+|10   |frlist     2+|rlist     |1  | 011   2+| spimm             |1000011| POPRET.D
-2+|0000000         2+|10         2+|11   |frlist     2+|rlist     |1  | 011   2+| spimm             |1000011| POPRET.Q
+2+|0000000         2+|10         2+|01   |frlist     2+|rlist     |1  | 011   2+| spimm[8:4]        |1000011| POPRET.F
+2+|0000000         2+|10         2+|10   |frlist     2+|rlist     |1  | 011   2+| spimm[8:4]        |1000011| POPRET.D
+2+|0000000         2+|10         2+|11   |frlist     2+|rlist     |1  | 011   2+| spimm[8:4]        |1000011| POPRET.Q
 |=========================================================================================================================
 
 [NOTE]
@@ -2626,7 +2630,7 @@ if (FLEN>XLEN &&
   padding = 0
 }
 total_register_bytes = number_of_registers_in_reg_list * XLEN/8 + padding + number_of_registers_in_freg_list * FLEN/8;
-stack_adjustment = Align16(total_register_bytes) + 16*spimm;
+stack_adjustment = Align16(total_register_bytes) + spimm;
 ----
 
 The bytes required for padding is simple - if FLEN==XLEN it's always zero. If FLEN=2*XLEN it is 0 or 4. RV32Q is more complex (see below) but this is an unlikely configuration.
@@ -2715,7 +2719,7 @@ See <<32bit-ra>> for `ra`.
 push.f  {ra, s0-s4, fs0}, -64
 ----
 
-Encoding: ra=1, rlist=5, frlist=1, fdq=0, spimm=2 (16-byte aligned)
+Encoding: ra=1, rlist=5, frlist=1, fdq=0, spimm=16 (16-byte aligned)
 
 Micro operation sequence:
 
@@ -2761,7 +2765,7 @@ addi sp, sp, -64;
 push.d  {fs0-fs7}, -128
 ----
 
-Encoding: rlist=0, frlist=12, fdq=2, spimm=2 (16-byte aligned)
+Encoding: rlist=0, frlist=12, fdq=2, spimm=32 (16-byte aligned)
 
 Micro operation sequence:
 
