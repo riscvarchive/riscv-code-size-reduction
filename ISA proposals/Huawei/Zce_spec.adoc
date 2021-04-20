@@ -384,11 +384,15 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 | C.SEXT.B      | rd' = sign_ext(rd'[ 7:0])
 | C.SEXT.H      | rd' = sign_ext(rd'[15:0])
 | C.NOT         | rd' = ~rd' / rd' = rd' XOR -1
-| C.NEG         | rd' = -rd'
+| C.NEG         | rd' = -rd' / rd' = 0 - rd'
 | C.MUL         | rd' = rd' * rs2'
 2+| RV64/RV128 only
 | C.ZEXT.W      | rd' = zero_ext(rd'[31:0])
 |=======================================================================
+
+[NOTE]
+
+  The expansion of `c.neg` puts `rd` onto `rs2`, unlike the other expansions which put `rd` onto `rs1`, and so requires additional muxing during the expansion
 
 [#mon-32bit]
 .simple instruction 32-bit equivalent instructions/pseudo-instructions
@@ -859,12 +863,16 @@ These instructions have no conflicts with other extensions, they use previously 
 3+|  100       | 1  | 1  | 0 8+|index8                         2+| 00    | C.TBLJAL
 |=============================================================================================
 
+[NOTE]
+
+  This encoding is in _custom-01_, correct encodings need to be allocated.
+
 [#tbljal32bitencoding]
 .TBLJAL 32-bit encoding, ZCE-type encoding
 [width="100%",options=header]
 |=========================================================================================================================
 | 31:23   |22:15         | 14:12   | 11:7         | 6 : 0 | instruction
-|00000000 |index13[12:5] | 000   2+| index13[4:0] |1000011| TBLJAL
+|00000000 |index13[12:5] | 000   2+| index13[4:0] |0101011| TBLJAL
 |=========================================================================================================================
 
 === CSRs
@@ -1540,7 +1548,7 @@ if (opcode == "POPRET" or opcode == "POPRET.E") {
 
 [NOTE]
 
-  These encodings are in custom-0, correct encodings need to be allocated.
+  These encodings are in _custom-0_, correct encodings need to be allocated.
 
 .push/pop/popret 32-bit format PPP-type
 [options="header",width="100%"]
