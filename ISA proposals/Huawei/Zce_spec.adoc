@@ -16,7 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.29.3  | updated c.sezt.*, c.zext.*, c.not, c.neg assembly syntax to match the 32-bit encodings
+| 0.29.3  | updated c.sezt.*, c.zext.*, c.not, c.neg assembly syntax to match the 32-bit encodings, fix Align16 function
 | 0.29.2  | change SPIMM definition so the encoding sets bits [8:4] not [4:0] to make it obvious it's a multiple of 16
 |         | fixed C.PUSH/C.POP etc. encodings as they overlapped
 | 0.29.1  | Add ZCE-type format for push/pop/popret and tbljal
@@ -1759,7 +1759,7 @@ The `stack_adjustment` field in the assembly syntax comprises of two components:
 
 [source,sourceCode,text]
 ----
-function Align16(i): return (i>>4)<<4; // make it 16-byte aligned
+function Align16(i): return ((i+15)>>4)<<4; // make it 16-byte aligned
 total_register_bytes = number_of_registers_in_reg_list * XLEN/8;
 stack_adjustment = Align16(total_register_bytes) + spimm;
 ----
