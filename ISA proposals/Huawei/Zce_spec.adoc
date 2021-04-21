@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.29.2
-Version 0.29.2
+= RISC-V Zce code-size reduction extension proposal v0.29.3
+Version 0.29.3
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,7 +16,8 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.29.2  | change SPIMM definiton so the encoding sets bits [8:4] not [4:0] to make it obvious it's a multiple of 16
+| 0.29.3  | updated c.sezt.*, c.zext.*, c.not, c.neg assembly syntax to match the 32-bit encodings
+| 0.29.2  | change SPIMM definition so the encoding sets bits [8:4] not [4:0] to make it obvious it's a multiple of 16
 |         | fixed C.PUSH/C.POP etc. encodings as they overlapped
 | 0.29.1  | Add ZCE-type format for push/pop/popret and tbljal
 | 0.29    | Add EABI versions of 32-bit encodings of PUSH/POP/POPRET, and move encodings of PUSH/POP/POPRET/BEQI/BNEI to custom-0 as I chose bad encodings
@@ -299,7 +300,7 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension
-3+|  100     3+|000        8+|xxxx                            2+| 00    |226/256 | `Zcea`
+3+|  100     3+|000        8+|xxxx                            2+| 00    |238/256 | `Zcea`
 3+|  100     3+|001        8+|xxxx                            2+| 00    |120/256 | `Zcea`
 3+|  100     3+|010        8+|xxxx                            2+| 00    |256/256 | `Zcea`
 3+|  100     3+|011        8+|xxxx                            2+| 00    |0/256   | *reserved*
@@ -340,8 +341,8 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 
 In total in the existing RVC (16-bit) encoding space:
 
-. RV32C has 3871 code points available, 576 are used (14.9%)
-. RV64C has 2303 code points available, 576 are used (25.0%)
+. RV32C has 3871 code points available, 588 are used (15.2%)
+. RV64C has 2303 code points available, 588 are used (25.5%)
 . RV32CD (i.e. the C.FSD,C.FLD, C.FSDSP, C.FLDSP encodings) has 8192 code points available, 6143 are used (75.0%)
 
 . if the partially allocated encoding groups from <<spare16encodings>> are fully allocated to Zce the figures become
@@ -400,13 +401,13 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembly syntax       | requirements for 16-bit encoding   | 32-bit extension
-|C.ZEXT.B    | zext.b rd             | rd x8-x15                          | I or E
-|C.ZEXT.H    | zext.h rd             | rd x8-x15                          | Zbb
-|C.SEXT.B    | sext.b rd             | rd x8-x15                          | Zbb
-|C.SEXT.H    | sext.h rd             | rd x8-x15                          | Zbb
-|C.NOT       | not    rd             | rd x8-x15                          | I or E
-|C.NEG       | neg    rd             | rd x8-x15                          | I or E
-|C.MUL       | mul    rd, rs1, rs2   | rd x8-x15                          | I or E
+|C.ZEXT.B    | zext.b rd, rs1        | all regs x8-x15, rd=rs1            | I or E
+|C.ZEXT.H    | zext.h rd, rs1        | all regs x8-x15, rd=rs1            | Zbb
+|C.SEXT.B    | sext.b rd, rs1        | all regs x8-x15, rd=rs1            | Zbb
+|C.SEXT.H    | sext.h rd, rs1        | all regs x8-x15, rd=rs1            | Zbb
+|C.NOT       | not    rd, rs1        | all regs x8-x15, rd=rs1            | I or E
+|C.NEG       | neg    rd, rs1        | all regs x8-x15, rd=rs1            | I or E
+|C.MUL       | mul    rd, rs1, rs2   | all regs x8-x15, rd=rs1            | I or E
 4+|RV64/RV128 only
 |C.ZEXT.W    | zext.h rd             | rd x8-x15                          | Zba
 |======================================================================================================
@@ -416,16 +417,20 @@ Assembly Examples
 
 [source,sourceCode,text]
 ----
-zext.b a5;  # a5 = zero_ext(a5[7:0])
-zext.h a5;  # a5 = zero_ext(a5[15:0])
-sext.b a5;  # a5 = sign_ext(a5[7:0])
-sext.h a5;  # a5 = sign_ext(a5[15:0])
+zext.b a5, a5;  # a5 = zero_ext(a5[7:0])
+zext.h a5, a5;  # a5 = zero_ext(a5[15:0])
+sext.b a5, a5;  # a5 = sign_ext(a5[7:0])
+sext.h a5, a5;  # a5 = sign_ext(a5[15:0])
 
-not a5          # a5 = ~a5 bitwise inversion
-neg a5          # a5 = -a5 two's complement inversion
+not a5, a5      # a5 = ~a5 bitwise inversion
+neg a5, a5      # a5 = -a5 two's complement inversion
 
 mul a5, a5, a6; # a5 = a5 * a6
 
+//RV64/RV128 only
+
+zext.w a5, a5;  # a5 = zero_ext(a5[31:0])
+sext.w a5, a5;  # a5 = sign_ext(a5[31:0])
 ----
 
 === C.SEXT.W
