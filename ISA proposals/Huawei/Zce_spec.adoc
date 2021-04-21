@@ -1766,8 +1766,28 @@ stack_adjustment = Align16(total_register_bytes) + spimm;
 
 The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up to 3-bits), and the 32-bit encoding allows up to 31.
 
+[NOTE]
+
+  `spimm` always represents 16-byte blocks even on RV32E where the stack is 8-byte aligned. This is for simplicity.
+
+[NOTE]
+
+  if `spimm` is out of range for the compiler, `PUSH/POP/POPRET` can still be inferred, and the compiler can infer an additional stack adjustment instruction
+
+In many cases the 16-bit encoding is sufficient. The 32-bit encoding offers a larger `spimm` range, but this can also be achieved with a separate `c.addi sp, sp, #offset` instruction giving the same overall code-size.
+
+Additional benefits of the 32-bit encoding are:
+
+* more accurate register lists improving performance and memory usage (so that superfluous `s` registers aren't saved/restored)
+* direct control of the `mv` instructions (`PUSH`) improving performance (so that superfluous register moves aren't executed)
+* better control over the return value (`POP/POPRET`) improving code-size.
+
+==== Total stack adjustment ranges for RV32
+
+These tables are provided as a handy reference, they are all calculated from the formulae in this specification.
+
 [#spimmrange_16]
-.C.PUSH/C.POP/C.POPRET valid values of stack adjustment
+.C.PUSH/C.POP/C.POPRET valid values of stack adjustment for RV32
 [width="100%",options=header]
 |==========================================================================================
 | rlist       | C.PUSH      | C.PUSH.E    | C.POPRET  | C.POPRET.E | C.POP       | C.POP.E
@@ -1783,7 +1803,7 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 |==========================================================================================
 
 [#spimmrange_32_ra]
-.PUSH/POP/POPRET valid values of stack adjustment including ra
+.PUSH/POP/POPRET valid values of total stack adjustment for RV32 including ra
 [width="100%",options=header]
 |==========================================================================================
 | rlist       |   PUSH      |   PUSH.E    | POP/POPRET|POP.E/POPRET.E 
@@ -1803,7 +1823,7 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 |==========================================================================================
 
 [#spimmrange_32_no_ra]
-.PUSH/POP valid values of stack adjustment excluding ra
+.PUSH/POP valid values of total stack adjustment for RV32 excluding ra
 [width="100%",options=header]
 |==========================================================================================
 | rlist       |   PUSH      |   PUSH.E    | POP       |POP.E
@@ -1812,7 +1832,7 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 | {s0-s2}     | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
 | {s0-s3}     | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
 | {s0-s4}     | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528  
-| {s0-s5}     | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528  
+| {s0-s5}     | -32 to -528 | N/A         | 32 to 528 | N/A
 | {s0-s6}     | -32 to -528 | N/A         | 32 to 528 | N/A        
 | {s0-s7}     | -32 to -528 | N/A         | 32 to 528 | N/A        
 | {s0-s8}     | -48 to -544 | N/A         | 48 to 544 | N/A        
@@ -1821,21 +1841,65 @@ The 16-bit encoding allows up to 7 additional 16-byte blocks (as `spimm` has up 
 | {s0-s11}    | -48 to -544 | N/A         | 48 to 544 | N/A        
 |==========================================================================================
 
-[NOTE]
+==== Total stack adjustment ranges for RV64
 
-  `spimm` represents 16-byte blocks even on RV32E where the stack is 8-byte aligned. This is for simplicity.
+These tables are provided as a handy reference, they are all calculated from the formulae in this specification.
 
-[NOTE]
+[#spimmrange_16_rv64]
+.C.PUSH/C.POP/C.POPRET valid values of stack adjustment for RV64
+[width="100%",options=header]
+|==========================================================================================
+| rlist       | C.PUSH      | C.PUSH.E    | C.POPRET  | C.POPRET.E | C.POP       | C.POP.E
+| {ra}        | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
+| {ra, s0}    | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
+| {ra, s0-s1} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | 32 to 48    | 32 to 48      
+| {ra, s0-s2} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | 32 to 48    | 32 to 48      
+| {ra, s0-s3} | -48 to -160 | -48 to -160 | 48 to 160 | 48 to 160  | 48 to 64    | 48 to 64
+| {ra, s0-s4} | N/A         | -48 to -160 | N/A       | 48 to 160  | N/A         | 48 to 64
+| {ra, s0-s5} | -64 to -176 | N/A         | 64 to 176 | N/A        | 64 to 80    | N/A      
+| {ra, s0-s8} | -80 to -192 | N/A         | 80 to 192 | N/A        | 80 to 96    | N/A     
+| {ra, s0-s11}| -112 to -224| N/A         |112 to 224 | N/A        |112 to 128   | N/A     
+|==========================================================================================
 
-  if `spimm` is out of range for the compiler, `PUSH/POP/POPRET` can still be inferred, and the compiler can infer an additional stack adjust instruction
+[#spimmrange_32_ra_rv64]
+.PUSH/POP/POPRET valid values of total stack adjustment for RV64 including ra
+[width="100%",options=header]
+|==========================================================================================
+| rlist       |   PUSH      |   PUSH.E    | POP/POPRET|POP.E/POPRET.E 
+| {ra}        | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512   
+| {ra, s0}    | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512   
+| {ra, s0-s1} | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528   
+| {ra, s0-s2} | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528   
+| {ra, s0-s3} | -48 to -544 | -48 to -544 | 48 to 544 | 48 to 544   
+| {ra, s0-s4} | -48 to -544 | -48 to -544 | 48 to 544 | 48 to 544   
+| {ra, s0-s5} | -64 to -560 | N/A         | 64 to 560 | N/A        
+| {ra, s0-s6} | -64 to -560 | N/A         | 64 to 560 | N/A        
+| {ra, s0-s7} | -80 to -576 | N/A         | 80 to 576 | N/A        
+| {ra, s0-s8} | -80 to -576 | N/A         | 80 to 576 | N/A        
+| {ra, s0-s9} | -96 to -592 | N/A         | 96 to 592 | N/A        
+| {ra, s0-s10}| -96 to -592 | N/A         | 96 to 592 | N/A        
+| {ra, s0-s11}|-112 to -608 | N/A         |112 to 608 | N/A        
+|==========================================================================================
 
+[#spimmrange_32_no_ra_rv64]
+.PUSH/POP valid values of total stack adjustment for RV64 excluding ra
+[width="100%",options=header]
+|==========================================================================================
+| rlist       |   PUSH      |   PUSH.E    | POP       |POP.E
+| {s0}        | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512 
+| {s0-s1}     | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512 
+| {s0-s2}     | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528 
+| {s0-s3}     | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528 
+| {s0-s4}     | -48 to -544 | -48 to -544 | 48 to 544 | 48 to 544 
+| {s0-s5}     | -48 to -544 | N/A         | 48 to 544 | N/A
+| {s0-s6}     | -64 to -560 | N/A         | 64 to 560 | N/A        
+| {s0-s7}     | -64 to -560 | N/A         | 64 to 560 | N/A        
+| {s0-s8}     | -80 to -576 | N/A         | 80 to 576 | N/A        
+| {s0-s9}     | -80 to -576 | N/A         | 80 to 576 | N/A        
+| {s0-s10}    | -96 to -592 | N/A         | 96 to 592 | N/A        
+| {s0-s11}    | -96 to -592 | N/A         | 96 to 592 | N/A        
+|==========================================================================================
 
-In many cases the 16-bit encoding is sufficient. The 32-bit encoding offers a larger `spimm` range, but this can also be achieved with a separate `c.addi sp, sp, #offset` instruction giving the same overall code-size.
-Additional benefits of the 32-bit encoding are:
-
-* more accurate register lists improving performance and memory usage (so that superfluous `s` registers aren't saved/restored)
-* direct control of the `mv` instructions (`PUSH`) improving performance (so that superfluous register moves aren't executed)
-* better control over the return value (`POP/POPRET`) improving code-size.
 
 ==== mv, ret_val, ra, rlist for the 32-bit encodings
 
@@ -2062,6 +2126,128 @@ It is possible for implementations to follow these restricted rules and to safel
 === Toolchain implementation
 
 `PUSH/POP/POPRET` can be generated by the compiler, but can also be added as an optimisation in the linker. If they are inferred at link time then they can also be used to optimise precompiled library code. This means that the libraries can be shipped without these instructions, but platforms which implement them can still benefit from the code-size saving.
+
+[NOTE]
+
+  The linker may have to reallocate registers as the register moves included in `PUSH/C.PUSH` target specific `s` registers which may not agree with the compiler output, as in the folowling example.
+
+==== Compiling for size or performance
+
+There are cases where it is not clear whether to use the 16-bit encoding, or the 32-bit encoding.
+
+If compiling with -Os or -Oz the compiler should generate the smallest possible code output. Compiling with a higher optimisation level will not waste performance by reducing the code-size, so the 16-bit encoding should not be included if doing so wastes performance by: 
+
+1. too many saved registers in the list
+2. too many includes moves (for C.PUSH only)
+
+There are cases where the 16 and 32-bit encodings result in the same code size and the same performance. In this case the compiler can choose either scheme.
+
+_Example 1_ The 16-bit encoding includes too many register moves.
+
+[source,sourceCode,text]
+----
+#From debian / re compiled with GCC (RV64)
+    53be:       7135                    addi    sp,sp,-160
+    53c0:       e526                    sd      s1,136(sp)
+    53c2:       e14a                    sd      s2,128(sp)
+    53c4:       f0da                    sd      s6,96(sp)
+    53c6:       ed06                    sd      ra,152(sp)
+    53c8:       e922                    sd      s0,144(sp)
+    53ca:       fcce                    sd      s3,120(sp)
+    53cc:       f8d2                    sd      s4,112(sp)
+    53ce:       f4d6                    sd      s5,104(sp)
+    53d0:       ecde                    sd      s7,88(sp)
+    53d2:       e8e2                    sd      s8,80(sp)
+    53d4:       e4e6                    sd      s9,72(sp)
+    53d6:       e0ea                    sd      s10,64(sp)
+    53d8:       fc6e                    sd      s11,56(sp)
+    53da:       84aa                    mv      s1,a0
+    53e0:       892e                    mv      s2,a1
+#-Os/-Oz: compile to c.push, but includes a redundant register move of a2
+    53be:       xxxx                    push    {ra,s0-s11}, {a0-a2}, -160
+#-O1/-O2/-O3: compile to push to avoid the redundant register move of a2, even though the code is larger
+    53be:       xxxxxxxx                push    {ra,s0-s11}, {a0-a1}, -160
+----
+
+_Example 2_ The stack adjustment is out of range for the 32-bit encoding, and the register list matches the 16-bit encoding.
+
+[source,sourceCode,text]
+----
+#From Huawei IoT code compiled with GCC (RV32)
+  e0c744:       2bc12083                lw      ra,700(sp)
+  e0c748:       2b812403                lw      s0,696(sp)
+  e0c74c:       2b412483                lw      s1,692(sp)
+  e0c750:       2b012903                lw      s2,688(sp)
+  e0c754:       2ac12983                lw      s3,684(sp)
+  e0c758:       2a812a03                lw      s4,680(sp)
+  e0c75c:       2a412a83                lw      s5,676(sp)
+  e0c760:       2a012b03                lw      s6,672(sp)
+  e0c764:       29c12b83                lw      s7,668(sp)
+  e0c768:       29812c03                lw      s8,664(sp)
+  e0c76c:       2c010113                addi    sp,sp,704 #out of range, limit is 544 for 32-bit encoding
+  e0c770:       8082                    ret
+#-Os/-Oz/-O1/-O2/-O3: always compile to 2 16-bit encodings, the 32-bit encoding is larger and doesn't improve performance
+  e0c744:       xxxx                    addi    sp,sp,640
+  e0c748:       xxxx                    popret  {ra,s0-s8}, 64
+----
+
+_Example 3_ The register list doesn't match the 16-bit encoding, and the 32-bit encoding allows inclusion of the return value.
+
+In this case the 16-bit encoding is inferior in the epilogue - because it includes `s8` and cannot include the `mv, a0, s0`. Therefore the 32-bit encoding uses the correct register list and has the same code size.
+
+[source,sourceCode,text]
+----
+#From Huawei IoT code compiled with GCC (RV32)
+#prologue
+  e0073e:       7179                    addi    sp,sp,-48
+  e00740:       d422                    sw      s0,40(sp)
+  e00742:       d04a                    sw      s2,32(sp)
+  e00744:       cc52                    sw      s4,24(sp)
+  e00746:       ca56                    sw      s5,20(sp)
+  e00748:       c85a                    sw      s6,16(sp)
+  e0074a:       c65e                    sw      s7,12(sp)
+  e0074c:       d606                    sw      ra,44(sp)
+  e0074e:       d226                    sw      s1,36(sp)
+  e00750:       ce4e                    sw      s3,28(sp)
+  e00752:       892a                    mv      s2,a0
+  e00754:       8aae                    mv      s5,a1
+  e00756:       8b32                    mv      s6,a2
+  e00758:       8bb6                    mv      s7,a3
+  e0075a:       8a3a                    mv      s4,a4
+....
+#epilogue
+  e0079a:       8522                    mv      a0,s0
+  e0079c:       5422                    lw      s0,40(sp)
+  e0079e:       5492                    lw      s1,36(sp)
+  e007a0:       5902                    lw      s2,32(sp)
+  e007a2:       49f2                    lw      s3,28(sp)
+  e007a4:       4a62                    lw      s4,24(sp)
+  e007a6:       4ad2                    lw      s5,20(sp)
+  e007a8:       4b42                    lw      s6,16(sp)
+  e007aa:       4bb2                    lw      s7,12(sp)
+  e007ac:       6145                    addi    sp,sp,48
+  e007ae:       8082                    ret
+
+#optimised prologue
+#-Os/-Oz: the smallest is with the 16-bit encoding which also stores s8 (so wastes performance)
+  e0073e:       xxxx                    push {ra,s0-s8}, {a0-a2}
+  e00758:       8bb6                    mv      s7,a3
+  e0075a:       8a3a                    mv      s4,a4
+
+#-O1/-O2/-O3: the 32-bit encoding is larger but doesn't store s8 (so doesn't waste performance)
+  e0073e:       xxxxxxxx                push {ra,s0-s7}, {a0-a2}
+  e00758:       8bb6                    mv      s7,a3
+  e0075a:       8a3a                    mv      s4,a4
+
+#optimised epilogue
+#the 16-bit encoding encoding also loads s8, and doesn't include the mv a0, s0 -> BAD CHOICE
+  e0079a:       8522                    mv      a0,s0
+  e0079c:       xxxx                    popret {ra,s0-s8}, 48
+
+#-Os/-Oz/-O1/-O2/-O3: always compile to the 32-bit encoding, 
+#it has the same overall code size as the 16-bit encoding and doesn't load s8
+  e0079c:       xxxxxxxx                popret {ra,s0-s7}, {s0}, 48
+----
 
 === Assembly examples
 
@@ -2426,8 +2612,8 @@ popret.[fdq] {<rfsreg_list>},     stack_adjustment //popret must include ra
 
 To be a legal encoding:
 
-1.  The stack adjustment must be negative for `PUSH.[FDQ]` and positive for `POP.[FDQ]/POPRET.[FDQ]`
-2.  The stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
+1.  The total stack adjustment must be negative for `PUSH.[FDQ]` and positive for `POP.[FDQ]/POPRET.[FDQ]`
+2.  The total stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register lists must be valid (see above)
 7.  For `POPRET.[FDQ]`, `rfsreg_list` must include `ra`
 
