@@ -52,7 +52,6 @@ This document describes the `Zce` extension to reduce code-size.
 
 == Issues
 
-* need 32-bit instruction formats for Zcea (I've only done Zceb)
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
@@ -118,11 +117,11 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |===============================================================================
 |Instruction|RV32|RV64|RV128|Extension|Notes
 6+| 16-bit encodings
-|C.DECBGEZ|✓|✓|✓|Zceb|incompatible with D
-|C.LBU|✓|✓|✓|Zceb|incompatible with D
-|C.LHU|✓|✓|✓|Zceb|incompatible with D
-|C.SB|✓|✓|✓|Zceb|incompatible with D
-|C.SH|✓|✓|✓|Zceb|incompatible with D
+|C.DECBGEZ|✓|✓| |Zceb|incompatible with D
+|C.LBU|✓|✓| |Zceb|incompatible with D
+|C.LHU|✓|✓| |Zceb|incompatible with D
+|C.SB|✓|✓| |Zceb|incompatible with D
+|C.SH|✓|✓| |Zceb|incompatible with D
 6+| 32-bit encodings
 |DECBGEZ|✓|✓|✓|Zceb|incompatible with D
 |LWGP|✓|✓|✓|Zceb|incompatible with D
@@ -152,7 +151,7 @@ For example:
 * `C.FSD`, `C.SQ`, and `{C.LBU, C.SB}` share opcodes, so for different configurations the encodings represent:
 ** `C.FSD` for `RV32CD/RV64CD`
 ** `C.SQ`  for `RV128C`
-** `{C.LBU, C.SB}` for `RV32C_Zce, RV64C_Zce， RV32C_Zce_ZDinx, RV64C_Zce_ZDinx`
+** `{C.LBU, C.SB}` for `RV32C_Zceb, RV64C_Zceb， RV32C_Zceb_ZDinx, RV64C_Zceb_ZDinx`
 ** illegal encoding for `RV32C, RV64C`, as neither `D` nor `Zce` was specified
 
 The shared encoding column in the tables assigns an arbitrary number to show which encodings are grouped together (I can't find a better way of highlighting groups of cells in the table in adoc format). `Zce` instructions are in *bold*.
@@ -628,7 +627,7 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembly syntax        | requirements for 16-bit encoding   | 32-bit extension
-|C.DECBGEZ   | decbgez, rd, imm, -offset | rd is x8-x15, imm is [1248], offset is in range   | Zcec
+|C.DECBGEZ   | decbgez, rd, imm, -offset | rd is x8-x15, imm is [1248], offset is in range   | Zceb
 |======================================================================================================
 
 Assembly Example
