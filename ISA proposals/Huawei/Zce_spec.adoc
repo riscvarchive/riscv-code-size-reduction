@@ -1796,11 +1796,11 @@ These tables are provided as a handy reference, they are all calculated from the
 | {ra, s0}    | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
 | {ra, s0-s1} | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
 | {ra, s0-s2} | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
-| {ra, s0-s3} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | 32 to 48    | 32 to 48
+| {ra, s0-s3} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | N/A         | 32 to 48
 | {ra, s0-s4} | N/A         | -32 to -144 | N/A       | 32 to 144  | N/A         | 32 to 48
-| {ra, s0-s5} | -32 to -144 | N/A         | 32 to 144 | N/A        | 32 to 48    | N/A      
-| {ra, s0-s8} | -48 to -160 | N/A         | 48 to 160 | N/A        | 48 to 64    | N/A     
-| {ra, s0-s11}| -64 to -176 | N/A         | 64 to 176 | N/A        | 64 to 80    | N/A     
+| {ra, s0-s5} | -32 to -144 | N/A         | 32 to 144 | N/A        | N/A         | N/A      
+| {ra, s0-s8} | -48 to -160 | N/A         | 48 to 160 | N/A        | N/A         | N/A     
+| {ra, s0-s11}| -64 to -176 | N/A         | 64 to 176 | N/A        | N/A         | N/A     
 |==========================================================================================
 
 [#spimmrange_32_ra]
