@@ -54,12 +54,14 @@ This document describes the `Zce` extension to reduce code-size.
 
 == Issues
 
+* whether to replace DECBGEZ with DECBNEZ
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
 * EABI spec is not frozen - so it's not clear which formats of PUSH.E etc that I need
 ** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s8, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
 * for `C.PUSH` confirm that the auto-included register moves are optimal (give the right balance between saving code-size and not wasting performance)
+* confirm extra features in the 32-bit push/pop encodings are useful
 
 == `Zce` configurations
 
