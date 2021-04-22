@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.29.3
-Version 0.29.3
+= RISC-V Zce code-size reduction extension proposal v0.30
+Version 0.30
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.30    | careful proofreading and updated C.POP encoding for simpler decode
 | 0.29.3  | updated c.sext, c.zext, c.not, c.neg assembly syntax to match the 32-bit encodings, fix Align16 function
 | 0.29.2  | change SPIMM definition so the encoding sets bits [8:4] not [4:0] to make it obvious it's a multiple of 16
 |         | fixed C.PUSH/C.POP etc. encodings as they overlapped
@@ -69,7 +70,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 * `Zcea` is required in RVM22, is compatible with all existing standard extensions
 ** `Zcee` is a subset of `Zcea` which required in RVA22
 ** `Zcea/Zcee` imply `Zba/Zba` to get the 32-bit versions of the sign/zero-extension encodings
-* `Zceb` is optional for in RVM22 _because it conflicts with the D-extension_
+* `Zceb` is optional in RVM22 _because it conflicts with the D-extension_
 ** `Zceb` is fully compatible with `ZDinx`
 
 [#zcea]
@@ -302,7 +303,7 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension
 3+|  100     3+|000        8+|xxxx                            2+| 00    |238/256 | `Zcea`
 3+|  100     3+|001        8+|xxxx                            2+| 00    |120/256 | `Zcea`
-3+|  100     3+|010        8+|xxxx                            2+| 00    |256/256 | `Zcea`
+3+|  100     3+|110        8+|xxxx                            2+| 00    |256/256 | `Zcea`
 3+|  100     3+|011        8+|xxxx                            2+| 00    |0/256   | *reserved*
 3+|  100     3+|1xx        8+|xxxx                            2+| 00    |0/1024  | *reserved*
 3+|  011       | 0 5+|xxxxx             5+|11111              2+| 01    |0/32    | *reserved*
@@ -688,12 +689,12 @@ These instructions reuse the encodings for `FLD/FSD`.
 
    Restrictions in the GCC toolchain mean that the full range of `gp` cannot be used for the standard `LW/SW` instructions, in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP, SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[See this github issue]. This issue means that with the current RISC-V ISA the full 4KB range cannot be accessed using `gp` using GCC so the benefit is lower than might be expected.
 
-`LWTP,SWTP` give an 16-bit/128KB offset range, which is larger than the standard `LW, SW` instructions by making the base register explicitly `tp`. `LDTP,SDTP` have a 17-bit/128KB range relative to `tp`.
+`LWTP,SWTP` have a 16-bit/64KB offset range, which is larger than the standard `LW, SW` instructions by making the base register explicitly `tp`. `LDTP,SDTP` have a 17-bit/128KB range relative to `tp`.
 
 
 [NOTE]
 
-  The intention is to allow the toolchain to use `tp` as a second global pointer, for systems which do not need thread local storage, giving two 256KB address spaces within reach of a single 32-bit load/store word instruction. Any ABI or toolchain implications from allowing this are not covered by this document. `LWTP, SWTP` can also be used to allow a larger range of thread local storage to be accessed with a 32-bit instruction.
+  The intention is to allow the toolchain to use `tp` as a second global pointer, for systems which do not need thread local storage, giving two 64KB/128KB address spaces within reach of a single 32-bit load/store word instruction. Any ABI or toolchain implications from allowing this are not covered by this document. `LWTP, SWTP` can also be used to allow a larger range of thread local storage to be accessed with a 32-bit instruction.
 
 [Zceb-32bit-encodings]
 .proposed 32-bit encodings for `LWGP/SWGP/LWTP/SWTP` and `LDGP/SDGP/LDTP/SDTP`
@@ -705,10 +706,10 @@ These instructions reuse the encodings for `FLD/FSD`.
 |000   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:2, 10:9]    |0100111| SWGP
 |001   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:2, 10:9]    |0100111| SWTP
 8+|RV64/RV128 only
-|000 2+|imm[8:3,16,10:9]                             |imm[15:11]  | 011   | rd                |0000111| LDGP
-|001 2+|imm[8:3,16,10:9]                             |imm[15:11]  | 011   | rd                |0000111| LDTP
-|000   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDGP
-|001   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDTP
+|010 2+|imm[8:3,16,10:9]                             |imm[15:11]  | 011   | rd                |0000111| LDGP
+|011 2+|imm[8:3,16,10:9]                             |imm[15:11]  | 011   | rd                |0000111| LDTP
+|010   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDGP
+|011   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDTP
 |=========================================================================================================================
 
 [#lwgp_semantics]
@@ -746,7 +747,7 @@ sd s0, 20(tp)
 
 These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
 
-These instructions reuse the encodings for `FLD/FSD`.
+These instructions reuse the encodings for `C.FSD/C.FSDSP`.
 
 [#ldstbh]
 .proposed 16-bit encodings for load/store byte/half
@@ -825,16 +826,16 @@ using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as cod
 [source,sourceCode,text]
 ----
 00e084be <vsprintf>:
-  e084be:	xxxx                tbljal #x ;#<mapped to __riscv_save_0>, saving 6-bytes
+  e084be:	<16-bit>            tbljal #x ;#<mapped to __riscv_save_0>, saving 6-bytes
   
   e084c6:	86b2                mv     a3,a2
   e084c8:	862e                mv     a2,a1
   e084ca:	800005b7            lui	   a1,0x80000
   e084ce:	fff5c593            not	   a1,a1
   
-  e084d2:	xxxx                tbljal #y ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
+  e084d2:	<16-bit>            tbljal #y ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
   
-  e084da:	xxxx                tbljal #z ;#<mapped to __riscv_restore_0>
+  e084da:	<16-bit>            tbljal #z ;#<mapped to __riscv_restore_0>
 ----
 
 The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `[C.]TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. 
@@ -847,15 +848,41 @@ Table jump allows the linker to:
 * replace 64-bit `AUIPC/JALR` calls to fixed locations with either a 16-bit `C.TBLJAL` or a 32-bit `TBLJAL` 
 ** `[C.]TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically inferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the ±1MB range.
 
+[#configuringthejumptable]
+=== Configuring the jump table
+
+If an ELF contains `M` calls to a function using `JAL`, and `N` calls to the same function using `AUIPC/JALR` then the code size saving is calculated as followed:
+
+[#tbljalsavings]
+.C.TBLJAL/TBJAL code size saving per function
+[width="100%",options=header]
+|=======================================================================================================================
+| original sequence | `C.TBLJAL` saving  | `TBLJAL` saving 
+| `JAL`             | M*2-(XLEN/8) bytes | No saving
+| `AUIPC/JALR`      | N*6-(XLEN/8) bytes | N*4-(XLEN/8) bytes
+|=======================================================================================================================
+
 [NOTE]
 
-   RV64 does not have `C.JAL` so `C.TBLJAL` is even more valuable
+  `C.JAL` is not included as there's no code-size saving for RV32 and it's not available for RV64
 
-[NOTE]
+Therefore the saving per function is
+[source,sourceCode,text]
+----
+saving_per_function_c_tbljal = M * 2 - (XLEN/8) + N * 6 - (XLEN-8)
+saving_per_function_tbljal   = N * 4 - (XLEN/8)
+----
 
-  The 32-bit encoding allows more functions to be called, but saves less code size, so the most common functions should be callable by the 16-bit encoding
+The suggested algorithm to optimally allocate functions in the jump table is:
 
-The 32-bit instruction encoding will ensure that 64-bit sequences `AUIPC/JALR` are unlikely to ever be needed to call functions, unless the jump table is full.
+1. Calculate `saving_per_function_c_tbljal` for every function.
+2. Sort the `saving_per_function_c_tbljal` results, and allocate the function with the biggest saving in entry 0, second biggest into entry 1 etc. up to entry 255.
+.. only allocate entries which save at least _n_-bytes of code-size.
+.. some micro-architectures maybe choose to cache the lowest numbered table entries, so these should be the most commonly accessed functions.
+3. Calculate `saving_per_function_tbljal` for any remaining functions, and sequentially allocate these in the remaining entries starting from 256.
+.. only allocate entries which save at least _n_-bytes of code-size.
+
+_n_ may be a result of performance modelling. _n=4_ is suggested for prototyping in the toolchain.
 
 === Encoding
 
@@ -871,7 +898,7 @@ These instructions have no conflicts with other extensions, they use previously 
 
 [NOTE]
 
-  This encoding is in _custom-01_, correct encodings need to be allocated.
+  The 32-bit encoding is in _custom-0_, correct encodings need to be allocated.
 
 [#tbljal32bitencoding]
 .TBLJAL 32-bit encoding, ZCE-type encoding
@@ -995,7 +1022,7 @@ Therefore if there are any updates to generated code in the table in vector mode
 
 The instruction fetch unit could cache the most frequently accessed table jump targets to improve performance. The management of this caching will cost some power (although the ~ 10% code size saving should save power overall by reducing the number of instruction fetches).
 
-An alternative approach is to for the instruction fetch to cache a certain range of table jump indices, e.g. 0-31. The linker could be configured to place the most frequently used table jump indices into this range so that static caching can be used. For this to be successful the linker would need information about the dynamic call frequency of each function call.
+An alternative approach is to for the instruction fetch to cache a certain range of table jump indices, e.g. 0-31. The linker could be configured to place the most frequently used table jump indices into this range so that static caching can be used. For this to be successful the linker would need information about the dynamic call frequency of each function call. This is supported by the suggested algorithm in <<configuringthejumptable>>
 
 [#vector-table-mode]
 === Future Mode: Vector table mode (not for RVM22/RVA22)
@@ -1353,24 +1380,22 @@ popret       {<rsreg_list>}, [{ret_val},]    stack_adjustment //popret must incl
 
 ----
 
-For the 16-bit encodings
+For the 16-bit encodings (including EABI versions):
 
 . In `reg_list`
 .. `ra` must be included
-.. `s0-sN` may be included, valid values of `N` are 0,1,2,3,5,8,11
-. for `pop, ret_val` must not be included 
-. for `popret, ret_val` may be included - and can only be set to `0`
+.. `s0-sN` may be included
+.. for `c.push/c.popret` valid values of `N` are 0,1,2,3,5,8,11 for the UABI and 0,1,2,3,4 for the EABI
+.. for `c.pop` valid values of `N` are 0,1,2 for both ABIs
+. for `c.pop, ret_val` must not be included 
+. for `c.popret, ret_val` may be included - and can only be set to `0`
 .. rationale: about 27% of functions which infer `popret` issue `li a0, 0` first
-. for `push` only specific combinations of `areg_list` and `sreg_list` are permitted
+. for `c.push` only specific combinations of `areg_list` and `sreg_list` are permitted
 .. `if sreg_list={ra}:       areg_list={}`
 .. `if sreg_list={ra,s0}:    areg_list={a0}`
-.. `if sreg_list={ra,s0-sN}: areg_list={a0-a1} where N=1,2,3`
+.. `if sreg_list={ra,s0-sN}: areg_list={a0-a1} where N=1,2,3,4`
 .. `if sreg_list={ra,s0-sN}: areg_list={a0-a2} where N=5,8,11`
-. The `stack_adjustment` must be no more than the total memory required for `reg_list`, rounded up to a multiple of 16-bytes, plus an additional (0..7)*16-bytes.
-
-[NOTE]
-
-  Depending on the EABI definition - the `.E` forms *may* support {ra,s0-s4}, TBD
+. The `stack_adjustment` must be no more than the total memory required for `reg_list`, rounded up to a multiple of 16-bytes, plus an additional (0 to 7)*16-bytes for 'c.pop/c.popret' or 16-bytes for 'c.pop'.
 
 Examples of valid 16-bit encodings for RV32I or RV64I using the UABI:
 
@@ -1386,23 +1411,13 @@ pop    {ra},        16;  //load  ra;        increment sp by 16
 popret {ra},        16;  //load  ra;        increment sp by 16; jump to ra
 
 pop    {ra,s0},     32;  //load  ra,s0;     increment sp by 32
-popret {ra,s0},{s0},32;  //load  ra,s0;     increment sp by 32; mv a0, s0; jump to ra
-
-pop    {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96
-popret {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96; jump to ra
-
-pop    {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128
+popret {ra,s0},{0}, 32;  //load  ra,s0;     increment sp by 32; li a0, 0; jump to ra
+popret {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96;  jump to ra
 popret {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128; jump to ra
 
 ----
 [NOTE]
   To save encoding space, for `c.push`, `areg_list` is automatically determined from the `reg_list` value based on analysing usage in the benchmark suite .
-
-[NOTE]
-  To save encoding space some opcodes do not allow the full range of `spimm` or `reg_list` which reduces the possible `stack adjustment` range further, see <<proposed-16bit-encodingsI-1>>
-
-[NOTE]
-  For the EABI the encodings, or pseudo-instructions all have a `.E` suffix and the highest `s` register is limited to `s4`.
 
 For the 32-bit encodings
 
@@ -1426,6 +1441,7 @@ To be a legal encoding:
 2.  The stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register lists must be valid (see above)
 4.  For `PUSH`, `areg_list` must not overwrite an `s` register which is not listed in `reg_list`
+4.  For `PUSH`, `ret_val` must be included
 5.  For `POPRET`, `reg_list` must include `ra`
 6.  For `POP` and `POPRET`, `areg_list` must not be included 
 
@@ -1678,7 +1694,7 @@ These instructions have no conflicts with other extensions, they use previously 
 3+|100    3+|000       3+|011        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s2}   
 3+|100    3+|000       3+|100        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s3}   
 3+|100    3+|000       3+|101        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s4}   
-3+|100    3+|000       2+|11 |rlist[1] |1   |1   |0 |rlist[0] |spimm[4] 2+|00  |C.POP    
+3+|100    3+|000       2+|11 |rlist[0] |1   |1   |0 |rlist[1] |spimm[4] 2+|00  |C.POP    
 
 3+|100    3+|000       |ret0 2+|00   |1   |1   |1 2+|spimm[5:4] 2+| 00  |C.POPRET.E   {ra, s0-s2}  
 3+|100    3+|000       |ret0 2+|01   |1   |1   |1 2+|spimm[5:4] 2+| 00  |C.POPRET.E   {ra, s0-s3}  
@@ -1796,11 +1812,11 @@ These tables are provided as a handy reference, they are all calculated from the
 | {ra, s0}    | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
 | {ra, s0-s1} | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
 | {ra, s0-s2} | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
-| {ra, s0-s3} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | 32 to 48    | 32 to 48
-| {ra, s0-s4} | N/A         | -32 to -144 | N/A       | 32 to 144  | N/A         | 32 to 48
-| {ra, s0-s5} | -32 to -144 | N/A         | 32 to 144 | N/A        | 32 to 48    | N/A      
-| {ra, s0-s8} | -48 to -160 | N/A         | 48 to 160 | N/A        | 48 to 64    | N/A     
-| {ra, s0-s11}| -64 to -176 | N/A         | 64 to 176 | N/A        | 64 to 80    | N/A     
+| {ra, s0-s3} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | N/A         | N/A    
+| {ra, s0-s4} | N/A         | -32 to -144 | N/A       | 32 to 144  | N/A         | N/A    
+| {ra, s0-s5} | -32 to -144 | N/A         | 32 to 144 | N/A        | N/A         | N/A      
+| {ra, s0-s8} | -48 to -160 | N/A         | 48 to 160 | N/A        | N/A         | N/A     
+| {ra, s0-s11}| -64 to -176 | N/A         | 64 to 176 | N/A        | N/A         | N/A     
 |==========================================================================================
 
 [#spimmrange_32_ra]
@@ -2139,10 +2155,10 @@ There are cases where it is not clear whether to use the 16-bit or 32-bit encodi
 
 If compiling with -Os/-Oz the compiler should generate the smallest possible code output, which may include performance reduction due to:
 
-1. too many 's' registers in the register list
+1. too many `s` registers in the register list
 .. for example `push {ra, s0-s7}` is required but not available in the 16-bit encoding so `c.push {ra,s0-s8}` must be used instead for the smallest code-size
-2. too many includes moves (for `C.PUSH` only)
-.. for example `push {ra,s0-s1}, {a0}` is required, but the 16-bit encoding will include an extra register moves `c.push {ra,s0-s1}, {a0-a1}`
+2. too many included register moves (for `C.PUSH` only)
+.. for example `push {ra,s0-s1}, {a0}` is required, but the 16-bit encoding will include an extra register move `c.push {ra,s0-s1}, {a0-a1}`
 
 Another consideration is whether the total stack adjustment can be encoded by the 16-bit version, the 32-bit encoding gives a larger range but still will not cover all cases.
 
@@ -2150,22 +2166,25 @@ The default choice is always to use the 16-bit encoding. The rules below are for
 
 For `C.PUSH/PUSH`, use `PUSH` if:
 
-1. If the total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.PUSH`, but in range for `PUSH`.
-2. If `C.PUSH` includes too many `s` registers and not compiling with -Os/-Oz.
-3. If `C.PUSH` includes too many register moves and not compiling with -Os/-Oz.
-4. If `C.PUSH` doesn't include enough register moves.
+1. The total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.PUSH`, but in range for `PUSH`.
+2. `C.PUSH` includes too many `s` registers and not compiling with -Os/-Oz.
+3. `C.PUSH` includes too many register moves and not compiling with -Os/-Oz.
+4. `C.PUSH` doesn't include enough register moves.
+5. `ra` is not in the register list.
 
 For `C.POPRET/POPRET`, use `POPRET` if:
 
-1. If the total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.POPRET`, but in range for `POPRET`.
-2. If `C.POPRET` includes too many `s` registers and not compiling with -Os/-Oz.
-3. If the return value is `1` or `s0`, (`C.POPRET` only allows the option of returning 0).
+1. The total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.POPRET`, but in range for `POPRET`.
+2. `C.POPRET` includes too many `s` registers and not compiling with -Os/-Oz.
+3. The return value is `1` or `s0`, (`C.POPRET` only allows the option of returning `0`).
+4. `ra` is not in the register list
 
 For `C.POP/POP`, use `POP` if
 
-1. If the total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.POP`, but in range for `POP`.
-2. If `C.POP` doesn't include enough registers.
-3. If the return value is `0, 1` or `s0`.
+1. The total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.POP`, but in range for `POP`.
+2. `C.POP` doesn't include enough registers.
+3. The return value is `0, 1` or `s0`.
+4. `ra` is not in the register list
 
 _Example 1_ The 16-bit encoding includes too many register moves.
 
@@ -2229,7 +2248,7 @@ In this case the 16-bit encoding is inferior in the epilogue - because it includ
 
 #optimised prologue
 #-Os/-Oz: the smallest is with the 16-bit encoding which also stores s8 (so wastes performance)
-  e0073e:       <16-bit>>               push {ra,s0-s8}, {a0-a2}
+  e0073e:       <16-bit>                push {ra,s0-s8}, {a0-a2}
   e00758:       8bb6                    mv      s7,a3
   e0075a:       8a3a                    mv      s4,a4
 
