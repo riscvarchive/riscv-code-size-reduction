@@ -16,7 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.29.3  | updated c.sezt.*, c.zext.*, c.not, c.neg assembly syntax to match the 32-bit encodings, fix Align16 function
+| 0.29.3  | updated c.sext, c.zext, c.not, c.neg assembly syntax to match the 32-bit encodings, fix Align16 function
 | 0.29.2  | change SPIMM definition so the encoding sets bits [8:4] not [4:0] to make it obvious it's a multiple of 16
 |         | fixed C.PUSH/C.POP etc. encodings as they overlapped
 | 0.29.1  | Add ZCE-type format for push/pop/popret and tbljal
@@ -1782,6 +1782,7 @@ Additional benefits of the 32-bit encoding are:
 * direct control of the `mv` instructions (`PUSH`) improving performance (so that superfluous register moves aren't executed)
 * better control over the return value (`POP/POPRET`) improving code-size.
 
+[#total-stack-rv32]
 ==== Total stack adjustment ranges for RV32
 
 These tables are provided as a handy reference, they are all calculated from the formulae in this specification.
@@ -1841,6 +1842,7 @@ These tables are provided as a handy reference, they are all calculated from the
 | {s0-s11}    | -48 to -544 | N/A         | 48 to 544 | N/A        
 |==========================================================================================
 
+[#total-stack-rv64]
 ==== Total stack adjustment ranges for RV64
 
 These tables are provided as a handy reference, they are all calculated from the formulae in this specification.
@@ -2129,44 +2131,59 @@ It is possible for implementations to follow these restricted rules and to safel
 
 [NOTE]
 
-  The linker may have to reallocate registers as the register moves included in `PUSH/C.PUSH` target specific `s` registers which may not agree with the compiler output, as in the folowling example.
+  The linker may have to reallocate registers as the register moves included in `PUSH/C.PUSH` target specific `s` registers which may not agree with the compiler output, example.
 
 ==== Compiling for size or performance
 
-There are cases where it is not clear whether to use the 16-bit encoding, or the 32-bit encoding.
+There are cases where it is not clear whether to use the 16-bit or 32-bit encoding.
 
-If compiling with -Os or -Oz the compiler should generate the smallest possible code output. Compiling with a higher optimisation level will not waste performance by reducing the code-size, so the 16-bit encoding should not be included if doing so wastes performance by: 
+If compiling with -Os/-Oz the compiler should generate the smallest possible code output, which may include performance reduction due to:
 
-1. too many saved registers in the list
-2. too many includes moves (for C.PUSH only)
+1. too many 's' registers in the register list
+.. for example `push {ra, s0-s7}` is required but not available in the 16-bit encoding so `c.push {ra,s0-s8}` must be used instead for the smallest code-size
+2. too many includes moves (for `C.PUSH` only)
+.. for example `push {ra,s0-s1}, {a0}` is required, but the 16-bit encoding will include an extra register moves `c.push {ra,s0-s1}, {a0-a1}`
 
-There are cases where the 16 and 32-bit encodings result in the same code size and the same performance. In this case the compiler can choose either scheme.
+Another consideration is whether the total stack adjustment can be encoded by the 16-bit version, the 32-bit encoding gives a larger range but still will not cover all cases.
+
+The default choice is always to use the 16-bit encoding. The rules below are for when to choose the 32-bit encoding instead.
+
+For `C.PUSH/PUSH`, use `PUSH` if:
+
+1. If the total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.PUSH`, but in range for `PUSH`.
+2. If `C.PUSH` includes too many `s` registers and not compiling with -Os/-Oz.
+3. If `C.PUSH` includes too many register moves and not compiling with -Os/-Oz.
+4. If `C.PUSH` doesn't include enough register moves.
+
+For `C.POPRET/POPRET`, use `POPRET` if:
+
+1. If the total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.POPRET`, but in range for `POPRET`.
+2. If `C.POPRET` includes too many `s` registers and not compiling with -Os/-Oz.
+3. If the return value is `1` or `s0`, (`C.POPRET` only allows the option of returning 0).
+
+For `C.POP/POP`, use `POP` if
+
+1. If the total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.POP`, but in range for `POP`.
+2. If `C.POP` doesn't include enough registers.
+3. If the return value is `0, 1` or `s0`.
 
 _Example 1_ The 16-bit encoding includes too many register moves.
 
 [source,sourceCode,text]
 ----
-#From debian / re compiled with GCC (RV64)
+#From debian / re compiled with GCC (RV64), reordered to put the registers in order
     53be:       7135                    addi    sp,sp,-160
-    53c0:       e526                    sd      s1,136(sp)
-    53c2:       e14a                    sd      s2,128(sp)
-    53c4:       f0da                    sd      s6,96(sp)
     53c6:       ed06                    sd      ra,152(sp)
     53c8:       e922                    sd      s0,144(sp)
-    53ca:       fcce                    sd      s3,120(sp)
-    53cc:       f8d2                    sd      s4,112(sp)
-    53ce:       f4d6                    sd      s5,104(sp)
-    53d0:       ecde                    sd      s7,88(sp)
-    53d2:       e8e2                    sd      s8,80(sp)
-    53d4:       e4e6                    sd      s9,72(sp)
-    53d6:       e0ea                    sd      s10,64(sp)
+...s1-s10...
     53d8:       fc6e                    sd      s11,56(sp)
     53da:       84aa                    mv      s1,a0
     53e0:       892e                    mv      s2,a1
-#-Os/-Oz: compile to c.push, but includes a redundant register move of a2
-    53be:       xxxx                    push    {ra,s0-s11}, {a0-a2}, -160
-#-O1/-O2/-O3: compile to push to avoid the redundant register move of a2, even though the code is larger
-    53be:       xxxxxxxx                push    {ra,s0-s11}, {a0-a1}, -160
+#-Os/-Oz: compile to C.PUSH, but includes a redundant register move of a2, 
+#note that the moves are "mv s0, a0; mv a1, s1; mv a2, s2"  so the s registers need to be reallocated
+    53be:       <16-bit>                push    {ra,s0-s11}, {a0-a2}, -160
+#-O1/-O2/-O3: compile to PUSH to avoid the redundant register move of a2, even though the code is larger
+    53be:       <32-bit>                push    {ra,s0-s11}, {a0-a1}, -160
 ----
 
 _Example 2_ The stack adjustment is out of range for the 32-bit encoding, and the register list matches the 16-bit encoding.
@@ -2176,19 +2193,13 @@ _Example 2_ The stack adjustment is out of range for the 32-bit encoding, and th
 #From Huawei IoT code compiled with GCC (RV32)
   e0c744:       2bc12083                lw      ra,700(sp)
   e0c748:       2b812403                lw      s0,696(sp)
-  e0c74c:       2b412483                lw      s1,692(sp)
-  e0c750:       2b012903                lw      s2,688(sp)
-  e0c754:       2ac12983                lw      s3,684(sp)
-  e0c758:       2a812a03                lw      s4,680(sp)
-  e0c75c:       2a412a83                lw      s5,676(sp)
-  e0c760:       2a012b03                lw      s6,672(sp)
-  e0c764:       29c12b83                lw      s7,668(sp)
+...s1-s7...
   e0c768:       29812c03                lw      s8,664(sp)
   e0c76c:       2c010113                addi    sp,sp,704 #out of range, limit is 544 for 32-bit encoding
   e0c770:       8082                    ret
-#-Os/-Oz/-O1/-O2/-O3: always compile to 2 16-bit encodings, the 32-bit encoding is larger and doesn't improve performance
-  e0c744:       xxxx                    addi    sp,sp,640
-  e0c748:       xxxx                    popret  {ra,s0-s8}, 64
+#-Os/-Oz/-O1/-O2/-O3: always compile to 2 16-bit encodings, the 32-bit encoding doesn't improve performance
+  e0c744:       <16-bit>                addi    sp,sp,640
+  e0c748:       <16-bit>                popret  {ra,s0-s8}, 64
 ----
 
 _Example 3_ The register list doesn't match the 16-bit encoding, and the 32-bit encoding allows inclusion of the return value.
@@ -2197,56 +2208,44 @@ In this case the 16-bit encoding is inferior in the epilogue - because it includ
 
 [source,sourceCode,text]
 ----
-#From Huawei IoT code compiled with GCC (RV32)
+#From Huawei IoT code compiled with GCC (RV32), reordered to put the registers in order
 #prologue
   e0073e:       7179                    addi    sp,sp,-48
-  e00740:       d422                    sw      s0,40(sp)
-  e00742:       d04a                    sw      s2,32(sp)
-  e00744:       cc52                    sw      s4,24(sp)
-  e00746:       ca56                    sw      s5,20(sp)
-  e00748:       c85a                    sw      s6,16(sp)
-  e0074a:       c65e                    sw      s7,12(sp)
   e0074c:       d606                    sw      ra,44(sp)
-  e0074e:       d226                    sw      s1,36(sp)
-  e00750:       ce4e                    sw      s3,28(sp)
+  e00740:       d422                    sw      s0,40(sp)
+...s1-s6...
+  e0074a:       c65e                    sw      s7,12(sp)
   e00752:       892a                    mv      s2,a0
-  e00754:       8aae                    mv      s5,a1
-  e00756:       8b32                    mv      s6,a2
-  e00758:       8bb6                    mv      s7,a3
+...a1-a3...
   e0075a:       8a3a                    mv      s4,a4
 ....
 #epilogue
   e0079a:       8522                    mv      a0,s0
   e0079c:       5422                    lw      s0,40(sp)
-  e0079e:       5492                    lw      s1,36(sp)
-  e007a0:       5902                    lw      s2,32(sp)
-  e007a2:       49f2                    lw      s3,28(sp)
-  e007a4:       4a62                    lw      s4,24(sp)
-  e007a6:       4ad2                    lw      s5,20(sp)
-  e007a8:       4b42                    lw      s6,16(sp)
+...s1-s6...
   e007aa:       4bb2                    lw      s7,12(sp)
   e007ac:       6145                    addi    sp,sp,48
   e007ae:       8082                    ret
 
 #optimised prologue
 #-Os/-Oz: the smallest is with the 16-bit encoding which also stores s8 (so wastes performance)
-  e0073e:       xxxx                    push {ra,s0-s8}, {a0-a2}
+  e0073e:       <16-bit>>               push {ra,s0-s8}, {a0-a2}
   e00758:       8bb6                    mv      s7,a3
   e0075a:       8a3a                    mv      s4,a4
 
 #-O1/-O2/-O3: the 32-bit encoding is larger but doesn't store s8 (so doesn't waste performance)
-  e0073e:       xxxxxxxx                push {ra,s0-s7}, {a0-a2}
+  e0073e:       <32-bit>                push {ra,s0-s7}, {a0-a2}
   e00758:       8bb6                    mv      s7,a3
   e0075a:       8a3a                    mv      s4,a4
 
 #optimised epilogue
-#the 16-bit encoding encoding also loads s8, and doesn't include the mv a0, s0 -> BAD CHOICE
+#the 16-bit encoding also loads s8, and doesn't include the mv a0, s0 -> BAD CHOICE
   e0079a:       8522                    mv      a0,s0
-  e0079c:       xxxx                    popret {ra,s0-s8}, 48
+  e0079c:       <16-bit>                popret {ra,s0-s8}, 48
 
 #-Os/-Oz/-O1/-O2/-O3: always compile to the 32-bit encoding, 
 #it has the same overall code size as the 16-bit encoding and doesn't load s8
-  e0079c:       xxxxxxxx                popret {ra,s0-s7}, {s0}, 48
+  e0079c:       <32-bit>                popret {ra,s0-s7}, {s0}, 48
 ----
 
 === Assembly examples
