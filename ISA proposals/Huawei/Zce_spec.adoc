@@ -16,6 +16,13 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.32    | Replace DECBGEZ with DECBNEZ as it's better for the compiler
+|         | For C.PUSH/C.POPRET change register list to include s7 instead of s8 as it greatly reduces the number of wasted load/stores (16% for debian, 4% for the other benchmarks) and has no effect on code-size
+|         | Fix POP/POPRET pseudo-code - it was doing "mv a0, s0" _after_ "ld s0,sp(n)" instead of before so the return value would have been wrong
+|         | for C.POPRET change ret_val to only be "mv a0, s0" not "mv a0, 0" as s0 is more commonly used
+|         | For PUSH also allow "mv s3, a3" up to "mv s6, a6", I'd forgotten to allocate 4 encodings
+|         | For C.PUSH increase the embedded moves to include s3 to improve the code-size reduction.
+|         | tighten up the Memory[] used in the semantics to specify that it's XLEN bits wide, and whether it's Instruction or Data memory as the endianness handling may be different (according to Allen Baum)
 | 0.31    | Fix Allen Baum's feedback including removing Zba/Zbb requirement and making them a recommendation only. There's no written policy requiring 32-bit versions of 16-bit encodings as far as I know, and we're not planning to fully benchmark Zba/Zbb for code-size.
 | 0.30    | careful proofreading and updated C.POP encoding for simpler decode
 | 0.29.3  | updated c.sext, c.zext, c.not, c.neg assembly syntax to match the 32-bit encodings, fix Align16 function
@@ -55,14 +62,14 @@ This document describes the `Zce` extension to reduce code-size.
 
 == Issues
 
-* whether to replace DECBGEZ with DECBNEZ
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
 * EABI spec is not frozen - so it's not clear which formats of PUSH.E etc that I need
-** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s8, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
+** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s7, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
 * for `C.PUSH` confirm that the auto-included register moves are optimal (give the right balance between saving code-size and not wasting performance)
-* confirm extra features in the 32-bit push/pop encodings are useful
+* confirm extra features in the 32-bit push/pop encodings are useful - looking dubious
+* is there any reason not to PUSH ra? there's a reason not to POP it, but I'm thinking of hardwiring ra=1 for PUSH.
 
 == `Zce` configurations
 
@@ -125,13 +132,13 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |===============================================================================
 |Instruction|RV32|RV64|RV128|Extension|Notes
 6+| 16-bit encodings
-|C.DECBGEZ|✓|✓| |Zceb|incompatible with D
+|C.DECBNEZ|✓|✓| |Zceb|incompatible with D
 |C.LBU|✓|✓| |Zceb|incompatible with D
 |C.LHU|✓|✓| |Zceb|incompatible with D
 |C.SB|✓|✓| |Zceb|incompatible with D
 |C.SH|✓|✓| |Zceb|incompatible with D
 6+| 32-bit encodings
-|DECBGEZ|✓|✓|✓|Zceb|incompatible with D
+|DECBNEZ|✓|✓|✓|Zceb|incompatible with D
 |LWGP|✓|✓|✓|Zceb|incompatible with D
 |LWTP|✓|✓|✓|Zceb|incompatible with D
 |SWGP|✓|✓|✓|Zceb|incompatible with D
@@ -175,7 +182,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 
 |001       |C.FLD     |1|Zcd |✓|✓ |   |C+D
 |001       |C.LQ      |1|Zcq |  |  |✓  |C
-|001       |*C.DECBGEZ* |1|*Zceb*|✓|✓ |  |C+*Zceb*
+|001       |*C.DECBNEZ* |1|*Zceb*|✓|✓ |  |C+*Zceb*
 
 |010       |C.LW      | |Zci |✓|✓ |✓  |C
 
@@ -290,7 +297,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 | |100    |001    |00   |C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H, C.ZEXT.W, C.NOT, C.NEG, C.MUL
 | |100    |110    |00   |C.TBLJAL
 
-|1|001    |xxx    |00   |C.DECBGEZ
+|1|001    |xxx    |00   |C.DECBNEZ
 
 |3|101    |0xx    |00   |C.SB
 |3|101    |1xx    |00   |C.LBU
@@ -593,14 +600,14 @@ It is recommended to implement both `Zba` and `Zbb` for code-size reduction, but
 |funct3a   |imm[8:5]               | rs2           2+|imm[15:11]  | funct3 | imm[4:2, 10:9]   |opcode | SW16-type
 |funct3a 2+|imm[8:3,16,10:9]                       2+|imm[15:11]  | funct3 | rd               |opcode | LD16-type
 |funct3a   |imm[8:5]               | rs2           2+|imm[15:11]  | funct3 | imm[4:3,16,10:9] |opcode | SD16-type
-9+|This format is only for DECBGEZ, designed for maximum immediate overlap with B-type and LW16-type
+9+|This format is only for DECBNEZ, designed for maximum immediate overlap with B-type and LW16-type
 |funct3a 2+|imm[8:2,10:9]                          |scale|imm[1,12:11]  | funct3 | rd         |opcode | DECB-type
 |=========================================================================================================================
 
 === Decrement and branch
 
 [[decbr16]]
-==== C.DECBGEZ
+==== C.DECBNEZ
 
 This instruction conflicts with the `D`-extension. If `D` is implemented, this instruction will not be available. It is compatible with `ZDinx`.
 
@@ -624,8 +631,8 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  001          3+|nzimm[6:4] 3+| rd'  3+|nzimm[3:1] 2+|scale 2+| 00 | C.DECBGEZ
-3+|  001          3+|000       3+| rd'  3+|000       2+|scale 2+| 00 | *reserved*
+3+|  001          3+|nzimm[6:4] 3+| rd'  3+|nzimm[3:1] 2+|scale 2+| 00 | C.DECBNEZ
+3+|  001          3+|000        3+| rd'  3+|000        2+|scale 2+| 00 | *reserved*
 |=============================================================================================
 
 [#deccmpbrsemantics]
@@ -633,24 +640,24 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| C.DECBGEZ     | rd' = rd' - (1<<scale); bge rd', zero, -zero_ext(nzimm);
+| C.DECBNEZ     | rd' = rd' - (1<<scale); bnez rd', zero, -zero_ext(nzimm);
 |=======================================================================
 
 [#v1.0-32bit]
 .32-bit equivalent instructions for decrement, compare and branch semantics
 [width="100%",options=header]
 |======================================================================================================
-|instruction | assembly syntax        | requirements for 16-bit encoding   | 32-bit extension
-|C.DECBGEZ   | decbgez, rd, imm, -offset | rd is x8-x15, imm is [1248], offset is in range   | Zceb
+|instruction | assembly syntax           | requirements for 16-bit encoding   | 32-bit extension
+|C.DECBNEZ   | decbnez, rd, imm, -offset | rd is x8-x15, imm is [1248], offset is in range   | Zceb
 |======================================================================================================
 
 Assembly Example
 [source,sourceCode,text]
 ----
-decbgez s2, 1, -4 ;# s2-=1;if(s2>=0) branch_to(PC-4) encoded as scale=0, uimm=4 (not uimm=-4)
+decbnez s2, 1, -4 ;# s2-=1;if(s2!=0) branch_to(PC-4) encoded as scale=0, uimm=4 (not uimm=-4)
 ----
 
-==== DECBGEZ
+==== DECBNEZ
 
 This instruction conflicts with the `D`-extension. If `D` is implemented, this instruction will not be available. It is compatible with `ZDinx`. It uses a DECB-type encoding.
 
@@ -660,26 +667,26 @@ The 16-bit encoding and specification is in <<decbr16>>.
 
   The 16 and 32-bit forms of this instruction need a new relocation type in the toolchain.
 
-[decbgez-32bit-encodings]
-.proposed 32-bit encoding `DECBGEZ`
+[DECBNEZ-32bit-encodings]
+.proposed 32-bit encoding `DECBNEZ`
 [width="100%",options=header]
 |=========================================================================================================================
 | 31:29    |28:25                  |24:20            |19:18|17:15       |14:12   | 11:7             | 6 : 0 | instruction
-|100     2+|imm[8:2,10:9]                            |scale|imm[1,12:11]  | 011 | rd                |0000111 | DECBGEZ
+|100     2+|imm[8:2,10:9]                            |scale|imm[1,12:11]  | 011 | rd                |0000111 | DECBNEZ
 |=========================================================================================================================
 
-[#decbgezsemantics32]
+[#DECBNEZsemantics32]
 .decrement, compare and branch 32-bit semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| DECBGEZ       | rd = rd - (1<<scale); bge rd, zero, sign_ext(imm);
+| DECBNEZ       | rd = rd - (1<<scale); bnez rd, zero, sign_ext(imm);
 |=======================================================================
 
 Assembly Example
 [source,sourceCode,text]
 ----
-decbgez s2, 1, offset ;# s2-=1;if(s2>=0) branch_to(PC+offset)
+decbnez s2, 1, offset ;# s2-=1;if(s2!=0) branch_to(PC+offset)
 ----
 
 
@@ -720,20 +727,24 @@ These instructions reuse the encodings for `FLD/FSD`.
 |011   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDTP
 |=========================================================================================================================
 
+[NOTE]
+
+  In <<lwgp_semantics>> DataMemory is a data memory array of elements with XLEN width.
+
 [#lwgp_semantics]
 .Load/store word/double GP/TP relative semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| LWGP          | rd=sign_ext(Memory[gp+sign_ext(imm)][31:0]);
-| SWGP          | Memory[gp+sign_ext(imm)][31:0])=rs2[31:0];
-| LWTP          | rd=sign_ext(Memory[tp+sign_ext(imm)][31:0]);
-| SWTP          | Memory[tp+sign_ext(imm)][31:0])=rs2[31:0];
+| LWGP          | rd=sign_ext(DataMemory[gp+sign_ext(imm)][31:0]);
+| SWGP          | DataMemory[gp+sign_ext(imm)][31:0])=rs2[31:0];
+| LWTP          | rd=sign_ext(DataMemory[tp+sign_ext(imm)][31:0]);
+| SWTP          | DataMemory[tp+sign_ext(imm)][31:0])=rs2[31:0];
 2+|RV64/RV128 only
-| LDGP          | rd=sign_ext(Memory[gp+sign_ext(imm)][63:0]);
-| SDGP          | Memory[gp+sign_ext(imm)][63:0])=rs2[63:0];
-| LDTP          | rd=sign_ext(Memory[tp+sign_ext(imm)][63:0]);
-| SDTP          | Memory[tp+sign_ext(imm)][63:0])=rs2[63:0];
+| LDGP          | rd=sign_ext(DataMemory[gp+sign_ext(imm)][63:0]);
+| SDGP          | DataMemory[gp+sign_ext(imm)][63:0])=rs2[63:0];
+| LDTP          | rd=sign_ext(DataMemory[tp+sign_ext(imm)][63:0]);
+| SDTP          | DataMemory[tp+sign_ext(imm)][63:0])=rs2[63:0];
 |=======================================================================
 
 Assembly Examples
@@ -768,15 +779,19 @@ These instructions reuse the encodings for `C.FSD/C.FSDSP`.
 3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LHU
 |=============================================================================================
 
+[NOTE]
+
+  In <<ldstbhsemantics>> DataMemory is a data memory array of elements with XLEN width
+
 [#ldstbhsemantics]
 .Load/store byte/half semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| C.LBU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][ 7:0])
-| C.LHU         | rd' = zero_ext(Memory[rs1'+zero_ext(uimm)][15:0])
-| C.SB          | rd' = Memory[rs1'+zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
-| C.SH          | rd' = Memory[rs1'+zero_ext(uimm)][15:0] = rs2'[15:0]
+| C.LBU         | rd' = zero_ext(DataMemory[rs1'+zero_ext(uimm)][ 7:0])
+| C.LHU         | rd' = zero_ext(DataMemory[rs1'+zero_ext(uimm)][15:0])
+| C.SB          | rd' = DataMemory[rs1'+zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
+| C.SH          | rd' = DataMemory[rs1'+zero_ext(uimm)][15:0] = rs2'[15:0]
 |=======================================================================
 
 [#ldstbh-32bit]
@@ -793,10 +808,10 @@ These instructions reuse the encodings for `C.FSD/C.FSDSP`.
 Assembly Examples
 [source,sourceCode,text]
 ----
-lbu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[ 7:0])
-lhu a5,20(a4)   # a5 = zero_ext(Memory(a4+20)[15:0])
-sb  a5,20(a4)   # Memory(a4+20)[ 7:0] = a5[ 7:0]
-sh  a5,20(a4)   # Memory(a4+20)[15:0] = a5[15:0]
+lbu a5,20(a4)   # a5 = zero_ext(DataMemory(a4+20)[ 7:0])
+lhu a5,20(a4)   # a5 = zero_ext(DataMemory(a4+20)[15:0])
+sb  a5,20(a4)   # DataMemory(a4+20)[ 7:0] = a5[ 7:0]
+sh  a5,20(a4)   # DataMemory(a4+20)[15:0] = a5[15:0]
 ----
 
 [#tablejump]
@@ -982,15 +997,19 @@ Jump table mode is easy to implement in the linker and doesn't affect the compil
 
 ==== Pseudo-code for jump table mode
 
+[NOTE]
+
+  InstMemory below is an instruction memory array of elements with XLEN width.
+
 [source,sourceCode,text]
 ----
 # tmp is temporary internal state, it doesn't represent a real register
 # Mem is byte indexed
 # n is the immediate operand passed to [c.]tbljal
 switch(XLEN) {
-  32:  LW tmp, Mem[xTBLJALVEC.base + n<<2][XLEN-1:0];
-  64:  LD tmp, Mem[xTBLJALVEC.base + n<<3][XLEN-1:0];
-  128: LQ tmp, Mem[xTBLJALVEC.base + n<<4][XLEN-1:0];
+  32:  LW tmp, InstMemory[xTBLJALVEC.base + n<<2][XLEN-1:0];
+  64:  LD tmp, InstMemory[xTBLJALVEC.base + n<<3][XLEN-1:0];
+  128: LQ tmp, InstMemory[xTBLJALVEC.base + n<<4][XLEN-1:0];
 }
 switch(tmp[1:0]) {
   0: JALR x0, tmp[XLEN-1:0]&~0x3;
@@ -1149,6 +1168,10 @@ All comparisons are _unsigned_.
 
 ==== Pseudo-code for vector table mode
 
+[NOTE]
+
+  InstMemory below is an instruction memory array of elements with XLEN width.
+
 [source,sourceCode,text]
 ----
 # Mem is byte indexed
@@ -1156,7 +1179,7 @@ All comparisons are _unsigned_.
 if (n > MTBLJALCFG.maxentry OR MTBLJALWM.wmx5 < MTBLJALWM.wxm0) {
   take_illegal_instruction_exception();
   }
-JALR LINK, Mem[xTBLJALVEC.base + n*tablescale][XLEN-1:0];
+JALR LINK, InstMemory[xTBLJALVEC.base + n*tablescale][XLEN-1:0];
 ----
 
 ==== vector table code
@@ -1393,16 +1416,16 @@ For the 16-bit encodings (including EABI versions):
 . In `reg_list`
 .. `ra` must be included
 .. `s0-sN` may be included
-.. for `c.push/c.popret` valid values of `N` are 0,1,2,3,5,8,11 for the UABI and 0,1,2,3,4 for the EABI
+.. for `c.push/c.popret` valid values of `N` are 0,1,2,3,5,7,11 for the UABI and 0,1,2,3,4 for the EABI
 .. for `c.pop` valid values of `N` are 0,1,2 for both ABIs
 . for `c.pop, ret_val` must not be included 
-. for `c.popret, ret_val` may be included - and can only be set to `0`
-.. rationale: about 27% of functions which infer `popret` issue `li a0, 0` first
+. for `c.popret, ret_val` may be included - and can only be set to `s0`
 . for `c.push` only specific combinations of `areg_list` and `sreg_list` are permitted
 .. `if sreg_list={ra}:       areg_list={}`
 .. `if sreg_list={ra,s0}:    areg_list={a0}`
-.. `if sreg_list={ra,s0-sN}: areg_list={a0-a1} where N=1,2,3,4`
-.. `if sreg_list={ra,s0-sN}: areg_list={a0-a2} where N=5,8,11`
+.. `if sreg_list={ra,s0-s1}: areg_list={a0-a1} 
+.. `if sreg_list={ra,s0-s2}: areg_list={a0-a2} 
+.. `if sreg_list={ra,s0-sN}: areg_list={a0-a3} where N=3,4,5,7,11` (`N=4` is only for the EABI version)
 . The `stack_adjustment` must be no more than the total memory required for `reg_list`, rounded up to a multiple of 16-bytes, plus an additional (0 to 7)*16-bytes for 'c.pop/c.popret' or 16-bytes for 'c.pop'.
 
 Examples of valid 16-bit encodings for RV32I or RV64I using the UABI:
@@ -1477,9 +1500,9 @@ Note that every architectural state update in the pseudo-code can be executed as
 
 Because the pseudo-code includes load or store operations, they may take any fault caused by executing loads or stores. See <<fault-handling>> for more details.
 
-==== PUSH/PUSH.E Pseudo-code
+==== PUSH/PUSH.E/C.PUSH/C.PUSH.E Pseudo-code
 
-The `PUSH/PUSH.E` instruction store the set of registers from `reg_list` to consecutive memory locations, and decrements the stack pointer.
+The `PUSH/PUSH.E/C.PUSH/C.PUSH.E` instruction store the set of registers from `reg_list` to consecutive memory locations, and decrements the stack pointer.
 The pseudo-code uses assembly inserts so that it can use `sw/sd` etc.
 
 The pseudo-code shows the memory and architectural state updates of the whole instruction which has completed without faults, debug halts or interrupts. See <<fault-handling>> and <<software-view>> for more information.
@@ -1522,9 +1545,9 @@ if (areg_list) {
 sp+=stack_adjustment; //decrement
 ----
 
-==== POP/POP.E/POPRET/POPRET.E Pseudo-code
+==== POP/POP.E/POPRET/POPRET.E/C.POP/C.POP.E/C.POPRET/C.POPRET.E Pseudo-code
 
-A `POP/POP.E/POPRET/POPRET.E` instruction loads the set of registers from `reg_list` from consecutive memory locations, and then increments the stack pointer. 
+A `POP/POP.E/POPRET/POPRET.E/C.POP/C.POP.E/C.POPRET/C.POPRET.E` instruction loads the set of registers from `reg_list` from consecutive memory locations, and then increments the stack pointer. 
 The pseudo-code uses assembly inserts so that it can use `lw/ld/ret` etc.
 
 The pseudo-code shows the architectural state updates of the whole instruction which has completed without faults, debug halts or interrupts. See <<fault-handling>> and <<software-view>> for more information.
@@ -1543,6 +1566,13 @@ if (misa.MXL==1) {bytes=4;}
 if (misa.MXL==2) {bytes=8;}
 else             {bytes=16;}
 addr=sp+stack_adjustment;
+if (ret_val) {
+   switch(ret_val) {
+      "s0": asm("mv a0, s0");
+      "0":  asm("li a0, 0");
+      "1":  asm("li a0, 1");
+   }
+}
 if (ra) {
   addr-=bytes;
   switch(bytes) {
@@ -1559,13 +1589,6 @@ for(i in sreg_list)  {
     8:  asm("ld s[i], 0(addr)");
     16: asm("lq s[i], 0(addr)");
   }
-}
-if (ret_val) {
-   switch(ret_val) {
-      "s0": asm("mv a0, s0");
-      "0":  asm("li a0, 0");
-      "1":  asm("li a0, 1");
-   }
 }
 sp+=stack_adjustment; //increment
 if (opcode == "POPRET" or opcode == "POPRET.E") { 
@@ -1746,7 +1769,7 @@ These instructions have no conflicts with other extensions, they use previously 
 
 [NOTE]
 
-  _sN_ = (s2,s3,s5,s8,s11) 
+  _sN_ = (s2,s3,s5,s7,s11) 
 
 [NOTE]
 
@@ -1823,7 +1846,7 @@ These tables are provided as a handy reference, they are all calculated from the
 | {ra, s0-s3} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | N/A         | N/A    
 | {ra, s0-s4} | N/A         | -32 to -144 | N/A       | 32 to 144  | N/A         | N/A    
 | {ra, s0-s5} | -32 to -144 | N/A         | 32 to 144 | N/A        | N/A         | N/A      
-| {ra, s0-s8} | -48 to -160 | N/A         | 48 to 160 | N/A        | N/A         | N/A     
+| {ra, s0-s7} | -48 to -160 | N/A         | 48 to 160 | N/A        | N/A         | N/A     
 | {ra, s0-s11}| -64 to -176 | N/A         | 64 to 176 | N/A        | N/A         | N/A     
 |==========================================================================================
 
@@ -1883,7 +1906,7 @@ These tables are provided as a handy reference, they are all calculated from the
 | {ra, s0-s3} | -48 to -160 | -48 to -160 | 48 to 160 | 48 to 160  | N/A         | N/A      
 | {ra, s0-s4} | N/A         | -48 to -160 | N/A       | 48 to 160  | N/A         | N/A      
 | {ra, s0-s5} | -64 to -176 | N/A         | 64 to 176 | N/A        | N/A         | N/A       
-| {ra, s0-s8} | -80 to -192 | N/A         | 80 to 192 | N/A        | N/A         | N/A     
+| {ra, s0-s7} | -80 to -192 | N/A         | 80 to 192 | N/A        | N/A         | N/A     
 | {ra, s0-s11}| -112 to -224| N/A         |112 to 224 | N/A        | N/A         | N/A     
 |==========================================================================================
 
@@ -1942,6 +1965,10 @@ Note that `mv` and `ret_val` are in the same location in the encoding.
 | 1      |a0
 | 2      |a0-a1
 | 3      |a0-a2
+| 4      |a0-a3
+| 5      |a0-a4
+| 6      |a0-a5
+| 7      |a0-a6
 |=========================================
 
 [#32bit-ret_val]
@@ -2004,7 +2031,7 @@ Note that `mv` and `ret_val` are in the same location in the encoding.
 2+|Following options for `C.PUSH/C.POPRET` only
 |4     |ra, s0-s3
 |5     |ra, s0-s5
-|6     |ra, s0-s8
+|6     |ra, s0-s7
 |7     |ra, s0-s11
 |============================
 
@@ -2164,7 +2191,7 @@ There are cases where it is not clear whether to use the 16-bit or 32-bit encodi
 If compiling with -Os/-Oz the compiler should generate the smallest possible code output, which may include performance reduction due to:
 
 1. too many `s` registers in the register list
-.. for example `push {ra, s0-s7}` is required but not available in the 16-bit encoding so `c.push {ra,s0-s8}` must be used instead for the smallest code-size
+.. for example `push {ra, s0-s6}` is required but not available in the 16-bit encoding so `c.push {ra,s0-s7}` must be used instead for the smallest code-size
 2. too many included register moves (for `C.PUSH` only)
 .. for example `push {ra,s0-s1}, {a0}` is required, but the 16-bit encoding will include an extra register move `c.push {ra,s0-s1}, {a0-a1}`
 
@@ -2221,17 +2248,17 @@ _Example 2_ The stack adjustment is out of range for the 32-bit encoding, and th
   e0c744:       2bc12083                lw      ra,700(sp)
   e0c748:       2b812403                lw      s0,696(sp)
 ...s1-s7...
-  e0c768:       29812c03                lw      s8,664(sp)
+  e0c768:       29812c03                lw      s7,668(sp)
   e0c76c:       2c010113                addi    sp,sp,704 #out of range, limit is 544 for 32-bit encoding
   e0c770:       8082                    ret
 #-Os/-Oz/-O1/-O2/-O3: always compile to 2 16-bit encodings, the 32-bit encoding doesn't improve performance
   e0c744:       <16-bit>                addi    sp,sp,640
-  e0c748:       <16-bit>                popret  {ra,s0-s8}, 64
+  e0c748:       <16-bit>                popret  {ra,s0-s7}, 64
 ----
 
 _Example 3_ The register list doesn't match the 16-bit encoding, and the 32-bit encoding allows inclusion of the return value.
 
-In this case the 16-bit encoding is inferior in the epilogue - because it includes `s8` and cannot include the `mv, a0, s0`. Therefore the 32-bit encoding uses the correct register list and has the same code size.
+In this case the 16-bit encoding is inferior in the epilogue - because it includes `s7` and cannot include the `mv, a0, s0`. Therefore the 32-bit encoding uses the correct register list and has the same code size.
 
 [source,sourceCode,text]
 ----
@@ -2241,7 +2268,7 @@ In this case the 16-bit encoding is inferior in the epilogue - because it includ
   e0074c:       d606                    sw      ra,44(sp)
   e00740:       d422                    sw      s0,40(sp)
 ...s1-s6...
-  e0074a:       c65e                    sw      s7,12(sp)
+  e0074a:       c65e                    sw      s6,16(sp)
   e00752:       892a                    mv      s2,a0
 ...a1-a3...
   e0075a:       8a3a                    mv      s4,a4
@@ -2250,29 +2277,27 @@ In this case the 16-bit encoding is inferior in the epilogue - because it includ
   e0079a:       8522                    mv      a0,s0
   e0079c:       5422                    lw      s0,40(sp)
 ...s1-s6...
-  e007aa:       4bb2                    lw      s7,12(sp)
+  e007aa:       4bb2                    lw      s6,16(sp)
   e007ac:       6145                    addi    sp,sp,48
   e007ae:       8082                    ret
 
 #optimised prologue
-#-Os/-Oz: the smallest is with the 16-bit encoding which also stores s8 (so wastes performance)
-  e0073e:       <16-bit>                push {ra,s0-s8}, {a0-a2}
+#-Os/-Oz: the smallest is with the 16-bit encoding which also stores s7 (so wastes performance)
+  e0073e:       <16-bit>                push {ra,s0-s7}, {a0-a2}
   e00758:       8bb6                    mv      s7,a3
   e0075a:       8a3a                    mv      s4,a4
 
-#-O1/-O2/-O3: the 32-bit encoding is larger but doesn't store s8 (so doesn't waste performance)
-  e0073e:       <32-bit>                push {ra,s0-s7}, {a0-a2}
+#-O1/-O2/-O3: the 32-bit encoding is larger but doesn't store s7 (so doesn't waste performance)
+  e0073e:       <32-bit>                push {ra,s0-s6}, {a0-a2}
   e00758:       8bb6                    mv      s7,a3
   e0075a:       8a3a                    mv      s4,a4
 
 #optimised epilogue
-#the 16-bit encoding also loads s8, and doesn't include the mv a0, s0 -> BAD CHOICE
-  e0079a:       8522                    mv      a0,s0
-  e0079c:       <16-bit>                popret {ra,s0-s8}, 48
+#-Os/-Oz the smallest is with the 16-bit encoding which also stores s7 (so wastes performance)
+  e0079c:       <16-bit>                popret {ra,s0-s7}, {s0}, 48
 
-#-Os/-Oz/-O1/-O2/-O3: always compile to the 32-bit encoding, 
-#it has the same overall code size as the 16-bit encoding and doesn't load s8
-  e0079c:       <32-bit>                popret {ra,s0-s7}, {s0}, 48
+#-O1/-O2/-O3: the 32-bit encoding is larger but doesn't store s7 (so doesn't waste performance)
+  e0079c:       <32-bit>                popret {ra,s0-s6}, {s0}, 48
 ----
 
 === Assembly examples
@@ -2347,7 +2372,6 @@ lw   s4, 136(sp);
 lw   s5, 132(sp);  
 lw   s6, 128(sp);  
 lw   s7, 124(sp);  
-lw   s8, 120(sp);  
 addi sp, sp, 160
 ----
 
@@ -2374,7 +2398,6 @@ lw   s4, 136(sp);
 lw   s5, 132(sp);  
 lw   s6, 128(sp);  
 lw   s7, 124(sp);  
-lw   s8, 120(sp);  
 addi sp, sp, 160;
 mv a0, s0;
 ret
@@ -2513,11 +2536,11 @@ Therefore the coverage is the same as the combined covergroups of the set of two
 
 == New branch functionality
 
-`DECBGEZ` and `C.DECBGEZ` are also fused versions of two instructions:
+`DECBNEZ` and `C.DECBNEZ` are also fused versions of two instructions:
 
 [source,sourceCode,text]
 ----
-decbgez  s2, 1, -48
+decbnez  s2, 1, -48
 ----
 
 is equivalent to:
@@ -2525,10 +2548,10 @@ is equivalent to:
 [source,sourceCode,text]
 ----
 addi s2, s2, -1
-bgez s2, -48
+bnez s2, -48
 ----
 
-Therefore the coverage is the same as for `ADDI/BGEZ` combined, noting the limited range of subtraction values (1,2,4,8) and the range of the branch offset (especially for `C.DECBGEZ`).
+Therefore the coverage is the same as for `ADDI/BGEZ` combined, noting the limited range of subtraction values (1,2,4,8) and the range of the branch offset (especially for `C.DECBNEZ`).
 
 == Sequenced functionality
 
@@ -3055,10 +3078,10 @@ These encodings require too much space for the benefit.
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| C.LBUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][ 7:0])
-| C.LHUSP       | rd' = zero_ext(Memory[sp + zero_ext(uimm)][15:0])
-| C.SBSP        | Memory[sp + zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
-| C.SHSP        | Memory[sp + zero_ext(uimm)][15:0] = rs2'[15:0]
+| C.LBUSP       | rd' = zero_ext(DataMemory[sp + zero_ext(uimm)][ 7:0])
+| C.LHUSP       | rd' = zero_ext(DataMemory[sp + zero_ext(uimm)][15:0])
+| C.SBSP        | DataMemory[sp + zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
+| C.SHSP        | DataMemory[sp + zero_ext(uimm)][15:0] = rs2'[15:0]
 |=======================================================================
 
 [#ldstbh_sprel_32bit]
