@@ -1411,7 +1411,7 @@ Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for 
 ** if `ret_val` is included, moves the specified constant value into `a0` as the return value
 ** adjusts the stack pointer by the `stack_adjustment`.
 
-. `POPRET` has the same behaviour as `POP`, followed by `RET`. It uses `rsreg_list` as the `ra` register must be included.
+. `POPRET` has the same behaviour as `POP`, followed by `RET`.
 
 32-bit and 16-bit forms of all instructions are available, the assembler should choose the 16-bit form if the parameters permit.
 
@@ -1446,8 +1446,6 @@ push         {<reg_list_32u>}, [{<areg_list>}], -stack_adjustment_0_31
 popret       {<reg_list_32u>}, [{ret_val_32},]   stack_adjustment_0_31
 pop          {<reg_list_32u>}, [{ret_val_32},]   stack_adjustment_0_31
 
-sreg_list in the pseudo-code refers to sreg_list_32u
-
 ----
 
 This syntax is for the 32-bit encodings, for the EABI, which has a shorter range of `s` registers. Note that if the highest register in `sreg_list_e` is `s2` or lower, then this instruction is a _pseudo-instruction_ for the non `.e` version. If `sreg_list_e` includes `s3` or `s4` then it is a separate encoding.
@@ -1460,8 +1458,6 @@ This syntax is for the 32-bit encodings, for the EABI, which has a shorter range
 push.e         {<reg_list_e>}, [{<areg_list>}], -stack_adjustment_0_31
 popret.e       {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
 pop.e          {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
-
-sreg_list in the pseudo-code refers to sreg_list_e
 
 ----
 
@@ -1478,8 +1474,6 @@ c.push       {<reg_list_16u>}, {<areg_list>}, -stack_adjustment_0_3
 c.popret     {<reg_list_16u>}, [{0},]          stack_adjustment_0_3
 c.pop        {<reg_list_16u>},                 stack_adjustment_0_1
 
-sreg_list in the pseudo-code refers to sreg_list_16u
-
 ----
 
 This syntax is for the 16-bit encodings, for the EABI. All variables have been previously defined.
@@ -1491,8 +1485,6 @@ c.push.e     {<reg_list_e>}, {<areg_list>}, -stack_adjustment_0_3
 c.popret.e   {<reg_list_e>}, [{0},]          stack_adjustment_0_3
 c.pop.e      {<reg_list_e>},                 stack_adjustment_0_1
 
-sreg_list in the pseudo-code refers to sreg_list_e
-
 ----
 
 Examples of valid 16-bit encodings for RV32I or RV64I using the UABI:
@@ -1500,18 +1492,18 @@ Examples of valid 16-bit encodings for RV32I or RV64I using the UABI:
 [source,sourceCode,text]
 ----
 
-push   {ra},                 -16; //store ra;                                                decrement sp by 16
-push   {ra,s0},    {a0},     -32; //store ra,s0;     mv s0,a0;                               decrement sp by 32
-push   {ra,s0-s1}, {a0-a1},  -96; //store ra,s0-s1;  mv s0,a0; mv s1,a1;                     decrement sp by 96
-push   {ra,s0-s11},{a0-a3}, -128; //store ra,s0-s11; mv s0,a0; mv s1,a1; mv s2,a2; mv s2,a3; decrement sp by 128
+c.push   {ra},                 -16; //store ra;                                                decrement sp by 16
+c.push   {ra,s0},    {a0},     -32; //store ra,s0;     mv s0,a0;                               decrement sp by 32
+c.push   {ra,s0-s1}, {a0-a1},  -96; //store ra,s0-s1;  mv s0,a0; mv s1,a1;                     decrement sp by 96
+c.push   {ra,s0-s11},{a0-a3}, -128; //store ra,s0-s11; mv s0,a0; mv s1,a1; mv s2,a2; mv s2,a3; decrement sp by 128
 
-pop    {ra},        16;  //load  ra;        increment sp by 16
-popret {ra},        16;  //load  ra;        increment sp by 16; jump to ra
+c.pop    {ra},        16;  //load  ra;        increment sp by 16
+c.popret {ra},        16;  //load  ra;        increment sp by 16; jump to ra
 
-pop    {ra,s0},     32;  //load  ra,s0;     increment sp by 32
-popret {ra,s0},{0}, 32;  //load  ra,s0;     increment sp by 32; li a0, 0; jump to ra
-popret {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96;           jump to ra
-popret {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128;          jump to ra
+c.pop    {ra,s0},     32;  //load  ra,s0;     increment sp by 32
+c.popret {ra,s0},{0}, 32;  //load  ra,s0;     increment sp by 32; li a0, 0; jump to ra
+c.popret {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96;           jump to ra
+c.popret {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128;          jump to ra
 
 ----
 
@@ -1815,6 +1807,7 @@ In many cases the 16-bit encoding is sufficient. The 32-bit encoding offers a la
 Additional benefits of the 32-bit encoding are:
 
 * more accurate register lists improving performance and memory usage (so that superfluous `s` registers aren't saved/restored)
+* disabling the mebedded `mv` instrucitons for `PUSH` if they are not needed
 * better control over the return value (`POP/POPRET`) improving code-size.
 
 [#total-stack-rv32]
