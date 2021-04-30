@@ -1,0 +1,61 @@
+minutes
+
+SIGs will continue to provide oversight along with HCs, TGs come and go
+
+this group charters code-size TG
+
+shoudl make a proposal for code optimisation to the T&R HSC
+ - under UNPRIV, dotted line to CODE-OPT
+
+code-size optimisation is a big gap
+
+Evandro and Christoph to take ownership, and bring a proposal to T&R
+
+board says to divide and conquer - is it ok to postpone some instructions?
+list the work that needs to be done, e.g. benchmarking PUSH.F
+discuss plan next week
+including PoC configs
+
+explain encoding strategy at next chairs meeting 
+
+Anders can generate encoding table form their tools, and check they are valid
+
+minutes 13/4/2021
+
+SWGP -> SWTP, change available to implied
+
+
+Evandro maybe think about RV64 more e.g. LDGP, SWGP
+Also test RVE, specify EABI versions, note can't be finalised yet
+- ask EABI group about the latest spec - hopefully stable doc next week
+
+CLIC is table of pointers
+
+What's the benefit of not having C+Zce
+
+notes about 16/32-bit encodings got push/pop/tbljal in the doc
+
+-> Zcecm is redundant, as you'd never specify it in the config string, dotted line
+
+embedded profile - talk to Krste and Greg - for Mark's meeting with Krste on friday
+
+remove Zced from Zce, Zced implies not D
+rename Zced to Zcen/Zcels
+
+Anders - to look at C.DECBGEZ
+
+
+Fix the encoding - looks like there is overlap on C.POPRET.E
+spimm[5:4] not spimm[1:0]
+
+DH - concern about subsets, let's get input from Krste before changing it, but concern noted
+
+DECBGEZ: analysis of patterns - BNEZ is an easier solution, and Anders will do some more work and we can udpate it next week if he's still happy with that
+(PPC instruction DECBGEZ) GCC uses C.BGEZ/C.BNEZs that's what's available
+
+MULI needs 10 bit immediate
+report MULIADD when MULI already inferred
+
+why ADDIADD is so high for HUFFBENCH
+- can release the script first then Paolo can run it
+
