@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.34b
-Version 0.34b
+= RISC-V Zce code-size reduction extension proposal v0.34c
+Version 0.34c
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,9 +16,12 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.34b   | Update encodings as request by John Hauser for 16-bit encodings 
+| 0.34c   | Update encodings as request by John Hauser for 16-bit encodings 
 |         | Update C.TBLJAL encoding
 |         | Change C.PUSH etc encodings, and adjust register lists and spimm ranges. No change to 32-bit encodings.
+|         | Put BEQI/BNEI in the BRANCH major opcode with funct3=01x
+|         | Reinstate C.MVA01S07 (will get renamed at some point)
+|         | Still to do for v0.34 - remove MULIW, ADDIADD*, MULIADD*, and try to sensibly encode MULI
 | 0.33    | s0 as a return value is UNSAFE for pop/popret, as the sequence is not restartable. Only returning constant values 0/1/-1 (only 0 for C.POPRET)
 |         | Simplify PUSH/POP/POPRET to remove ra option (very rare not to include ra)
 |         | Increase PUSH/C.PUSH embedded moves to include a3, and make them consistent with between PUSH and C.PUSH (PUSH has the option not to do any so as not to waste performance).
@@ -110,6 +113,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |MULIW| |✓|✓|Zcea|requires M or Zmmul
 |MULIADDW| |✓|✓|Zcea|requires M or Zmmul
 6+|other 16-bit encodings
+|C.MVA01S07| |✓|✓|Zcea|
 |C.NOT|✓|✓|✓|Zcea|
 |C.NEG|✓|✓|✓|Zcea|
 |C.TBLJAL|✓|✓|✓|Zcea|
@@ -255,6 +259,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |C.ADDW (RV32:RSV)                     | |Zc64/Zc128	|	|✓	|✓	|C
 
 |100       |C.MUL                                 | |Zcea	|	|✓	|✓	|M+C+*Zcea*
+|100       |C.MVA01S07                            | |Zcea	|	|✓	|✓	|C+*Zcea*
 
 
 |101       |C.J	       | |Zci	|✓	|✓	|✓	|C
@@ -311,6 +316,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 |3|101    |1xx    |00   |C.SH
 
 | |100    |111    |01   |C.MUL
+| |100    |111    |01   |C.MVA01S07
 
 |11|101   |xxx    |10   |C.DECBNEZ
 |======================================
@@ -407,7 +413,6 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 17+|monadic with single source/dest, room for 1 more encoding 
 3+|  100     3+| 111        3+| rd'     2+| 10    3+| rs2'    2+| 00    | C.MUL
-3+|  100     3+| 111        3+| rd'     2+| 11    3+| rs2'    2+| 00    | *reserved*
 |=============================================================================================
 
 [#monsemantics]
@@ -478,6 +483,75 @@ sext.w a5, a5;  # a5 = sign_ext(a5[31:0])
 
 `C.SEXT.W` is added as a pseudo-instruction for `C.ADDIW rd, rd, 0`
 
+=== C.MVA01S07
+
+Register moves are the most common in GCC output in both the benchmark suite and the Debian distro. This two instructions combines a very common pairs of moves into a single 16-bit encoding:
+
+* move from two `s[0-7]` registers into `a0` and `a1`.
+
+Similar to `PUSH/POP` this instruction uses ABI names for the registers. The mapping from `s` to `x` number is simple. For `RV32_Zdinx` a paired register write port is required already. For other configurations the microarchitecture can split the instructions into an uninterruptable sequence of two `mv` instructions to avoid the second write port.
+
+[NOTE]
+
+  We may need an EABI version of this instruction. TBD.
+
+[NOTE]
+
+  There is no 32-bit instruction, because a 32-bit form would add no value.
+
+Mapping from the `s` register number to the `x` register index is simple for the UABI:
+
+[source,sourceCode,text]
+----
+
+//000 (s0) -> 01000 (x8)
+//001 (s1) -> 01001 (x9)
+//010 (s2) -> 10010 (x18)
+//011 (s3) -> 10011 (x19)
+// ...         ...
+//111 (s7) -> 10111 (x23)
+
+//verilog syntax for concatenation of bits
+xreg[4:0] = {sreg[2:1]>0,sreg[2:1]==0,sreg[2:0]};
+----
+
+The EABI mapping may not be so simple, TBD.
+
+[#mva-16encodings]
+.`C.MVA01S07` 16-bit encodings
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|monadic with single source/dest, room for 1 more encoding 
+3+|  100     3+| 111        3+| sreg1   2+| 11    3+| sreg2   2+| 00    | C.MVA01S07
+|=============================================================================================
+
+[#mva_semantics]
+.`C.MVA01S07` semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction                | definition
+| C.MVA01S07 sreg1, sreg2   | mv a0, s[sreg1];  mv a1, s[sreg2]
+|=======================================================================
+
+[#mva_syntax]
+.`C.MVA01S07` assembler syntax
+[width="100%",options=header]
+|======================================================================================================
+|instruction | assembler syntax       | requirements for 16-bit encoding   | 32-bit extension
+|C.MVAS01S07 | mv(a0,a1),(sreg1,sreg2)| none                               | N/A
+|======================================================================================================
+
+Assembly examples.
+[source,sourceCode,text]
+----
+# c.mva01s07: sreg1 = 0; sreg2 = 0;
+mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
+----
+
+
+
+
 === MULI, MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
 
 These instructions have no conflicts with other extensions, they use previously reserved encodings.
@@ -537,7 +611,7 @@ addiaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 + 2)
 
 [NOTE]
 
-  These encodings could go in the `BRANCH` major opcode, with `funct3=01x`, if not otherwise allocated?
+  These encodings use reserved encodings in the `BRANCH` major opcode, with `funct3=01x`. The format uses the offset from `JALR`, although slightly shortened to take less encoding space, and the immediate field from `SB`, but _is_ a different format.
 
 The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
 
@@ -545,9 +619,9 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 .proposed 32-bit encodings for `BEQI/BNEI`
 [width="100%",options=header]
 |=========================================================================================================================
-| 31:30 |  29:24        |23:20            |19:15 | 14:12   | 11:7              | 6 : 0 | instruction
-| 00    | scmpimm[5:0]  |  offset[9:6]    | rs1  | 000     | offset[5:1]       |0001011| BEQI
-| 00    | scmpimm[5:0]  |  offset[9:6]    | rs1  | 001     | offset[5:1]       |0001011| BNEI
+| 31:30 |  29:20         |19:15 | 14:12   | 11:7              | 6 : 0 | instruction
+| 00    | offset[9:0]    | rs1  | 010     | scmpimm[4:0]      |1100011| BEQI
+| 00    | offset[9:0]    | rs1  | 011     | scmpimm[4:0]      |1100011| BNEI
 |=========================================================================================================================
 
 [#compare-immediate branch_semantics]
@@ -3120,7 +3194,7 @@ The generic move uses standard x register numbers, and so it more standard than 
 |=======================================================================
 
 [#mvp-syntax]
-.`C.MV01S07, C.MV23S07` assembler syntax
+.`C.MVP` assembler syntax
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembler syntax          | requirements for 16-bit encoding   | 32-bit extension
@@ -3138,59 +3212,37 @@ Assembly examples.
 mv (x2, x3), (x18, x19) ; # mv x2, x2; mv x18, x19
 ----
 
-=== C.MVA01S07, C.MVA23S07
+=== C.MVA23S07
 
-Register moves are the most common in GCC output in both the benchmark suite and the Debian distro. These two instructions combine two very common pairs of moves into single 16-bit encodings:
-
-* move from two `s[0-7]` registers into `a0` and `a1`.
-* move from two `s[0-7]` registers into `a2` and `a3`.
-
-[NOTE]
-
-  The syntax takes ABI names not `x` register names, so it is unusual. However this allows much more frequent usage without increasing the encoding space requirement.
-
-[NOTE]
-
-  Currently there are no 32-bit equivalent instructions, is it enough to expand to *two* 32-bit instructions?
-
-[NOTE]
-
-  These are optional (`Zces`) as they require 2 register file write ports, or are sequenced.
-
+Similar to C.MVA01S07 but the benefit is much lower.
 
 [#proposed-16bit-encodings-4]
-.`C.MV01S07, C.MV23S07` 16-bit encoding
+.`C.MVA01S07, C.MVA23S07` 16-bit encoding
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100     2+|10     3+| 000      3+|sreg1      3+|sreg2    2+| 00    | C.MVA01S07
 3+|  100     2+|10     3+| 001      3+|sreg1      3+|sreg2    2+| 00    | C.MVA23S07
 |================================================================================================
 
 [#mvs07_semantics]
-.`C.MV01S07, C.MV23S07` semantics
+.`C.MVA01S07, C.MVA23S07` semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction                | definition
-| C.MVA01S07 sreg1, sreg2   | mv a0, s[sreg1];  mv a1, s[sreg2]
 | C.MVA23S07 sreg1, sreg2   | mv a2, s[sreg1];  mv a3, s[sreg2]
 |=======================================================================
 
 [#mvs07_syntax]
-.`C.MV01S07, C.MV23S07` assembler syntax
+.`C.MVA01S07, C.MVA23S07` assembler syntax
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembler syntax       | requirements for 16-bit encoding   | 32-bit extension
-|C.MVAS01S07 | mv(a0,a1),(sreg1,sreg2)| none                               | N/A
 |C.MVAS23S07 | mv(a2,a3),(sreg1,sreg2)| none                               | N/A
 |======================================================================================================
 
 Assembly examples.
 [source,sourceCode,text]
 ----
-# c.mva01s: sreg1 = 0; sreg2 = 0;
-mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
-
 # c.mva23s: sreg1 = 1; sreg2 = 3;
 mv (a2, a3), (s1, s3) ; # mv a2, s1; mv a3, s3
 ----
