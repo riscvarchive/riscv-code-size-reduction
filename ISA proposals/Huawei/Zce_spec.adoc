@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.34a
-Version 0.34a
+= RISC-V Zce code-size reduction extension proposal v0.34b
+Version 0.34b
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,7 +16,9 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.34a   | Update encodings as request by John Hauser for 16-bit encodings (next commit will include C.PUSH/C.POP etc.)
+| 0.34b   | Update encodings as request by John Hauser for 16-bit encodings 
+|         | Update C.TBLJAL encoding
+|         | Change C.PUSH etc encodings, and adjust register lists and spimm ranges. No change to 32-bit encodings.
 | 0.33    | s0 as a return value is UNSAFE for pop/popret, as the sequence is not restartable. Only returning constant values 0/1/-1 (only 0 for C.POPRET)
 |         | Simplify PUSH/POP/POPRET to remove ra option (very rare not to include ra)
 |         | Increase PUSH/C.PUSH embedded moves to include a3, and make them consistent with between PUSH and C.PUSH (PUSH has the option not to do any so as not to waste performance).
@@ -950,7 +952,7 @@ These instructions have no conflicts with other extensions, they use previously 
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10  | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100       | 1  | 1  | 0 8+|index8                         2+| 00    | C.TBLJAL
+3+|  100       3+| 010       8+|index8                         2+| 00    | C.TBLJAL
 |=============================================================================================
 
 [#tbljal16bitassemblersyntax]
@@ -1489,8 +1491,8 @@ This syntax is for the 16-bit encodings, for the UABI. The rules stated above fo
 <sreg_list_16u>  ::= <s0>  | <s0-sN>   (where N is 1,2,3,5,7,11)
 <reg_list_16u>   ::= <ra> ["," <sreg_list_16u>]
 
-c.push       {<reg_list_16u>}, {<areg_list>}, -stack_adjustment_0_3
-c.popret     {<reg_list_16u>}, [{0},]          stack_adjustment_0_3
+c.push       {<reg_list_16u>}, {<areg_list>}, -stack_adjustment_0_5
+c.popret     {<reg_list_16u>}, [{0},]          stack_adjustment_0_5
 c.pop        {<reg_list_16u>},                 stack_adjustment_0_1
 
 ----
@@ -1500,8 +1502,8 @@ This syntax is for the 16-bit encodings, for the EABI. All variables have been p
 [source,sourceCode,text]
 ----
 
-c.push.e     {<reg_list_e>}, {<areg_list>}, -stack_adjustment_0_3
-c.popret.e   {<reg_list_e>}, [{0},]          stack_adjustment_0_3
+c.push.e     {<reg_list_e>}, {<areg_list>}, -stack_adjustment_0_5
+c.popret.e   {<reg_list_e>}, [{0},]          stack_adjustment_0_5
 c.pop.e      {<reg_list_e>},                 stack_adjustment_0_1
 
 ----
@@ -1679,6 +1681,45 @@ if (opcode == "POPRET"   or
 
   `rlist>12` gives register lists which only map to the EABI because the `X` register mapping is different for `s2-s4`, hence the `.E` suffix
 
+
+[#32bit-ret_val]
+.`ret_val` values for the 32-bit encodings for `POP, POPRET`
+[options="header"]
+|=========================================
+|return value      |ABI names  
+| 0      |none (don't set a0)        
+| 1      |a0=0
+| 2      |a0=1
+| 3      |a0=-1
+|=========================================
+
+[#32bit-rlist]
+.`rlist` field values for the 32-bit encodings
+[options="header"]
+|==========================
+|rlist  | ABI names | ABI                
+3+|`s0-s1` are the same for the UABI or EABI so the encoding is the same
+| 0      |none       | both           
+| 1      |s0         | both  
+| 2      |s0-s1      | both     
+| 3      |s0-s2      | UABI     
+3+|`s2+` is different
+| 4      |s0-s3      | UABI      
+| 5      |s0-s4      | UABI      
+| 6      |s0-s5      | UABI      
+| 7      |s0-s6      | UABI      
+| 8      |s0-s7      | UABI      
+| 9      |s0-s8      | UABI      
+| 10     |s0-s9      | UABI      
+| 11     |s0-s10     | UABI       
+| 12     |s0-s11     | UABI       
+3+|EABI has `s2-s4` differently mapped
+| 13     |s0-s2      | EABI     
+| 14     |s0-s3      | EABI     
+| 15     |s0-s4      | EABI      
+|==========================
+
+
 [#proposed-32bit-encodingsI-2]
 .PUSH/POP/POPRET 32-bit encoding validity on RV32I/RV32E/RV64I/RV128I
 [width="100%",options=header]
@@ -1735,30 +1776,54 @@ These instructions have no conflicts with other extensions, they use previously 
 .PUSH/POP/POPRET 16-bit encodings 
 [width="100%",options=header]
 |=========================================================================================================================
-|15 |14 |13 |12 |11 |10  |9 |8     |7|6   |5   |4 |3 |2           |1 |0 |instruction   
+|15 |14 |13 |12 |11 |10  |9 |8    |7|6   |5   |4 |3 |2           |1 |0 |instruction   
 
-3+|100    3+|000       3+|rlist[2:0] |ret0|0 3+|spimm[6:4]      2+| 00  |C.POPRET      
+3+|100    3+|011       3+|spimm0_5  |0   |ret0 3+|rlist3       2+| 00  |C.POPRET
+3+|100    3+|011       2+|11|spimm0 |0   |0    3+|rlist3       2+| 00  |C.POP
+3+|100    3+|011       2+|11|spimm0 |0   |1    |0 2+|rlist2    2+| 00  |C.POP.E (RV32 only)
 
-3+|100    3+|000       3+|rlist[2:0] |0   |1 3+|spimm[6:4]      2+| 00  |C.PUSH        
-
-3+|100    3+|000       3+|000-010    |1   |1   |0 2+|spimm[5:4] 2+| 00  |*reserved*    
-3+|100    3+|000       3+|011        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s2}   
-3+|100    3+|000       3+|100        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s3}   
-3+|100    3+|000       3+|101        |1   |1   |0 2+|spimm[5:4] 2+| 00  |C.PUSH.E   {ra, s0-s4}   
-3+|100    3+|000       2+|11 |rlist[0] |1   |1   |0 |rlist[1] |spimm[4] 2+|00  |C.POP    
-
-3+|100    3+|000       |ret0 2+|00   |1   |1   |1 2+|spimm[5:4] 2+| 00  |C.POPRET.E   {ra, s0-s2}  
-3+|100    3+|000       |ret0 2+|01   |1   |1   |1 2+|spimm[5:4] 2+| 00  |C.POPRET.E   {ra, s0-s3}  
-3+|100    3+|000       |ret0 2+|10   |1   |1   |1 2+|spimm[5:4] 2+| 00  |C.POPRET.E   {ra, s0-s4}  
-3+|100    3+|000       |0    2+|11   |1   |1   |1 |0 |spimm[4] 2+| 00  |C.POP.E {ra, s0-s2}    
-3+|100    3+|000       |1    2+|11   |1   |1   |1 |0 |spimm[4] 2+| 00  |*reserved*    
-3+|100    3+|000       |0    2+|11   |1   |1   |1 |1 |spimm[4] 2+| 00  |*reserved*    
-3+|100    3+|000       |1    2+|11   |1   |1   |1 |1 |spimm[4] 2+| 00  |*reserved*    
+3+|100    3+|011       3+|spimm0_5  |1   |0    3+|rlist3       2+| 00  |C.PUSH
+3+|100    3+|011       3+|spimm0_5  |1   |1    |ret0 2+|rlist2 2+| 00  |C.POPRET.E (RV32 only)
+3+|100    3+|011       2+|11|spimm0_5[2] |1   2+|spimm0_5[1:0] 2+|rlist2 2+| 00  |C.PUSH.E (RV32 only)
 
 |=========================================================================================================================
 
-  * For `C.POPRET`, `ret_val[0]=ret0` as specified in the encoding, `ret_val[1]=0`. 
-  * For `C.POP` `ret_val[1:0]=0`.
+  * `spimm0_5` has legal values of 0 to 5
+
+[#rlist3-table]
+.`rlist3` values for the 16-bit encodings
+[options="header",width=100%]
+|============================
+|rlist3| ABI names
+|0     |{ra}
+|1     |{ra, s0}
+|2     |{ra, s0-s1}
+|3     |{ra, s0-s2}
+|4     |{ra, s0-s3}
+|5     |{ra, s0-s5}
+|6     |{ra, s0-s7}
+|7     |{ra, s0-s11}
+|============================
+
+[#rlist2-table]
+.`rlist2` values for the 16-bit encodings
+[options="header",width=100%]
+|============================
+|rlist2| ABI names
+|0     |{ra, s0-s2}
+|1     |{ra, s0-s3}
+|2     |{ra, s0-s4}
+|3     |*reserved*
+|============================
+
+[#ret0-table]
+.`ret0` values for the 16-bit encodings
+[options="header",width=100%]
+|=========================================
+|return value      |ABI names  
+| 0      |none (don't set a0)        
+| 1      |a0=0
+|=========================================
 
 
 [#proposed-16bit-encodingsI-2]
@@ -1839,19 +1904,19 @@ These tables are provided as a handy reference, they are all calculated from the
 [width="100%",options=header]
 |==========================================================================================
 | rlist       | C.PUSH      | C.PUSH.E    | C.POPRET  | C.POPRET.E | C.POP       | C.POP.E
-| {ra}        | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
-| {ra, s0}    | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
-| {ra, s0-s1} | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
-| {ra, s0-s2} | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
-| {ra, s0-s3} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | N/A         | N/A    
-| {ra, s0-s4} | N/A         | -32 to -144 | N/A       | 32 to 144  | N/A         | N/A    
-| {ra, s0-s5} | -32 to -144 | N/A         | 32 to 144 | N/A        | N/A         | N/A      
-| {ra, s0-s7} | -48 to -160 | N/A         | 48 to 160 | N/A        | N/A         | N/A     
-| {ra, s0-s11}| -64 to -176 | N/A         | 64 to 176 | N/A        | N/A         | N/A     
+| {ra}        | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   | 16 to 32    | 16 to 32
+| {ra, s0}    | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   | 16 to 32    | 16 to 32
+| {ra, s0-s1} | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   | 16 to 32    | 16 to 32
+| {ra, s0-s2} | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   | 16 to 32    | 16 to 32
+| {ra, s0-s3} | -32 to -112 | -32 to -112 | 32 to 112 | 32 to 112  | N/A         | 16 to 48
+| {ra, s0-s4} | N/A         | -32 to -112 | N/A       | 32 to 112  | N/A         | N/A
+| {ra, s0-s5} | -32 to -112 | N/A         | 32 to 112 | N/A        | 32 to 48    | 32 to 48
+| {ra, s0-s7} | -48 to -128 | N/A         | 48 to 128 | N/A        | 48 to 64    | 48 to 64
+| {ra, s0-s11}| -64 to -144 | N/A         | 64 to 144 | N/A        | 64 to 80    | 64 to 80
 |==========================================================================================
 
 [#spimmrange_32_ra]
-.PUSH/POP/POPRET valid values of total stack adjustment for RV32 including ra
+.PUSH/POP/POPRET valid values of total stack adjustment for RV32
 [width="100%",options=header]
 |==========================================================================================
 | rlist       |   PUSH      |   PUSH.E    | POP/POPRET|POP.E/POPRET.E 
@@ -1870,25 +1935,6 @@ These tables are provided as a handy reference, they are all calculated from the
 | {ra, s0-s11}| -64 to -560 | N/A         | 64 to 560 | N/A        
 |==========================================================================================
 
-[#spimmrange_32_no_ra]
-.PUSH/POP valid values of total stack adjustment for RV32 excluding ra
-[width="100%",options=header]
-|==========================================================================================
-| rlist       |   PUSH      |   PUSH.E    | POP       |POP.E
-| {s0}        | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
-| {s0-s1}     | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
-| {s0-s2}     | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
-| {s0-s3}     | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
-| {s0-s4}     | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528  
-| {s0-s5}     | -32 to -528 | N/A         | 32 to 528 | N/A
-| {s0-s6}     | -32 to -528 | N/A         | 32 to 528 | N/A        
-| {s0-s7}     | -32 to -528 | N/A         | 32 to 528 | N/A        
-| {s0-s8}     | -48 to -544 | N/A         | 48 to 544 | N/A        
-| {s0-s9}     | -48 to -544 | N/A         | 48 to 544 | N/A        
-| {s0-s10}    | -48 to -544 | N/A         | 48 to 544 | N/A        
-| {s0-s11}    | -48 to -544 | N/A         | 48 to 544 | N/A        
-|==========================================================================================
-
 [#total-stack-rv64]
 ==== Total stack adjustment ranges for RV64
 
@@ -1899,19 +1945,19 @@ These tables are provided as a handy reference, they are all calculated from the
 [width="100%",options=header]
 |==========================================================================================
 | rlist       | C.PUSH      | C.PUSH.E    | C.POPRET  | C.POPRET.E | C.POP       | C.POP.E
-| {ra}        | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
-| {ra, s0}    | -16 to -128 | -16 to -128 | 16 to 128 | 16 to 128  | 16 to 32    | 16 to 32      
-| {ra, s0-s1} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | 32 to 48    | 32 to 48      
-| {ra, s0-s2} | -32 to -144 | -32 to -144 | 32 to 144 | 32 to 144  | 32 to 48    | 32 to 48      
-| {ra, s0-s3} | -48 to -160 | -48 to -160 | 48 to 160 | 48 to 160  | N/A         | N/A      
-| {ra, s0-s4} | N/A         | -48 to -160 | N/A       | 48 to 160  | N/A         | N/A      
-| {ra, s0-s5} | -64 to -176 | N/A         | 64 to 176 | N/A        | N/A         | N/A       
-| {ra, s0-s7} | -80 to -192 | N/A         | 80 to 192 | N/A        | N/A         | N/A     
-| {ra, s0-s11}| -112 to -224| N/A         |112 to 224 | N/A        | N/A         | N/A     
+| {ra}        | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   |  16 to 32   | 16 to 32        
+| {ra, s0}    | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   |  16 to 32   | 16 to 32        
+| {ra, s0-s1} | -32 to -112 | -32 to -112 | 32 to 112 | 32 to 112  |  32 to 48   | 32 to 48       
+| {ra, s0-s2} | -32 to -112 | -32 to -112 | 32 to 112 | 32 to 112  |  32 to 48   | 32 to 48       
+| {ra, s0-s3} | -48 to -128 | -48 to -128 | 48 to 128 | 48 to 128  |  48 to 64   | 48 to 80  
+| {ra, s0-s4} | N/A         | -48 to -128 | N/A       | 48 to 128  |  N/A        | 48 to 96  
+| {ra, s0-s5} | -64 to -144 | N/A         | 64 to 144 | N/A        |  64 to 80   | N/A         
+| {ra, s0-s7} | -80 to -160 | N/A         | 80 to 160 | N/A        |  80 to 96   | N/A       
+| {ra, s0-s11}| -112 to -192| N/A         |112 to 192 | N/A        | 112 to 128  | N/A       
 |==========================================================================================
 
 [#spimmrange_32_ra_rv64]
-.PUSH/POP/POPRET valid values of total stack adjustment for RV64 including ra
+.PUSH/POP/POPRET valid values of total stack adjustment for RV64
 [width="100%",options=header]
 |==========================================================================================
 | rlist       |   PUSH      |   PUSH.E    | POP/POPRET|POP.E/POPRET.E 
@@ -1929,89 +1975,6 @@ These tables are provided as a handy reference, they are all calculated from the
 | {ra, s0-s10}| -96 to -592 | N/A         | 96 to 592 | N/A        
 | {ra, s0-s11}|-112 to -608 | N/A         |112 to 608 | N/A        
 |==========================================================================================
-
-[#spimmrange_32_no_ra_rv64]
-.PUSH/POP valid values of total stack adjustment for RV64 excluding ra
-[width="100%",options=header]
-|==========================================================================================
-| rlist       |   PUSH      |   PUSH.E    | POP       |POP.E
-| {s0}        | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512 
-| {s0-s1}     | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512 
-| {s0-s2}     | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528 
-| {s0-s3}     | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528 
-| {s0-s4}     | -48 to -544 | -48 to -544 | 48 to 544 | 48 to 544 
-| {s0-s5}     | -48 to -544 | N/A         | 48 to 544 | N/A
-| {s0-s6}     | -64 to -560 | N/A         | 64 to 560 | N/A        
-| {s0-s7}     | -64 to -560 | N/A         | 64 to 560 | N/A        
-| {s0-s8}     | -80 to -576 | N/A         | 80 to 576 | N/A        
-| {s0-s9}     | -80 to -576 | N/A         | 80 to 576 | N/A        
-| {s0-s10}    | -96 to -592 | N/A         | 96 to 592 | N/A        
-| {s0-s11}    | -96 to -592 | N/A         | 96 to 592 | N/A        
-|==========================================================================================
-
-==== ret_val and rlist for the 32-bit encodings
-
-The registers in the `reg_list` are controlled by these fields
-
-[#32bit-ret_val]
-.`ret_val` values for the 32-bit encodings for `POP, POPRET`
-[options="header"]
-|=========================================
-|return value      |ABI names  
-| 0      |none (don't set a0)        
-| 1      |a0=0
-| 2      |a0=1
-| 3      |a0=-1
-|=========================================
-
-[#32bit-rlist]
-.`rlist` field values for the 32-bit encodings
-[options="header"]
-|==========================
-|rlist  | ABI names | ABI                
-3+|`s0-s1` are the same for the UABI or EABI so the encoding is the same
-| 0      |none       | both           
-| 1      |s0         | both  
-| 2      |s0-s1      | both     
-| 3      |s0-s2      | UABI     
-3+|`s2+` is different
-| 4      |s0-s3      | UABI      
-| 5      |s0-s4      | UABI      
-| 6      |s0-s5      | UABI      
-| 7      |s0-s6      | UABI      
-| 8      |s0-s7      | UABI      
-| 9      |s0-s8      | UABI      
-| 10     |s0-s9      | UABI      
-| 11     |s0-s10     | UABI       
-| 12     |s0-s11     | UABI       
-3+|EABI has `s2-s4` differently mapped
-| 13     |s0-s2      | EABI     
-| 14     |s0-s3      | EABI     
-| 15     |s0-s4      | EABI      
-|==========================
-
-==== `rlist`, `ret_val` for the 16-bit encodings
-
-[#rlist-table]
-.`rlist` values for the 16-bit encodings
-[options="header",width=100%]
-|============================
-|rlist| ABI names
-|0     |ra
-|1     |ra, s0
-|2     |ra, s0-s1
-|3     |ra, s0-s2
-2+|Following options for `C.PUSH/C.POPRET` only
-|4     |ra, s0-s3
-|5     |ra, s0-s5
-|6     |ra, s0-s7
-|7     |ra, s0-s11
-|============================
-
-`ret_val` is as specified in <<32bit-ret_val>>. Note that:
-
-* `C.POPRET` allows bit 0 to vary, bit 1 is always 0
-* `C.POP` always has `ret_val=0` to save encoding space
 
 [#fault-handling]
 === Fault handling
