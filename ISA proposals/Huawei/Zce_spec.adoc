@@ -16,12 +16,12 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.34c   | Update encodings as requested by John Hauser for 16-bit encodings 
+| 0.34    | Update encodings as requested by John Hauser for 16-bit encodings 
 |         | Update C.TBLJAL encoding
 |         | Change C.PUSH etc encodings, and adjust register lists and spimm ranges. No change to 32-bit encodings.
 |         | Put BEQI/BNEI in the BRANCH major opcode with funct3=01x, update branch offset range and make comparison immediate unsigned
 |         | Reinstate C.MVA01S07 (will get renamed at some point)
-|         | Still to do for v0.34 - remove MULIW, ADDIADD*, MULIADD*, and try to sensibly encode MULI
+|         | remove MULIW, ADDIADD*, MULIADD*, change encoding for MULI
 | 0.33    | s0 as a return value is UNSAFE for pop/popret, as the sequence is not restartable. Only returning constant values 0/1/-1 (only 0 for C.POPRET)
 |         | Simplify PUSH/POP/POPRET to remove ra option (very rare not to include ra)
 |         | Increase PUSH/C.PUSH embedded moves to include a3, and make them consistent with between PUSH and C.PUSH (PUSH has the option not to do any so as not to waste performance).
@@ -109,9 +109,6 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 6+|Require M or Zmmul to be inferred
 |C.MUL|✓|✓|✓|Zcea|requires M or Zmmul
 |MULI|✓|✓|✓|Zcea|requires M or Zmmul
-|MULIADD|✓|✓|✓|Zcea|requires M or Zmmul
-|MULIW| |✓|✓|Zcea|requires M or Zmmul
-|MULIADDW| |✓|✓|Zcea|requires M or Zmmul
 6+|other 16-bit encodings
 |C.MVA01S07| |✓|✓|Zcea|
 |C.NOT|✓|✓|✓|Zcea|
@@ -124,8 +121,6 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.POP.E|✓| | |Zcea|
 |C.POPRET.E|✓| | |Zcea|
 6+|other 32-bit encodings
-|ADDIADD|✓|✓|✓|Zcea|
-|ADDIADDW| |✓|✓|Zcea|
 |TBLJAL|✓|✓|✓|Zcea|
 |PUSH|✓|✓|✓|Zcea|
 |POP|✓|✓|✓|Zcea|
@@ -162,7 +157,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 
 All systems which implement `Zcea/Zceb` must also implement the `C` extension. 
 
-If `M` or `Zmmul` is specified then `Zcea` also includes the `C.MUL, MULI, MULIADD` instructions, and `MULIW, MULIADDW` for RV64/RV128.
+If `M` or `Zmmul` is specified then `Zcea` also includes the `C.MUL, MULI` instructions.
 
 == C-extension subsets
 
@@ -536,8 +531,8 @@ The EABI mapping may not be so simple, TBD.
 .`C.MVA01S07` assembler syntax
 [width="100%",options=header]
 |======================================================================================================
-|instruction | assembler syntax       | requirements for 16-bit encoding   | 32-bit extension
-|C.MVAS01S07 | mv(a0,a1),(sreg1,sreg2)| none                               | N/A
+|instruction | example assembler syntax | requirements for 16-bit encoding   | 32-bit extension
+|C.MVAS01S07 | mv(a0,a1),(sreg1,sreg2)  | none                               | N/A
 |======================================================================================================
 
 Assembly examples.
@@ -547,44 +542,32 @@ Assembly examples.
 mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
 ----
 
+=== MULI
 
+This encoding is in the same group as `ADDI, XORI` etc. and uses the same format. It multiplies a 12-bit signed immediate by rs1 with the same semantics as `MUL`.
 
-
-=== MULI, MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
-
-These instructions have no conflicts with other extensions, they use previously reserved encodings.
-
-See https://github.com/clairexen/riscv-fanfic/blob/master/riscv-cfmt/riscv-cfmt.md[Clare's proposal from the B-extension].
-Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[this document], which is implemented on silicon.
-
-[zcec-32bit-encodings-arithmetic]
-.arithmetic instructions 32-bit encodings
+[muli-encodings]
+.`MULI` 32-bit encoding
 [width="100%",options=header]
 |=========================================================================================================================
-| 31:27              | 26|25   |24  |23|22|21:20      |19:18|17:16|15 | 14:12   | 11:10 |9:7        | 6 : 0 | instruction
-15+|C2-type from Claire's proposal
-7+|imm[11:0]                                          |00 2+|rs1'   2+| 11100           | rd'       |0011011| MULI
-7+|imm[11:0]                                          |10 2+|rs1'   2+| 11100           | rd'       |0011011| MULIW
-15+|C3-type from Claire's proposal
-5+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADD
-5+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11100           | rd'       |0011111| MULIADDW
-5+|imm[8:0]                          2+|rs2'          |00 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADD
-5+|imm[8:0]                          2+|rs2'          |10 2+|rs1'   2+| 11101           | rd'       |0011111| ADDIADDW
+| 31:20    |19:15 | 14:12   | 11:7      | 6 : 0 | instruction
+|imm[11:0] |rs1   | 001     |rd         |0010011| MULI
 |=========================================================================================================================
 
+[#muli_syntax]
+.`MULI` assembler syntax
+[width="100%",options=header]
+|=====================================
+|instruction | assembler syntax       
+|MULI        | mul rd, rs1, imm           
+|=====================================
+
 [#arithmetic_semantics]
-.Arithmetic semantics
+.`MULI` semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
 |MULI           |rd' = rs1' * sign_ext(imm)
-|MULIADD        |rd' = rs1' + rs2' * sign_ext(imm)
-|ADDIADD        |rd' = rs1' + rs2' + sign_ext(imm)
-2+|RV64/RV128 only
-|MULIW          |rd' = sign_ext((rs1'[31:0] * sign_ext(imm))[31:0])
-|MULIADDW       |rd' = sign_ext((rs1'[31:0] + rs2'[31:0] * sign_ext(imm))[31:0])
-|ADDIADDW       |rd' = sign_ext((rs1'[31:0] + rs2'[31:0] + sign_ext(imm))[31:0])
-)
 |=======================================================================
 
 Assembly Examples
@@ -592,12 +575,8 @@ Assembly Examples
 [source,sourceCode,text]
 ----
 muli     a0, a1, 2     # a0 = a1 * 2
-muliadd  a0, a1, a2, 2 # a0 = a1 + a2 * 2
-addiadd  a0, a1, a2, 2 # a0 = a1 + a2 + 2
-muliw    a0, a1, 2     # a0 = sign_ext(a1 * 2)
-muliaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 * 2)
-addiaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 + 2)
 ----
+
 
 
 [#cmpimmbr]
@@ -609,7 +588,7 @@ addiaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 + 2)
 
 [NOTE]
 
-  These encodings use reserved encodings in the `BRANCH` major opcode, with `funct3=01x`. The format uses the offset from `JALR`, although slightly shortened to take less encoding space, and the immediate field from `SB`, but _is_ a different format.
+  These encodings match the format for BEQ as much as possible
 
 The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
 
@@ -2492,53 +2471,8 @@ These instructions are extremely similar to existing instructions, so the verifi
 .. these have the same functionality as LW, but the base register is explicitly GP or TP and the immediate offset range is larger
 . SWGP, SWTP
 .. these have the same functionality as SW, but the base register is explicitly GP or TP and the immediate offset range is larger
-. MULI, MULIW
-.. same as MUL, MULW with an immediate operand, note that the register specifiers are only 3-bit (x8-x15)
-
-== New arithmetic functionality
-
-MULIADD[W], ADDIADD[W] are different because they have two register sources and an immediate source. They are all the fused version of two or three instructions. 
-
-`MULIADD` is equivalent to two or three fused instructions:
-
-[source,sourceCode,text]
-----
-muliadd s0, s1, s2, 32
-----
-
-is equivalent to
-
-[source,sourceCode,text]
-----
-muli s0, s2, 32
-add  s0, s0, s1
-----
-
-or without using any Zce instructions:
-
-[source,sourceCode,text]
-----
-li  s0, 32
-mul s0, s0, s2
-add s0, s0, s1
-----
-
-`ADDIADD` is equivalent to a fused version of two instructions:
-
-[source,sourceCode,text]
-----
-addiadd s0, s1, s2, 32
-----
-
-is equivalent to:
-
-[source,sourceCode,text]
-----
-addi s0, s2, 32
-add  s0, s0, s1
-----
-
-Therefore the coverage is the same as the combined covergroups of the set of two or three sequential instructions, covering all combinations which are possible within the fused set for the legal set of operands to `MULIADD` and `ADDIADD`. Because of the 3-bit register specifiers the coverage space is smaller than you might imagine, and additionally the immediate range is smaller than the of the expanded sequence.
+. MULI
+.. same as MUL with a signed immediate operand
 
 == New branch functionality
 
@@ -3033,6 +2967,37 @@ addi sp, sp, -128;
 
 == Benchmarking results too low
 
+=== MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
+
+These instructions have low benefit. `MULIADD` and `ADDIADD` are unpopular due to requiring 3 operands. `MULI` is useful (and is included in the proposal) and takes much of the benefit of `MULIADD`
+
+See https://github.com/clairexen/riscv-fanfic/blob/master/riscv-cfmt/riscv-cfmt.md[Clare's proposal from the B-extension].
+Also see https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/Huawei%20Custom%20Extension/riscv_muladd_extension.rst[this document], which is implemented on silicon.
+
+[#arithmetic_semantics]
+.Arithmetic semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+|MULIADD        |rd' = rs1' + rs2' * sign_ext(imm)
+|ADDIADD        |rd' = rs1' + rs2' + sign_ext(imm)
+2+|RV64/RV128 only
+|MULIW          |rd' = sign_ext((rs1'[31:0] * sign_ext(imm))[31:0])
+|MULIADDW       |rd' = sign_ext((rs1'[31:0] + rs2'[31:0] * sign_ext(imm))[31:0])
+|ADDIADDW       |rd' = sign_ext((rs1'[31:0] + rs2'[31:0] + sign_ext(imm))[31:0])
+)
+|=======================================================================
+
+Assembly Examples
+
+[source,sourceCode,text]
+----
+muliadd  a0, a1, a2, 2 # a0 = a1 + a2 * 2
+addiadd  a0, a1, a2, 2 # a0 = a1 + a2 + 2
+muliw    a0, a1, 2     # a0 = sign_ext(a1 * 2)
+muliaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 * 2)
+addiaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 + 2)
+----
 === BGEUI, BLTUI
 
 These allocate reserved encodings, and are similar to <<cmpimmbr>> but have lower value. It's possible that future use of these instructions will be found in later versions of `Zce`.
