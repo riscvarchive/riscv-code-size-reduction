@@ -24,6 +24,8 @@ This document describes the `Zce` extension to reduce code-size.
 |         | remove MULIW, ADDIADD*, MULIADD*, change encoding for MULI
 |         | Add C.LB, C.LH
 |         | Remove LWTP/SWTP/LDTP/SDTP
+|         | remove TBLJAL - 0.01% benefit occasionally
+|         | Mark DECBNEZ as "limited value" - we may well remove it in the future
 | 0.33    | s0 as a return value is UNSAFE for pop/popret, as the sequence is not restartable. Only returning constant values 0/1/-1 (only 0 for C.POPRET)
 |         | Simplify PUSH/POP/POPRET to remove ra option (very rare not to include ra)
 |         | Increase PUSH/C.PUSH embedded moves to include a3, and make them consistent with between PUSH and C.PUSH (PUSH has the option not to do any so as not to waste performance).
@@ -80,10 +82,11 @@ This document describes the `Zce` extension to reduce code-size.
 * `xTBLJALVEC` need addresses to be allocated
 * EABI spec is not frozen - so it's not clear which formats of PUSH.E etc that I need
 ** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s7, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
+* May need an EABI version of C.MVA01S07
 
 == `Zce` configurations
 
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified3.png[Zce subsets]
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified.png[Zce subsets]
 
 `Zce` is split into two main subsets
 
@@ -123,7 +126,6 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.POP.E|✓| | |Zcea|
 |C.POPRET.E|✓| | |Zcea|
 6+|other 32-bit encodings
-|TBLJAL|✓|✓|✓|Zcea|
 |PUSH|✓|✓|✓|Zcea|
 |POP|✓|✓|✓|Zcea|
 |POPRET|✓|✓|✓|Zcea|
@@ -587,10 +589,6 @@ muli     a0, a1, 2     # a0 = a1 * 2
 
 [NOTE]
 
-  These encodings are in custom-0 space pending allocation
-
-[NOTE]
-
   These encodings match the format for BEQ as much as possible
 
 The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
@@ -628,12 +626,7 @@ The specification is in <<tablejump>>.
 [[tablejump16]]
 ==== C.TBLJAL
 
-The 16-bit encoding is in <<tbljal16bitencoding>>.
-
-[[tablejump32]]
-==== TBLJAL
-
-The 32-bit encoding is in <<tbljal32bitencoding>>.
+The encoding is in <<tbljal16bitencoding>>.
 
 [#pushpoppopret_heading]
 === PUSH and POP
@@ -737,7 +730,7 @@ Assembly Example
 decbnez s2, 1, -4 ;# s2-=1;if(s2!=0) branch_to(PC-4) encoded as scale=0, uimm=4 (not uimm=-4)
 ----
 
-==== DECBNEZ
+==== DECBNEZ (limited value?)
 
 This instruction conflicts with the `D`-extension. If `D` is implemented, this instruction will not be available. It is compatible with `ZDinx`. 
 
@@ -940,15 +933,15 @@ using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as cod
   e084da:	<16-bit>            tbljal #z ;#<mapped to __riscv_restore_0>
 ----
 
-The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `[C.]TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. 
+The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `C.TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. 
 
-`TBLJALENTRIES` is set by the maximum size of the table, which is currently 8192 as the 32-bit encoding has an 13-bit index.
+`TBLJALENTRIES` is set by the maximum size of the table, which is 256 as the encoding has an 8-bit index.
 
 Table jump allows the linker to:
 
-* replace 32-bit `JAL` calls with 16-bit `C.TBLJAL`
-* replace 64-bit `AUIPC/JALR` calls to fixed locations with either a 16-bit `C.TBLJAL` or a 32-bit `TBLJAL` 
-** `[C.]TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically inferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the ±1MB range.
+* replace 32-bit `JAL` calls with `C.TBLJAL`
+* replace 64-bit `AUIPC/JALR` calls to fixed locations with `C.TBLJAL`
+** `C.TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically inferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the ±1MB range.
 
 [#configuringthejumptable]
 === Configuring the jump table
@@ -959,9 +952,9 @@ If an ELF contains `M` calls to a function using `JAL`, and `N` calls to the sam
 .C.TBLJAL/TBJAL code size saving per function
 [width="100%",options=header]
 |=======================================================================================================================
-| original sequence | `C.TBLJAL` saving  | `TBLJAL` saving 
-| `JAL`             | M*2-(XLEN/8) bytes | No saving
-| `AUIPC/JALR`      | N*6-(XLEN/8) bytes | N*4-(XLEN/8) bytes
+| original sequence | `C.TBLJAL` saving  
+| `JAL`             | M*2-(XLEN/8) bytes 
+| `AUIPC/JALR`      | N*6-(XLEN/8) bytes 
 |=======================================================================================================================
 
 [NOTE]
@@ -972,7 +965,6 @@ Therefore the saving per function is
 [source,sourceCode,text]
 ----
 saving_per_function_c_tbljal = M * 2 - (XLEN/8) + N * 6 - (XLEN-8)
-saving_per_function_tbljal   = N * 4 - (XLEN/8)
 ----
 
 The suggested algorithm to optimally allocate functions in the jump table is:
@@ -981,14 +973,10 @@ The suggested algorithm to optimally allocate functions in the jump table is:
 2. Sort the `saving_per_function_c_tbljal` results, and allocate the function with the biggest saving in entry 0, second biggest into entry 1 etc. up to entry 255.
 .. only allocate entries which save at least _n_-bytes of code-size.
 .. some micro-architectures maybe choose to cache the lowest numbered table entries, so these should be the most commonly accessed functions.
-3. Calculate `saving_per_function_tbljal` for any remaining functions, and sequentially allocate these in the remaining entries starting from 256.
-.. only allocate entries which save at least _n_-bytes of code-size.
-
-_n_ may be a result of performance modelling. _n=4_ is suggested for prototyping in the toolchain.
 
 === Encoding
 
-These instructions have no conflicts with other extensions, they use previously reserved encodings.
+This instruction uses a previously reserved encoding.
 
 [#tbljal16bitencoding]
 .C.TBLJAL 16-bit encoding
@@ -1009,18 +997,6 @@ These instructions have no conflicts with other extensions, they use previously 
 [NOTE]
 
   Other assembler syntaxes are possible such as including the c. prefix 
-
-[NOTE]
-
-  The 32-bit encoding is in _custom-0_, correct encodings need to be allocated.
-
-[#tbljal32bitencoding]
-.TBLJAL 32-bit encoding, ZCE-type encoding
-[width="100%",options=header]
-|=========================================================================================================================
-| 31:23   |22:15         | 14:12   | 11:7         | 6 : 0 | instruction
-|00000000 |index13[12:5] | 000   2+| index13[4:0] |0101011| TBLJAL
-|=========================================================================================================================
 
 === CSRs
 
@@ -1096,7 +1072,7 @@ Jump table mode is easy to implement in the linker and doesn't affect the compil
 ----
 # tmp is temporary internal state, it doesn't represent a real register
 # Mem is byte indexed
-# n is the immediate operand passed to [c.]tbljal
+# n is the immediate operand passed to c.tbljal
 switch(XLEN) {
   32:  LW tmp, InstMemory[xTBLJALVEC.base + n<<2][XLEN-1:0];
   64:  LD tmp, InstMemory[xTBLJALVEC.base + n<<3][XLEN-1:0];
@@ -1106,7 +1082,7 @@ switch(tmp[1:0]) {
   0: JALR x0, tmp[XLEN-1:0]&~0x3;
   1: JALR x1, tmp[XLEN-1:0]&~0x3;
   2: JALR x5, tmp[XLEN-1:0]&~0x3;
-  #MEPC is the PC of the [c.]tbljal, not tmp
+  #MEPC is the PC of the c.tbljal, not tmp
   3: take_illegal_instruction_exception();
 }
 ----
@@ -1122,7 +1098,7 @@ xTBLJALVEC.base+12(index 2) = #  e08433 <vsnprintf>         # requires JAL x1 so
 
 ==== Exceptions for jump table mode
 
-The only illegal instruction exception is if the jump table LSBs are set to `11`. If this happens `MEPC` is set to the PC of the `[c.]tbljal` instruction.
+The only illegal instruction exception is if the jump table LSBs are set to `11`. If this happens `MEPC` is set to the PC of the `c.tbljal` instruction.
 
 ==== Context Switching for jump table mode
 
@@ -1248,7 +1224,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 
 ==== Exceptions for vector table mode
 
-Take an illegal instruction exception if `[C.]TBLJAL #n` is executed and one of more of these conditions are true:
+Take an illegal instruction exception if `C.TBLJAL #n` is executed and one of more of these conditions are true:
 
 - `n > MTBLJALWM.maxentry` 
 - `MTBLJALWM.wmx5 < MTBLJALWM.wxm0` 
@@ -1323,7 +1299,7 @@ xTBLJALVEC.base+48: <vsnprintf>
 
 ==== Vector Mode Security (future ideas)
 
-The vector mode mechanism could be reused for security in the future. It is possible to define that the memory allocated to to the table can only have entry points on the specific vectors, and also only from `[C.]TBLJAL` instructions. In this way sensitive code can be placed in the table which cannot be reused for ROP/JOP gadgets, because the code cannot be targetted by `JALR` instructions.
+The vector mode mechanism could be reused for security in the future. It is possible to define that the memory allocated to to the table can only have entry points on the specific vectors, and also only from `C.TBLJAL` instructions. In this way sensitive code can be placed in the table which cannot be reused for ROP/JOP gadgets, because the code cannot be targetted by `JALR` instructions.
 
 These ideas will not be pursued as part of the code size work.
 
@@ -2959,11 +2935,28 @@ addi sp, sp, -128;
 
 == Benchmarking results too low
 
+=== TBLJAL (32-bit encoding)
+
+`TBLJAL` offers minimal additional benefit over `C.TBLJAL`
+
+[NOTE]
+
+  The 32-bit encoding is in _custom-0_, correct encodings need to be allocated.
+
+[#tbljal32bitencoding]
+.TBLJAL 32-bit encoding, ZCE-type encoding
+[width="100%",options=header]
+|=========================================================================================================================
+| 31:23   |22:15         | 14:12   | 11:7         | 6 : 0 | instruction
+|00000000 |index13[12:5] | 000   2+| index13[4:0] |0101011| TBLJAL
+|=========================================================================================================================
+
+
 === LWTP, SWTP, LDTP, SDTP
 
 TP relative load/store (similar to LWGP etc.) adding TP as a second global pointer.
 
-The benefit from LWGP etc. so far is very low so there is no jutification to add an extended range to TP.
+The benefit from LWGP etc. so far is very low so there is no justification to add an extended range to TP.
 
 === MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
 
