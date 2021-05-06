@@ -16,10 +16,10 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
-| 0.34c   | Update encodings as request by John Hauser for 16-bit encodings 
+| 0.34c   | Update encodings as requested by John Hauser for 16-bit encodings 
 |         | Update C.TBLJAL encoding
 |         | Change C.PUSH etc encodings, and adjust register lists and spimm ranges. No change to 32-bit encodings.
-|         | Put BEQI/BNEI in the BRANCH major opcode with funct3=01x
+|         | Put BEQI/BNEI in the BRANCH major opcode with funct3=01x, update branch offset range and make comparison immediate unsigned
 |         | Reinstate C.MVA01S07 (will get renamed at some point)
 |         | Still to do for v0.34 - remove MULIW, ADDIADD*, MULIADD*, and try to sensibly encode MULI
 | 0.33    | s0 as a return value is UNSAFE for pop/popret, as the sequence is not restartable. Only returning constant values 0/1/-1 (only 0 for C.POPRET)
@@ -393,7 +393,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|monadic with single source/dest, room for 1 more encoding 
+17+|monadic with single source/dest, room for 3 more encodings
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 000     2+| 00  | C.ZEXT.B
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 001     2+| 00  | C.SEXT.B
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 010     2+| 00  | C.ZEXT.H
@@ -411,8 +411,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|monadic with single source/dest, room for 1 more encoding 
-3+|  100     3+| 111        3+| rd'     2+| 10    3+| rs2'    2+| 00    | C.MUL
+3+|  100     3+| 111        3+| rd'     2+| 10    3+| rs2'    2+| 01    | C.MUL
 |=============================================================================================
 
 [#monsemantics]
@@ -485,7 +484,7 @@ sext.w a5, a5;  # a5 = sign_ext(a5[31:0])
 
 === C.MVA01S07
 
-Register moves are the most common in GCC output in both the benchmark suite and the Debian distro. This two instructions combines a very common pairs of moves into a single 16-bit encoding:
+Register moves are the most common in GCC output in both the benchmark suite and the Debian distro. This instruction combines very common pairs of moves into a single 16-bit encoding:
 
 * move from two `s[0-7]` registers into `a0` and `a1`.
 
@@ -522,8 +521,7 @@ The EABI mapping may not be so simple, TBD.
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|monadic with single source/dest, room for 1 more encoding 
-3+|  100     3+| 111        3+| sreg1   2+| 11    3+| sreg2   2+| 00    | C.MVA01S07
+3+|  100     3+| 111        3+| sreg1   2+| 11    3+| sreg2   2+| 10    | C.MVA01S07
 |=============================================================================================
 
 [#mva_semantics]
@@ -619,9 +617,9 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 .proposed 32-bit encodings for `BEQI/BNEI`
 [width="100%",options=header]
 |=========================================================================================================================
-| 31:30 |  29:20         |19:15 | 14:12   | 11:7              | 6 : 0 | instruction
-| 00    | offset[9:0]    | rs1  | 010     | scmpimm[4:0]      |1100011| BEQI
-| 00    | offset[9:0]    | rs1  | 011     | scmpimm[4:0]      |1100011| BNEI
+|  31:25             |24:20       |19:15 | 14:12   | 11:7              | 6 : 0 | instruction
+| offset[12,10:5]    |cmpimm[4:0] | rs1  | 010     | imm[4:1,11]       |1100011| BEQI
+| offset[12,10:5]    |cmpimm[4:0] | rs1  | 011     | imm[4:1,11]       |1100011| BNEI
 |=========================================================================================================================
 
 [#compare-immediate branch_semantics]
@@ -629,8 +627,8 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| BEQI          | if (rs1==sign_ext(scmpimm)) target_pc=PC+offset; else target_pc=PC+4;
-| BNEI          | if (rs1!=sign_ext(scmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BEQI          | if (rs1==zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BNEI          | if (rs1!=zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
 |=======================================================================
 
 Assembly Examples
@@ -1858,7 +1856,7 @@ These instructions have no conflicts with other extensions, they use previously 
 
 3+|100    3+|011       3+|spimm0_5  |1   |0    3+|rlist3       2+| 00  |C.PUSH
 3+|100    3+|011       3+|spimm0_5  |1   |1    |ret0 2+|rlist2 2+| 00  |C.POPRET.E (RV32 only)
-3+|100    3+|011       2+|11|spimm0_5[2] |1   2+|spimm0_5[1:0] 2+|rlist2 2+| 00  |C.PUSH.E (RV32 only)
+3+|100    3+|011       2+|11|spimm0_5[0] |1   2+|spimm0_5[2:1] 2+|rlist2 2+| 00  |C.PUSH.E (RV32 only)
 
 |=========================================================================================================================
 
