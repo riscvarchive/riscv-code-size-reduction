@@ -23,6 +23,7 @@ This document describes the `Zce` extension to reduce code-size.
 |         | Reinstate C.MVA01S07 (will get renamed at some point)
 |         | remove MULIW, ADDIADD*, MULIADD*, change encoding for MULI
 |         | Add C.LB, C.LH
+|         | Remove LWTP/SWTP/LDTP/SDTP
 | 0.33    | s0 as a return value is UNSAFE for pop/popret, as the sequence is not restartable. Only returning constant values 0/1/-1 (only 0 for C.POPRET)
 |         | Simplify PUSH/POP/POPRET to remove ra option (very rare not to include ra)
 |         | Increase PUSH/C.PUSH embedded moves to include a3, and make them consistent with between PUSH and C.PUSH (PUSH has the option not to do any so as not to waste performance).
@@ -145,15 +146,10 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.SB|✓|✓| |Zceb|incompatible with D
 |C.SH|✓|✓| |Zceb|incompatible with D
 6+| 32-bit encodings
-|DECBNEZ|✓|✓|✓|Zceb|incompatible with D
 |LWGP|✓|✓|✓|Zceb|incompatible with D
-|LWTP|✓|✓|✓|Zceb|incompatible with D
 |SWGP|✓|✓|✓|Zceb|incompatible with D
-|SWTP|✓|✓|✓|Zceb|incompatible with D
 |LDGP| |✓|✓|Zceb|incompatible with D
-|LDTP| |✓|✓|Zceb|incompatible with D
 |SDGP| |✓|✓|Zceb|incompatible with D
-|SDTP| |✓|✓|Zceb|incompatible with D
 |===============================================================================
 
 `Zcea/Zceb` are compatible with both the `I` and `E` extensions. 
@@ -681,8 +677,6 @@ It is recommended to implement both `Zba` and `Zbb` for code-size reduction, but
 |funct3a   |imm[8:5]               | rs2           2+|imm[15:11]  | funct3 | imm[4:2, 10:9]   |opcode | SW16-type
 |funct3a 2+|imm[8:3,16,10:9]                       2+|imm[15:11]  | funct3 | rd               |opcode | LD16-type
 |funct3a   |imm[8:5]               | rs2           2+|imm[15:11]  | funct3 | imm[4:3,16,10:9] |opcode | SD16-type
-9+|This format is only for DECBNEZ, designed for maximum immediate overlap with B-type and LW16-type
-|funct3a 2+|imm[8:2,10:9]                          |scale|imm[1,12:11]  | funct3 | rd         |opcode | DECB-type
 |=========================================================================================================================
 
 === Decrement and branch
@@ -745,9 +739,13 @@ decbnez s2, 1, -4 ;# s2-=1;if(s2!=0) branch_to(PC-4) encoded as scale=0, uimm=4 
 
 ==== DECBNEZ
 
-This instruction conflicts with the `D`-extension. If `D` is implemented, this instruction will not be available. It is compatible with `ZDinx`. It uses a DECB-type encoding.
+This instruction conflicts with the `D`-extension. If `D` is implemented, this instruction will not be available. It is compatible with `ZDinx`. 
 
 The 16-bit encoding and specification is in <<decbr16>>.
+
+[NOTE]
+
+  This instruction appears to have limited value, and so it may well be removed.
 
 [NOTE]
 
@@ -776,7 +774,7 @@ decbnez s2, 1, offset ;# s2-=1;if(s2!=0) branch_to(PC+offset)
 ----
 
 
-=== LWGP, SWGP, LWTP, SWTP
+=== LWGP, SWGP
 
 These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
 
@@ -790,27 +788,16 @@ These instructions reuse the encodings for `FLD/FSD`.
 
    Restrictions in the GCC toolchain mean that the full range of `gp` cannot be used for the standard `LW/SW` instructions, in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP, SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[See this github issue]. This issue means that with the current RISC-V ISA the full 4KB range cannot be accessed using `gp` using GCC so the benefit is lower than might be expected.
 
-`LWTP,SWTP` have a 16-bit/64KB offset range, which is larger than the standard `LW, SW` instructions by making the base register explicitly `tp`. `LDTP,SDTP` have a 17-bit/128KB range relative to `tp`.
-
-
-[NOTE]
-
-  The intention is to allow the toolchain to use `tp` as a second global pointer, for systems which do not need thread local storage, giving two 64KB/128KB address spaces within reach of a single 32-bit load/store word instruction. Any ABI or toolchain implications from allowing this are not covered by this document. `LWTP, SWTP` can also be used to allow a larger range of thread local storage to be accessed with a 32-bit instruction.
-
 [Zceb-32bit-encodings]
 .proposed 32-bit encodings for `LWGP/SWGP/LWTP/SWTP` and `LDGP/SDGP/LDTP/SDTP`
 [width="100%",options=header]
 |=========================================================================================================================
 | 31:29|28:25   |24:20      |19:15 | 14:12   | 11:7  | 6 : 0 | instruction
 |000 2+|imm[8:2,10:9]                                |imm[15:11]  | 011   | rd                |0000111| LWGP
-|001 2+|imm[8:2,10:9]                                |imm[15:11]  | 011   | rd                |0000111| LWTP
 |000   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:2, 10:9]    |0100111| SWGP
-|001   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:2, 10:9]    |0100111| SWTP
 8+|RV64/RV128 only
 |010 2+|imm[8:3,16,10:9]                             |imm[15:11]  | 011   | rd                |0000111| LDGP
-|011 2+|imm[8:3,16,10:9]                             |imm[15:11]  | 011   | rd                |0000111| LDTP
 |010   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDGP
-|011   |imm[8:5]                   | rs2             |imm[15:11]  | 011   | imm[4:3,16,10:9]  |0100111| SDTP
 |=========================================================================================================================
 
 [NOTE]
@@ -818,19 +805,15 @@ These instructions reuse the encodings for `FLD/FSD`.
   In <<lwgp_semantics>> DataMemory is a data memory array of elements with XLEN width.
 
 [#lwgp_semantics]
-.Load/store word/double GP/TP relative semantics
+.Load/store word/double GP relative semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
 | LWGP          | rd=sign_ext(DataMemory[gp+sign_ext(imm)][31:0]);
 | SWGP          | DataMemory[gp+sign_ext(imm)][31:0])=rs2[31:0];
-| LWTP          | rd=sign_ext(DataMemory[tp+sign_ext(imm)][31:0]);
-| SWTP          | DataMemory[tp+sign_ext(imm)][31:0])=rs2[31:0];
 2+|RV64/RV128 only
 | LDGP          | rd=sign_ext(DataMemory[gp+sign_ext(imm)][63:0]);
 | SDGP          | DataMemory[gp+sign_ext(imm)][63:0])=rs2[63:0];
-| LDTP          | rd=sign_ext(DataMemory[tp+sign_ext(imm)][63:0]);
-| SDTP          | DataMemory[tp+sign_ext(imm)][63:0])=rs2[63:0];
 |=======================================================================
 
 Assembly Examples
@@ -838,21 +821,15 @@ Assembly Examples
 ----
 lw s0, 20(gp)
 sw s0, 20(gp)
-lw s0, 20(tp)
-sw s0, 20(tp)
 
 //RV64/RV128 only
 ld s0, 20(gp)
 sd s0, 20(gp)
-ld s0, 20(tp)
-sd s0, 20(tp)
 ----
 
 === C.LBU, C.LHU, C.LB, C.LH, C.SB, C.SH
 
 These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
-
-These instructions reuse the encodings for `C.FSD/C.FSDSP`.
 
 [#ldstbh]
 .proposed 16-bit encodings for load/store byte/half
@@ -2482,10 +2459,10 @@ These instructions are extremely similar to existing instructions, so the verifi
 
 . BEQI, BNEI
 .. these are immediate forms of BEQ and BNE, they compare a register value against an immediate instead of two register values
-. LWGP, LWTP
-.. these have the same functionality as LW, but the base register is explicitly GP or TP and the immediate offset range is larger
-. SWGP, SWTP
-.. these have the same functionality as SW, but the base register is explicitly GP or TP and the immediate offset range is larger
+. LWGP
+.. this have the same functionality as LW, but the base register is explicitly GP and the immediate offset range is larger
+. SWGP
+.. this have the same functionality as SW, but the base register is explicitly GP and the immediate offset range is larger
 . MULI
 .. same as MUL with a signed immediate operand
 
@@ -2981,6 +2958,12 @@ addi sp, sp, -128;
 ----
 
 == Benchmarking results too low
+
+=== LWTP, SWTP, LDTP, SDTP
+
+TP relative load/store (similar to LWGP etc.) adding TP as a second global pointer.
+
+The benefit from LWGP etc. so far is very low so there is no jutification to add an extended range to TP.
 
 === MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
 
