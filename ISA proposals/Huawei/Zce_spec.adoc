@@ -22,6 +22,7 @@ This document describes the `Zce` extension to reduce code-size.
 |         | Put BEQI/BNEI in the BRANCH major opcode with funct3=01x, update branch offset range and make comparison immediate unsigned
 |         | Reinstate C.MVA01S07 (will get renamed at some point)
 |         | remove MULIW, ADDIADD*, MULIADD*, change encoding for MULI
+|         | Add C.LB, C.LH
 | 0.33    | s0 as a return value is UNSAFE for pop/popret, as the sequence is not restartable. Only returning constant values 0/1/-1 (only 0 for C.POPRET)
 |         | Simplify PUSH/POP/POPRET to remove ra option (very rare not to include ra)
 |         | Increase PUSH/C.PUSH embedded moves to include a3, and make them consistent with between PUSH and C.PUSH (PUSH has the option not to do any so as not to waste performance).
@@ -139,6 +140,8 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.DECBNEZ|✓|✓| |Zceb|incompatible with D
 |C.LBU|✓|✓| |Zceb|incompatible with D
 |C.LHU|✓|✓| |Zceb|incompatible with D
+|C.LB|✓|✓| |Zceb|incompatible with D
+|C.LH|✓|✓| |Zceb|incompatible with D
 |C.SB|✓|✓| |Zceb|incompatible with D
 |C.SH|✓|✓| |Zceb|incompatible with D
 6+| 32-bit encodings
@@ -276,7 +279,8 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |000       |C.SLLI64 (RV32/64 or rd=0:HINT)	       | 8|Zc128	        |	|	|✓	|C
 |001       |C.FLDSP	                               | 9|Zcd	        |✓	|✓	|	|C+D
 |001       |C.LQSP (rd=0:RSV)	                     | 9|Zc128	        |	|	|✓	|C
-|001       |*unallocated*	                         | 9|N/A 	|✓	|✓	| 	|C+*??*
+|001       |*C.LB*                                 | 9|N/A 	|✓	|✓	| 	|C+*Zceb*
+|001       |*C.LH*                                 | 9|N/A 	|✓	|✓	| 	|C+*Zceb*
 |010       |C.LWSP (rd=0:RSV)	                     |  |Zci	        |✓	|✓	|✓	|C
 |011       |C.FLWSP	                               |10|Zcf	        |✓	|	|	|C+F
 |011       |C.LDSP (rd=0:HINT)	                   |10|Zc64/Zc128	|	|✓	|✓	|C
@@ -313,11 +317,14 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 | |100    |111    |01   |C.MUL
 | |100    |111    |01   |C.MVA01S07
 
+|9|001    |0xx    |10   |C.LB
+|9|001    |1xx    |10   |C.LH
+
 |11|101   |xxx    |10   |C.DECBNEZ
 |======================================
 
 
-=== 16-bit encoding code-points
+=== 16-bit encoding code-points *OUT OF DATE UNTIL ENCODINGS STABILISE*
 
 All previously reserved 16-bit encodings are in the tables below, showing how many are allocated to `Zce`.
 
@@ -841,7 +848,7 @@ ld s0, 20(tp)
 sd s0, 20(tp)
 ----
 
-=== C.LBU, C.LHU, C.SB, C.SH
+=== C.LBU, C.LHU, C.LB, C.LH, C.SB, C.SH
 
 These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
 
@@ -854,6 +861,8 @@ These instructions reuse the encodings for `C.FSD/C.FSDSP`.
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 3+|  001       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.LBU
 3+|  001       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.LHU
+3+|  101       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LB
+3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LH
 3+|  101       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SB
 3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SH
 |=============================================================================================
@@ -873,6 +882,8 @@ These instructions reuse the encodings for `C.FSD/C.FSDSP`.
 |instruction    | definition
 | C.LBU         | rd' = zero_ext(DataMemory[rs1'+zero_ext(uimm)][ 7:0])
 | C.LHU         | rd' = zero_ext(DataMemory[rs1'+zero_ext(uimm)][15:0])
+| C.LB          | rd' = sign_ext(DataMemory[rs1'+zero_ext(uimm)][ 7:0])
+| C.LH          | rd' = sign_ext(DataMemory[rs1'+zero_ext(uimm)][15:0])
 | C.SB          | rd' = DataMemory[rs1'+zero_ext(uimm)][ 7:0] = rs2'[ 7:0]
 | C.SH          | rd' = DataMemory[rs1'+zero_ext(uimm)][15:0] = rs2'[15:0]
 |=======================================================================
@@ -882,10 +893,12 @@ These instructions reuse the encodings for `C.FSD/C.FSDSP`.
 [width="100%",options=header]
 |======================================================================================================
 |instruction | example assembler syntax       | requirements for 16-bit encoding   | 32-bit extension
-|C.LBU       | lbu    rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
-|C.LHU       | lhu    rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
-|C.SB        | sb     rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
-|C.SH        | sh     rd, imm(rs1)   | all regs x8-x15, imm in range      | I-extension
+|C.LBU       | lbu    rd, imm(rs1)            | all regs x8-x15, imm in range      | I-extension
+|C.LHU       | lhu    rd, imm(rs1)            | all regs x8-x15, imm in range      | I-extension
+|C.LB        | lb     rd, imm(rs1)            | all regs x8-x15, imm in range      | I-extension
+|C.LH        | lh     rd, imm(rs1)            | all regs x8-x15, imm in range      | I-extension
+|C.SB        | sb     rd, imm(rs1)            | all regs x8-x15, imm in range      | I-extension
+|C.SH        | sh     rd, imm(rs1)            | all regs x8-x15, imm in range      | I-extension
 |======================================================================================================
 
 [NOTE]
@@ -897,6 +910,8 @@ Assembly Examples
 ----
 lbu a5,20(a4)   # a5 = zero_ext(DataMemory(a4+20)[ 7:0])
 lhu a5,20(a4)   # a5 = zero_ext(DataMemory(a4+20)[15:0])
+lb  a5,20(a4)   # a5 = sign_ext(DataMemory(a4+20)[ 7:0])
+lh  a5,20(a4)   # a5 = sign_ext(DataMemory(a4+20)[15:0])
 sb  a5,20(a4)   # DataMemory(a4+20)[ 7:0] = a5[ 7:0]
 sh  a5,20(a4)   # DataMemory(a4+20)[15:0] = a5[15:0]
 ----
@@ -2459,7 +2474,7 @@ Many of the instructions are 16-bit encodings of existing 32-bit instructions, t
 . C.SEXT.B, C.SEXT.H, (C.SEXT.W is a pseudo-instruction)
 . C.ZEXT.B, C.ZEXT.H, C.ZEXT.W
 . C.MUL, C.NOT, C.NEG
-. C.LBU, C.LHU, C.SB, C.SH
+. C.LBU, C.LHU, C.LB, C.LH, C.SB, C.SH
 
 == Simple extensions to existing functionality
 
