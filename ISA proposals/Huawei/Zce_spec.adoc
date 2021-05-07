@@ -16,6 +16,8 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.40    | *Stable version for toolchain/simulator prototyping*
+|         | Split C.TBLJAL into C.TBLJ, C,TBLJAL, C.TBLJALM. The encoding is the same, the link register is chosen based on the table index.
 | 0.34    | Update encodings as requested by John Hauser for 16-bit encodings 
 |         | Update C.TBLJAL encoding
 |         | Change C.PUSH etc encodings, and adjust register lists and spimm ranges. No change to 32-bit encodings.
@@ -82,7 +84,7 @@ This document describes the `Zce` extension to reduce code-size.
 * `xTBLJALVEC` need addresses to be allocated
 * EABI spec is not frozen - so it's not clear which formats of PUSH.E etc that I need
 ** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s7, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
-* May need an EABI version of C.MVA01S07
+* May need an EABI version of `C.MVA01S07`
 
 == `Zce` configurations
 
@@ -118,7 +120,9 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.MVA01S07| |✓|✓|Zcea|
 |C.NOT|✓|✓|✓|Zcea|
 |C.NEG|✓|✓|✓|Zcea|
+|C.TBLJ|✓|✓|✓|Zcea|
 |C.TBLJAL|✓|✓|✓|Zcea|
+|C.TBLJALM|✓|✓|✓|Zcea|
 |C.PUSH|✓|✓|✓|Zcea|
 |C.POP|✓|✓|✓|Zcea|
 |C.POPRET|✓|✓|✓|Zcea|
@@ -203,7 +207,9 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |*C.POPRET.E*| |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.PUSH.E*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 
+|100       |*C.TBLJ*    | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.TBLJAL*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.TBLJALM* | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.SEXT.B*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.SEXT.H*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.ZEXT.B*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
@@ -303,7 +309,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 |Group|[15:13]|[12:10]|[1:0]|Instruction
 
 | |100    |000    |00   |C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H, C.ZEXT.W, C.NOT, C.NEG
-| |100    |010    |00   |C.TBLJAL
+| |100    |010    |00   |C.TBLJ, C.TBLJAL, C.TBLJALM
 | |100    |011    |00   |C.POP, C.POPRET, C.PUSH, C.POP.E, C.POPRET.E, C.PUSH.E
 
 |1|001    |0xx    |00   |C.LBU
@@ -480,7 +486,7 @@ sext.w a5, a5;  # a5 = sign_ext(a5[31:0])
 
 === C.SEXT.W
 
-`C.SEXT.W` is added as a pseudo-instruction for `C.ADDIW rd, rd, 0`
+`C.SEXT.W` is added as a pseudo-instruction for `C.ADDIW rd, 0`
 
 === C.MVA01S07
 
@@ -624,9 +630,9 @@ bne  a5,-1,offset # if(a5!=-1) branch_to(PC+offset) # signed comparison
 The specification is in <<tablejump>>.
 
 [[tablejump16]]
-==== C.TBLJAL
+==== C.TBLJ, C.TBLJAL, C.TBLJALM
 
-The encoding is in <<tbljal16bitencoding>>.
+The encodings are in <<tbljal16bitencoding>>.
 
 [#pushpoppopret_heading]
 === PUSH and POP
@@ -889,7 +895,7 @@ sh  a5,20(a4)   # DataMemory(a4+20)[15:0] = a5[15:0]
 [#tablejump]
 == Table Jump 
 
-Table jumps are used to reduce the code size of `JAL` / `JALR` instructions.
+Table jumps are used to reduce the code size of `JAL` / `AUIPC+JALR` / `JR` / `AUIPC+JR` instructions.
 
 === Rationale
 
@@ -916,12 +922,12 @@ Here's an example from the Huawei IoT code, GCC output:
   e084da:	19630067            jr	  406(t1) # 100066c <__riscv_restore_0>
 ----
 
-using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as code has been deleted)
+using `C.TBLJ*` we can reduce this as follows (accepting gaps in the PCs as code has been deleted)
 
 [source,sourceCode,text]
 ----
 00e084be <vsprintf>:
-  e084be:	<16-bit>            tbljal #x ;#<mapped to __riscv_save_0>, saving 6-bytes
+  e084be:	<16-bit>            tbljalm #x ;#<mapped to __riscv_save_0>, saving 6-bytes
   
   e084c6:	86b2                mv     a3,a2
   e084c8:	862e                mv     a2,a1
@@ -930,73 +936,91 @@ using `C.TBLJAL` we can reduce this as follows (accepting gaps in the PCs as cod
   
   e084d2:	<16-bit>            tbljal #y ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
   
-  e084da:	<16-bit>            tbljal #z ;#<mapped to __riscv_restore_0>
+  e084da:	<16-bit>            tblj   #z ;#<mapped to __riscv_restore_0>
 ----
 
-The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `C.TBLJAL`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. 
+The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `C.TBLJ*`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. 
 
 `TBLJALENTRIES` is set by the maximum size of the table, which is 256 as the encoding has an 8-bit index.
 
 Table jump allows the linker to:
 
-* replace 32-bit `JAL` calls with `C.TBLJAL`
-* replace 64-bit `AUIPC/JALR` calls to fixed locations with `C.TBLJAL`
-** `C.TBLJAL` can be used replace `JALR` if it jumps to a fixed target, which is typically inferred as an `AUIPC/JALR` sequence because the offset from the PC is out of the ±1MB range.
-
-[#configuringthejumptable]
-=== Configuring the jump table
-
-If an ELF contains `M` calls to a function using `JAL`, and `N` calls to the same function using `AUIPC/JALR` then the code size saving is calculated as followed:
-
-[#tbljalsavings]
-.C.TBLJAL/TBJAL code size saving per function
-[width="100%",options=header]
-|=======================================================================================================================
-| original sequence | `C.TBLJAL` saving  
-| `JAL`             | M*2-(XLEN/8) bytes 
-| `AUIPC/JALR`      | N*6-(XLEN/8) bytes 
-|=======================================================================================================================
-
-[NOTE]
-
-  `C.JAL` is not included as there's no code-size saving for RV32 and it's not available for RV64
-
-Therefore the saving per function is
-[source,sourceCode,text]
-----
-saving_per_function_c_tbljal = M * 2 - (XLEN/8) + N * 6 - (XLEN-8)
-----
-
-The suggested algorithm to optimally allocate functions in the jump table is:
-
-1. Calculate `saving_per_function_c_tbljal` for every function.
-2. Sort the `saving_per_function_c_tbljal` results, and allocate the function with the biggest saving in entry 0, second biggest into entry 1 etc. up to entry 255.
-.. only allocate entries which save at least _n_-bytes of code-size.
-.. some micro-architectures maybe choose to cache the lowest numbered table entries, so these should be the most commonly accessed functions.
+* replace 32-bit `J` calls with `C.TBLJ`
+* replace 32-bit `JAL ra` calls with `C.TBLJAL`
+* replace 32-bit `JAL t0` calls with `C.TBLJALM` (`M` for Millicode)
+* replace 64-bit `AUIPC/JR` calls to fixed locations with `C.TBLJ`
+* replace 64-bit `AUIPC/JALR ra` calls to fixed locations with `C.TBLJAL`
+* replace 64-bit `AUIPC/JALR t0` calls to fixed locations with `C.TBLJALM`
+** The `AUIPC+JR/JALR` sequence is used because the offset from the PC is out of the ±1MB range.
 
 === Encoding
 
-This instruction uses a previously reserved encoding.
+These instructions use a previously reserved encoding.
 
 [#tbljal16bitencoding]
 .C.TBLJAL 16-bit encoding
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10  | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100       3+| 010       8+|index8                         2+| 00    | C.TBLJAL
+3+|  100       3+| 010       8+|index8<7                       2+| 00    | C.TBLJ
+3+|  100       3+| 010       8+|index8>=8 && index8<64         2+| 00    | C.TBLJALM
+3+|  100       3+| 010       8+|index8>=64                     2+| 00    | C.TBLJAL
 |=============================================================================================
 
 [#tbljal16bitassemblersyntax]
 .C.TBLJAL assembler syntax
 [width="100%",options=header]
-|======================================================================================================
-|instruction | example assembler syntax       | requirements for 16-bit encoding   | 32-bit extension
-|C.TBLJAL    | tbljal #index                  | index<256                          | Zceb
-|======================================================================================================
+|==================================================================================================================
+|instruction | example assembler syntax   | requirements for 16-bit encoding         | 32-bit extension
+|C.TBLJ      | tblj    #n                 | n is in the range 0 to 7   (index8=n)    | N/A
+|C.TBLJALM   | tbljalm #n                 | n is in the range 0 to 55  (index8=n+8)  | N/A
+|C.TBLJAL    | tbljal  #n                 | n is in the range 0 to 191 (index8=n+64) | N/A
+|==================================================================================================================
 
 [NOTE]
 
   Other assembler syntaxes are possible such as including the c. prefix 
+
+Therefore there is a single jump table in memory. The table entry number is from the `index8` field in the encoding, which controls the link register.
+
+* `C.TBLJ`: entries 0-7, link to `zero`
+* `C.TBLJALM`: entries 8-63, link to `t0`
+* `C.TBLJAL`: entries 64-255, link to `ra`
+
+Note that the LSB of every jump table entry is _ignored_ which matches standard `JALR` behaviour.
+
+[#configuringthejumptable]
+=== Configuring the jump table
+
+Calls to each function are categorised as shown in <<tbljalsavings>>
+
+[#tbljalsavings]
+.C.TBLJAL/TBJAL code size saving per function
+[width="100%",options=header]
+|=======================================================================================================================
+| original sequence | `C.TBLJ*` saving  
+| `J`               | A*2-(XLEN/8) bytes 
+| `AUIPC+JR`        | B*6-(XLEN/8) bytes 
+| `JAL ra`          | C*2-(XLEN/8) bytes 
+| `AUIPC+JALR ra`   | D*6-(XLEN/8) bytes 
+| `JAL t0`          | E*2-(XLEN/8) bytes 
+| `AUIPC+JALR t0`   | F*6-(XLEN/8) bytes 
+|=======================================================================================================================
+
+[NOTE]
+
+  `C.JAL` is not included as there's no code-size saving for RV32 and it's not available for RV64
+
+Each function is called by using one of the three link registers. The total saving per function is calculated by looking at all the times it is called, as follows:
+[source,sourceCode,text]
+----
+saving_per_function_c_tblj    = A * 2 + B * 6 - 2*(XLEN-8)
+saving_per_function_c_tbljal  = C * 2 + D * 6 - 2*(XLEN-8)
+saving_per_function_c_tbljalm = E * 2 + F * 6 - 2*(XLEN-8)
+----
+
+The functions are sorted so that the one with the highest saving is in table entry 0, the second highest in entry 1 etc.
+This gives the core the chance to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. ONly caching a few entries will greatly improve the performance.
 
 === CSRs
 
@@ -1045,22 +1069,11 @@ The memory pointed to by `xTBLJALVEC.base` only requires eXecute permission. Rea
 
 === Jump table mode
 
-In jump table mode the behaviour is to load the target address from `xTBLJALVEC.base` with an offset which is `XLEN/8` times the parameter passed to the instruction. Bits [1:0] of the data at the target address represent which link register is in use, and whether the entry is legal. Therefore the target functions must be word aligned in memory.
+In jump table mode the behaviour is to load the target address from `xTBLJALVEC.base` with an offset which is `XLEN/8` times the parameter passed to the instruction.
 
-The actual functions are not moved in memory, the jump table lookup is only to give a reference to them using a 16-bit encoding whenever possible.
+The actual functions are not moved in memory, the jump table lookup is only to give a reference to them using a 16-bit encoding.
 
-Jump table mode is easy to implement in the linker and doesn't affect the compiler at all as it is only a link time optimisation. It may complicate instruction fetch due to the indirection, and so may cost performance. The instruction fetch unit can choose to cache the table.
-
-[#entry-lsbs]
-.bits [1:0] of each jump table entry
-[width="100%",options=header]
-|=============================================================================================
-| Value| Link Register
-| 00   | link to x0
-| 01   | link to x1
-| 10   | link to x5
-| 11   | *reserved / table entry is illegal*
-|=============================================================================================
+Jump table mode is easy to implement in the linker and doesn't affect the compiler as it is only a link time optimisation. 
 
 ==== Pseudo-code for jump table mode
 
@@ -1072,33 +1085,31 @@ Jump table mode is easy to implement in the linker and doesn't affect the compil
 ----
 # tmp is temporary internal state, it doesn't represent a real register
 # Mem is byte indexed
-# n is the immediate operand passed to c.tbljal
+# n is the immediate operand passed to c.tblj*
 switch(XLEN) {
   32:  LW tmp, InstMemory[xTBLJALVEC.base + n<<2][XLEN-1:0];
   64:  LD tmp, InstMemory[xTBLJALVEC.base + n<<3][XLEN-1:0];
   128: LQ tmp, InstMemory[xTBLJALVEC.base + n<<4][XLEN-1:0];
 }
-switch(tmp[1:0]) {
-  0: JALR x0, tmp[XLEN-1:0]&~0x3;
-  1: JALR x1, tmp[XLEN-1:0]&~0x3;
-  2: JALR x5, tmp[XLEN-1:0]&~0x3;
-  #MEPC is the PC of the c.tbljal, not tmp
-  3: take_illegal_instruction_exception();
+switch(opcode) {
+  C.TBLJ:    JALR zero, tmp[XLEN-1:0]&~0x1;
+  C.TBLJAL:  JALR ra,   tmp[XLEN-1:0]&~0x1;
+  C.TBLJALM: JALR t0,   tmp[XLEN-1:0]&~0x1;
 }
 ----
 
-For the `vsprintf` example above, the jump table contains the following:
+For the `vsprintf` example above, the jump table contains the following for `RV32`:
 
 [source,sourceCode,text]
 ----
-xTBLJALVEC.base+ 0(index 0) = # 100066c <__riscv_restore_0> # requires JAL x0 so [1:0]=00
-xTBLJALVEC.base+ 8(index 1) = # 100064a <__riscv_save_0>    # requires JAL x5 so [1:0]=10
-xTBLJALVEC.base+12(index 2) = #  e08433 <vsnprintf>         # requires JAL x1 so [1:0]=01
+xTBLJALVEC.base+  0(index  0) = # 100066c <__riscv_restore_0> # requires C.TBLJ
+xTBLJALVEC.base+ 32(index  8) = # 100064a <__riscv_save_0>    # requires C.TBLJALM
+xTBLJALVEC.base+256(index 64) = #  e08433 <vsnprintf>         # requires C.TBLJAL
 ----
 
 ==== Exceptions for jump table mode
 
-The only illegal instruction exception is if the jump table LSBs are set to `11`. If this happens `MEPC` is set to the PC of the `c.tbljal` instruction.
+The jump table address can cause instruction fetch errors, such as page faults. In these cases `MEPC` is set to the PC of the `C.TBLJ*` instruction and `MADDR` is set to the address in the jump table entry.
 
 ==== Context Switching for jump table mode
 
@@ -1112,18 +1123,12 @@ Any write to `xTBLJALVEC`, even if the actual value is not updated, will indicat
 
 Therefore if there are any updates to generated code in the table in vector mode, a write to `xTBLJALVEC` is required to ensure that any cached contents are not stale. This is not expected to be the common case, because in the absence of dynamically linked libraries, the jump table is static for a given executable. Therefore the recommendation is that it is set with eXecute only privileges, the same as the rest of the code. This is better for security to prevent code in the jump table being scanned for gadgets.
 
-==== Power/performance of jump table mode
-
-The instruction fetch unit could cache the most frequently accessed table jump targets to improve performance. The management of this caching will cost some power (although the ~ 10% code size saving should save power overall by reducing the number of instruction fetches).
-
-An alternative approach is to for the instruction fetch to cache a certain range of table jump indices, e.g. 0-31. The linker could be configured to place the most frequently used table jump indices into this range so that static caching can be used. For this to be successful the linker would need information about the dynamic call frequency of each function call. This is supported by the suggested algorithm in <<configuringthejumptable>>
-
 [#vector-table-mode]
 === Future Mode: Vector table mode (not for RVM22/RVA22)
 
 Vector table mode is very similar to vectored interrupt handling. The target address is a scaled offset from the base vector. Therefore in vector table mode, execution passes directly to the scaled offset from the base register, not via a jump table.
 
-Vector table mode is simplest for the hardware, as it's just the same mechanism as for the interrupt handler vector. The jump is direct to the destination. However the compiler would have to be aware as it will have to try to fit functions into the table, as each entry is a fixed size so it's not so obviously implementable in the toolchain. We may find other reasons for having this mode. TBD.
+Vector table mode is similar to the mechanism for the interrupt handler vector. The jump is direct to the destination. However the compiler would have to be aware as it will have to try to fit functions into the table, as each entry is a fixed size so it's not so obviously implementable in the toolchain. We may find other reasons for having this mode. TBD.
 
 `xTBLJALVEC.scale` controls the scale. It is a read/write field instead of WARL.
 
@@ -1140,99 +1145,6 @@ Vector table mode is simplest for the hardware, as it's just the same mechanism 
 
 Note that `tablescale = 1<<(xTBLJALVEC.scale+3)`
 
-`MTBLJALCFG` controls the valid entries in the table and the _watermarks_ which are used to control which link register is in use for each table entry.
-
-[#MTBLJALCFG-table]
-.`MTBLJALCFG` definition
-[width="100%",options=header]
-|================================================================================================================
-| XLEN-1:30       | 29:20   | 19:10|  9: 0  | CSR         | Permissions | Status
-| ROZ             |maxentry | wxm5 | wmx0   | MTBLJALCFG  | MRW         | Required if vector mode is implemented
-| ROZ             |maxentry | wxm5 | wmx0   | STBLJALCFG  | SRW         | Required if S-mode is implemented
-| ROZ             |maxentry | wxm5 | wmx0   | UTBLJALCFG  | URW         | Optional
-|================================================================================================================
-
-* M-mode always uses `MTBLJALCFG`
-* S-mode always uses `STBLJALCFG`
-* U-mode uses `UTBLJALCFG` if implemented, otherwise `STBLJALCFG` if implemented, otherwise `MTBLJALCFG`
-
-
-[NOTE]
-  The range of `MTBLJALCFG.maxentry` is from 0 to `TBLJALENTRIES-1`
-
-[NOTE]
-  All 3 fields are _unsigned_ integers
-
-==== Watermarks
-
-The two watermark fields are used to control which tables entries link to
-
-*  `x0` (i.e. `J` not `JAL`)
-*  `x1` (`ra`, standard link register)
-*  `x5` (alternate link register for millicode routines)
-
-Depending upon the programming, table entries can all be allocated to 1, 2 or all 3 link registers.
-
-In the table MAX is `TBLJALENTRIES-1`.
-
-[#MTBLJALCFG-table-watermark-end-conditions]
-.`MTBLJALCFG` watermarks
-[width="100%",options=header]
-|==================================================================================================================
-|`MTBLJALCFG.wmx0`  |`MTBLJALCFG.wmx5`| `JAL x0` range | `JAL x5` range | `JAL x1` range | Comment
-6+| Normal programming model, use all 3 link registers
-| X, X>0            | Y, Y>X          |*0 to X-1*      |*X to Y-1*      |*Y to MAX*      | Use all 3 link registers
-6+| Restricted programming model, exclude 1 or 2 link registers
-| 0                 |  MAX            |*0 to MAX*      |_none_          |_none_          | Only link to x0   
-| MAX               |  MAX            |_none_          |*0 to MAX*      |_none_          | Only link to x5      
-| 0                 | 0               |_none_          |_none_          |*0 to MAX*      | Only link to x1
-| 0                 | Y, Y>0          |*0 to Y-1*      |_none_          |*Y to MAX*      | Only link to x0, x1
-| X, X>0            | X               |_none_          |*0 to X-1*      |*X to MAX*      | Only link to x1, x5
-6+| reserved for future use
-| Z                 | <Z            3+|illegal instruction                               | *reserved*
-|==================================================================================================================
-
-Some of the modes may not be so useful, so we can consider restricting them, for example
-
-- only link to x5 (only millicode routines)
-- only link to x1, x5 (no J equivalent)
-- _this needs review, but in general I'd like the specification to be flexible_
-
-With the proposed encodings 
-
-- the 16-bit encoding can access entry 0 to min(127, `MTBLJALCFG.maxentry`)
-- the 32-bit encoding can access entry 0 to min(255, `MTBLJALCFG.maxentry`)
-
-[#MTBLJALCFG-table-watermark-examples]
-.`MTBLJALCFG` watermark examples
-[width="100%",options=header]
-|==========================================================================================================================
-|`MTBLJALCFG.wmx0`  |`MTBLJALCFG.wmx5`|`JAL x0` range|`JAL x5` range| `JAL x1` range 
-| 20                | 40              |*0 to 19*     |*20 to 39*    |*40 to 255*
-| 0                 | 40              |*0 to 39*     |_none_        |*40 to 255*
-| 40                | 40              |_none_        |*0 to 39*     |*40 to 255*
-| 40                | 39            3+| *reserved*
-| 0                 | 255             |*0 to 255*    |_none_        |_none_
-| 255               | 255             |_none_        |*0 to 255*    |_none_
-| 0                 | 0               |_none_        |_none_        |*0 to 255*               
-|==========================================================================================================================
-
-`JAL x1` is always highest in the range (if enabled), so that the 32-bit encoding typically adds more cases using `x1` to convert `AUIPC/JALR x1` sequences to `TBLJAL` to save code size.
-
-.watermark example
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/tbljump2.PNG[watermark example]
-
-==== Exceptions for vector table mode
-
-Take an illegal instruction exception if `C.TBLJAL #n` is executed and one of more of these conditions are true:
-
-- `n > MTBLJALWM.maxentry` 
-- `MTBLJALWM.wmx5 < MTBLJALWM.wxm0` 
-- `MTBLJALWM.wmx0 > MTBLJALWM.maxentry` 
-- `MTBLJALWM.wmx5 > MTBLJALWM.maxentry`
-
-All comparisons are _unsigned_.
-
 ==== Pseudo-code for vector table mode
 
 [NOTE]
@@ -1242,11 +1154,12 @@ All comparisons are _unsigned_.
 [source,sourceCode,text]
 ----
 # Mem is byte indexed
-# LINK is x0, x1, x5 depending on the index number and the watermarks
-if (n > MTBLJALCFG.maxentry OR MTBLJALWM.wmx5 < MTBLJALWM.wxm0) {
-  take_illegal_instruction_exception();
-  }
-JALR LINK, InstMemory[xTBLJALVEC.base + n*tablescale][XLEN-1:0];
+# n is the immediate operand passed to c.tblj*
+switch(opcode) {
+  C.TBLJ:    JALR zero, InstMemory[xTBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
+  C.TBLJAL:  JALR ra,   InstMemory[xTBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
+  C.TBLJALM: JALR t0,   InstMemory[xTBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
+}
 ----
 
 ==== vector table code
@@ -1258,17 +1171,14 @@ Setting `xTBLJALVEC.scale` to specific values does not set a requirement on the 
 
 If `tablescale` is set to 4096 then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `xTBLJALVEC` must be changed by machine mode only so as the table refers to the system as a whole.
 
-In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a 32-bit or 16-bit encoding of `TBLJ[AL]` to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
+In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a `C.TBLJALM` instruction to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
 For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `xTBLJALVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is 136 bytes, but will shrink to 128-bytes or smaller by use of `c.tbljal` so I have allocated 4 entries to it.
 
 [source,sourceCode,text]
 ----
 
-MTBJALVECWM.wmx0 = 0 # c.tbljal #0 maps to JAL x0
-MTBJALVECWM.wmx5 = 1 # c.tbljal #1+ map to JAL x1
-
-#index 0 (JAL x0)
+#index 0 (JAL zero)
 xTBLJALVEC.base+0 <__riscv_restore_0>:
  	4902                	lw	s2,0(sp)
  	4492                	lw	s1,4(sp)
@@ -1277,7 +1187,7 @@ xTBLJALVEC.base+0 <__riscv_restore_0>:
  	0141                	addi	sp,sp,16
  	8082                	ret
 
-# index 2 (JAL x1)
+# index 8 (JAL t0)
 xTBLJALVEC.base+32  <__riscv_save_0>:
  	1141                	addi	sp,sp,-16
  	c04a                	sw	s2,0(sp)
@@ -1286,11 +1196,11 @@ xTBLJALVEC.base+32  <__riscv_save_0>:
  	c606                	sw	ra,12(sp)
  	8282                	jr	t0
 
-# index 3-6 (JAL x1)
+# index 64-67 (JAL ra)
 xTBLJALVEC.base+48: <vsnprintf>
-  	xxxx                	tbljal #5 ;# call to <__riscv_save_0>
+  	xxxx                	tbljalm #0 ;# call to <__riscv_save_0>
   ...  up to 128-byte function body ...
-  	xxxx                	tbljal #4 ;# call to <__riscv_restore_0>
+  	xxxx                	tblj #0 ;# call to <__riscv_restore_0>
 ----
 
 [NOTE]
@@ -1299,7 +1209,7 @@ xTBLJALVEC.base+48: <vsnprintf>
 
 ==== Vector Mode Security (future ideas)
 
-The vector mode mechanism could be reused for security in the future. It is possible to define that the memory allocated to to the table can only have entry points on the specific vectors, and also only from `C.TBLJAL` instructions. In this way sensitive code can be placed in the table which cannot be reused for ROP/JOP gadgets, because the code cannot be targetted by `JALR` instructions.
+The vector mode mechanism could be reused for security in the future. It is possible to define that the memory allocated to to the table can only have entry points on the specific vectors, and also only from `C.TBLJ*` instructions. In this way sensitive code can be placed in the table which cannot be reused for ROP/JOP gadgets, because the code cannot be targetted by `JALR` instructions.
 
 These ideas will not be pursued as part of the code size work.
 
@@ -1311,14 +1221,12 @@ It relies on the values in temporary registers not being maintained across funct
 
 _There are concerns about overwriting the temporary registers so this may be rejected_
 
-No illegal instruction exceptions are possible in emulation mode.
-
 ==== Pseudo-code for emulation mode
 
 [source,sourceCode,text]
 ----
 t4 = xTBLJALVEC.base;
-t5 = n;       #immediate operand
+t5 = n;       #table index
 JALR t4, t4;  # t4 gets PC+2 for c.tbljal, PC+4 for tbljal
 ----
 
