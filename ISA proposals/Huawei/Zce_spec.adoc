@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41    | bug fix: change MULI encoding, as it overlapped with SLLI (it's now in custom-0, so will have to change again in the future)
 | 0.40    | *Stable version for toolchain/simulator prototyping*
 |         | Split C.TBLJAL into C.TBLJ, C,TBLJAL, C.TBLJALM. The encoding is the same, the link register is chosen based on the table index.
 | 0.34    | Update encodings as requested by John Hauser for 16-bit encodings 
@@ -79,6 +80,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 == Issues
 
+* `MULI` has a temporary encoding
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
@@ -555,14 +557,16 @@ mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
 
 === MULI
 
-This encoding is in the same group as `ADDI, XORI` etc. and uses the same format. It multiplies a 12-bit signed immediate by rs1 with the same semantics as `MUL`.
+[NOTE]
+
+  This encoding is in `custom-0`, a real encoding must be found possibly with a shorter immediate
 
 [muli-encodings]
 .`MULI` 32-bit encoding
 [width="100%",options=header]
 |=========================================================================================================================
 | 31:20    |19:15 | 14:12   | 11:7      | 6 : 0 | instruction
-|imm[11:0] |rs1   | 001     |rd         |0010011| MULI
+|imm[11:0] |rs1   | 001     |rd         |0001011| MULI
 |=========================================================================================================================
 
 [#muli_syntax]
