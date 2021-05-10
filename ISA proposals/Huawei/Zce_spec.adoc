@@ -17,6 +17,7 @@ This document describes the `Zce` extension to reduce code-size.
 |===================================================================
 | version | change
 | 0.41    | bug fix: change MULI encoding, as it overlapped with SLLI (it's now in custom-0, so will have to change again in the future)
+|         | bug fix: C.TBLJ and C.TBLJALM were reserved in the encoding table and example usage
 | 0.40    | *Stable version for toolchain/simulator prototyping*
 |         | Split C.TBLJAL into C.TBLJ, C,TBLJAL, C.TBLJALM. The encoding is the same, the link register is chosen based on the table index.
 | 0.34    | Update encodings as requested by John Hauser for 16-bit encodings 
@@ -966,8 +967,8 @@ These instructions use a previously reserved encoding.
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10  | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100       3+| 010       8+|index8<7                       2+| 00    | C.TBLJ
-3+|  100       3+| 010       8+|index8>=8 && index8<64         2+| 00    | C.TBLJALM
+3+|  100       3+| 010       8+|index8<7                       2+| 00    | C.TBLJALM
+3+|  100       3+| 010       8+|index8>=8 && index8<64         2+| 00    | C.TBLJ
 3+|  100       3+| 010       8+|index8>=64                     2+| 00    | C.TBLJAL
 |=============================================================================================
 
@@ -976,8 +977,8 @@ These instructions use a previously reserved encoding.
 [width="100%",options=header]
 |==================================================================================================================
 |instruction | example assembler syntax   | requirements for 16-bit encoding         | 32-bit extension
-|C.TBLJ      | tblj    #n                 | n is in the range 0 to 7   (index8=n)    | N/A
-|C.TBLJALM   | tbljalm #n                 | n is in the range 0 to 55  (index8=n+8)  | N/A
+|C.TBLJALM   | tbljalm #n                 | n is in the range 0 to 7   (index8=n)    | N/A
+|C.TBLJ      | tblj    #n                 | n is in the range 0 to 55  (index8=n+8)  | N/A
 |C.TBLJAL    | tbljal  #n                 | n is in the range 0 to 191 (index8=n+64) | N/A
 |==================================================================================================================
 
@@ -987,16 +988,16 @@ These instructions use a previously reserved encoding.
 
 Therefore there is a single jump table in memory. The table entry number is from the `index8` field in the encoding, which controls the link register.
 
-* `C.TBLJ`: entries 0-7, link to `zero`
-* `C.TBLJALM`: entries 8-63, link to `t0`
-* `C.TBLJAL`: entries 64-255, link to `ra`
+* `C.TBLJALM`: entries 0-7,    link to `zero`
+* `C.TBLJ`   : entries 8-63,   link to `t0`
+* `C.TBLJAL` : entries 64-255, link to `ra`
 
 Note that the LSB of every jump table entry is _ignored_ which matches standard `JALR` behaviour.
 
 [#configuringthejumptable]
-=== Configuring the jump table
+=== Recommended algorithm for allocating entries in the jump table
 
-Calls to each function are categorised as shown in <<tbljalsavings>>
+Calls to each function are categorised as shown in <<tbljalsavings>>.
 
 [#tbljalsavings]
 .C.TBLJAL/TBJAL code size saving per function
@@ -1023,8 +1024,13 @@ saving_per_function_c_tbljal  = C * 2 + D * 6 - 2*(XLEN-8)
 saving_per_function_c_tbljalm = E * 2 + F * 6 - 2*(XLEN-8)
 ----
 
-The functions are sorted so that the one with the highest saving is in table entry 0, the second highest in entry 1 etc.
-This gives the core the chance to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. ONly caching a few entries will greatly improve the performance.
+The functions are sorted so that the one with the highest saving is in table entry 0, the second highest in entry 1 etc. for that encoding.
+
+[NOTE]
+
+  This algorithm assumes that each function is only called with one link register.
+
+This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. Only caching a few entries will greatly improve the performance.
 
 === CSRs
 
@@ -1089,16 +1095,16 @@ Jump table mode is easy to implement in the linker and doesn't affect the compil
 ----
 # tmp is temporary internal state, it doesn't represent a real register
 # Mem is byte indexed
-# n is the immediate operand passed to c.tblj*
+# index8 is the field from the encoding, not the index passed to the C.TBLJ* in the assembler
 switch(XLEN) {
-  32:  LW tmp, InstMemory[xTBLJALVEC.base + n<<2][XLEN-1:0];
-  64:  LD tmp, InstMemory[xTBLJALVEC.base + n<<3][XLEN-1:0];
-  128: LQ tmp, InstMemory[xTBLJALVEC.base + n<<4][XLEN-1:0];
+  32:  LW tmp, InstMemory[xTBLJALVEC.base + index8<<2][XLEN-1:0];
+  64:  LD tmp, InstMemory[xTBLJALVEC.base + index8<<3][XLEN-1:0];
+  128: LQ tmp, InstMemory[xTBLJALVEC.base + index8<<4][XLEN-1:0];
 }
 switch(opcode) {
+  C.TBLJALM: JALR t0,   tmp[XLEN-1:0]&~0x1;
   C.TBLJ:    JALR zero, tmp[XLEN-1:0]&~0x1;
   C.TBLJAL:  JALR ra,   tmp[XLEN-1:0]&~0x1;
-  C.TBLJALM: JALR t0,   tmp[XLEN-1:0]&~0x1;
 }
 ----
 
@@ -1106,9 +1112,9 @@ For the `vsprintf` example above, the jump table contains the following for `RV3
 
 [source,sourceCode,text]
 ----
-xTBLJALVEC.base+  0(index  0) = # 100066c <__riscv_restore_0> # requires C.TBLJ
-xTBLJALVEC.base+ 32(index  8) = # 100064a <__riscv_save_0>    # requires C.TBLJALM
-xTBLJALVEC.base+256(index 64) = #  e08433 <vsnprintf>         # requires C.TBLJAL
+xTBLJALVEC.base+ 32(index  0) = # 100064a <__riscv_save_0>    # called with C.TBLJALM #0 (index8=0  in the encoding)
+xTBLJALVEC.base+  0(index  8) = # 100066c <__riscv_restore_0> # called with C.TBLJ    #0 (index8=8  in the encoding)
+xTBLJALVEC.base+256(index 64) = #  e08433 <vsnprintf>         # called with C.TBLJAL  #0 (index8=64 in the encoding)
 ----
 
 ==== Exceptions for jump table mode
@@ -1182,16 +1188,7 @@ For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12
 [source,sourceCode,text]
 ----
 
-#index 0 (JAL zero)
-xTBLJALVEC.base+0 <__riscv_restore_0>:
- 	4902                	lw	s2,0(sp)
- 	4492                	lw	s1,4(sp)
- 	4422                	lw	s0,8(sp)
- 	40b2                	lw	ra,12(sp)
- 	0141                	addi	sp,sp,16
- 	8082                	ret
-
-# index 8 (JAL t0)
+# index 0 (JAL t0 called by C.TBLJALM #0 (index8=0 in the encoding))
 xTBLJALVEC.base+32  <__riscv_save_0>:
  	1141                	addi	sp,sp,-16
  	c04a                	sw	s2,0(sp)
@@ -1200,7 +1197,16 @@ xTBLJALVEC.base+32  <__riscv_save_0>:
  	c606                	sw	ra,12(sp)
  	8282                	jr	t0
 
-# index 64-67 (JAL ra)
+#index 8 (JAL zero called by C.TBLJ #0 (index8=8 in the encoding))
+xTBLJALVEC.base+0 <__riscv_restore_0>:
+ 	4902                	lw	s2,0(sp)
+ 	4492                	lw	s1,4(sp)
+ 	4422                	lw	s0,8(sp)
+ 	40b2                	lw	ra,12(sp)
+ 	0141                	addi	sp,sp,16
+ 	8082                	ret
+
+# index 64-67 (JAL ra called by C.TBLJAL #0 (index8=64 in the encoding))
 xTBLJALVEC.base+48: <vsnprintf>
   	xxxx                	tbljalm #0 ;# call to <__riscv_save_0>
   ...  up to 128-byte function body ...
