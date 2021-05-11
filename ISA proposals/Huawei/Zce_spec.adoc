@@ -331,7 +331,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 |======================================
 
 
-=== 16-bit encoding code-points *OUT OF DATE UNTIL ENCODINGS STABILISE*
+=== 16-bit encoding code-points
 
 All previously reserved 16-bit encodings are in the tables below, showing how many are allocated to `Zce`.
 
@@ -340,13 +340,13 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension
-3+|  100     3+|000        8+|xxxx                            2+| 00    |238/256 | `Zcea`
-3+|  100     3+|001        8+|xxxx                            2+| 00    |120/256 | `Zcea`
-3+|  100     3+|110        8+|xxxx                            2+| 00    |256/256 | `Zcea`
-3+|  100     3+|011        8+|xxxx                            2+| 00    |0/256   | *reserved*
+3+|  100     3+|000        8+|xxxx                            2+| 00    |56/256  | `Zcea`
+3+|  100     3+|001        8+|xxxx                            2+| 00    |0/256   | *reserved*
+3+|  100     3+|010        8+|xxxx                            2+| 00    |120/256 | `Zcea`
+3+|  100     3+|011        8+|xxxx                            2+| 00    |256/256 | `Zcea`
 3+|  100     3+|1xx        8+|xxxx                            2+| 00    |0/1024  | *reserved*
 3+|  011       | 0 5+|xxxxx             5+|11111              2+| 01    |0/32    | *reserved*
-3+|  100     3+|111  3+|xxx   |1  4+|xxx                      2+| 01    |0/128   | *reserved*
+3+|  100     3+|111  3+|xxx   |1  4+|xxx                      2+| 01    |64/128  | `Zcea`
 3+|  100     6+|000000                  5+|non-zero           2+| 10    |0/31    | *reserved*
 |================================================================================================
 
@@ -375,19 +375,15 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points|sub-extension  
 3+| 001        11+|xxx                                        2+|00     |2048/2048| `Zceb`
 3+| 101        11+|xxx                                        2+|00     |2048/2048| `Zceb`
-3+| 001        11+|xxx                                        2+|10     |   0/2048| *reserved*       
+3+| 001        11+|xxx                                        2+|10     |2048/2048| `Zceb`
 3+| 101        11+|xxx                                        2+|10     |2047/2048| `Zceb`
 |================================================================================================
 
 In total in the existing RVC (16-bit) encoding space:
 
-. RV32C has 3871 code points available, 588 are used (15.2%)
-. RV64C has 2303 code points available, 588 are used (25.5%)
-. RV32CD (i.e. the C.FSD,C.FLD, C.FSDSP, C.FLDSP encodings) has 8192 code points available, 6143 are used (75.0%)
-
-. if the partially allocated encoding groups from <<spare16encodings>> are fully allocated to Zce the figures become
-.. RV32C has 3871 code points available, 768 are used (19.8%)
-.. RV64C has 2303 code points available, 768 are used (33.3%)
+. RV32C has 3871 code points available, 496 are used (12.8%)
+. RV64C has 2303 code points available, 496 are used (21.5%)
+. RV32CD (i.e. the C.FSD,C.FLD, C.FSDSP, C.FLDSP encodings) has 8192 code points available, 8191 are used (99.9%)
 
 == `Zcea` definition
 
@@ -407,7 +403,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 001     2+| 00  | C.SEXT.B
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 010     2+| 00  | C.ZEXT.H
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 011     2+| 00  | C.SEXT.H
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 100     2+| 00  | C.ZEXT.W
+3+|  100     3+| 000 3+| xxx      2+| 00  3+| 100     2+| 00  | C.ZEXT.W
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 101     2+| 00  | *reserved*
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 110     2+| 00  | C.NEG
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 111     2+| 00  | C.NOT
@@ -546,7 +542,7 @@ The EABI mapping may not be so simple, TBD.
 [width="100%",options=header]
 |======================================================================================================
 |instruction | example assembler syntax | requirements for 16-bit encoding   | 32-bit extension
-|C.MVAS01S07 | mv(a0,a1),(sreg1,sreg2)  | none                               | N/A
+|C.MVA01S07  | mv(a0,a1),(sreg1,sreg2)  | none                               | N/A
 |======================================================================================================
 
 Assembly examples.
