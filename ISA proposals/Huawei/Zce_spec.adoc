@@ -609,8 +609,8 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 [width="100%",options=header]
 |=========================================================================================================================
 |  31:25             |24:20       |19:15 | 14:12   | 11:7              | 6 : 0 | instruction
-| offset[12,10:5]    |cmpimm[4:0] | rs1  | 010     | imm[4:1,11]       |1100011| BEQI
-| offset[12,10:5]    |cmpimm[4:0] | rs1  | 011     | imm[4:1,11]       |1100011| BNEI
+| offset[12,10:5]    |cmpimm[4:0] | rs1  | 010     | offset[4:1,11]    |1100011| BEQI
+| offset[12,10:5]    |cmpimm[4:0] | rs1  | 011     | offset[4:1,11]    |1100011| BNEI
 |=========================================================================================================================
 
 [#compare-immediate branch_semantics]
