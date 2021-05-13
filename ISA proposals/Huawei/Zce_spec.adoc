@@ -73,7 +73,7 @@ This document describes the `Zce` extension to reduce code-size.
 | 0.17    | Add Zbb and possibly Zba (open issue)
 | 0.16    | Add Zces[fdq] subsets
 | 0.15    | add B-ext pseudo-ops and pack/packw into Zcec for 32-bit forms of new instructions
-| 0.14    | BNEI/BEQI/MULI/MULIADD/ADDIADD moved from Zced to Zcec. Found encodings for B*I and DECBGEZ to allow Zced+ZDinx. Reduced cmpimm range for BNEI/BEQI to fit the encoding. Allocated provisional encodings for all 32-bit instructions. Fixed width of frcount, mv in PUSH/POP encodings.
+| 0.14    | BNEI/BEQI/MULI/MULIADD/ADDIADD moved from Zced to Zcec. Found encodings for B*I and DECBGEZ to allow Zced+Zdinx. Reduced cmpimm range for BNEI/BEQI to fit the encoding. Allocated provisional encodings for all 32-bit instructions. Fixed width of frcount, mv in PUSH/POP encodings.
 | 0.13    | split LWGP/SWGP into LWGP/SWGP and LWTP/SWTP
 | 0.12    | reduce ret_val to 2-bits for POP/POPRET
 | 0.11    | Add C.SEXT.W, C.ZEXT.W, MULI, MULIADDW, ADDIADDW, and change the C.[SZ]EXT.* encodings. Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
@@ -98,7 +98,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 * `Zcea` which is compatible with all existing standard extensions designed for small embedded cores
 ** `Zcee` is a simpler subset of `Zcea` for high performance cores, it can be implemented without the test of `Zcwa`
 * `Zceb` reuses encoding from the `D`-extension, and so is incompatible with `D`
-** `Zceb` is fully compatible with `ZDinx`
+** `Zceb` is fully compatible with `Zdinx`
 
 [NOTE]
 
@@ -142,7 +142,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |===============================================================================
 
 [#zceb]
-.Zceb extension, incompatible with D, compatible with ZDinx
+.Zceb extension, incompatible with D, compatible with Zdinx
 [width="100%",options=header]
 |===============================================================================
 |Instruction|RV32|RV64|RV128|Extension|Notes
@@ -176,7 +176,7 @@ For example:
 * `C.FSD`, `C.SQ`, and `{C.LBU, C.SB}` share opcodes, so for different configurations the encodings represent:
 ** `C.FSD` for `RV32CD/RV64CD`
 ** `C.SQ`  for `RV128C`
-** `{C.LBU, C.SB}` for `RV32C_Zceb, RV64C_Zceb， RV32C_Zceb_ZDinx, RV64C_Zceb_ZDinx`
+** `{C.LBU, C.SB}` for `RV32C_Zceb, RV64C_Zceb， RV32C_Zceb_Zdinx, RV64C_Zceb_Zdinx`
 ** illegal encoding for `RV32C, RV64C`, as neither `D` nor `Zce` was specified
 
 The shared encoding column in the tables assigns an arbitrary number to show which encodings are grouped together (I can't find a better way of highlighting groups of cells in the table in adoc format). `Zce` instructions are in *bold*.
@@ -493,7 +493,10 @@ Register moves are the most common in GCC output in both the benchmark suite and
 
 * move from two `s[0-7]` registers into `a0` and `a1`.
 
-Similar to `PUSH/POP` this instruction uses ABI names for the registers. The mapping from `s` to `x` number is simple. For `RV32_Zdinx` a paired register write port is required already. For other configurations the microarchitecture can split the instructions into an uninterruptable sequence of two `mv` instructions to avoid the second write port.
+Similar to `PUSH/POP` this instruction uses ABI names for the registers. The mapping from `s` to `x` number is simple. For `RV32_Zdinx` a paired register write port is required already. For other configurations the microarchitecture can 
+
+* split the instructions into an uninterruptable sequence of two `mv` instructions to avoid the second write port
+* add a paired write port for `a0` and `a1` only. Because the instruction only writes these two registers only one paired write port is needed, which is much cheaper than allowing paired writes to the whole register file.
 
 [NOTE]
 
@@ -665,7 +668,7 @@ It is recommended to implement both `Zba` and `Zbb` for code-size reduction, but
 
 `Zceb` and the `D`-extension use the same encodings, therefore the two cannot co-exist and would be an illegal RISC-V configuration.
 
-`Zceb` is compatible with `ZDinx`.
+`Zceb` is compatible with `Zdinx`.
 
 [Zceb-32bit-formats]
 .proposed 32-bit formats
@@ -774,9 +777,9 @@ decbnez s2, 1, offset ;# s2-=1;if(s2!=0) branch_to(PC+offset)
 ----
 
 
-=== LWGP, SWGP
+=== LWGP, SWGP, LDGP, SDGP
 
-These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
+These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `Zdinx`.
 
 These instructions reuse the encodings for `FLD/FSD`.
 
@@ -829,7 +832,7 @@ sd s0, 20(gp)
 
 === C.LBU, C.LHU, C.LB, C.LH, C.SB, C.SH
 
-These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `ZDinx`.
+These instructions conflict with the `D`-extension. If `D` is implemented, these instruction will not be available. They are compatible with `Zdinx`.
 
 [#ldstbh]
 .proposed 16-bit encodings for load/store byte/half
@@ -1415,6 +1418,10 @@ pop.e          {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
 
 ----
 
+[NOTE]
+
+  An ealier version of the specification allowed `ra` to be excluded from the register list. This caused a lot of complexity in the specifications above and we found very few cases in the benchmark suite where it would have been beneficial. If `ra` is not required then `PUSH/C.PUSH` can still be used, which will waste `XLEN` bits of stack memory but `POP/POPRET` etc. _cannot_ as they would overwrite `ra`
+
 ==== 16-bit encoding assembler syntax
 
 This syntax is for the 16-bit encodings, for the UABI. The rules stated above for the 32-bit encodings also apply.
@@ -1465,7 +1472,7 @@ For example
 
 . `c.push   {ra,s0-s2}, {a0-a2},  -64` can use a 16-bit encoding
 . `push     {ra,s0-s2},           -64` must use a 32-bit encoding as `{a0-a2}` is excluded
-. `push     {ra,s0-s2}, {a0-a2}, -256` must use a 32-bit encoding as the `stack_adjustment` is out of range for `c.push`
+. `push     {ra,s0-s2}, {a0-a2}, -256` can use a 32-bit encoding as the `stack_adjustment` is out of range for `c.push`, or a `c.addi16sp; c.push` sequence achieves the same code-size
 . `c.popret {ra,s0-s2}, {0},       32` can use a 16-bit encoding
 . `popret   {ra,s0-s2}, {1},       32` must use a 32-bit encoding as `c.popret` only supports `0` as the `ret_val` value
 
@@ -1711,17 +1718,17 @@ These instructions have no conflicts with other extensions, they use previously 
 |=========================================================================================================================
 |15 |14 |13 |12 |11 |10  |9 |8    |7|6   |5   |4 |3 |2           |1 |0 |instruction   
 
-3+|100    3+|011       3+|spimm0_5  |0   |ret0 3+|rlist3       2+| 00  |C.POPRET
-3+|100    3+|011       2+|11|spimm0 |0   |0    3+|rlist3       2+| 00  |C.POP
-3+|100    3+|011       2+|11|spimm0 |0   |1    |0 2+|rlist2    2+| 00  |C.POP.E (RV32 only)
+3+|100    3+|011       3+|spimm0_5[6:4]  |0   |ret0 3+|rlist3       2+| 00  |C.POPRET
+3+|100    3+|011       2+|11|spimm[4] |0   |0    3+|rlist3       2+| 00  |C.POP
+3+|100    3+|011       2+|11|spimm[4] |0   |1    |0 2+|rlist2    2+| 00  |C.POP.E (RV32 only)
 
-3+|100    3+|011       3+|spimm0_5  |1   |0    3+|rlist3       2+| 00  |C.PUSH
-3+|100    3+|011       3+|spimm0_5  |1   |1    |ret0 2+|rlist2 2+| 00  |C.POPRET.E (RV32 only)
-3+|100    3+|011       2+|11|spimm0_5[0] |1   2+|spimm0_5[2:1] 2+|rlist2 2+| 00  |C.PUSH.E (RV32 only)
+3+|100    3+|011       3+|spimm0_5[6:4]  |1   |0    3+|rlist3       2+| 00  |C.PUSH
+3+|100    3+|011       3+|spimm0_5[6:4]  |1   |1    |ret0 2+|rlist2 2+| 00  |C.POPRET.E (RV32 only)
+3+|100    3+|011       2+|11|spimm0_5[4] |1   2+|spimm0_5[6:5] 2+|rlist2 2+| 00  |C.PUSH.E (RV32 only)
 
 |=========================================================================================================================
 
-  * `spimm0_5` has legal values of 0 to 5
+  * `spimm0_5[6:4]` has legal values of 0 to 5
 
 [#rlist3-table]
 .`rlist3` values for the 16-bit encodings
