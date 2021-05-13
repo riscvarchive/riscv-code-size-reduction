@@ -82,6 +82,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 == Issues
 
+* `BEQI/BNEI` should have `nzuimm` instead of `uimm`, will fix after prototyping phase
 * `MULI` has a temporary encoding
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
 * is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
@@ -602,6 +603,10 @@ muli     a0, a1, 2     # a0 = a1 * 2
 
   These encodings match the format for BEQ as much as possible
 
+[NOTE]
+
+  This should be a `nzuimm` as if `uimm==0` then `BEQ/BNE rs1, zero, offset` can be used.
+
 The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
 
 [compare-immediate-branch_encodings]
@@ -609,8 +614,8 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 [width="100%",options=header]
 |=========================================================================================================================
 |  31:25             |24:20       |19:15 | 14:12   | 11:7              | 6 : 0 | instruction
-| offset[12,10:5]    |cmpimm[4:0] | rs1  | 010     | offset[4:1,11]    |1100011| BEQI
-| offset[12,10:5]    |cmpimm[4:0] | rs1  | 011     | offset[4:1,11]    |1100011| BNEI
+| offset[12,10:5]    |uimm[4:0]   | rs1  | 010     | offset[4:1,11]    |1100011| BEQI
+| offset[12,10:5]    |uimm[4:0]   | rs1  | 011     | offset[4:1,11]    |1100011| BNEI
 |=========================================================================================================================
 
 [#compare-immediate branch_semantics]
@@ -618,8 +623,8 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| BEQI          | if (rs1==zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
-| BNEI          | if (rs1!=zero_ext(cmpimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BEQI          | if (rs1==zero_ext(uimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BNEI          | if (rs1!=zero_ext(uimm)) target_pc=PC+offset; else target_pc=PC+4;
 |=======================================================================
 
 Assembly Examples
@@ -710,7 +715,7 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  101          3+|nzimm[6:4] 3+| rd'  3+|nzimm[3:1] 2+|scale 2+| 10 | C.DECBNEZ
+3+|  101          3+|nzuimm[6:4] 3+| rd' 3+|nzuimm[3:1] 2+|scale 2+| 10 | C.DECBNEZ
 3+|  001          3+|000        3+| rd'  3+|000        2+|scale 2+| 00 | *reserved*
 |=============================================================================================
 
@@ -719,7 +724,7 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| C.DECBNEZ     | rd' = rd' - (1<<scale); bnez rd', zero, -zero_ext(nzimm);
+| C.DECBNEZ     | rd' = rd' - (1<<scale); bnez rd', zero, -zero_ext(nzuimm);
 |=======================================================================
 
 [#v1.0-32bit]
@@ -2092,8 +2097,7 @@ For `C.POPRET/POPRET`, use `POPRET` if:
 For `C.POP/POP`, use `POP` if
 
 1. The total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.POP`, but in range for `POP`.
-2. `C.POP` doesn't include enough registers.
-3. The return value is `0, 1` or `-1`.
+2. The return value is `0, 1` or `-1`.
 
 _Example 1_ The 16-bit encoding includes too many register moves.
 
