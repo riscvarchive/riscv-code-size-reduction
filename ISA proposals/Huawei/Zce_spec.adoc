@@ -18,6 +18,7 @@ This document describes the `Zce` extension to reduce code-size.
 | version | change
 | 0.41    | bug fix: change MULI encoding, as it overlapped with SLLI (it's now in custom-0, so will have to change again in the future)
 |         | bug fix: C.TBLJ and C.TBLJALM were reserved in the encoding table and example usage
+|         | add compiler switches for the prototype compiler
 | 0.40    | *Stable version for toolchain/simulator prototyping*
 |         | Split C.TBLJAL into C.TBLJ, C,TBLJAL, C.TBLJALM. The encoding is the same, the link register is chosen based on the table index.
 | 0.34    | Update encodings as requested by John Hauser for 16-bit encodings 
@@ -2340,9 +2341,43 @@ Even though there is not much code-size saving once the `sp` save/restore code h
 
 If the target memory is non-idempotent then see <<non-idem-mem>> for additional constraints.
 
-= Verification notes
+== Compiler switches
 
-== Existing functionality
+If `Zce/Zcea/Zceb/Zcee` are specificied, then the compiler will include all the instructions from the relevant subsets.
+It is also useful to be able to select instructions in a more fine-grained way to help with benchmarking and analysis work, especially when analysing the results of the prototype compiler.
+Therefore the compiler switches in <<compilerswitches>> are available, each one is used to enable a specific list of instructions.
+
+[#compilerswitches]
+.Compiler switches for Zce
+[options="header",width=100%]
+|==============================================================================
+| Switch             | Enabled instructions
+| -mzce-cpush-cpop   | C.PUSH, C.POP, C.POPRET
+| -mzce-push-pop     | PUSH.E, POP.E, POPRET.E
+| -mzce-cpushe-cpope | C.PUSH.E, C.POP.E, C.POPRET.E
+| -mzce-pushe-pope   | PUSH.E, POP.E, POPRET.E
+| -mzce-tbljal       | C.TBLJ, C.TBLJAL, C.TBLJALM
+| -mzce-clbhu        | C.LBU, C.LHU
+| -mzce-clbh         | C.LB, C.LH
+| -mzce-csbh         | C.SB, C.SH
+| -mzce-lsgp         | LWGP, SWGP, LDGP (RV64), SDGP (RV64)
+| -mzce-muli         | MULI
+| -mzce-cmul         | C.MUL
+| -mzce-sext         | C.SEXT.B, C.SEXT.H, (C.SEXT.W RV64 pseudo-instruction)
+| -mzce-zext         | C.ZEXT.B, C.ZEXT.H, C.ZEXT.W (RV64)
+| -mzce-beqi         | BEQI
+| -mzce-bnei         | BNEI
+| -mzce-cnot         | C.NOT
+| -mzce-cneg         | C.NEG
+| -mzce-cmva01s07    | C.MVA01S07
+| -mzce-cdecbnez     | C.DECBNEZ
+| -mzce-decbnez      | DECBNEZ
+|==============================================================================
+
+
+== Verification notes
+
+=== Existing functionality
 
 Many of the instructions are 16-bit encodings of existing 32-bit instructions, therefore the verification should be a simple extension to existing tests and coverage. Additionally, the instructions are all very simple.
 . C.SEXT.B, C.SEXT.H, (C.SEXT.W is a pseudo-instruction)
@@ -2350,7 +2385,7 @@ Many of the instructions are 16-bit encodings of existing 32-bit instructions, t
 . C.MUL, C.NOT, C.NEG
 . C.LBU, C.LHU, C.LB, C.LH, C.SB, C.SH
 
-== Simple extensions to existing functionality
+=== Simple extensions to existing functionality
 
 These instructions are extremely similar to existing instructions, so the verification tests and coverage should be a simple extension from existing tests and coverage:
 
@@ -2363,7 +2398,7 @@ These instructions are extremely similar to existing instructions, so the verifi
 . MULI
 .. same as MUL with a signed immediate operand
 
-== New branch functionality
+=== New branch functionality
 
 `DECBNEZ` and `C.DECBNEZ` are also fused versions of two instructions:
 
@@ -2382,11 +2417,11 @@ bnez s2, -48
 
 Therefore the coverage is the same as for `ADDI/BGEZ` combined, noting the limited range of subtraction values (1,2,4,8) and the range of the branch offset (especially for `C.DECBNEZ`).
 
-== Sequenced functionality
+=== Sequenced functionality
 
 `PUSH/POP/POPRET` execute a sequence of micro-ops to execute the whole instruction. As a result they are considerably more complex to verify than the other instructions.
 
-=== Cover all possible sets of operands
+==== Cover all possible sets of operands
 
 `mv, rlist, ra, spimm` are all fields in the encoding.
 
@@ -2415,7 +2450,7 @@ The 16-bit encodings have ffar ewer coverage bins:
 | C.POPRET    | `rlist`(0 to 7) x `ret_val` (0 to 1) x `spimm` (0 to 7) | 128
 |==============================================================================
 
-=== Test the functionality
+==== Test the functionality
 
 Execution of every PUSH/POP/POPRET instruction must result in the same architectural state updates as executing the sequence that it expands into. For example:
 
@@ -2452,7 +2487,7 @@ on the loads and stores in the sequence. `mepc` will be different between the tw
 
 Implementations may choose for the sequences to be uninterruptible, or to be interruptible and to restart after the `mret`. The overall result is the same - the sequence will eventually complete and correctly update the architectural state, providing any debug triggers are disabled in the handler before resuming execution (so they don't trigger again)
 
-== Table jump, jump table mode only
+==== Table jump, jump table mode only
 
 Table jump is quite simple architecturally. 
 
@@ -2462,15 +2497,15 @@ The core to jump to address `m`, and link to the register referenced by bits[1:0
 
 For verification we must show that the different link registers work and that the core jumps to the correct location each time.
 
-= Rejected and postponed instructions
+== Rejected and postponed instructions
 
-== Not benchmarked: PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]
+=== Not benchmarked: PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]
 
 Please read <<pushpoppopret>> before reading this section.
 
 These instructions are variants of `PUSH/POP/POPRET` which also allow `F` registers to be saved/restored.
 
-=== Assembler Syntax
+==== Assembler Syntax
 
 These instructions require a register list including `fs` registers.
 
@@ -2502,7 +2537,7 @@ Additionally:
 [NOTE]
   When moving from loading or storing `x` registers to `f` registers there may be a gap as the registers may be different widths, and all registers must be aligned in memory
 
-==== Rationale: why include the .[fdq] suffix
+===== Rationale: why include the .[fdq] suffix
 
 It is required to hard-code the length of the `f` registers in the opcode, and not just save/restore the whole register. We must allow code compiled for the F-extension
 to run on a  core which supports D and possibly Q. We must also allow code compiled for the D-extension to run on a core which supports Q.
@@ -2514,7 +2549,7 @@ An alternative would be to use `misa.[FDQ]`
 to directly control the behaviour and so set `misa.[DQ]=0` when running F code. Nothing else in the architecture requires this, so it seems unreasonable to 
 add this requirement here. This approach also wouldn't work for `Z[FDQ]inx` cores as `misa.[FDQ]` are all hardwired to zero.
 
-=== Pseudo-code
+==== Pseudo-code
 
 The pseudo-code below show the required architectural state updates. 
 
@@ -2522,7 +2557,7 @@ Note that every architectural state update in the pseudo-code can be executed as
 
 Because the pseudo-code includes load or store operations, they may take any fault caused by executing loads or stores. See <<fault-handling>> for more details.
 
-==== PUSH.[FDQ] Pseudo-code
+===== PUSH.[FDQ] Pseudo-code
 
 The `PUSH.FDQ` instruction stores the set of registers from `fsreg_list` to consecutive memory locations, and decrements the stack pointer.
 The pseudo-code uses assembly inserts so that it can use `fsw/fsd` etc.
@@ -2573,7 +2608,7 @@ for(i in freg_list)  {
 sp+=stack_adjustment; //decrement
 ----
 
-==== POP.[FDQ]/POPRET/[FDQ] Pseudo-code
+===== POP.[FDQ]/POPRET/[FDQ] Pseudo-code
 
 A `POP/POPRET` instruction loads the set of registers from `fsreg_list` from consecutive memory locations, and then increments the stack pointer. 
 The pseudo-code uses assembly inserts so that it can use `flw/fld/ret`.
@@ -2629,7 +2664,7 @@ if (opcode == "POPRET") {
 ----
 
 [#pushpoppopret32bitencodings]
-=== 32-bit Encodings
+==== 32-bit Encodings
 
 [NOTE]
 
@@ -2661,7 +2696,7 @@ if (opcode == "POPRET") {
   `ra=1` for all `popret` encodings, it is not specified in the encoding
 
 
-==== Illegal instructions 
+===== Illegal instructions 
 
 The encoding takes the same behaviour as any floating point instruction if executed when disabled:
 
@@ -2676,13 +2711,13 @@ The following cases do not decode as `PUSH*/POP*/POPRET*`
 * `fdq=3`
 * `rlist==13` and `frlist>0` and the opcode doesn't have an `[fdq]` suffix
 
-==== Rational: `rlist=13, frlist=0` saving all saved registers
+===== Rational: `rlist=13, frlist=0` saving all saved registers
 
 The debian distro does save all `s` and `fs` registers on a few occasions, so there is a special encoding for this case. I saw no justification for saving all `fs` registers *without* saving all `s` registers. It seems useful to have a form which saves all saved registers.
 
 The programmable range for `frlist` doesn't save many `fs` registers as `FPMark` only saves one or two and Debian rarely saves more than that.
 
-=== Encoding Fields
+==== Encoding Fields
 
 See <<spimm>>.
 
@@ -2733,7 +2768,7 @@ The bytes required for padding is simple - if FLEN==XLEN it's always zero. If FL
 | 4n+3   |12-bytes
 |====================================
 
-==== `mv, ret_val, ra, frlist, rlist` for the 32-bit encodings
+===== `mv, ret_val, ra, frlist, rlist` for the 32-bit encodings
 
 The registers in the `reg_list` are controlled by these fields
 
@@ -2778,9 +2813,9 @@ See <<32bit-ra>> for `ra`.
 | 14-15  | *reserved*
 |==========================
 
-=== Assembly examples
+==== Assembly examples
 
-==== PUSH.F RV32I[FDQ] UABI (16-byte aligned stack)
+===== PUSH.F RV32I[FDQ] UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
@@ -2803,7 +2838,7 @@ fsw fs0, -28(sp)
 addi sp, sp, -64;
 ----
 
-==== PUSH.D RV64I[DQ] UABI (16-byte aligned stack)
+===== PUSH.D RV64I[DQ] UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
@@ -2826,7 +2861,7 @@ fsd fs0, -56(sp)
 addi sp, sp, -64;
 ----
 
-==== PUSH.D RV64I[DQ] UABI (16-byte aligned stack)
+===== PUSH.D RV64I[DQ] UABI (16-byte aligned stack)
 
 [source,sourceCode,text]
 ----
@@ -2854,9 +2889,9 @@ fsd  fs11,-96(sp);
 addi sp, sp, -128; 
 ----
 
-== Benchmarking results too low
+=== Benchmarking results too low
 
-=== TBLJAL (32-bit encoding)
+==== TBLJAL (32-bit encoding)
 
 `TBLJAL` offers minimal additional benefit over `C.TBLJAL`
 
@@ -2873,13 +2908,13 @@ addi sp, sp, -128;
 |=========================================================================================================================
 
 
-=== LWTP, SWTP, LDTP, SDTP
+==== LWTP, SWTP, LDTP, SDTP
 
 TP relative load/store (similar to LWGP etc.) adding TP as a second global pointer.
 
 The benefit from LWGP etc. so far is very low so there is no justification to add an extended range to TP.
 
-=== MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
+==== MULIADD, ADDIADD, MULIW, MULIADDW, ADDIADDW
 
 These instructions have low benefit. `MULIADD` and `ADDIADD` are unpopular due to requiring 3 operands. `MULI` is useful (and is included in the proposal) and takes much of the benefit of `MULIADD`
 
@@ -2910,7 +2945,7 @@ muliw    a0, a1, 2     # a0 = sign_ext(a1 * 2)
 muliaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 * 2)
 addiaddw a0, a1, 2     # a0 = sign_ext(a1 + a2 + 2)
 ----
-=== BGEUI, BLTUI
+==== BGEUI, BLTUI
 
 These allocate reserved encodings, and are similar to <<cmpimmbr>> but have lower value. It's possible that future use of these instructions will be found in later versions of `Zce`.
 
@@ -2940,7 +2975,7 @@ bgeu a5, 1,offset # if(a5>= 1) branch_to(PC+offset) # unsigned comparison
 bltu a5, 1,offset # if(a5<  1) branch_to(PC+offset) # unsigned comparison
 ----
 
-=== C.LBUSP, C.LHUSP, C.SBSP, C.SHSP
+==== C.LBUSP, C.LHUSP, C.SBSP, C.SHSP
 
 These encodings require too much space for the benefit.
 
@@ -2988,7 +3023,7 @@ sb  a5,20(sp)   # Memory(sp+20)[ 7:0] = a5[ 7:0]
 sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0]   
 ----
 
-=== C.LSBNOT / C.LSBSET
+==== C.LSBNOT / C.LSBSET
 
 The encodings are cheap, but the benefit is low.
 
@@ -3028,9 +3063,9 @@ lsbnot a5;      # a5 = a5 XOR 1
 ----
 
 
-= Future ideas
+== Future ideas
 
-== Multiple move instructions
+=== Multiple move instructions
 
 These instructions have some problems: 
 
@@ -3040,7 +3075,7 @@ These instructions have some problems:
 
 Therefore ratification is delayed, and some more thought is needed.
 
-=== C.MVP
+==== C.MVP
 
 The generic move uses standard x register numbers, and so it more standard than `C.MVA*S07`, however it takes a lot more encoding space. Both register pairs must be even/odd pairs (`rdp[0]=0, rsp[0]=0`) to reduce the encoding space requirement.
 
@@ -3087,7 +3122,7 @@ Assembly examples.
 mv (x2, x3), (x18, x19) ; # mv x2, x2; mv x18, x19
 ----
 
-=== C.MVA23S07
+==== C.MVA23S07
 
 Similar to C.MVA01S07 but the benefit is much lower.
 
