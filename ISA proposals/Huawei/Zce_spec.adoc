@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.1  | bug fix: move PUSH/POP/POPRET to custom-1 as they were overlapping (so will have to change again in the future)
 | 0.41    | bug fix: change MULI encoding, as it overlapped with SLLI (it's now in custom-0, so will have to change again in the future)
 |         | bug fix: C.TBLJ and C.TBLJALM were reserved in the encoding table and example usage
 |         | add compiler switches for the prototype compiler
@@ -45,39 +46,6 @@ This document describes the `Zce` extension to reduce code-size.
 |         | tighten up the Memory[] used in the semantics to specify that it's XLEN bits wide, and whether it's Instruction or Data memory as the endianness handling may be different (according to Allen Baum)
 | 0.31    | Fix Allen Baum's feedback including removing Zba/Zbb requirement and making them a recommendation only. There's no written policy requiring 32-bit versions of 16-bit encodings as far as I know, and we're not planning to fully benchmark Zba/Zbb for code-size.
 | 0.30    | careful proofreading and updated C.POP encoding for simpler decode
-| 0.29.3  | updated c.sext, c.zext, c.not, c.neg assembler syntax to match the 32-bit encodings, fix Align16 function
-| 0.29.2  | change SPIMM definition so the encoding sets bits [8:4] not [4:0] to make it obvious it's a multiple of 16
-|         | fixed C.PUSH/C.POP etc. encodings as they overlapped
-| 0.29.1  | Add ZCE-type format for push/pop/popret and tbljal
-| 0.29    | Add EABI versions of 32-bit encodings of PUSH/POP/POPRET, and move encodings of PUSH/POP/POPRET/BEQI/BNEI to custom-0 as I chose bad encodings
-| 0.28    | change alignment check of all non FP forms of PUSH/POP/POPRET to 8-byte not 16-byte to allow EABI compatibility. SPIMM still allocates blocks of 16-bytes.
-| 0.27    | add tentative versions of C.PUSH.E/C.POP.E/C.POPRET.E, need to review them
-| 0.26    | simplify and rename subsets. Re-encode LWGP/SWGP etc. Add LDWP/SDGP etc. Re-encode DECBGEZ. Re-encode C.SEXT.B, C.SEXT.H, C.NOT, C.NEG following Greg Favor's recommendation
-| 0.25    | Add Zcee for inclusion in RVA22
-| 0.24    | add illegal combinations of mv and rcount into PUSH spec
-|         | added verification notes
-| 0.23    | add C.ZEXT.W and Zba for the 32-bit version 
-| 0.22    | group encodings closer together to hopefully allocate 16-bit encoding space to Zce. Put code points numbers into the tables
-| 0.21    | remove SEXT.W as it's an existing pseudo-instruction, and also remove ZEXT.W as it requires Zbp (which is otherwise is *not* required). 
-|         | Remove C.LSBKEEP as it's the same as C.ANDI, rs, 1. Postpone C.LSBSET. 
-|         | Tidy up encodings of C.[SX]EXT.[BH] so we don't leave gaps
-|         | Add code-point information
-| 0.20    | Put MULI[W]/MULIADD[W] into Zcecm
-|         | POSTPONE PUSH.[FDQ]/POP.[FDQ]/POPRET.[FDQ]. 
-|         | Replace C.LSBNOT with C.LSBSET and also add C.LSBKEEP. 
-|         | Remove BGEUI, BLTUI, C.LSBNOT, C.LBUSP, C.LHUSP, C.SBSP, C.SHSP as benchmarking results are low
-|         | Put C.MVP/C.MVA*S07 into a "future work" category as they need more thought
-|         | reduced C.TBLJAL immediate to 8-bits, the 9th bit didn't pay for itself
-|         | Note EABI compatibility in PUSH/POP/POPRET
-|         | Update C.NOT/C.NEG assembler syntax
-| 0.18    | Separate C.MUL into Zcecm to avoid the dependancy on M, so Zcec has one subset (but is still the same ratification group)
-| 0.17    | Add Zbb and possibly Zba (open issue)
-| 0.16    | Add Zces[fdq] subsets
-| 0.15    | add B-ext pseudo-ops and pack/packw into Zcec for 32-bit forms of new instructions
-| 0.14    | BNEI/BEQI/MULI/MULIADD/ADDIADD moved from Zced to Zcec. Found encodings for B*I and DECBGEZ to allow Zced+Zdinx. Reduced cmpimm range for BNEI/BEQI to fit the encoding. Allocated provisional encodings for all 32-bit instructions. Fixed width of frcount, mv in PUSH/POP encodings.
-| 0.13    | split LWGP/SWGP into LWGP/SWGP and LWTP/SWTP
-| 0.12    | reduce ret_val to 2-bits for POP/POPRET
-| 0.11    | Add C.SEXT.W, C.ZEXT.W, MULI, MULIADDW, ADDIADDW, and change the C.[SZ]EXT.* encodings. Rename flen PUSH/POP encoding field to fdq to avoid confusion with FLEN.
 |===================================================================
 
 == Issues
@@ -1022,8 +990,8 @@ These instructions use a previously reserved encoding.
 
 Therefore there is a single jump table in memory. The table entry number is from the `index8` field in the encoding, which controls the link register.
 
-* `C.TBLJALM`: entries 0-7,    link to `zero`
-* `C.TBLJ`   : entries 8-63,   link to `t0`
+* `C.TBLJALM`: entries 0-7,    link to `t0`
+* `C.TBLJ`   : entries 8-63,   link to `zero`
 * `C.TBLJAL` : entries 64-255, link to `ra`
 
 Note that the LSB of every jump table entry is _ignored_ which matches standard `JALR` behaviour.
@@ -1631,7 +1599,7 @@ if (opcode == "POPRET"   or
 
 [NOTE]
 
-  These encodings are in _custom-0_, correct encodings need to be allocated.
+  These encodings are in _custom-1_, correct encodings need to be allocated.
 
 .push/pop/popret 32-bit format PPP-type
 [options="header",width="100%"]
@@ -1644,12 +1612,12 @@ if (opcode == "POPRET"   or
 [options="header",width="100%"]
 |================================================================================================
 | 31:22          |21:20   |19:16        |15 | 14:12   | 11: 7      | 6 : 0 | instruction
-|000000000       |0       |rlist (0-12) |0  | 100     | spimm[8:4] |0010011| PUSH
-|000000000       |0       |rlist (13-15)|0  | 100     | spimm[8:4] |0010011| PUSH.E
-|000000000       |ret_val |rlist (0-12) |0  | 101     | spimm[8:4] |0010011| POP
-|000000000       |ret_val |rlist (13-15)|0  | 101     | spimm[8:4] |0010011| POP.E
-|000000000       |ret_val |rlist (0-12) |0  | 110     | spimm[8:4] |0010011| POPRET
-|000000000       |ret_val |rlist (13-15)|0  | 110     | spimm[8:4] |0010011| POPRET.E
+|000000000       |0       |rlist (0-12) |0  | 100     | spimm[8:4] |0101011| PUSH
+|000000000       |0       |rlist (13-15)|0  | 100     | spimm[8:4] |0101011| PUSH.E
+|000000000       |ret_val |rlist (0-12) |0  | 101     | spimm[8:4] |0101011| POP
+|000000000       |ret_val |rlist (13-15)|0  | 101     | spimm[8:4] |0101011| POP.E
+|000000000       |ret_val |rlist (0-12) |0  | 110     | spimm[8:4] |0101011| POPRET
+|000000000       |ret_val |rlist (13-15)|0  | 110     | spimm[8:4] |0101011| POPRET.E
 |================================================================================================
   
 [NOTE]
