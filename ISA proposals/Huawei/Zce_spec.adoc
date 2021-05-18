@@ -628,8 +628,8 @@ Assembly Examples
 
 [source,sourceCode,text]
 ----
-beq  a5, 1,offset # if(a5== 1) branch_to(PC+offset) # signed comparison
-bne  a5,-1,offset # if(a5!=-1) branch_to(PC+offset) # signed comparison
+beq  a5, 1,offset # if(a5==zero_ext(1)) branch_to(PC+offset) 
+bne  a5, 2,offset # if(a5!=zero_ext(2)) branch_to(PC+offset) 
 ----
 
 === Table Jump
