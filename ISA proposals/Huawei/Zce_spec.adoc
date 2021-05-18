@@ -1309,7 +1309,7 @@ with `PUSH/POPRET` this reduces to
 [source,sourceCode,text]
 ----
 20405458 <bt_rand>:
-20405458:	<16-bit>                push	 {ra,s0-s2},{a0-a1},-16
+20405458:	<16-bit>                push	 {ra,s0-s2},{a0-a2},-16
 2040545c:	70000937          	lui	s2,0x70000
 20405460:	62090613          	addi	a2,s2,1568 # 70000620 <prng>
 <function body>
@@ -1322,6 +1322,10 @@ The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes w
 [NOTE]
 
   The calls to `<riscv_save_0>/<riscv_restore_0>` become 64-bit when the target functions are out of the ±1MB range, increasing the prologue/epilogue size to 22-bytes.
+
+[NOTE]
+
+  The `C.PUSH` has an additional register move included `mv s2, a2` which wasn't in the original prologue. This is included to simplify the encoding and definition of `C.PUSH/PUSH` and will cost some performance.
 
 === UABI and EABI support
 
