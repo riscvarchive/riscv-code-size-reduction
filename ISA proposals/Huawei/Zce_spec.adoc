@@ -1368,6 +1368,7 @@ Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for 
 . The `PUSH` instruction 
 ** pushes(stores)  the registers specified in `reg_list` to the stack
 ** if `areg_list` is included, moves the registers in the `areg_list` into `s` registers
+*** `areg_list` is determined automatically from `rlist`, it cannot be arbitrarily specified. The definition is in <<pushpop32bitsyntax>>.
 ** adjusts the stack pointer by the `stack_adjustment` 
 
 . The `POP` instruction 
@@ -1383,6 +1384,7 @@ The registers in `reg_list` and `areg_list` are comma separated lists and must n
 
 The assembler/disassembler can choose whether to include the `c.` prefix for 16-bit encodings. The recommendation is to exclude it.
 
+[#pushpop32bitsyntax]
 ==== 32-bit encoding assembler syntax
 
 There are different definitions for the register lists in use (`reg_list_32u/reg_list_16u/reg_list_e`). In all cases the requirements of `areg_list` are the same - and so it is only specified only once with respect to `reg_list_*` to avoid replication.
@@ -1840,7 +1842,6 @@ In many cases the 16-bit encoding is sufficient. The 32-bit encoding offers a la
 Additional benefits of the 32-bit encoding are:
 
 * more accurate register lists improving performance and memory usage (so that superfluous `s` registers aren't saved/restored)
-* disabling the mebedded `mv` instrucitons for `PUSH` if they are not needed
 * better control over the return value (`POP/POPRET`) improving code-size.
 
 [#total-stack-rv32]
