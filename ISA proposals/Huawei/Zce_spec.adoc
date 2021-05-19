@@ -729,7 +729,7 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 [width="100%",options=header]
 |======================================================================================================
 |instruction | example assembler syntax  | requirements for 16-bit encoding   | 32-bit extension
-|C.DECBNEZ   | decbnez, rd, imm, -offset | rd is x8-x15, imm is [1248], offset is in range   | Zceb
+|C.DECBNEZ   | decbnez rd, scale, -nzuimm | rd is x8-x15, scale is [1248], nzuimm is in range   | Zceb
 |======================================================================================================
 
 [NOTE]
@@ -740,7 +740,7 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 Assembly Example
 [source,sourceCode,text]
 ----
-decbnez s2, 1, -4 ;# s2-=1;if(s2!=0) branch_to(PC-4) encoded as scale=0, uimm=4 (not uimm=-4)
+decbnez s2, 1, -4 ;# s2-=1;if(s2!=0) branch_to(PC-4) encoded as scale=0, nzuimm=4
 ----
 
 ==== DECBNEZ (limited value?)
