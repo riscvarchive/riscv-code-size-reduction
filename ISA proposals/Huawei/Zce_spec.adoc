@@ -1540,6 +1540,7 @@ for(i in sreg_list)  {
     16: asm("sq s[i], 0(addr)");
   }
 }
+//The sequence must be uninterruptible from this point
 if (areg_list) {
   for (i in areg_list) {
     asm("mv s[i], a[i]");}
@@ -1582,6 +1583,7 @@ for(i in sreg_list)  {
     16: asm("lq s[i], 0(addr)");
   }
 }
+//The sequence must be uninterruptible from this point
 sp+=stack_adjustment; //increment
 if (ret_val) {
    switch(ret_val) {
