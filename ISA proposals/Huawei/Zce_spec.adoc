@@ -1657,26 +1657,26 @@ if (opcode == "POPRET"   or
 .`rlist` field values for the 32-bit encodings
 [options="header"]
 |==========================
-|rlist  | ABI names | ABI                
+|rlist  | reg_list_32u/_e | ABI                
 3+|`s0-s1` are the same for the UABI or EABI so the encoding is the same
-| 0      |none       | both           
-| 1      |s0         | both  
-| 2      |s0-s1      | both     
-| 3      |s0-s2      | UABI     
-3+|`s2+` is different
-| 4      |s0-s3      | UABI      
-| 5      |s0-s4      | UABI      
-| 6      |s0-s5      | UABI      
-| 7      |s0-s6      | UABI      
-| 8      |s0-s7      | UABI      
-| 9      |s0-s8      | UABI      
-| 10     |s0-s9      | UABI      
-| 11     |s0-s10     | UABI       
-| 12     |s0-s11     | UABI       
-3+|EABI has `s2-s4` differently mapped
-| 13     |s0-s2      | EABI     
-| 14     |s0-s3      | EABI     
-| 15     |s0-s4      | EABI      
+| 0      |ra            | both           
+| 1      |ra, s0         | both  
+| 2      |ra, s0-s1      | both     
+3+| These values are for `reg_list_32u` for the UABI only
+| 3      |ra, s0-s2      | UABI     
+| 4      |ra, s0-s3      | UABI      
+| 5      |ra, s0-s4      | UABI      
+| 6      |ra, s0-s5      | UABI      
+| 7      |ra, s0-s6      | UABI      
+| 8      |ra, s0-s7      | UABI      
+| 9      |ra, s0-s8      | UABI      
+| 10     |ra, s0-s9      | UABI      
+| 11     |ra, s0-s10     | UABI       
+| 12     |ra, s0-s11     | UABI       
+3+| These values are for `reg_list_e` for the EABI only
+| 13     |ra, s0-s2      | EABI     
+| 14     |ra, s0-s3      | EABI     
+| 15     |ra, s0-s4      | EABI      
 |==========================
 
 [#32-bit-areg-list]
@@ -1684,14 +1684,14 @@ if (opcode == "POPRET"   or
 [options="header"]
 |==========================
 |areg     |rlist  | areg_list
-| 0       | x     |{}          
-| 1       | 0     |{}
-| 1       | 1     |{a0}
-| 1       | 2     |{a0-a1}
-| 1       | 3     |{a0-a2}
-| 1       | 4-12  |{a0-a3}
-| 1       | 13    |{a0-a2}
-| 1       | 14-15 |{a0-a3}
+| 0       | x     |empty          
+| 1       | 0     |empty
+| 1       | 1     |a0
+| 1       | 2     |a0-a1
+| 1       | 3     |a0-a2
+| 1       | 4-12  |a0-a3
+| 1       | 13    |a0-a2
+| 1       | 14-15 |a0-a3
 |==========================
 
 [#proposed-32bit-encodingsI-2]
@@ -1768,26 +1768,26 @@ These instructions have no conflicts with other extensions, they use previously 
 .`rlist3` values for the 16-bit encodings
 [options="header",width=100%]
 |============================
-|rlist3| ABI names
-|0     |{ra}
-|1     |{ra, s0}
-|2     |{ra, s0-s1}
-|3     |{ra, s0-s2}
-|4     |{ra, s0-s3}
-|5     |{ra, s0-s5}
-|6     |{ra, s0-s7}
-|7     |{ra, s0-s11}
+|rlist3| reg_list_16u    | areg_list (C.PUSH only)
+|0     |ra         | empty
+|1     |ra, s0     | a0
+|2     |ra, s0-s1  | a0-a1
+|3     |ra, s0-s2  | a0-a2
+|4     |ra, s0-s3  | a0-a3
+|5     |ra, s0-s5  | a0-a3
+|6     |ra, s0-s7  | a0-a3
+|7     |ra, s0-s11 | a0-a3
 |============================
 
 [#rlist2-table]
 .`rlist2` values for the 16-bit encodings
 [options="header",width=100%]
 |============================
-|rlist2| ABI names
-|0     |{ra, s0-s2}
-|1     |{ra, s0-s3}
-|2     |{ra, s0-s4}
-|3     |*reserved*
+|rlist2| reg_list_e   | areg_list (C.PUSH only)
+|0     |ra, s0-s2     | a0-a2
+|1     |ra, s0-s3     | a0-a3
+|2     |ra, s0-s4     | a0-a3
+|3     2+|*reserved*
 |============================
 
 [#ret0-table]
