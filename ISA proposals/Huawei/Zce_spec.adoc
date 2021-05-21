@@ -2372,6 +2372,93 @@ Even though there is not much code-size saving once the `sp` save/restore code h
 
 If the target memory is non-idempotent then see <<non-idem-mem>> for additional constraints.
 
+[[benchamrkingpushpop]]
+=== Appendix: Benchmarking PUSH/POP against -msave-restore
+
+Any user who cares about code-size will enable `-msave-restore` at compilation time, which is available in GCC and more recently also available in LLVM 13.
+Benchmarking results against `-msave-restore` have already been reported as part of the Zce analysis, but it is clear that `-msave-restore` can be improved to give a more sensible baseline. 
+
+This is what will be benchmarked, the save routines are replaced by the following (for RV32). Note that embedded moves are included.
+
+[source,sourceCode,text]
+----
+<_riscv_save_ra_s011>:
+  sw s11, -56(sp)
+  sw s10, -48(sp)
+  sw s9, -44(sp)
+  sw s8, -40(sp)
+<_riscv_save_ra_s07>:
+  sw s7, -36(sp)
+  sw s6, -32(sp)
+<_riscv_save_ra_s05>:
+  sw s5, -28(sp)
+  sw s4, -24(sp)
+  sw s3, -20(sp)
+  mv s3, a3           ;# embedded move
+  sw s2, -16(sp)
+  mv s2, a2           ;# embedded move
+<_riscv_save_ra_s01>:
+  sw s1, -12(sp)
+  mv s1, a1           ;# embedded move
+  sw s0, -8(sp)
+  mv s0, a0           ;# embedded move
+  sw ra, -4(sp)
+  j t0
+----
+
+The restore routines are unchanged, and always include `ret` at the end. This means that tail call optimisation is disabled when using `msave-restore`, which can have a large performance impact (which is solved by using `C.POP`). Realistically, a second set of routines without `ret` are needed to allow tail call optimisation.
+
+[source,sourceCode,text]
+----
+<__riscv_restore_12>:
+  lw	s11,12(sp)
+  addi	sp,sp,16
+
+<__riscv_restore_10>:
+  lw	s10,0(sp)
+  lw	s9,4(sp)
+  lw	s8,8(sp)
+  lw	s7,12(sp)
+  addi	sp,sp,16
+
+<__riscv_restore_4>:
+  lw	s6,0(sp)
+  lw	s5,4(sp)
+  lw	s4,8(sp)
+  lw	s3,12(sp)
+  addi	sp,sp,16
+
+<__riscv_restore_0>:
+  lw	s2,0(sp)
+  lw	s1,4(sp)
+  lw	s0,8(sp)
+  lw	ra,12(sp)
+  addi	sp,sp,16
+  ret
+----
+
+The cost of each call to the save/restore routines varies. If `C.TBLJALM/C.TBLJ` are used then it is _always_ 16-bits. If not, then the call to save will be 32 or 64-bit (`C.JAL` can't link to `t0`). The call to the restore routine can be 16-bit (`C.J`) 32-bit (`J`) or 64-bit (`AUIPC; JR`).
+
+Clearly the code-size will be considerably smaller if all calls use `C.TBLJALM/CLTBLJ`.
+
+=== Benchmarking configuration 1
+
+Configuration 1 uses the save/restore code above, and does not use `C.TBLJALM/C.TBLJ`.
+It will *not* call a save/restore routine if only `ra` is saved/restored.
+
+=== Benchmarking configuration 2
+
+Configuration 2 uses the save/restore code above, and uses `C.TBLJALM/C.TBLJ`, so every call is 16-bits.
+It will *not* call a save/restore routine if only `ra` is saved/restored.
+
+=== Performance analysis
+
+Performance is expected to be significantly higher using PUSH/POP than the software routines. Unnecessary jumps are eliminated, and redundant loads/stores are minimised. Additionally `C.POP` allows tail call optimisation to be enabled.
+
+[NOTE]
+
+  We should do some performance analysis to show the benefit vs `-msave-restore`. Details TBD.
+
 == Compiler switches
 
 If `Zce/Zcea/Zceb/Zcee` are specificied, then the compiler will include all the instructions from the relevant subsets.
