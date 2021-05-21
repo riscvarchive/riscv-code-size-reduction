@@ -2441,17 +2441,17 @@ The cost of each call to the save/restore routines varies. If `C.TBLJALM/C.TBLJ`
 
 Clearly the code-size will be considerably smaller if all calls use `C.TBLJALM/CLTBLJ`.
 
-=== Benchmarking configuration 1
+==== Benchmarking configuration 1
 
 Configuration 1 uses the save/restore code above, and does not use `C.TBLJALM/C.TBLJ`.
 It will *not* call a save/restore routine if only `ra` is saved/restored.
 
-=== Benchmarking configuration 2
+==== Benchmarking configuration 2
 
 Configuration 2 uses the save/restore code above, and uses `C.TBLJALM/C.TBLJ`, so every call is 16-bits.
 It will *not* call a save/restore routine if only `ra` is saved/restored.
 
-=== Performance analysis
+==== Performance analysis
 
 Performance is expected to be significantly higher using PUSH/POP than the software routines. Unnecessary jumps are eliminated, and redundant loads/stores are minimised. Additionally `C.POP` allows tail call optimisation to be enabled.
 
