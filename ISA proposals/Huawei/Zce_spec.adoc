@@ -17,6 +17,8 @@ This document describes the `Zce` extension to reduce code-size.
 |===================================================================
 | version | change
 | 0.41.3  | remove requirement that writing to xTBLJALVEC flushes the jump table cache - just use FENCE.I or other standard mechanism
+|         | change pseudo-code for POP so that the return value can be interrupted / repeated
+|         | beq/bne assembly example should have been beqi/bnei
 | 0.41.2  | bug fix: PUSH/PUSH.E were missing the `areg` field which controls wether the PUSH moves a[i] into s[i]
 | 0.41.1  | bug fix: move PUSH/POP/POPRET to custom-1 as they were overlapping (so will have to change again in the future)
 | 0.41    | bug fix: change MULI encoding, as it overlapped with SLLI (it's now in custom-0, so will have to change again in the future)
@@ -632,8 +634,8 @@ Assembly Examples
 
 [source,sourceCode,text]
 ----
-beq  a5, 1,offset # if(a5==zero_ext(1)) branch_to(PC+offset) 
-bne  a5, 2,offset # if(a5!=zero_ext(2)) branch_to(PC+offset) 
+beqi  a5, 1,offset # if(a5==zero_ext(1)) branch_to(PC+offset) 
+bnei  a5, 2,offset # if(a5!=zero_ext(2)) branch_to(PC+offset) 
 ----
 
 === Table Jump
@@ -2384,38 +2386,60 @@ If the target memory is non-idempotent then see <<non-idem-mem>> for additional 
 [[benchmarkingpushpop]]
 === Appendix: Benchmarking PUSH/POP against -msave-restore
 
-Any user who cares about code-size will enable `-msave-restore` at compilation time, which is available in GCC and more recently also available in LLVM 13.
-Benchmarking results against `-msave-restore` have already been reported as part of the Zce analysis, but it is clear that `-msave-restore` can be improved to give a more sensible baseline. 
-
-This is what will be benchmarked, the save routines are replaced by the following (for RV32). Note that embedded moves are included.
+`PUSH/POP` are benchmarked relative to `-msave-restore`, which is available in GCC and more recently also available in LLVM 13. To give more realistic benchmarking results, the save routines have embedded moves added (see below), and are otherwise unchanged from GCC10.
 
 [source,sourceCode,text]
 ----
-<_riscv_save_ra_s011>:
-  sw s11, -56(sp)
-  sw s10, -48(sp)
-  sw s9, -44(sp)
-  sw s8, -40(sp)
-<_riscv_save_ra_s07>:
-  sw s7, -36(sp)
-  sw s6, -32(sp)
-<_riscv_save_ra_s05>:
-  sw s5, -28(sp)
-  sw s4, -24(sp)
-  sw s3, -20(sp)
-  mv s3, a3           ;# embedded move
-  sw s2, -16(sp)
-  mv s2, a2           ;# embedded move
-<_riscv_save_ra_s01>:
-  sw s1, -12(sp)
-  mv s1, a1           ;# embedded move
-  sw s0, -8(sp)
-  mv s0, a0           ;# embedded move
-  sw ra, -4(sp)
-  j t0
+
+<__riscv_save_12>:
+  addi	sp,sp,-64
+  li	t1,0
+  sw	s11,12(sp)
+  j	1000610 <__riscv_save_10_j>
+
+<__riscv_save_10>:
+  addi	sp,sp,-64
+  li	t1,-16
+<__riscv_save_10_j>:
+  sw	s10,16(sp)
+  sw	s9,20(sp)
+  sw	s8,24(sp)
+  sw	s7,28(sp)
+  j	100062c <__riscv_save_4_j>
+
+<__riscv_save_4>:
+  addi	sp,sp,-64
+  li	t1,-32
+<__riscv_save_4_j>:
+  sw	s6,32(sp)
+  sw	s5,36(sp)
+  sw	s4,40(sp)
+  sw	s3,44(sp)
+  sw	s2,48(sp)
+  sw	s1,52(sp)
+  sw	s0,56(sp)
+  sw	ra,60(sp)
+  mv  s3, a3           ;# embedded move
+  mv  s2, a2           ;# embedded move
+  mv  s1, a1           ;# embedded move
+  mv  s0, a0           ;# embedded move
+  sub	sp,sp,t1
+  jr	t0
+
+<__riscv_save_0>:
+  addi	sp,sp,-16
+  sw	s2,0(sp)
+  sw	s1,4(sp)
+  sw	s0,8(sp)
+  sw	ra,12(sp)
+  mv  s2, a2           ;# embedded move
+  mv  s1, a1           ;# embedded move
+  mv  s0, a0           ;# embedded move
+  jr	t0
+
 ----
 
-The restore routines are unchanged, and always include `ret` at the end. This means that tail call optimisation is disabled when using `msave-restore`, which can have a large performance impact (which is solved by using `C.POP`). Realistically, a second set of routines without `ret` are needed to allow tail call optimisation.
+The restore routines are unchanged, and always include `ret` at the end. This means that tail call optimisation is disabled when using `msave-restore`, which can have a large performance impact (which is solved by using `C.POP`). Realistically, a second set of routines without `RET` are needed to allow tail call optimisation.
 
 [source,sourceCode,text]
 ----
@@ -2446,7 +2470,7 @@ The restore routines are unchanged, and always include `ret` at the end. This me
   ret
 ----
 
-The cost of each call to the save/restore routines varies. If `C.TBLJALM/C.TBLJ` are used then it is _always_ 16-bits. If not, then the call to save will be 32 or 64-bit (`C.JAL` can't link to `t0`). The call to the restore routine can be 16-bit (`C.J`) 32-bit (`J`) or 64-bit (`AUIPC; JR`).
+The cost of each call to the save/restore routines varies. If `C.TBLJALM/C.TBLJ` are used then it is _always_ 16-bits. If not, then the call to save will be 32 or 64-bit (`C.JAL` can't link to `t0`). The call to the restore routine can be 16-bit (`C.J`), 32-bit (`J`) or 64-bit (`AUIPC; JR`).
 
 Clearly the code-size will be considerably smaller if all calls use `C.TBLJALM/CLTBLJ`.
 
