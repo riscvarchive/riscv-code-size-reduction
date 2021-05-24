@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.2
-Version 0.41.2
+= RISC-V Zce code-size reduction extension proposal v0.41.3
+Version 0.41.3
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.3  | remove requirement that writing to xTBLJALVEC flushes the jump table cache - just use FENCE.I or other standard mechanism
 | 0.41.2  | bug fix: PUSH/PUSH.E were missing the `areg` field which controls wether the PUSH moves a[i] into s[i]
 | 0.41.1  | bug fix: move PUSH/POP/POPRET to custom-1 as they were overlapping (so will have to change again in the future)
 | 0.41    | bug fix: change MULI encoding, as it overlapped with SLLI (it's now in custom-0, so will have to change again in the future)
