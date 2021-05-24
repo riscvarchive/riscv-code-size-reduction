@@ -62,12 +62,12 @@ This document describes the `Zce` extension to reduce code-size.
 
 == `Zce` configurations
 
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified.png[Zce subsets]
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified4.png[Zce subsets]
 
 `Zce` is split into two main subsets
 
 * `Zcea` which is compatible with all existing standard extensions designed for small embedded cores
-** `Zcee` is a simpler subset of `Zcea` for high performance cores, it can be implemented without the test of `Zcwa`
+** `Zcee` is a simpler subset of `Zcea` for high performance cores, it can be implemented without the rest of `Zcea`
 * `Zceb` reuses encoding from the `D`-extension, and so is incompatible with `D`
 ** `Zceb` is fully compatible with `Zdinx`
 
@@ -110,6 +110,8 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |PUSH.E|✓| | |Zcea|
 |POP.E|✓| | |Zcea|
 |POPRET.E|✓| | |Zcea|
+|BEQI|✓|✓|✓|Zcea|
+|BNEI|✓|✓|✓|Zcea|
 |===============================================================================
 
 [#zceb]
@@ -154,7 +156,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 
 [NOTE]
 
-  The names `Zci, Zcf, Zcd, Zcq, Zc321, Zc64, Zc128` are not official subset names, I have used them to help explain how the 16-bit encoding space is divided up and reused.
+  The names `Zci, Zcf, Zcd, Zcq, Zc32, Zc64, Zc128` are not official subset names, I have used them to help explain how the 16-bit encoding space is divided up and reused.
 
 [#zce_quad0]
 .C-extension quadrant 0
@@ -1122,7 +1124,7 @@ xTBLJALVEC.base+256(index 64) = #  e08433 <vsnprintf>         # called with C.TB
 
 ==== Exceptions for jump table mode
 
-The jump table address can cause instruction fetch errors, such as page faults. In these cases `MEPC` is set to the PC of the `C.TBLJ*` instruction and `MADDR` is set to the address in the jump table entry.
+The jump table address can cause instruction fetch errors, such as page faults. In these cases `MEPC` is set to the PC of the `C.TBLJ*` instruction and `MTVAL` is set to the address in the jump table entry.
 
 ==== Context Switching for jump table mode
 
@@ -1130,11 +1132,7 @@ The `xTBLJALVEC` CSRs form part of the current context, and so will need to be s
 
 ==== Caching for jump table mode
 
-For improved performance, the implementation may cache the contents of the jump table. To assist this and avoid unnecessary memory fetches, we state that the table contents may be cached without consistency checks against memory outside the hart if `xTBLJALVEC` has not been written to. 
-
-Any write to `xTBLJALVEC`, even if the actual value is not updated, will indicate that any table caching must be flushed and refetched.
-
-Therefore if there are any updates to generated code in the table in vector mode, a write to `xTBLJALVEC` is required to ensure that any cached contents are not stale. This is not expected to be the common case, because in the absence of dynamically linked libraries, the jump table is static for a given executable. Therefore the recommendation is that it is set with eXecute only privileges, the same as the rest of the code. This is better for security to prevent code in the jump table being scanned for gadgets.
+For improved performance, the implementation may cache the contents of the jump table. To maintain coherency between stores to the jump table and the instruction fetch, then a `FENCE.I` is required, or other standard coherency mechanism as defined by RISC-V. More generally, any jump table cache should be flushed whenever the instruction cache is flushed.
 
 [#vector-table-mode]
 === Future Mode: Vector table mode (not for RVM22/RVA22)
@@ -1586,8 +1584,6 @@ for(i in sreg_list)  {
     16: asm("lq s[i], 0(addr)");
   }
 }
-//The sequence must be uninterruptible from this point
-sp+=stack_adjustment; //increment
 if (ret_val) {
    switch(ret_val) {
       "0":  asm("li a0, 0");
@@ -1595,6 +1591,8 @@ if (ret_val) {
       "-1": asm("li a0, -1");
    }
 }
+//The sequence must be uninterruptible from this point
+sp+=stack_adjustment; //increment
 if (opcode == "POPRET"   or 
     opcode == "POPRET.E" or 
     opcode == "C.POPRET" or 
@@ -1956,18 +1954,26 @@ The sequence required to execute the instruction may be interrupted, or may not 
 
 * virtual memory page fault or PMP fault
 ** these can be detected before execution, or during execution if the memory addresses cross a page/PMP boundary
+** `MADDR` is set to any address which causes the fault
 * watchpoint trigger
 ** these can be detected before execution, or during execution depending on the trigger type (load data triggers require the sequence to have started executing, for example)
+** `MADDR` is set to any address which causes the fault
 * external debug halt
 ** the halt can treat the whole sequence atomically, or interrupt mid sequence (implementation defined)
 * debug halt caused by a trigger
 ** same comment as watchpoint trigger above
 * load access fault
 ** these are detected while the sequence is executing
+** `MADDR` is set to the fault address.
 * store access fault (precise or imprecise)
 ** these may be detected while the sequence is executing, or afterwards if imprecise
+** `MADDR` is set to the fault address.
 * interrupts
 ** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
+
+In all case `MEPC` contain the `PC` of the `PUSH/POP` instruction, and `MCAUSE` is set as expected for the type of fault.
+
+For debug halts `DPC` is set to the `PC` of the `PUSH/POP` instruction.
 
 Because some faults can only be detected during the sequence the core implementation is able to recover from the fault and re-execute the sequence. This may involve executing some or all of the loads and stores from the sequence multiple times before the sequence completes (as multiple faults or multiple interrupts are possible).
 
@@ -2346,12 +2352,12 @@ addi sp, sp, 256
 ----
 
 lui t0, 0xffff
-sw  s5, 4c(t0)
-sw  s4, 50(t0)
-sw  s3, 54(t0)
-sw  s2, 58(t0)
-sw  s1, 5c(t0)
-sw  s0, 60(t0)
+sw  s5, 0x4c(t0)
+sw  s4, 0x50(t0)
+sw  s3, 0x54(t0)
+sw  s2, 0x58(t0)
+sw  s1, 0x5c(t0)
+sw  s0, 0x60(t0)
 
 ----
 
@@ -2366,13 +2372,15 @@ push {s0-s5}, -64
 
 ----
 
-This requires that  `sp` is saved before and restored after the sequence. Also `POP` can be used to replace the equivalent series of loads. 
+This requires that `sp` is saved before and restored after the sequence.  It may also require that interrupts are disbled if the interrupt handler allocates space using `sp`, as the `sp` will not point to the stack during the sequence.
+
+Also `POP` can be used to replace the equivalent series of loads. 
 
 Even though there is not much code-size saving once the `sp` save/restore code has been included, and the restricted memory layout targetted by the instructions, there may be a performance benefit to doing this for small embedded cores. A load/store-multiple sequence may be issued to the peripheral bus as a single burst instead of multiple single accesses which individually require arbitration. In some cases this can save one or more cycles per access as the arbiter remains locked to the core until the sequence has completed.
 
 If the target memory is non-idempotent then see <<non-idem-mem>> for additional constraints.
 
-[[benchamrkingpushpop]]
+[[benchmarkingpushpop]]
 === Appendix: Benchmarking PUSH/POP against -msave-restore
 
 Any user who cares about code-size will enable `-msave-restore` at compilation time, which is available in GCC and more recently also available in LLVM 13.
@@ -2609,9 +2617,9 @@ Implementations may choose for the sequences to be uninterruptible, or to be int
 
 Table jump is quite simple architecturally. 
 
-`tbljal #n;` references memory address `m = xTBLJALVEC + n * XLEN/8`
+`c.tblj* #n;` references memory address `m = xTBLJALVEC + n * XLEN/8`
 
-The core to jump to address `m`, and link to the register referenced by bits[1:0] of the data at address `m`, including the illegal case where [1:0]=11
+The core jumps to address `m`, and links to the relevant link register.
 
 For verification we must show that the different link registers work and that the core jumps to the correct location each time.
 
