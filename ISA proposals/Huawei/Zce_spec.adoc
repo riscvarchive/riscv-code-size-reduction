@@ -2399,7 +2399,7 @@ If the target memory is non-idempotent then see <<non-idem-mem>> for additional 
   addi	sp,sp,-64
   li	t1,0
   sw	s11,12(sp)
-  j	1000610 <__riscv_save_10_j>
+  j <__riscv_save_10_j>
 
 <__riscv_save_10>:
   addi	sp,sp,-64
@@ -2409,7 +2409,7 @@ If the target memory is non-idempotent then see <<non-idem-mem>> for additional 
   sw	s9,20(sp)
   sw	s8,24(sp)
   sw	s7,28(sp)
-  j	100062c <__riscv_save_4_j>
+  j <__riscv_save_4_j>
 
 <__riscv_save_4>:
   addi	sp,sp,-64
@@ -2498,7 +2498,7 @@ Performance is expected to be significantly higher using PUSH/POP than the softw
 
 == Compiler switches
 
-If `Zce/Zcea/Zceb/Zcee` are specificied, then the compiler will include all the instructions from the relevant subsets.
+If `Zcea/Zceb/Zcee` are specified, then the compiler will include all the instructions from the relevant subsets.
 It is also useful to be able to select instructions in a more fine-grained way to help with benchmarking and analysis work, especially when analysing the results of the prototype compiler.
 Therefore the compiler switches in <<compilerswitches>> are available, each one is used to enable a specific list of instructions.
 
