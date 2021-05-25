@@ -65,7 +65,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 == `Zce` configurations
 
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified4.png[Zce subsets]
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified5.png[Zce subsets]
 
 `Zce` is split into two main subsets
 
@@ -1742,6 +1742,10 @@ The following cases cause illegal instruction exceptions:
 
   RV32I may use either the UABI or EABI, so we can only check the EABI minimum alignment.
 
+[NOTE]
+
+  The alignment check is for future compatibility with `PUSH.F,PUSH.D, PUSH.Q` where `XLEN!=FLEN`.
+
 [#pushpoppopret16bitIencodings]
 === 16-bit Encodings
 
@@ -1957,20 +1961,20 @@ The sequence required to execute the instruction may be interrupted, or may not 
 
 * virtual memory page fault or PMP fault
 ** these can be detected before execution, or during execution if the memory addresses cross a page/PMP boundary
-** `MADDR` is set to any address which causes the fault
+** `MTVAL` is set to any address which causes the fault
 * watchpoint trigger
 ** these can be detected before execution, or during execution depending on the trigger type (load data triggers require the sequence to have started executing, for example)
-** `MADDR` is set to any address which causes the fault
+** `MTVAL` is set to any address which causes the fault
 * external debug halt
 ** the halt can treat the whole sequence atomically, or interrupt mid sequence (implementation defined)
 * debug halt caused by a trigger
 ** same comment as watchpoint trigger above
 * load access fault
 ** these are detected while the sequence is executing
-** `MADDR` is set to the fault address.
+** `MTVAL` is set to the fault address.
 * store access fault (precise or imprecise)
 ** these may be detected while the sequence is executing, or afterwards if imprecise
-** `MADDR` is set to the fault address.
+** `MTVAL` is set to the fault address.
 * interrupts
 ** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
 
@@ -2077,12 +2081,12 @@ If the core implementation does not have a requirement to support `PUSH/POP/POPR
 
 It is possible to support non-idempotent memory. One reason is to re-use `PUSH/POP` as a restricted form of a load/store multiple instruction to a peripheral (see <<ldstm>>), as there is no generic load/store multiple instruction currently in the RISC-V ISA. If load/store multiple is supported in the future then it should support non-idempotent memory.
 
-Non-idempotent memory support requires additional restrictions:
+If accessing non-idempotent memory then it is _recommended_ to:
 
-. Do not allow interrupts during execution
-. Do not allow external debug halt during execution
+. Not allow interrupts during execution
+. Not allow external debug halt during execution
 . Detect any virtual memory page faults or PMP faults for the whole instruction before starting execution (instead of during the sequence)
-. Do not split / merge / reorder the generated memory accesses
+. Not split / merge / reorder the generated memory accesses
 
 It is possible that one of the following will still occur during execution:
 
@@ -2642,7 +2646,7 @@ Implementations may choose for the sequences to be uninterruptible, or to be int
 
 Table jump is quite simple architecturally. 
 
-`c.tblj* #n;` references memory address `m = xTBLJALVEC + n * XLEN/8`
+`c.tblj* #n;` references memory address `m = InstMemory[xTBLJALVEC + n * XLEN/8]`
 
 The core jumps to address `m`, and links to the relevant link register.
 
