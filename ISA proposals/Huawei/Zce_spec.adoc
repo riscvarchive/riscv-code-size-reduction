@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.3
-Version 0.41.3
+= RISC-V Zce code-size reduction extension proposal v0.41.4
+Version 0.41.4
 :doctype: book
 :encoding: utf-8
 :lang: en
