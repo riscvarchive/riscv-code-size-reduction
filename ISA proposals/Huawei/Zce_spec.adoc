@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.4  | correct table 30 so that the C.LB/C.LH encodings are in tyhe 001____10 group (the spec was inconsistent)
 | 0.41.3  | remove requirement that writing to xTBLJALVEC flushes the jump table cache - just use FENCE.I or other standard mechanism
 |         | change pseudo-code for POP so that the return value can be interrupted / repeated
 |         | beq/bne assembly example should have been beqi/bnei
@@ -719,7 +720,7 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 3+|  101          3+|nzuimm[6:4] 3+| rd' 3+|nzuimm[3:1] 2+|scale 2+| 10 | C.DECBNEZ
-3+|  001          3+|000        3+| rd'  3+|000        2+|scale 2+| 00 | *reserved*
+3+|  101          3+|000         3+| rd'  3+|000        2+|scale 2+| 10 | *reserved*
 |=============================================================================================
 
 [#deccmpbrsemantics]
@@ -850,8 +851,8 @@ These instructions conflict with the `D`-extension. If `D` is implemented, these
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
 3+|  001       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.LBU
 3+|  001       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.LHU
-3+|  101       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LB
-3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LH
+3+|  001       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LB
+3+|  001       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 10 | C.LH
 3+|  101       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SB
 3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SH
 |=============================================================================================
