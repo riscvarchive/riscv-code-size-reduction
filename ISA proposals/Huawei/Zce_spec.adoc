@@ -543,8 +543,8 @@ The EABI mapping may not be so simple, TBD.
 .`C.MVA01S07` semantics
 [width="100%",options=header]
 |=======================================================================
-|instruction                | definition
-| C.MVA01S07 sreg1, sreg2   | mv a0, s[sreg1];  mv a1, s[sreg2]
+|instruction  | definition
+| C.MVA01S07  | mv a0, s[sreg1];  mv a1, s[sreg2]
 |=======================================================================
 
 [#mva_syntax]
