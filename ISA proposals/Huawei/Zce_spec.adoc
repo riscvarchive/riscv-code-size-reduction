@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.4
-Version 0.41.4
+= RISC-V Zce code-size reduction extension proposal v0.41.5
+Version 0.41.5
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.5  | remove # from c.tblj* assembly syntax, as it's a comment character
 | 0.41.4  | correct table 30 so that the C.LB/C.LH encodings are in tyhe 001____10 group (the spec was inconsistent)
 | 0.41.3  | remove requirement that writing to xTBLJALVEC flushes the jump table cache - just use FENCE.I or other standard mechanism
 |         | change pseudo-code for POP so that the return value can be interrupted / repeated
@@ -941,16 +942,16 @@ using `C.TBLJ*` we can reduce this as follows (accepting gaps in the PCs as code
 [source,sourceCode,text]
 ----
 00e084be <vsprintf>:
-  e084be:	<16-bit>            tbljalm #x ;#<mapped to __riscv_save_0>, saving 6-bytes
+  e084be:	<16-bit>            tbljalm x ;#<mapped to __riscv_save_0>, saving 6-bytes
   
   e084c6:	86b2                mv     a3,a2
   e084c8:	862e                mv     a2,a1
   e084ca:	800005b7            lui	   a1,0x80000
   e084ce:	fff5c593            not	   a1,a1
   
-  e084d2:	<16-bit>            tbljal #y ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
+  e084d2:	<16-bit>            tbljal y ;#<mapped to vsnprintf>, saving 2-bytes (8-byte refs to this fn also exist)
   
-  e084da:	<16-bit>            tblj   #z ;#<mapped to __riscv_restore_0>
+  e084da:	<16-bit>            tblj   z ;#<mapped to __riscv_restore_0>
 ----
 
 The principle is to have a single lookup table of `TBLJALENTRIES` addresses for `C.TBLJ*`, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. 
@@ -986,9 +987,9 @@ These instructions use a previously reserved encoding.
 [width="100%",options=header]
 |==================================================================================================================
 |instruction | example assembler syntax   | requirements for 16-bit encoding         | 32-bit extension
-|C.TBLJALM   | tbljalm #n                 | n is in the range 0 to 7   (index8=n)    | N/A
-|C.TBLJ      | tblj    #n                 | n is in the range 0 to 55  (index8=n+8)  | N/A
-|C.TBLJAL    | tbljal  #n                 | n is in the range 0 to 191 (index8=n+64) | N/A
+|C.TBLJALM   | tbljalm n                  | n is in the range 0 to 7   (index8=n)    | N/A
+|C.TBLJ      | tblj    n                  | n is in the range 0 to 55  (index8=n+8)  | N/A
+|C.TBLJAL    | tbljal  n                  | n is in the range 0 to 191 (index8=n+64) | N/A
 |==================================================================================================================
 
 [NOTE]
@@ -2647,7 +2648,7 @@ Implementations may choose for the sequences to be uninterruptible, or to be int
 
 Table jump is quite simple architecturally. 
 
-`c.tblj* #n;` references memory address `m = InstMemory[xTBLJALVEC + n * XLEN/8]`
+`c.tblj* n;` references memory address `m = InstMemory[xTBLJALVEC + n * XLEN/8]`
 
 The core jumps to address `m`, and links to the relevant link register.
 
