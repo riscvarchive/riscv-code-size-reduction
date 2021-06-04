@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.5
-Version 0.41.5
+= RISC-V Zce code-size reduction extension proposal v0.41.6
+Version 0.41.6
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -16,6 +16,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.6  | simplify c.mva01s07 assembler syntax
 | 0.41.5  | remove # from c.tblj* assembly syntax, as it's a comment character
 | 0.41.4  | correct table 30 so that the C.LB/C.LH encodings are in tyhe 001____10 group (the spec was inconsistent)
 | 0.41.3  | remove requirement that writing to xTBLJALVEC flushes the jump table cache - just use FENCE.I or other standard mechanism
