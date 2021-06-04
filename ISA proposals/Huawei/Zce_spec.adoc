@@ -471,31 +471,31 @@ Register moves are the most common in GCC output in both the benchmark suite and
 
 * move from two `s[0-7]` registers into `a0` and `a1`.
 
-Similar to `PUSH/POP` this instruction uses ABI names for the registers. The mapping from `s` to `x` number is simple. For `RV32_Zdinx` a paired register write port is required already. For other configurations the microarchitecture can 
+Similar to `PUSH/POP` this instruction uses ABI names for the registers. The mapping from `s` to `x` number is simple. For `RV32_Zdinx` a paired register write port is required already. For other configurations the microarchitecture can:
 
 * split the instructions into an uninterruptable sequence of two `mv` instructions to avoid the second write port
-* add a paired write port for `a0` and `a1` only. Because the instruction only writes these two registers only one paired write port is needed, which is much cheaper than allowing paired writes to the whole register file.
+* add a paired write port for `a0` and `a1` only. Because the instruction only writes these two registers, only one paired write port is needed. This is much cheaper than allowing paired writes to the whole register file.
 
 [source,sourceCode,text]
 ----
 #RV64 debian/libm-2 example
     ab08:       86a2                    mv      a3,s0
     ab0a:       8652                    mv      a2,s4
-    ab0c:       85de                    mv      a1,s7 # c.mva01s07: mv(a0,a1),(s1,s7)
+    ab0c:       85de                    mv      a1,s7 # c.mva01s07 s1, s7
     ab0e:       8526                    mv      a0,s1 #
     ab10:       0f73e0ef                jal     ra,49406 <__exp2f_finite@@GLIBC_2.27+0x1e58>
     ab14:       55010993                addi    s3,sp,1360
     ab18:       86a2                    mv      a3,s0
     ab1a:       864e                    mv      a2,s3
-    ab1c:       85de                    mv      a1,s7 # c.mva01s07: mv(a0,a1),(s1,s7)
+    ab1c:       85de                    mv      a1,s7 # c.mva01s07 s1, s7
     ab1e:       8526                    mv      a0,s1 #
     ab20:       1bb3e0ef                jal     ra,494da <__exp2f_finite@@GLIBC_2.27+0x1f2c>
     ab24:       8622                    mv      a2,s0
-    ab26:       85da                    mv      a1,s6 # c.mva01s07: mv(a0,a1),(s4,s6)
+    ab26:       85da                    mv      a1,s6 # c.mva01s07 s4, s6
     ab28:       8552                    mv      a0,s4 #
     ab2a:       49a3e0ef                jal     ra,48fc4 <__exp2f_finite@@GLIBC_2.27+0x1a16>
     ab2e:       8622                    mv      a2,s0
-    ab30:       85d6                    mv      a1,s5 # c.mva01s07: mv(a0,a1),(s3,s5)
+    ab30:       85d6                    mv      a1,s5 # c.mva01s07 s3, s5
     ab32:       854e                    mv      a0,s3 #
     ab34:       4903e0ef                jal     ra,48fc4 <__exp2f_finite@@GLIBC_2.27+0x1a16>
 
@@ -552,14 +552,14 @@ The EABI mapping may not be so simple, TBD.
 [width="100%",options=header]
 |======================================================================================================
 |instruction | example assembler syntax | requirements for 16-bit encoding   | 32-bit extension
-|C.MVA01S07  | mv(a0,a1),(sreg1,sreg2)  | none                               | N/A
+|C.MVA01S07  | c.mva01s07 sreg1, sreg2  | none                               | N/A
 |======================================================================================================
 
 Assembly examples.
 [source,sourceCode,text]
 ----
 # c.mva01s07: sreg1 = 0; sreg2 = 0;
-mv (a0, a1), (s0, s0) ; # mv a0, s0; mv a1, s0
+c.mva01s07 s0, s0; # mv a0, s0; mv a1, s0
 ----
 
 === MULI
@@ -3284,7 +3284,7 @@ mv (x2, x3), (x18, x19) ; # mv x2, x2; mv x18, x19
 Similar to C.MVA01S07 but the benefit is much lower.
 
 [#proposed-16bit-encodings-4]
-.`C.MVA01S07, C.MVA23S07` 16-bit encoding
+.`C.MVA23S07` 16-bit encoding
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
@@ -3292,7 +3292,7 @@ Similar to C.MVA01S07 but the benefit is much lower.
 |================================================================================================
 
 [#mvs07_semantics]
-.`C.MVA01S07, C.MVA23S07` semantics
+.`C.MVA23S07` semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction                | definition
@@ -3300,7 +3300,7 @@ Similar to C.MVA01S07 but the benefit is much lower.
 |=======================================================================
 
 [#mvs07_syntax]
-.`C.MVA01S07, C.MVA23S07` assembler syntax
+.`C.MVA23S07` assembler syntax
 [width="100%",options=header]
 |======================================================================================================
 |instruction | assembler syntax       | requirements for 16-bit encoding   | 32-bit extension
