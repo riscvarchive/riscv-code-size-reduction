@@ -17,6 +17,7 @@ This document describes the `Zce` extension to reduce code-size.
 |===================================================================
 | version | change
 | 0.41.6  | simplify c.mva01s07 assembler syntax, and fix encoding in table 16 (it was inconsistent)
+|         | fix ZCE-type format for 32-bit PUSH/POP (no actual spec change)
 | 0.41.5  | remove # from c.tblj* assembly syntax, as it's a comment character
 | 0.41.4  | correct table 30 so that the C.LB/C.LH encodings are in tyhe 001____10 group (the spec was inconsistent)
 | 0.41.3  | remove requirement that writing to xTBLJALVEC flushes the jump table cache - just use FENCE.I or other standard mechanism
@@ -1617,8 +1618,8 @@ if (opcode == "POPRET"   or
 .push/pop/popret 32-bit format PPP-type
 [options="header",width="100%"]
 |================================================================================================
-| 31:23 |22:20   |19:16  |15     | 14:12   | 11: 7      | 6 : 0 | type
-|funct9 |field4  |field3 |field2 | funct3  | field1     |opcode | ZCE-type
+| 31:22 |21:20   |19:16  |15     | 14:12   | 11: 7      | 6 : 0 | type
+|funct10|field4  |field3 |field2 | funct3  | field1     |opcode | ZCE-type
 |================================================================================================
 
 .push/pop/popret 32-bit encodings
