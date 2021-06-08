@@ -1369,6 +1369,10 @@ The `.E` forms are not available on RV64I or RV128I. Any encodings with a `.E` s
 
 Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for RV32E may be executed on an RV32I core. 
 
+[NOTE]
+
+  An RV32I core running the EABI has many saved registers. The `PUSH/POP` encodings only support up to `s4`. There are no encodings which support saving higher numbered `s` registers in this case, and so the optimal solution would be for a reduced version of `-msave-restore` which is used for longer register lists.
+
 === Assembler Syntax
 
 . The `PUSH` instruction 
