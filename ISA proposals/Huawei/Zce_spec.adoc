@@ -1371,7 +1371,7 @@ Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for 
 
 [NOTE]
 
-  An RV32I core running the EABI has many saved registers. The `PUSH/POP` encodings only support up to `s4`. There are no encodings which support saving higher numbered `s` registers in this case, and so the optimal solution would be for a reduced version of `-msave-restore` which is used for longer register lists.
+  An RV32I core running the EABI has many saved registers. The `PUSH/POP` encodings only support up to `s4`. There are no encodings which support saving higher numbered `s` registers in this case, and so the optimal solution would be for a reduced version of `-msave-restore` which is used for longer register lists. A future version of `Zce` may include new cases in the 32-bit encodings to save the higher `s` registers. At the timing of writing the EABI specification is not frozen and there is no toolchain publicly available so the distribution of higher numbered saved registers for RV32I EABI cannot be assessed.
 
 === Assembler Syntax
 
