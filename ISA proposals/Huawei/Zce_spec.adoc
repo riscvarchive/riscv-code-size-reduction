@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.6
-Version 0.41.6
+= RISC-V Zce code-size reduction extension proposal v0.41.7
+Version 0.41.7
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -20,6 +20,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.7  | fix c.push assembler syntax so <areg_list> must always be included, even if null
 | 0.41.6  | simplify c.mva01s07 assembler syntax, and fix encoding in table 16 (it was inconsistent)
 |         | fix ZCE-type format for 32-bit PUSH/POP (no actual spec change)
 | 0.41.5  | remove # from c.tblj* assembly syntax, as it's a comment character
@@ -1480,7 +1481,7 @@ Examples of valid 16-bit encodings for RV32I or RV64I using the UABI:
 [source,sourceCode,text]
 ----
 
-c.push   {ra},                 -16; //store ra;                                                decrement sp by 16
+c.push   {ra},       {},       -16; //store ra;                                                decrement sp by 16
 c.push   {ra,s0},    {a0},     -32; //store ra,s0;     mv s0,a0;                               decrement sp by 32
 c.push   {ra,s0-s1}, {a0-a1},  -96; //store ra,s0-s1;  mv s0,a0; mv s1,a1;                     decrement sp by 96
 c.push   {ra,s0-s11},{a0-a3}, -128; //store ra,s0-s11; mv s0,a0; mv s1,a1; mv s2,a2; mv s3,a3; decrement sp by 128
