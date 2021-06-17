@@ -1462,6 +1462,10 @@ c.pop        {<reg_list_16u>},                 stack_adjustment_0_1
 
 This syntax is for the 16-bit encodings, for the EABI. All variables have been previously defined.
 
+[NOTE]
+
+  `areg_list` is required for `c.push`. If no register moves are required then the 32-bit encoding `push` is required instead.
+
 [source,sourceCode,text]
 ----
 
