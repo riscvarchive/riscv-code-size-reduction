@@ -1422,7 +1422,7 @@ if (<reg_list_*>=="ra, s0-sN") <areg_list>="a0-aP" where: if (N<4) P=N; else P=3
 
 //legal syntax for 32-bit encodings. Note that <areg_list> is optional for push.
 
-push         {<reg_list_32u>}, [{<areg_list>}], -stack_adjustment_0_31
+push         {<reg_list_32u>}, [{<areg_list>},] -stack_adjustment_0_31
 popret       {<reg_list_32u>}, [{ret_val_32},]   stack_adjustment_0_31
 pop          {<reg_list_32u>}, [{ret_val_32},]   stack_adjustment_0_31
 
@@ -1435,7 +1435,7 @@ This syntax is for the 32-bit encodings, for the EABI, which has a shorter range
 <sreg_list_e>  ::= <s0>  | <s0-sN>   (where N is in the range [1, 4])
 <reg_list_e>   ::= <ra> ["," <sreg_list_e>]
 
-push.e         {<reg_list_e>}, [{<areg_list>}], -stack_adjustment_0_31
+push.e         {<reg_list_e>}, [{<areg_list>},] -stack_adjustment_0_31
 popret.e       {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
 pop.e          {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
 
@@ -1454,9 +1454,9 @@ This syntax is for the 16-bit encodings, for the UABI. The rules stated above fo
 <sreg_list_16u>  ::= <s0>  | <s0-sN>   (where N is 1,2,3,5,7,11)
 <reg_list_16u>   ::= <ra> ["," <sreg_list_16u>]
 
-c.push       {<reg_list_16u>}, {<areg_list>}, -stack_adjustment_0_5
-c.popret     {<reg_list_16u>}, [{0},]          stack_adjustment_0_5
-c.pop        {<reg_list_16u>},                 stack_adjustment_0_1
+c.push       {<reg_list_16u>}, [{<areg_list>},] -stack_adjustment_0_5
+c.popret     {<reg_list_16u>}, [{0},]            stack_adjustment_0_5
+c.pop        {<reg_list_16u>},                   stack_adjustment_0_1
 
 ----
 
@@ -1465,9 +1465,9 @@ This syntax is for the 16-bit encodings, for the EABI. All variables have been p
 [source,sourceCode,text]
 ----
 
-c.push.e     {<reg_list_e>}, {<areg_list>}, -stack_adjustment_0_5
-c.popret.e   {<reg_list_e>}, [{0},]          stack_adjustment_0_5
-c.pop.e      {<reg_list_e>},                 stack_adjustment_0_1
+c.push.e     {<reg_list_e>}, [{<areg_list>},] -stack_adjustment_0_5
+c.popret.e   {<reg_list_e>}, [{0},]            stack_adjustment_0_5
+c.pop.e      {<reg_list_e>},                   stack_adjustment_0_1
 
 ----
 
