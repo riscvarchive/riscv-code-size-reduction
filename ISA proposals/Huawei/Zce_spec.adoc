@@ -1422,7 +1422,7 @@ if (<reg_list_*>=="ra, s0-sN") <areg_list>="a0-aP" where: if (N<4) P=N; else P=3
 
 //legal syntax for 32-bit encodings. Note that <areg_list> is optional for push.
 
-push         {<reg_list_32u>}, [{<areg_list>}], -stack_adjustment_0_31
+push         {<reg_list_32u>}, [{<areg_list>},] -stack_adjustment_0_31
 popret       {<reg_list_32u>}, [{ret_val_32},]   stack_adjustment_0_31
 pop          {<reg_list_32u>}, [{ret_val_32},]   stack_adjustment_0_31
 
@@ -1435,7 +1435,7 @@ This syntax is for the 32-bit encodings, for the EABI, which has a shorter range
 <sreg_list_e>  ::= <s0>  | <s0-sN>   (where N is in the range [1, 4])
 <reg_list_e>   ::= <ra> ["," <sreg_list_e>]
 
-push.e         {<reg_list_e>}, [{<areg_list>}], -stack_adjustment_0_31
+push.e         {<reg_list_e>}, [{<areg_list>},] -stack_adjustment_0_31
 popret.e       {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
 pop.e          {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
 
