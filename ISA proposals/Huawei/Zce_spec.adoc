@@ -1410,7 +1410,7 @@ This syntax is for the 32-bit encodings, for the UABI
 
 [source,sourceCode,text]
 ----
-<ret_val_32>     ::= 0 | 1 | -1
+<ret_val_32>     ::= "" | 0 | 1 | -1
 <sreg_list_32u>  ::=      <s0>  | <s0-sN>   (where N is in the range [1, 11])
 <areg_list>      ::= "" | <a0>  | <a0-aP>   (where P is in the range [1, 3])
 <reg_list_32u>   ::= <ra> ["," <sreg_list_32u>]
@@ -1423,9 +1423,9 @@ if (<reg_list_*>=="ra, s0-sN") <areg_list>="a0-aP" where: if (N<4) P=N; else P=3
 
 //legal syntax for 32-bit encodings. Note that <areg_list> is optional for push.
 
-push         {<reg_list_32u>}, [{<areg_list>},] -stack_adjustment_0_31
-popret       {<reg_list_32u>}, [{ret_val_32},]   stack_adjustment_0_31
-pop          {<reg_list_32u>}, [{ret_val_32},]   stack_adjustment_0_31
+push         {<reg_list_32u>}, {"" | <areg_list>}, -stack_adjustment_0_31
+popret       {<reg_list_32u>}, {ret_val_32},       stack_adjustment_0_31
+pop          {<reg_list_32u>}, {ret_val_32},       stack_adjustment_0_31
 
 ----
 
@@ -1436,9 +1436,9 @@ This syntax is for the 32-bit encodings, for the EABI, which has a shorter range
 <sreg_list_e>  ::= <s0>  | <s0-sN>   (where N is in the range [1, 4])
 <reg_list_e>   ::= <ra> ["," <sreg_list_e>]
 
-push.e         {<reg_list_e>}, [{<areg_list>},] -stack_adjustment_0_31
-popret.e       {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
-pop.e          {<reg_list_e>}, [{ret_val_32},]   stack_adjustment_0_31
+push.e         {<reg_list_e>}, {"" | <areg_list>}, -stack_adjustment_0_31
+popret.e       {<reg_list_e>}, {ret_val_32},        stack_adjustment_0_31
+pop.e          {<reg_list_e>}, {ret_val_32},        stack_adjustment_0_31
 
 ----
 
@@ -1456,8 +1456,8 @@ This syntax is for the 16-bit encodings, for the UABI. The rules stated above fo
 <reg_list_16u>   ::= <ra> ["," <sreg_list_16u>]
 
 c.push       {<reg_list_16u>}, {<areg_list>}, -stack_adjustment_0_5
-c.popret     {<reg_list_16u>}, [{0},]          stack_adjustment_0_5
-c.pop        {<reg_list_16u>},                 stack_adjustment_0_1
+c.popret     {<reg_list_16u>}, {"" | 0},       stack_adjustment_0_5
+c.pop        {<reg_list_16u>}, {},             stack_adjustment_0_1
 
 ----
 
@@ -1471,8 +1471,8 @@ This syntax is for the 16-bit encodings, for the EABI. All variables have been p
 ----
 
 c.push.e     {<reg_list_e>}, {<areg_list>}, -stack_adjustment_0_5
-c.popret.e   {<reg_list_e>}, [{0},]          stack_adjustment_0_5
-c.pop.e      {<reg_list_e>},                 stack_adjustment_0_1
+c.popret.e   {<reg_list_e>}, {"" | 0},       stack_adjustment_0_5
+c.pop.e      {<reg_list_e>}, {},             stack_adjustment_0_1
 
 ----
 
@@ -1486,20 +1486,20 @@ c.push   {ra,s0},    {a0},     -32; //store ra,s0;     mv s0,a0;                
 c.push   {ra,s0-s1}, {a0-a1},  -96; //store ra,s0-s1;  mv s0,a0; mv s1,a1;                     decrement sp by 96
 c.push   {ra,s0-s11},{a0-a3}, -128; //store ra,s0-s11; mv s0,a0; mv s1,a1; mv s2,a2; mv s3,a3; decrement sp by 128
 
-c.pop    {ra},        16;  //load  ra;        increment sp by 16
-c.popret {ra},        16;  //load  ra;        increment sp by 16; jump to ra
+c.pop    {ra}, {},    16;  //load  ra;        increment sp by 16
+c.popret {ra}, {},    16;  //load  ra;        increment sp by 16; jump to ra
 
-c.pop    {ra,s0},     32;  //load  ra,s0;     increment sp by 32
-c.popret {ra,s0},{0}, 32;  //load  ra,s0;     increment sp by 32; li a0, 0; jump to ra
-c.popret {ra,s0-s3},  96;  //load  ra,s0-s3;  increment sp by 96;           jump to ra
-c.popret {ra,s0-s11}, 128; //load  ra,s0-s11; increment sp by 128;          jump to ra
+c.pop    {ra,s0},    {},  32;  //load  ra,s0;     increment sp by 32
+c.popret {ra,s0},    {0}, 32;  //load  ra,s0;     increment sp by 32; li a0, 0; jump to ra
+c.popret {ra,s0-s3}, {},  96;  //load  ra,s0-s3;  increment sp by 96;           jump to ra
+c.popret {ra,s0-s11},{}, 128;  //load  ra,s0-s11; increment sp by 128;          jump to ra
 
 ----
 
 For example
 
 . `c.push   {ra,s0-s2}, {a0-a2},  -64` can use a 16-bit encoding
-. `push     {ra,s0-s2},           -64` must use a 32-bit encoding as `{a0-a2}` is excluded
+. `push     {ra,s0-s2}, {},       -64` must use a 32-bit encoding as `<areg_list>` is null 
 . `push     {ra,s0-s2}, {a0-a2}, -256` can use a 32-bit encoding as the `stack_adjustment` is out of range for `c.push`, or a `c.addi16sp; c.push` sequence achieves the same code-size
 . `c.popret {ra,s0-s2}, {0},       32` can use a 16-bit encoding
 . `popret   {ra,s0-s2}, {1},       32` must use a 32-bit encoding as `c.popret` only supports `0` as the `ret_val` value
@@ -2269,7 +2269,7 @@ addi sp, sp, -64;
 
 [source,sourceCode,text]
 ----
-c.push {ra, s0-s1}, {a0-a1} -32
+c.push {ra, s0-s1}, {a0-a1}, -32
 ----
 
 Encoding: rlist=2, spimm=16
@@ -2290,7 +2290,7 @@ addi sp, sp, -32;
 
 [source,sourceCode,text]
 ----
-c.pop   {ra, s0-s7}, 160
+c.pop   {ra, s0-s7}, {}, 160
 ----
 
 Encoding: rlist=6, spimm=112 
@@ -2316,7 +2316,7 @@ addi sp, sp, 160
 
 [source,sourceCode,text]
 ----
-c.popret   {ra, s0-s7},{0}, 160
+c.popret   {ra, s0-s7}, {0}, 160
 ----
 
 Encoding: rlist=6, spimm=112 
