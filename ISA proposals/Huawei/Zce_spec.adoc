@@ -1135,9 +1135,9 @@ if (!can_access_instruction_memory(target_address)) {
   take_memory_exception(target_address);
 }
 switch(opcode) {
-  C.TBLJALM: JALR t0,   tmp[XLEN-1:0]&~0x1;
-  C.TBLJ:    JALR zero, tmp[XLEN-1:0]&~0x1;
-  C.TBLJAL:  JALR ra,   tmp[XLEN-1:0]&~0x1;
+  C.TBLJALM: JALR t0,   target_address[XLEN-1:0]&~0x1;
+  C.TBLJ:    JALR zero, target_address[XLEN-1:0]&~0x1;
+  C.TBLJAL:  JALR ra,   target_address[XLEN-1:0]&~0x1;
 }
 ----
 
