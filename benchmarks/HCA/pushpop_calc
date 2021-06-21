@@ -1,0 +1,64 @@
+#!/usr/bin/python3 -u
+
+__author__ = "Ibrahim Abu Kharmeh"
+__copyright__ = "Copyright 2021, Huawei R&D Bristol"
+__license__ = "BSD 2-Clause"
+__version__ = "0.4.0"
+
+
+import numpy as np
+import pandas as pd
+import sys
+from argparse import ArgumentParser
+
+
+parser = ArgumentParser()
+parser.add_argument("-f", "--files", dest="ifiles",
+                    help="Input csv files", metavar="FILE",nargs="+")
+parser.add_argument("-r", "--destination", dest='destination',
+                    help="output csv files")
+parser.add_argument("-o", "--options", dest="options",
+                    help="Analysis options",nargs="+")
+# parser.add_argument("-a", "--actions", dest="actions",
+#                     help="Analysis actions",nargs="1")
+
+pd.set_option('display.expand_frame_repr', False)
+pd.set_option('display.max_rows', None)
+
+def main():
+    args = parser.parse_args()
+    df_list = dict()
+        
+    if (args.ifiles is None):
+            print("Please input file names")
+            parser.print_help(sys.stderr)
+            sys.exit(-1)
+    else:
+        # Read all files, create Pandas frames and add to list !
+        for csv_file in args.ifiles:
+            df_list[csv_file.split("/")[-1].split(".")[0]] = pd.read_csv(csv_file)
+        
+        df_list["pushpop_both-size"].columns = df_list["pushpop_both-size"].columns.map(lambda x : "NO_MSR_"+x if (x !=  "File name") else x)
+        merged_df = df_list["pushpop_both-size"].merge(df_list["size"])
+        merged_df["NO_MSR_Optimised File"] = merged_df["NO_MSR_File Size"] - (merged_df["NO_MSR_File Size"]*(merged_df["NO_MSR_Savings"].apply(lambda x: float(x[0:-1])/100)))
+        merged_df["Saving W.R.T MSR"] = (1- (merged_df["NO_MSR_Optimised File"] / merged_df["File Size"]))*100
+        merged_df.sort_values(['Saving W.R.T MSR'],ascending=False,inplace=True)
+        merged_df["Saving W.R.T MSR"] = (merged_df["Saving W.R.T MSR"]).apply(lambda x  : str("{:.2f}".format(x))+"%")
+        merged_df.drop(["Savings","NO_MSR_Optimised File"],axis=1,inplace=True)
+        merged_df.rename(columns={"File Size" : "MSR File Size"},inplace=True)
+
+
+    if (args.options is not None and "csv" in args.options ):
+        if (args.destination is None):
+            print (merged_df.to_csv(index=False))
+        else:
+            merged_df.to_csv(args.destination+'/'+"_".join([name.split("/")[-1].split(".")[0] for name in args.ifiles])+".csv",index=False)
+    else:
+        print (merged_df)
+            
+
+ 
+
+    
+if __name__ == "__main__":
+    main()
