@@ -20,6 +20,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.8  | fix table jump pseudo-code to show that two memory exceptions are possible during execution
 | 0.41.7  | fix c.push assembler syntax so <areg_list> must always be included, even if null
 | 0.41.6  | simplify c.mva01s07 assembler syntax, and fix encoding in table 16 (it was inconsistent)
 |         | fix ZCE-type format for 32-bit PUSH/POP (no actual spec change)
@@ -1110,13 +1111,28 @@ Jump table mode is easy to implement in the linker and doesn't affect the compil
 
 [source,sourceCode,text]
 ----
-# tmp is temporary internal state, it doesn't represent a real register
+# target_address is temporary internal state, it doesn't represent a real register
 # Mem is byte indexed
 # index8 is the field from the encoding, not the index passed to the C.TBLJ* in the assembler
+
 switch(XLEN) {
-  32:  LW tmp, InstMemory[xTBLJALVEC.base + index8<<2][XLEN-1:0];
-  64:  LD tmp, InstMemory[xTBLJALVEC.base + index8<<3][XLEN-1:0];
-  128: LQ tmp, InstMemory[xTBLJALVEC.base + index8<<4][XLEN-1:0];
+  32:  table_address[XLEN-1:0] = xTBLJALVEC.base + index8<<2;
+  64:  table_address[XLEN-1:0] = xTBLJALVEC.base + index8<<3;
+  128: table_address[XLEN-1:0] = xTBLJALVEC.base + index8<<4;
+}
+
+if (!can_access_instruction_memory(table_address)) {
+  take_memory_exception(table_address);
+}
+
+switch(XLEN) {
+  32:  LW target_address, InstMemory[table_address][XLEN-1:0];
+  64:  LD target_address, InstMemory[table_address][XLEN-1:0];
+  128: LQ target_address, InstMemory[table_address][XLEN-1:0];
+}
+
+if (!can_access_instruction_memory(target_address)) {
+  take_memory_exception(target_address);
 }
 switch(opcode) {
   C.TBLJALM: JALR t0,   tmp[XLEN-1:0]&~0x1;
@@ -1136,7 +1152,12 @@ xTBLJALVEC.base+256(index 64) = #  e08433 <vsnprintf>         # called with C.TB
 
 ==== Exceptions for jump table mode
 
-The jump table address can cause instruction fetch errors, such as page faults. In these cases `MEPC` is set to the PC of the `C.TBLJ*` instruction and `MTVAL` is set to the address in the jump table entry.
+Two instruction memory accesses are required, and either can cause a fault such as a page fault. The first memory access is to the jump table, 
+and the second is from dereferencing the jump table entry and fetching the target address.
+
+A fault from accessing the target address can only be taken if the read from the jump table completed successfully.
+
+In both cases, `MEPC` is set to the PC of the `C.TBLJ*` instruction and `MTVAL` is set to the address which caused the fault. 
 
 ==== Context Switching for jump table mode
 
