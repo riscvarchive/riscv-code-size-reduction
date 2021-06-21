@@ -12,7 +12,7 @@
 
 == Introduction:
 
-HCA is a simple python script mainly used to model and estimate code savings of Zce extension instructions. The script uses objdump to obtain the disassembly, static and dynamic symbol tables for a given ELF file. It parses the executable disassembly and write it into what is called the instructions record. 
+https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/HCA[HCA] is a simple python script mainly used to model and estimate code savings of Zce extension instructions. The script uses objdump to obtain the disassembly, static and dynamic symbol tables for a given ELF file. It parses the executable disassembly and write it into what is called the instructions record. 
 
 This record contain all functions found in the input executable elf file, and the parsed RISC-V instructions under each function. A snippet for such record generated from Embench CRC32 example is shown below.
 
