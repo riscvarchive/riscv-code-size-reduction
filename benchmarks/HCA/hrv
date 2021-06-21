@@ -1,0 +1,84 @@
+#!/usr/bin/python3 -u
+
+__author__ = "Ibrahim Abu Kharmeh"
+__copyright__ = "Copyright 2021, Huawei R&D Bristol"
+__license__ = "BSD 2-Clause"
+__version__ = "0.4.0"
+
+import numpy as np
+import pandas as pd
+import sys
+from argparse import ArgumentParser
+from collections import OrderedDict
+
+
+parser = ArgumentParser()
+parser.add_argument("-f", "--files", dest="ifiles",
+                    help="Input csv files", metavar="FILE",nargs="+")
+
+parser.add_argument("-r", "--destination", dest='destination',
+                    help="output csv files")
+parser.add_argument("-o", "--options", dest="options",
+                    help="Analysis options",nargs="+")
+
+pd.set_option('display.expand_frame_repr', False)
+pd.set_option('display.max_rows', None)
+
+
+def main():
+    files = dict()
+    columns_names = list()
+    files_not_found = list()
+    args = parser.parse_args()
+    columns_names.append("Size")
+    if (args.ifiles is None):
+            print("Please input file names")
+            parser.print_help(sys.stderr)
+            sys.exit(-1)
+    else:
+        for csv_file in args.ifiles:
+            filename = "-".join(csv_file.split("/")[-1].split(".")[0].split("-")[:-1])
+            name = filename.replace("_",".")
+            try:
+                with open(csv_file,'r') as fh:
+                    # Skip the header
+                    next(fh)
+                    columns_names.append(name)
+                    for line in fh:
+                        fields = line.split(",")
+                        if (len(fields) > 1):
+                            if (fields[0] not in files):
+                                files[fields[0]]= {"Size":int(fields[1][:-2]),name:fields[-1][:-1] }
+                            else:
+                                files[fields[0]][name] = fields[-1][:-1]
+            except FileNotFoundError:
+                files_not_found.append(name)
+        if (len(files_not_found)>0): print("Unable to find the following files",files_not_found)
+                                        
+    df = pd.DataFrame(files).T 
+    df = df[columns_names]
+    df.rename_axis('Filename',inplace=True)
+    # NOTE: x!= x would evaluate to true if x is Nan !!
+    df["Total"] = df[list(df)[1:]].applymap(lambda x  : 0 if x!=x else float(x[0:-1])).sum(axis=1)
+
+    
+    df = df.sort_values(["Filename"], ascending=True).reset_index(level="Filename")
+        
+
+    if (args.options is not None and "droptotal" in args.options ):
+        df.drop("Total",axis=1,inplace=True)
+    else:
+        df["Total"] = df["Total"].apply(lambda x  : str("{:.2f}".format(x)+"%" ))
+
+    if (args.options is not None and "csv" in args.options ):
+        if (args.destination is None):
+            print (df.to_csv())
+        elif ("csv" in args.destination):
+            df.to_csv(args.destination,index=False)
+        else:
+            df.to_csv(args.destination+'/'+"_".join([name.split("/")[-1].split(".")[0] for name in args.ifiles])+".csv",index=False)
+    else:
+        print (df)
+
+if __name__ == "__main__":
+    main()

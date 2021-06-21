@@ -1,16 +1,279 @@
-= Open Source Benchmarks
+:doctype: book
+:encoding: utf-8
+:lang: en
+:toc: left
+:toclevels: 4
+:numbered:
+:xrefstyle: short
+:le: &#8804;
+:rarr: &#8658;
 
-== Huawei WiFi-IoT stack
+= RISC-V Code-size Analysis Script
+
+== Introduction:
+
+https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/HCA[HCA] is a simple python script mainly used to model and estimate code savings of Zce extension instructions. The script uses objdump to obtain the disassembly, static and dynamic symbol tables for a given ELF file. It parses the executable disassembly and write it into what is called the instructions record. 
+
+This record contain all functions found in the input executable elf file, and the parsed RISC-V instructions under each function. A snippet for such record generated from Embench CRC32 example is shown below.
+
+.Instruction Record Snippet:
+[Source,Python]
+----
+00010074/main
+{'PC': '10074', 'HOB': True, 'Encoding': '124002ef', 'WoE': 32, 'Instruction': 'jal', 'Category': 'jump', 'Target_address': 65944, 'Destination': ('t0',)}
+{'PC': '10078', 'Encoding': '1141', 'WoE': 16, 'Instruction': 'c.addi', 'Category': 'alu_imm', 'Destination': ('sp',), 'Source': ('sp',), 'Immediate': '-16'}
+{'PC': '1007a', 'Encoding': '2049', 'WoE': 16, 'Instruction': 'c.jal', 'Category': 'jump', 'HOB': True, 'Target_address': 65788, 'Destination': ('ra',)}
+{'PC': '1007c', 'Encoding': '20a5', 'WoE': 16, 'Instruction': 'c.jal', 'Category': 'jump', 'HOB': True, 'Target_address': 65764, 'Destination': ('ra',)}
+{'PC': '1007e', 'Encoding': '4505', 'WoE': 16, 'Instruction': 'c.li', 'Category': 'load_imm', 'Destination': ('a0',), 'Immediate': '1'}
+{'PC': '10080', 'Encoding': '209d', 'WoE': 16, 'Instruction': 'c.jal', 'Category': 'jump', 'HOB': True, 'Target_address': 65766, 'Destination': ('ra',)}
+{'PC': '10082', 'Encoding': '28bd', 'WoE': 16, 'Instruction': 'c.jal', 'Category': 'jump', 'HOB': True, 'Target_address': 65792, 'Destination': ('ra',)}
+{'PC': '10084', 'Encoding': '2095', 'WoE': 16, 'Instruction': 'c.jal', 'Category': 'jump', 'HOB': True, 'Target_address': 65768, 'Destination': ('ra',)}
+{'PC': '10086', 'Encoding': 'c62a', 'WoE': 16, 'Instruction': 'c.sw', 'Category': 'store', 'Source': ('a0', 'sp'), 'Immediate': '12'}
+{'PC': '10088', 'Encoding': '28b5', 'WoE': 16, 'Instruction': 'c.jal', 'Category': 'jump', 'HOB': True, 'Target_address': 65796, 'Destination': ('ra',)}
+{'PC': '1008a', 'Encoding': '4532', 'WoE': 16, 'Instruction': 'c.lw', 'Category': 'load', 'Destination': ('a0',), 'Immediate': '12', 'Source': ('sp',)}
+{'PC': '1008c', 'Encoding': '208d', 'WoE': 16, 'Instruction': 'c.jal', 'Category': 'jump', 'HOB': True, 'Target_address': 65774, 'Destination': ('ra',)}
+{'PC': '1008e', 'Encoding': '00153513', 'WoE': 32, 'Instruction': 'seqz', 'Category': 'alu', 'Destination': ('a0',), 'Source': ('a0',)}
+{'PC': '10092', 'Encoding': '0141', 'WoE': 16, 'Instruction': 'c.addi', 'Category': 'alu_imm', 'Destination': ('sp',), 'Source': ('sp',), 'Immediate': '16'}
+{'PC': '10094', 'Encoding': 'a2b1', 'WoE': 16, 'Instruction': 'c.j', 'Category': 'jump', 'HOB': True, 'Target_address': 66016}
+----
+
+After populating the instruction record, the script finds all branch targets and mark them with a special key to help identify them as (HOB) head of blocks.
+
+The script uses this instruction record to perform various analysis tasks, these tasks are called actions.
+
+Generally speaking, most of these actions correspond to a single Zce instruction. When the script is called with a given action, it would filter the instruction record, find the target instruction/instruction chain, make sure it fits the target optimised instruction, then it replaces that instruction with the optimised instruction. Along side instructions modelling actions, the script contain several actions used to report various statistics in CSV format.
+
+== CMD line arguments 
+HCA -a action[1] action[2] action[n] -f file[1] file[2] file[n] -v[1/2] -r [output-dir]
+
+_Description_: +
+-a Required action names, full description of available actions is available below +
+-f ELF files paths +
+-v Verbosity level : 0  (default value, suppress all warning and debug messages), 1 (prints all errors and important messages), 2 (print debug information along with error messages). +
+-r output directory for CSV results files, if not specific results would be printed to console output.
+
+NOTE: The script is capable of performing any number of actions on any number of files. For each passed file, the  script will perform the required actions as described below, and then write the result as a new row to the the results CSV file or to the console output before moving to the next file.
+
+
+== Available actions:
+
+Below is a list of various actions that the script can execute, please note that actions are case sensitive, and the script expects them exactly like they are written in the headings.
+
+
+=== Zce modelling actions:
+
+==== c_sb,c_sh, c_lhu, c_lbu, c_lh and c_lb
+
+_Description_: These actions estimate the code size savings of c.sb,c.sh,c.lhu, c.lbu, c.lh and c.lb respectively
+
+_Replacement criteria_:
+
+. Find all SB / SH/ LHU/ LBU / SH / LHU instructions
+. If the immediate field bigger than 0 and less than 2^4, and the register fits within compressed register format then replace it with compressed form.
+
+==== beqi and bnei
+
+_Description_: These actions estimate the code size savings of beqi and bnei respectively
+
+_Replacement criteria_:
+
+. Find all beq / bne instructions
+. If one of the operands comes from li, and its value bigger than 0 and less than 2^5 then replace the sequence with either beqi/bnei.
+
+NOTE: We don't need to check if the offset would fit the 
+
+
+==== c_mul
+
+_Description_: This action estimates the code size savings of c.mul
+
+_Replacement criteria_:
+
+.. Find all multiply instructions
+.. Replace all the ones where destination and source register names are equal, and fit in compressed format with with c.mul and change WoE field to 16
+
+
+==== c_mul
+
+_Description_: This action estimates the code size savings of c.mul
+
+_Replacement criteria_:
+
+.. Find all multiplication instructions
+.. Replace all the ones where destination and source register names are within the compressed format with c.mul and change WoE field to 16
+
+==== c_mva01s07
+
+_Description_: Used to estimate the code size savings of c.mva01s07
+
+_Replacement criteria_:
+.. Find all moves consecutive moves
+.. Filter moves that fit the criteria for each of the proposed encoding
+.. Overwrite each multiple move that fit the replacement criteria  with the new moves instruction
+
+
+==== c_zext_b c_zext_h and c_zext_w
+
+_Description_: These actions estimate the code size savings of c.zext.b,c.zext.h and c.zext.w respectively
+
+_Replacement criteria_:
+
+. For c_zext_b, find all andi instructions where immediate field is 255, destination and source register are equal, and fit in the compressed register format with c.zext.b 
+
+. For c_zext_h and c_zext_h, Find all srai instructions dependent on slli and the immediate field for both equals  for 0x10 c_zext_h  and  0x20 for c_zext_w
+
+. Replace matched instructions with compressed equivalent and change WoE to 16
+
+==== c_sext_b, c_sext_h
+
+_Description_: These actions estimate the code size savings of c.sext.b,c.sext.h respectively, 
+
+NOTE: c.sext.w is a pseudo instruction (linked to c.addi.w), thus we don't need to search for it
+
+_Replacement criteria_:
+
+.. Find all instructions stli dependent on slli and replace the ones with equal immediate field and immediate value of 0x18 with c.sext.b  and immediate value of 0x10 for c.sext.h
+
+
+==== c_tbljal
+
+_Description_: Used to estimate the code size savings of c.tbljal
+
+_Replacement criteria_:
+
+.. Get all function calls (JAL, JALR, J and JR)
+.. Remove entries that we won't gain any code saving from substituting, (JAL,J) <  3
+.. Change the weight of JALR and JR entries to 3*Count (to incentives their selection since they save 3 time as much)
+.. Get the top 256 entries
+.. Overwrite the instruction record for these entries
+
+==== pushpop
+
+_Description_: This action used to estimate the collective code size savings from push pop and popret in both 16 and 32 bits format. 
+
+NOTE: This action works correctly only with files compiled without msave-restore.
+
+_Replacement criteria_:
+
+. C.PUSH
+.. Traverse functions prologue 
+.. Find negative stack adjustments
+.. Find all stack relative store that has a negative offset and fits within the range 
+_(abs(int(current_entry["Immediate"])+int(stack_adj_push[-1]["Adj"]["Immediate"])) < 60)_
+
+.. Stop search at HOBs 
+.. Check what is the maximum number of registers that we can fit in our replacement criteria
+_rcount = { 0: ("ra",), 1: ("ra", "s0"),2: ("ra", "s0-s1"),3: ("ra", "s0-s2"),4:("ra", "s0-s3"),5: ("ra", "s0-s5"),6: ("ra", "s0-s8"),7: ("ra", "s0-s11")}_
+
+.. Replace all instructions that fit the replacement criteria with the correct push instruction 
+
+. C.POP and C.POPRET 
+.. Traverse functions in reverse starting from epilogue
+.. Find positive stack adjustments 
+.. Find all stack relative  Load words that has positive offsets and fit within the range 
+.. Stop search at HOBs 
+.. Check what is the maximum number of registers that we can fit in our replacement criteria
+.. Replace all instructions that fit the replacement criteria with the correct POP/POPRET instruction 
+
+
+
+==== muli
+
+_Description_: This action estimates the code size savings of muli
+
+_Replacement criteria_:
+
+.. Find all mul instructions dependant in li instructions
+.. Replace them all 
+
+
+==== c_not
+
+_Description_: This action estimates the code size savings of c.not
+
+_Replacement criteria_:
+
+.. Find all not instructions (pseudo instruction of xori rs,-1)
+.. Replace all the ones where destination and source register names are equal and within the compressed register format with c.not and change WoE field to 16
+
+==== c_neg
+
+_Description_: This action estimates the code size savings of c.neg
+
+_Replacement criteria_:
+
+.. Find all neg instructions (pseudo instruction of sub x0,rs)
+.. Replace all the ones where destination and source register names are equal and within the compressed register format with c.neg and change WoE field to 16
+
+
+
+=== Other actions:
+
+==== size
+Sum up all width of encoding fields from all parsed instructions in the application record, and report the summation along side the original result when the instruction record was first constructed
+
+    hca -a size -f GCC10_iot_huawei_application.elf
+
+==== dict
+Output the constructed instruction record to console, if this was executed after modifying actions, then the record would be modified accordingly
+
+    hca -a dict -f GCC10_iot_huawei_application.elf
+
+==== coverage
+Output the added benefit for immediate bits for various instructions, *(Requires two additional parameters, Target Instruction and Immediate Signdness ) !*
+
+    hca -a coverage,lbu,unsigned -f GCC10_iot_huawei_application.elf
+
+==== instfreq
+Output the frequency of instructions in a given elf file *(it accepts an additional parameter that makes it report the frequency of instructions withn a given category)*
+
+    hca -a instfreq -f GCC10_iot_huawei_application.elf
+
+Available categories: (jump_imm,branch,load_imm,custom,multiple,system,alu_imm,alu,load,store,jump,f_ext,a_ext,b_ext)
+
+==== longaddress
+Report the number of times the program needed to construct a long address using multiple instructions, and the sections that the address lies in. 
+
+    hca -a longaddress -f GCC10_iot_huawei_application.elf
+
+
+== Application Examples:
+
+
+. hca -a pushpop size -f GCC10_iot_huawei_application.elf
+    .. The script would construct an instruction record for huawei_iot_application file
+    .. Calculate and store the initial record size by summing all WoE fields in the record. 
+    .. Go through the execution steps detailed above for pushpop and replace stack adjustments, store and load instructions with equivalent push and pop instructions
+    .. Calculate the modified instruction record size
+    .. Report the initial and final size to the console since -r was not specified
+
+. hca -a pushpop dict -f GCC10_iot_huawei_application.elf
+    .. The script would construct an instruction record for huawei_iot_application file
+    .. Calculate and store the initial record size by summing all WoE fields in the record. 
+    .. Go through the execution steps detailed above for pushpop and replace stack adjustments, store and load instructions with equivalent push and pop instructions
+    .. Outputs the modified instruction record to the console
+
+. hca -a c_not c_neg c_mul size -f GCC10_iot_huawei_application.elf -r ~/
+    .. The script would construct an instruction record for huawei_iot_application file
+    .. Calculate and store the initial record size by summing all WoE fields in the record. 
+    .. Go through the execution steps detailed above for not, neg and mul and replace  such instructions with equivalent compressed ones.
+    .. Calculate the modified instruction record size
+    .. Writes the initial and final size to a csv file named c_not_c_neg_c_mul_size.csv in the home directory. 
+
+
+== Open Source Benchmarks
+
+=== Huawei WiFi-IoT stack
 
 See the instructions https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/Hi3861_WiFi_IoT[here].
 
 Also the development board is available in China https://item.taobao.com/item.htm?spm=a1z10.3-c.w4002-18447093278.24.46a24c57weAWXH&id=622343426064[on Taobao].
 
-== Zephyr
+=== Zephyr
 
 See the instructions https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks/zephyr[here].
 
-== Google v8
+=== Google v8
 
 There's a RISC-V run script https://github.com/v8-riscv/v8-riscv-tools/blob/main/init_v8_all_in_one.sh[here].
 
@@ -18,38 +281,38 @@ Sometimes it needs a patch so hopefully the script has an up-to-date one. Note t
 
 issues can be submitted https://github.com/v8-riscv/v8/issues[here].
 
-== Debian distro
+=== Debian distro
 
 Precompiled Debian distro is available https://wiki.debian.org/RISC-V[here].
 
 I downloaded https://people.debian.org/~mafm/debian-riscv64-tarball-20180418.tar.gz[this specific file].
 
-== Opus codec
+=== Opus codec
 
 Downloadable https://opus-codec.org/downloads/[here].
 
 We compile the floating point and fixed point versions, and analyse `opus_demo.elf`.
 
-== Softfloat/testfloat
+=== Softfloat/testfloat
 
 http://www.jhauser.us/arithmetic/SoftFloat.html[Softfloat-3e].
 http://www.jhauser.us/arithmetic/TestFloat.html[Testfloat-3e].
 
 Testfloat is really used to link to Softfloat.
 
-== Embench IoT
+=== Embench IoT
 
 Embench IoT is available https://github.com/embench/embench-iot[here].
 
-== CSiBE
+=== CSiBE
 
 Available https://github.com/szeged/csibe[here].
 
-= EEMBC benchmarks (not open source)
+=== EEMBC benchmarks (not open source)
 
-== FPMark 
+=== FPMark 
 
-== Coremark 
+=== Coremark 
 
 
 
