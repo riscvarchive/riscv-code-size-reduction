@@ -68,7 +68,7 @@ _Description_: These actions estimate the code size savings of c.sb,c.sh,c.lhu, 
 
 _Replacement criteria_:
 
-. Find all SB / SH/ LHU/ LBU / SH / LHU instructions
+. Find all SB / SH/ LHU/ LBU / LH / LB instructions
 . If the immediate field bigger than 0 and less than 2^4, and the register fits within compressed register format then replace it with compressed form.
 
 ==== beqi and bnei
@@ -92,15 +92,6 @@ _Replacement criteria_:
 .. Find all multiply instructions
 .. Replace all the ones where destination and source register names are equal, and fit in compressed format with with c.mul and change WoE field to 16
 
-
-==== c_mul
-
-_Description_: This action estimates the code size savings of c.mul
-
-_Replacement criteria_:
-
-.. Find all multiplication instructions
-.. Replace all the ones where destination and source register names are within the compressed format with c.mul and change WoE field to 16
 
 ==== c_mva01s07
 
