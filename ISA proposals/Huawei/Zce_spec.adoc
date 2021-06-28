@@ -25,7 +25,7 @@ This document describes the `Zce` extension to reduce code-size.
 | 0.41.6  | simplify c.mva01s07 assembler syntax, and fix encoding in table 16 (it was inconsistent)
 |         | fix ZCE-type format for 32-bit PUSH/POP (no actual spec change)
 | 0.41.5  | remove # from c.tblj* assembly syntax, as it's a comment character
-| 0.41.4  | correct table 30 so that the C.LB/C.LH encodings are in tyhe 001____10 group (the spec was inconsistent)
+| 0.41.4  | correct table 30 so that the C.LB/C.LH encodings are in the 001____10 group (the spec was inconsistent)
 | 0.41.3  | remove requirement that writing to xTBLJALVEC flushes the jump table cache - just use FENCE.I or other standard mechanism
 |         | change pseudo-code for POP so that the return value can be interrupted / repeated
 |         | beq/bne assembly example should have been beqi/bnei
@@ -2693,6 +2693,15 @@ Table jump is quite simple architecturally.
 The core jumps to address `m`, and links to the relevant link register.
 
 For verification we must show that the different link registers work and that the core jumps to the correct location each time.
+
+==== Table jump and overlays
+
+The overlap task group has a proposal which can fit nicely with a table jump implementation. https://github.com/riscv/riscv-overlay/blob/master/docs/overlay-hld.adoc[Click here for the proposal].
+They use `t6` as the semi-fixed address for the overlap table engine. This could be replaced by a `c.tbljal` to the overlay engine. 
+If the address of the engine needs to be changed then it can be changed in the jump table, so allowing table jump to call the engine removes teh need to allocate `t6`.
+
+A future version of this spec may not allocate CSRs (as CSRs are a finite resource), and use a temporary register for the jump table base address. If this is the case then using `t6` would fit nicely with overlap proposal, 
+but the concern is that precompiled libraries which use `t6` will no longer work, and additionally the EABI only has two temporary registers so allocating one of them for the jump table base is unlikely to be acceptable.
 
 == Rejected and postponed instructions
 
