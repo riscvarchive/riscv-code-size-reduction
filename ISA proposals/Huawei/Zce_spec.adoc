@@ -1359,6 +1359,7 @@ The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes w
 
   The `C.PUSH` has an additional register move included `mv s2, a2` which wasn't in the original prologue. This is included to simplify the encoding and definition of `C.PUSH/PUSH` and will cost some performance.
 
+[#uabiandeabisupport]
 === UABI and EABI support
 
 The UABI is available on all RVI cores. The EABI is optional on RV32I and required on RV32E.
@@ -1915,20 +1916,24 @@ Additional benefits of the 32-bit encoding are:
 
 These tables are provided as a handy reference, they are all calculated from the formulae in this specification. They should be in an appendix.
 
+[NOTE]
+
+  Cells which say `see PUSH/POP/POPRET` etc. are because the `.E` instruction is a pseudo-instruction. See <<uabiandeabisupport>>.
+
 [#spimmrange_16]
 .C.PUSH/C.POP/C.POPRET valid values of stack adjustment for RV32
 [width="100%",options=header]
 |==========================================================================================
-| rlist       | C.PUSH      | C.PUSH.E    | C.POPRET  | C.POPRET.E | C.POP       | C.POP.E
-| {ra}        | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   | 16 to 32    | 16 to 32
-| {ra, s0}    | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   | 16 to 32    | 16 to 32
-| {ra, s0-s1} | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   | 16 to 32    | 16 to 32
-| {ra, s0-s2} | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   | 16 to 32    | 16 to 32
-| {ra, s0-s3} | -32 to -112 | -32 to -112 | 32 to 112 | 32 to 112  | N/A         | 32 to 48
-| {ra, s0-s4} | N/A         | -32 to -112 | N/A       | 32 to 112  | N/A         | N/A
-| {ra, s0-s5} | -32 to -112 | N/A         | 32 to 112 | N/A        | 32 to 48    | 32 to 48
-| {ra, s0-s7} | -48 to -128 | N/A         | 48 to 128 | N/A        | 48 to 64    | 48 to 64
-| {ra, s0-s11}| -64 to -144 | N/A         | 64 to 144 | N/A        | 64 to 80    | 64 to 80
+| rlist       | C.PUSH      | C.PUSH.E    | C.POPRET  | C.POPRET.E   | C.POP       | C.POP.E
+| {ra}        | -16 to -96  | see C.PUSH  | 16 to 96  | see C.POPRET | 16 to 32    | see C.POP
+| {ra, s0}    | -16 to -96  | see C.PUSH  | 16 to 96  | see C.POPRET | 16 to 32    | see C.POP
+| {ra, s0-s1} | -16 to -96  | see C.PUSH  | 16 to 96  | see C.POPRET | 16 to 32    | see C.POP
+| {ra, s0-s2} | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96     | 16 to 32    | 16 to 32
+| {ra, s0-s3} | -32 to -112 | -32 to -112 | 32 to 112 | 32 to 112    | N/A         | 32 to 48
+| {ra, s0-s4} | N/A         | -32 to -112 | N/A       | 32 to 112    | N/A         | N/A
+| {ra, s0-s5} | -32 to -112 | N/A         | 32 to 112 | N/A          | 32 to 48    | 32 to 48
+| {ra, s0-s7} | -48 to -128 | N/A         | 48 to 128 | N/A          | 48 to 64    | 48 to 64
+| {ra, s0-s11}| -64 to -144 | N/A         | 64 to 144 | N/A          | 64 to 80    | 64 to 80
 |==========================================================================================
 
 [NOTE]
@@ -1940,9 +1945,9 @@ These tables are provided as a handy reference, they are all calculated from the
 [width="100%",options=header]
 |==========================================================================================
 | rlist       |   PUSH      |   PUSH.E    | POP/POPRET|POP.E/POPRET.E 
-| {ra}        | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
-| {ra, s0}    | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
-| {ra, s0-s1} | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
+| {ra}        | -16 to -512 | see PUSH    | 16 to 512 | see POP/POPRET 
+| {ra, s0}    | -16 to -512 | see PUSH    | 16 to 512 | see POP/POPRET 
+| {ra, s0-s1} | -16 to -512 | see PUSH    | 16 to 512 | see POP/POPRET 
 | {ra, s0-s2} | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512  
 | {ra, s0-s3} | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528  
 | {ra, s0-s4} | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528  
@@ -1963,38 +1968,38 @@ These tables are provided as a handy reference, they are all calculated from the
 [#spimmrange_16_rv64]
 .C.PUSH/C.POP/C.POPRET valid values of stack adjustment for RV64
 [width="100%",options=header]
-|==========================================================================================
-| rlist       | C.PUSH      | C.PUSH.E    | C.POPRET  | C.POPRET.E | C.POP       | C.POP.E
-| {ra}        | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   |  16 to 32   | 16 to 32        
-| {ra, s0}    | -16 to -96  | -16 to -96  | 16 to 96  | 16 to 96   |  16 to 32   | 16 to 32        
-| {ra, s0-s1} | -32 to -112 | -32 to -112 | 32 to 112 | 32 to 112  |  32 to 48   | 32 to 48       
-| {ra, s0-s2} | -32 to -112 | -32 to -112 | 32 to 112 | 32 to 112  |  32 to 48   | 32 to 48       
-| {ra, s0-s3} | -48 to -128 | -48 to -128 | 48 to 128 | 48 to 128  |  48 to 64   | 48 to 80  
-| {ra, s0-s4} | N/A         | -48 to -128 | N/A       | 48 to 128  |  N/A        | 48 to 96  
-| {ra, s0-s5} | -64 to -144 | N/A         | 64 to 144 | N/A        |  64 to 80   | N/A         
-| {ra, s0-s7} | -80 to -160 | N/A         | 80 to 160 | N/A        |  80 to 96   | N/A       
-| {ra, s0-s11}| -112 to -192| N/A         |112 to 192 | N/A        | 112 to 128  | N/A       
-|==========================================================================================
+|=====================================================
+| rlist       | C.PUSH      | C.POPRET  | C.POP       
+| {ra}        | -16 to -96  | 16 to 96  |  16 to 32     
+| {ra, s0}    | -16 to -96  | 16 to 96  |  16 to 32     
+| {ra, s0-s1} | -32 to -112 | 32 to 112 |  32 to 48    
+| {ra, s0-s2} | -32 to -112 | 32 to 112 |  32 to 48    
+| {ra, s0-s3} | -48 to -128 | 48 to 128 |  48 to 64   
+| {ra, s0-s4} | N/A         | N/A       |  N/A        
+| {ra, s0-s5} | -64 to -144 | 64 to 144 |  64 to 80   
+| {ra, s0-s7} | -80 to -160 | 80 to 160 |  80 to 96   
+| {ra, s0-s11}| -112 to -192|112 to 192 | 112 to 128  
+|=====================================================
 
 [#spimmrange_32_ra_rv64]
 .PUSH/POP/POPRET valid values of total stack adjustment for RV64
 [width="100%",options=header]
-|==========================================================================================
-| rlist       |   PUSH      |   PUSH.E    | POP/POPRET|POP.E/POPRET.E 
-| {ra}        | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512   
-| {ra, s0}    | -16 to -512 | -16 to -512 | 16 to 512 | 16 to 512   
-| {ra, s0-s1} | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528   
-| {ra, s0-s2} | -32 to -528 | -32 to -528 | 32 to 528 | 32 to 528   
-| {ra, s0-s3} | -48 to -544 | -48 to -544 | 48 to 544 | 48 to 544   
-| {ra, s0-s4} | -48 to -544 | -48 to -544 | 48 to 544 | 48 to 544   
-| {ra, s0-s5} | -64 to -560 | N/A         | 64 to 560 | N/A        
-| {ra, s0-s6} | -64 to -560 | N/A         | 64 to 560 | N/A        
-| {ra, s0-s7} | -80 to -576 | N/A         | 80 to 576 | N/A        
-| {ra, s0-s8} | -80 to -576 | N/A         | 80 to 576 | N/A        
-| {ra, s0-s9} | -96 to -592 | N/A         | 96 to 592 | N/A        
-| {ra, s0-s10}| -96 to -592 | N/A         | 96 to 592 | N/A        
-| {ra, s0-s11}|-112 to -608 | N/A         |112 to 608 | N/A        
-|==========================================================================================
+|=======================================
+| rlist       |   PUSH      | POP/POPRET
+| {ra}        | -16 to -512 | 16 to 512 
+| {ra, s0}    | -16 to -512 | 16 to 512 
+| {ra, s0-s1} | -32 to -528 | 32 to 528 
+| {ra, s0-s2} | -32 to -528 | 32 to 528 
+| {ra, s0-s3} | -48 to -544 | 48 to 544 
+| {ra, s0-s4} | -48 to -544 | 48 to 544 
+| {ra, s0-s5} | -64 to -560 | 64 to 560 
+| {ra, s0-s6} | -64 to -560 | 64 to 560 
+| {ra, s0-s7} | -80 to -576 | 80 to 576 
+| {ra, s0-s8} | -80 to -576 | 80 to 576 
+| {ra, s0-s9} | -96 to -592 | 96 to 592 
+| {ra, s0-s10}| -96 to -592 | 96 to 592 
+| {ra, s0-s11}|-112 to -608 |112 to 608 
+|=======================================
 
 [#fault-handling]
 === Fault handling
