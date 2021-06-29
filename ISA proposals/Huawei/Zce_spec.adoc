@@ -1373,8 +1373,8 @@ The `PUSH/POP/POPRET/C.PUSH/C.POP/C.POPRET` instructions support the UABI. The `
 
 Where the `X` register list is the same for both ABIs the EABI version is a pseudo-instruction, where the `X` register list is different it has a different encoding, for example: 
 
-* `c.pop.e {ra, s0}, 32` is a pseudo-instruction for `c.pop {ra, s0}, 32`
-* `c.pop.e {ra, s0-s2}, 32` has a different encoding to `c.pop {ra, s0-s2}, 32`
+* `c.pop.e {ra, s0}, {}, 32` is a pseudo-instruction for `c.pop {ra, s0}, {}, 32`
+* `c.pop.e {ra, s0-s2}, {}, 32` has a different encoding to `c.pop {ra, s0-s2}, {}, 32`
 
 It is recommended that:
 
@@ -1826,7 +1826,7 @@ These instructions have no conflicts with other extensions, they use previously 
 .`rlist2` values for the 16-bit encodings
 [options="header",width=100%]
 |============================
-|rlist2| reg_list_e   | areg_list (C.PUSH only)
+|rlist2| reg_list_e   | areg_list (C.PUSH.E only)
 |0     |ra, s0-s2     | a0-a2
 |1     |ra, s0-s3     | a0-a3
 |2     |ra, s0-s4     | a0-a3
