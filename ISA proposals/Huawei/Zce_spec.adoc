@@ -1902,6 +1902,10 @@ the allowable range of `spimm` varies for different encodings.
 
 [NOTE]
 
+  `spimm` is an _unsigned_ immediate, it is subtracted for all `PUSH` instructions and added for all `POP/POPRET` instructions.
+
+[NOTE]
+
   if `spimm` is out of range for the compiler, `PUSH/POP/POPRET` can still be inferred, and the compiler can infer an additional stack adjustment instruction
 
 In many cases the 16-bit encoding is sufficient. The 32-bit encoding offers a larger `spimm` range, but this can also be achieved with a separate `c.addi sp, sp, #offset` instruction giving the same overall code-size.
