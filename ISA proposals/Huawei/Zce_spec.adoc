@@ -1806,7 +1806,7 @@ These instructions have no conflicts with other extensions, they use previously 
 
 |=========================================================================================================================
 
-  * `spimm0_5[6:4]` has legal values of 0 to 5
+  * `spimm0_5[6:4]` has legal values of 0 to 5, which maps to stack adjustments of 0 to 80 as bits [6:4] are specified.
 
 [#rlist3-table]
 .`rlist3` values for the 16-bit encodings
@@ -1943,6 +1943,11 @@ These tables are provided as a handy reference, they are all calculated from the
 [NOTE]
 
   The ranges in <<spimmrange_16>> and <<spimmrange_32_ra>> show the total stack adjustment range, starting from `spimm=0` up to the maximum value of `spimm` for each encoding.
+
+For example:
+
+`c.push {ra,s0-s2}` requires 16-bytes to cover the registers, and the range shown is `-16 to -96`. The range of `spimm0_5[6:4]=0 to 5` which maps to the values `0 to 80`. 
+The stack adjustment is negative for `c.push` so the total possible stack adjustment is `-(16+(0*16) to -(16+(5*16)) = -16 to -80`.
 
 [#spimmrange_32_ra]
 .PUSH/POP/POPRET valid values of total stack adjustment for RV32
