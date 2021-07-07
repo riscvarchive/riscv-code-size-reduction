@@ -1,0 +1,53 @@
+[#insns-c_zext_w,reftext="Zero extend word, 16-bit encoding"]
+=== c.zext.w
+
+Synopsis::
+Zero extend word, 16-bit encoding
+
+Mnemonic::
+c.zext.w _rsd'_
+
+Encoding (RV64, RV128)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  3, name: 0x4, attr: ['FUNCT3'] },
+    { bits:  3, name: 0x0, attr: ['TBD'] },
+    { bits:  3, name: 'rsd' },
+    { bits:  2, name: 0x0, attr: ['TBD'] },
+    { bits:  3, name: 0x4, attr: ['C.ZEXT.W'] },
+    { bits:  2, name: 0x0, attr: ['C1'] },
+]}
+....
+
+
+.Encoding (RV32, RV64, RV128) as wavedrom doesn't render on github
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  100     3+| 000        3+| rsd'    2+| 00    3+| 100     2+| 00    | C.ZEXT.W
+|=============================================================================================
+
+Description::
+This instruction takes a single source/destination operand, from the 8-register set x8-x15. It returns the lowest word of _rsd'_ zero extended to XLEN bits. 
+
+Prerequisites::
+The C-extension must also be configured.
+
+Operation::
+[source,sail]
+--
+X(rsd) = EXTZ(truncate(X(rsd),32))
+--
+
+Included in::
+[%header,cols="4,2,2"]
+|===
+|Extension
+|Minimum version
+|Lifecycle state
+
+|Zcee (<<#zcee>>)
+|0.41.8
+|Plan
+|===
