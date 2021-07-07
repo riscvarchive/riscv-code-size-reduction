@@ -21,7 +21,7 @@ Encoding (RV64, RV128)::
 ....
 
 
-.Encoding (RV32, RV64, RV128) as wavedrom doesn't render on github
+.Encoding (RV64, RV128) as wavedrom doesn't render on github
 [width="100%",options=header]
 |=============================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
