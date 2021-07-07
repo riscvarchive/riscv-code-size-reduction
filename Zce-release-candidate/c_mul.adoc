@@ -1,5 +1,5 @@
 [#insns-c_mul,reftext="Multiply, 16-bit encoding"]
-=== c.zext.h
+=== c.mul
 
 Synopsis::
 Multiply, 16-bit encoding
