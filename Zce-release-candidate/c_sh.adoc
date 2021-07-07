@@ -31,7 +31,7 @@ Encoding (RV32, RV64, RV128)::
 
 
 Description::
-This instruction stores a half-word to the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. 
+This instruction stores the least significant half-word of _rs2'_ to the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. 
 Both operands are from the 8-register set x8-x15.
 
 Prerequisites::
