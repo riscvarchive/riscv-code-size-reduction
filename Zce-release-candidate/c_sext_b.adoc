@@ -1,4 +1,4 @@
-[#insns-sext_b,reftext="Sign extend byte, 16-bit encoding"]
+[#insns-c_sext_b,reftext="Sign extend byte, 16-bit encoding"]
 === c.sext.b
 
 Synopsis::
@@ -16,7 +16,7 @@ Encoding (RV32, RV64, RV128)::
     { bits:  3, name: 'rsd' },
     { bits:  2, name: 0x0, attr: ['TBD'] },
     { bits:  3, name: 0x1, attr: ['C.SEXT.B'] },
-    { bits:  2, name: 'shamt', attr: ['C1'] },
+    { bits:  2, name: '0x0, attr: ['C1'] },
 ]}
 ....
 
