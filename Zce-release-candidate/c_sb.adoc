@@ -1,0 +1,55 @@
+[#insns-c_sb,reftext="Store byte, 16-bit encoding"]
+=== c.sb
+
+Synopsis::
+Store byte, 16-bit encoding
+
+Mnemonic::
+c.sb _r2'_, _uimm_(_rs1'_)
+
+Encoding (RV32, RV64, RV128)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  3, name: 0x5, attr: ['FUNCT3'] },
+    { bits:  1, name: 0x0, attr: ['TBD'] },
+    { bits:  2, name: 'uimm[4:3]' },
+    { bits:  3, name: 'rs1' },
+    { bits:  2, name: 'uimm[2:1]' },
+    { bits:  3, name: 'rs2' },
+    { bits:  2, name: 0x0, attr: ['C1'] },
+]}
+....
+
+
+.Encoding (RV32, RV64, RV128) as wavedrom doesn't render on github
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+3+|  101       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SB
+|=============================================================================================
+
+Description::
+This instruction stores the least significant byte of _rs2'_ to the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. 
+Both operands are from the 8-register set x8-x15.
+
+Prerequisites::
+The C-extension. This encoding conflicts with the D-extension, but there is no conflict with Zdinx if double-precision arithmetic is required.
+
+Operation::
+[source,sail]
+--
+<non-trivial code - needs linking to SAIL model>
+--
+
+Included in::
+[%header,cols="4,2,2"]
+|===
+|Extension
+|Minimum version
+|Lifecycle state
+
+|Zceb (<<#zceb>>)
+|0.41.8
+|Plan
+|===
