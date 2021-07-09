@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.8
-Version 0.41.8
+= RISC-V Zce code-size reduction extension proposal v0.41.9
+Version 0.41.9
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -20,6 +20,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.9  | Update Zcee definition to include C.MUL
 | 0.41.8  | fix table jump pseudo-code to show that two memory exceptions are possible during execution
 | 0.41.7  | fix c.push assembler syntax so <areg_list> must always be included, even if null
 | 0.41.6  | simplify c.mva01s07 assembler syntax, and fix encoding in table 16 (it was inconsistent)
@@ -67,7 +68,6 @@ This document describes the `Zce` extension to reduce code-size.
 * `BEQI/BNEI` should have `nzuimm` instead of `uimm`, will fix after prototyping phase
 * `MULI` has a temporary encoding
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
-* is a hypervisor version of `xTBLJALVEC` required for `tbljal`?
 * `xTBLJALVEC` need addresses to be allocated
 * EABI spec is not frozen - so it's not clear which formats of PUSH.E etc that I need
 ** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s7, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
@@ -75,7 +75,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 == `Zce` configurations
 
-image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified5.png[Zce subsets]
+image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_subsets%20simplified6.png[Zce subsets]
 
 `Zce` is split into two main subsets
 
@@ -101,7 +101,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.ZEXT.H|✓|✓|✓|Zcea/Zcee|
 |C.ZEXT.W| |✓|✓|Zcea/Zcee|
 6+|Require M or Zmmul to be inferred
-|C.MUL|✓|✓|✓|Zcea|requires M or Zmmul
+|C.MUL|✓|✓|✓|Zcea/Zcee|requires M or Zmmul
 |MULI|✓|✓|✓|Zcea|requires M or Zmmul
 6+|other 16-bit encodings
 |C.MVA01S07| |✓|✓|Zcea|
@@ -151,7 +151,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 
 All systems which implement `Zcea/Zceb` must also implement the `C` extension. 
 
-If `M` or `Zmmul` is specified then `Zcea` also includes the `C.MUL, MULI` instructions.
+If `M` or `Zmmul` is specified then `Zcea/Zcee` also include the `C.MUL, MULI` instructions.
 
 == C-extension subsets
 
@@ -199,10 +199,10 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |*C.TBLJ*    | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.TBLJAL*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.TBLJALM* | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.SEXT.B*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.SEXT.H*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.ZEXT.B*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.ZEXT.H*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.SEXT.B*  | |*Zcea/Zcee*|	✓|	✓|	✓|	C+*Zcea/Zcee*
+|100       |*C.SEXT.H*  | |*Zcea/Zcee*|	✓|	✓|	✓|	C+*Zcea/Zcee*
+|100       |*C.ZEXT.B*  | |*Zcea/Zcee*|	✓|	✓|	✓|	C+*Zcea/Zcee*
+|100       |*C.ZEXT.H*  | |*Zcea/Zcee*|	✓|	✓|	✓|	C+*Zcea/Zcee*
 |100       |*C.NOT*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 |100       |*C.NEG*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
 
@@ -249,7 +249,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |C.SUBW (RV32:RSV)                     | |Zc64/Zc128	|	|✓	|✓	|C
 |100       |C.ADDW (RV32:RSV)                     | |Zc64/Zc128	|	|✓	|✓	|C
 
-|100       |C.MUL                                 | |Zcea	|	|✓	|✓	|M+C+*Zcea*
+|100       |C.MUL                                 | |Zcea/Zcee	|	|✓	|✓	|M+C+*Zcea/Zcee*
 |100       |C.MVA01S07                            | |Zcea	|	|✓	|✓	|C+*Zcea*
 
 
@@ -326,13 +326,13 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 [width="100%",options=header]
 |================================================================================================
 | 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension
-3+|  100     3+|000        8+|xxxx                            2+| 00    |56/256  | `Zcea`
+3+|  100     3+|000        8+|xxxx                            2+| 00    |56/256  | `Zcea` (40 `Zcee`)
 3+|  100     3+|001        8+|xxxx                            2+| 00    |0/256   | *reserved*
 3+|  100     3+|010        8+|xxxx                            2+| 00    |120/256 | `Zcea`
 3+|  100     3+|011        8+|xxxx                            2+| 00    |256/256 | `Zcea`
 3+|  100     3+|1xx        8+|xxxx                            2+| 00    |0/1024  | *reserved*
 3+|  011       | 0 5+|xxxxx             5+|11111              2+| 01    |0/32    | *reserved*
-3+|  100     3+|111  3+|xxx   |1  4+|xxx                      2+| 01    |64/128  | `Zcea`
+3+|  100     3+|111  3+|xxx   |1  4+|xxx                      2+| 01    |64/128  | `Zcea` (56 `Zcee`)
 3+|  100     6+|000000                  5+|non-zero           2+| 10    |0/31    | *reserved*
 |================================================================================================
 
@@ -371,13 +371,17 @@ In total in the existing RVC (16-bit) encoding space:
 . RV64C has 2303 code points available, 496 are used (21.5%)
 . RV32CD (i.e. the C.FSD,C.FLD, C.FSDSP, C.FLDSP encodings) has 8192 code points available, 8191 are used (99.9%)
 
-== `Zcea` definition
+The `Zcee` subset uses 106 code points (2.7% RV32C, 4.6% RV64C).
 
-=== C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H, C.ZEXT.W, C.MUL, C.NOT, C.NEG
+== `Zcee` definition
+
+=== C.SEXT.B, C.SEXT.H, C.ZEXT.B, C.ZEXT.H, C.ZEXT.W, C.MUL
 
 These instructions have no conflicts with other extensions, they use previously reserved encodings.
 
 These instructions are 16-bit versions of existing 32-bit instructions, from either `I/E` or the `Zba/Zbb`-extension.
+
+`C.NOT/C.NEG` are _not_ part of `Zcee` but are included in <<monadic-16encodings>> to show the entire allocation of this encoding group. They are specified in <<c_not_c_neg>>.
 
 [#monadic-16encodings]
 .monadic simple instructions 16-bit encodings
@@ -389,10 +393,10 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 001     2+| 00  | C.SEXT.B
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 010     2+| 00  | C.ZEXT.H
 3+|  100     3+| 000 3+| rd'      2+| 00  3+| 011     2+| 00  | C.SEXT.H
-3+|  100     3+| 000 3+| xxx      2+| 00  3+| 100     2+| 00  | C.ZEXT.W
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 101     2+| 00  | *reserved*
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 110     2+| 00  | C.NEG
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 111     2+| 00  | C.NOT
+3+|  100     3+| 000 3+| rd'      2+| 00  3+| 100     2+| 00  | C.ZEXT.W
+3+|  100     3+| 000 3+| xxx      2+| 00  3+| 101     2+| 00  | *reserved*
+3+|  100     3+| 000 3+| rd'      2+| 00  3+| 110     2+| 00  | C.NEG (see Zcea)
+3+|  100     3+| 000 3+| rd'      2+| 00  3+| 111     2+| 00  | C.NOT (see Zcea)
 3+|  100     3+| 000 3+| xxx      2+| 01  3+| xxx     2+| 00  | *reserved*
 3+|  100     3+| 000 3+| xxx      2+| 1x  3+| xxx     2+| 00  | *reserved*
 |=============================================================================================
@@ -414,8 +418,6 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 | C.ZEXT.H      | rd' = zero_ext(rd'[15:0])
 | C.SEXT.B      | rd' = sign_ext(rd'[ 7:0])
 | C.SEXT.H      | rd' = sign_ext(rd'[15:0])
-| C.NOT         | rd' = ~rd' / rd' = rd' XOR -1
-| C.NEG         | rd' = -rd' / rd' = 0 - rd'
 | C.MUL         | rd' = rd' * rs2'
 2+| RV64/RV128 only
 | C.ZEXT.W      | rd' = zero_ext(rd'[31:0])
@@ -434,8 +436,6 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 |C.ZEXT.H    | zext.h rd, rs1        | all regs x8-x15, rd=rs1            | Zbb
 |C.SEXT.B    | sext.b rd, rs1        | all regs x8-x15, rd=rs1            | Zbb
 |C.SEXT.H    | sext.h rd, rs1        | all regs x8-x15, rd=rs1            | Zbb
-|C.NOT       | not    rd, rs1        | all regs x8-x15, rd=rs1            | I or E
-|C.NEG       | neg    rd, rs1        | all regs x8-x15, rd=rs1            | I or E
 |C.MUL       | mul    rd, rs1, rs2   | all regs x8-x15, rd=rs1            | I or E
 4+|RV64/RV128 only
 |C.ZEXT.W    | zext.h rd, rs1        | all regs x8-x15, rd=rs1            | Zba
@@ -458,9 +458,6 @@ zext.h a5, a5;  # a5 = zero_ext(a5[15:0])
 sext.b a5, a5;  # a5 = sign_ext(a5[7:0])
 sext.h a5, a5;  # a5 = sign_ext(a5[15:0])
 
-not a5, a5      # a5 = ~a5 bitwise inversion
-neg a5, a5      # a5 = -a5 two's complement inversion
-
 mul a5, a5, a6; # a5 = a5 * a6
 
 //RV64/RV128 only
@@ -471,7 +468,62 @@ sext.w a5, a5;  # a5 = sign_ext(a5[31:0])
 
 === C.SEXT.W
 
-`C.SEXT.W` is added as a pseudo-instruction for `C.ADDIW rd, 0`
+`C.SEXT.W` is added as a pseudo-instruction for `C.ADDIW rd, 0`.
+
+== `Zcea` definition
+
+`Zcea` includes all of the `Zcee` instructions above.
+
+[#c_not_c_neg]
+=== C.NOT, C.NEG
+
+These instructions have no conflicts with other extensions, they use previously reserved encodings.
+
+These instructions are 16-bit versions of existing 32-bit instructions, from the `I/E`-extension.
+
+[#monadic-16encodings]
+.monadic simple instructions 16-bit encodings
+[width="100%",options=header]
+|=============================================================================================
+| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
+17+|monadic with single source/dest, room for 3 more encodings
+3+|  100     3+| 000 3+| rd'      2+| 00  3+| 110     2+| 00  | C.NEG
+3+|  100     3+| 000 3+| rd'      2+| 00  3+| 111     2+| 00  | C.NOT
+|=============================================================================================
+
+[#monsemantics]
+.simple instruction semantics
+[width="100%",options=header]
+|=======================================================================
+|instruction    | definition
+| C.NEG         | rd' = -rd' / rd' = 0 - rd'
+| C.NOT         | rd' = ~rd' / rd' = rd' XOR -1
+|=======================================================================
+
+[NOTE]
+
+  The expansion of `c.neg` puts `rd` onto `rs2`, unlike the other expansions which put `rd` onto `rs1`, and so requires additional muxing during the expansion
+
+[#mon-32bit]
+.simple instruction 32-bit equivalent instructions/pseudo-instructions
+[width="100%",options=header]
+|======================================================================================================
+|instruction | example assembler syntax | requirements for 16-bit encoding   | 32-bit extension
+|C.NEG       | neg    rd, rs1        | all regs x8-x15, rd=rs1            | I or E
+|C.NOT       | not    rd, rs1        | all regs x8-x15, rd=rs1            | I or E
+|======================================================================================================
+
+[NOTE]
+
+  Other assembler syntaxes are possible such as including the c. prefix and only including one operand to cover rs1 and rd
+
+Assembly Examples
+
+[source,sourceCode,text]
+----
+not a5, a5      # a5 = ~a5 bitwise inversion
+neg a5, a5      # a5 = -a5 two's complement inversion
+----
 
 === C.MVA01S07
 
@@ -675,7 +727,7 @@ See <<proposed-16bit-encodingsI-1>> for the encodings.
 
 === B-extension recommended subsets for code-size reduction
 
-The 32-bit encodings for `Zcee` (see <<mon-32bit>>) are in `Zba` and `Zbb`.
+The 32-bit encodings for `C.SEXT.*` and `C.ZEXT.*` from `Zcee` (see <<mon-32bit>>) are in `Zba` and `Zbb`.
 
 It is recommended to implement both `Zba` and `Zbb` for code-size reduction, but not required by `Zce`. They contain useful instructions for example:
 
