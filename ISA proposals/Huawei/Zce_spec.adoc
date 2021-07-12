@@ -36,7 +36,7 @@ This document describes the `Zce` extension to reduce code-size.
 |         | bug fix: C.TBLJ and C.TBLJALM were reserved in the encoding table and example usage
 |         | add compiler switches for the prototype compiler
 | 0.40    | *Stable version for toolchain/simulator prototyping*
-|         | Split C.TBLJAL into C.TBLJ, C,TBLJAL, C.TBLJALM. The encoding is the same, the link register is chosen based on the table index.
+|         | Split C.TBLJAL into C.TBLJ, C.TBLJAL, C.TBLJALM. The encoding is the same, the link register is chosen based on the table index.
 | 0.34    | Update encodings as requested by John Hauser for 16-bit encodings 
 |         | Update C.TBLJAL encoding
 |         | Change C.PUSH etc encodings, and adjust register lists and spimm ranges. No change to 32-bit encodings.
