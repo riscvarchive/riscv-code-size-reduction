@@ -995,11 +995,11 @@ class elf:
                 continue
 
             # Search the instruction to find the best correcsponding set that fits all required registers! 
-            (current_set,Found,Waste) = Searchset(inst)
+            (current_set,Found,Wasted_moves) = Searchset(inst)
             # If we didnt find corresponding a set that fits all (c.pop, then remove c. and try again if both is enabled)
             if (not(Found) and "c." in inst):
                 if both_encodings:
-                    (current_set,Found,Waste)= Searchset(inst[2:])
+                    (current_set,Found,Wasted_moves)= Searchset(inst[2:])
                     self.dprint("Converted c.pop to pop for register out of range ! ")
                     assert(Found)
                     inst = inst[2:]
