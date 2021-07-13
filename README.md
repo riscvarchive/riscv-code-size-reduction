@@ -3,13 +3,21 @@ Welcome to the RISC-V Code Size Reduction Group
 
 _If you can't measure it you can't improve it_
 
-This is the current proposal for reducing code size:
+This is the current proopsal for Zcee:
+
+- [Zcee ISA proposal](https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zcee.pdf)
+
+This is the current proposal for reducing code size, including Zcee:
 
 - [Zce ISA proposal](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc)
 
 For details of analysing `Zce` against your ELF file look here
 
 - [Analysis script](https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks)
+
+This is the current benchmark results from the analysis script:
+
+- [Benchmark results](https://docs.google.com/spreadsheets/d/1UYll7HGR_QLGTsHcjGoNL4EodM5BNO41hXdxVAFaxFs/edit#gid=1281210325)
 
 This will be the home for the all of the code size reduction proposals, analysis, results etc.
 
