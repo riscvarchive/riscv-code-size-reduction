@@ -32,8 +32,6 @@ c.mul encoding::
 ],config:{bits:16}}
 ....
 
-Benchmark results are in https://docs.google.com/spreadsheets/d/1UYll7HGR_QLGTsHcjGoNL4EodM5BNO41hXdxVAFaxFs/edit#gid=1281210325[this spreadsheet].
-
 [NOTE]
 
   `c.sext.w` will be a pseudo-instruction for `c.addiw rd, 0` (RV64/RV128)
