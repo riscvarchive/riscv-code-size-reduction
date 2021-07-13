@@ -1,4 +1,4 @@
-==== Zcee
+==== Zcee 1.0.0-rc
 
 Zcee is the first subset of the code-size reduction extension Zce to be proposed for public review. The instructions are all very simple and are 16-bit encodings of existing instructions, either from the I/E ISA or from Zbb.
 
