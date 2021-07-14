@@ -1,5 +1,8 @@
 ==== Zcee 1.0.0-rc
 
+This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
+https://riscv.org/spec-state
+
 Zcee is the first subset of the code-size reduction extension Zce to be proposed for public review. The instructions are all very simple and are 16-bit encodings of existing instructions, either from the I/E ISA or from Zbb.
 
 All proposed encodings are currently reserved for all architectures, and have no conflicts with any existing extensions.
