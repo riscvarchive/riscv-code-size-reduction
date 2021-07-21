@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.9
-Version 0.41.9
+= RISC-V Zce code-size reduction extension proposal v0.41.10
+Version 0.41.10
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -20,6 +20,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.10 | Change definition of C.TBLJ* exceptions
 | 0.41.9  | Update Zcee definition to include C.MUL
 | 0.41.8  | fix table jump pseudo-code to show that two memory exceptions are possible during execution
 | 0.41.7  | fix c.push assembler syntax so <areg_list> must always be included, even if null
@@ -1204,12 +1205,28 @@ xTBLJALVEC.base+256(index 64) = #  e08433 <vsnprintf>         # called with C.TB
 
 ==== Exceptions for jump table mode
 
-Two instruction memory accesses are required, and either can cause a fault such as a page fault. The first memory access is to the jump table, 
-and the second is from dereferencing the jump table entry and fetching the target address.
+Two instruction memory accesses are required. 
 
-A fault from accessing the target address can only be taken if the read from the jump table completed successfully.
+- The first memory access is to the jump table.
+- The second memory access is from dereferencing the jump table entry and fetching the address of the destination function.
 
-In both cases, `MEPC` is set to the PC of the `C.TBLJ*` instruction and `MTVAL` is set to the address which caused the fault. 
+A fault from accessing the destination function address can only be taken if the read from the jump table completed successfully.
+
+The address of the table jump entry is considered to be an instruction address, and so is checked against all possible sources of address faults such as page faults and instruction address breakpoints. When a fault occurs on the jump table address, the saved PC is the PC of the `C.TBLJ*` instruction, which is stored in `MEPC` or `DPC` as required.
+
+_Example 1: the jump table entry itself caused a fault_
+
+- `MEPC`  = the PC of the `C.TBLJ*` instruction
+- `MTVAL` = the address of the jump table entry
+
+_Example 2: the destination function caused a fault_
+
+- `MEPC`  = the PC of the destination function
+- `MTVAL` = the PC of the destination function
+
+==== Single stepping
+
+When single stepping across a `C.TBLJ*` instruction, execution stops before the `C.TBLJ*`, and then stops before the first instruction of the destination function. The fetch from the jump table only becomes visible if it causes a fault, as shown above.
 
 ==== Context Switching for jump table mode
 
