@@ -4,6 +4,7 @@ __license__ = "BSD 2-Clause"
 __version__ = "0.4.0"
 
 
+
 import sys
 import os
 import subprocess
@@ -20,17 +21,6 @@ from math import ceil
 class elf:
     ''' When this class is initialised, it opens an elf file with objdump, and retrieve the symbol table as well as disassembly. 
     If function list was passed using funcs_name, then we only analyse and retrive the disassembly of the given functions  '''
-    main_dictionary = {}
-    sections = []
-    func = {}
-    aux_func = {}
-    func_bound_dict = {}
-    func_bound_begin = [[],[],[]]
-    other_list = {}
-    aux_dictionary = {}
-    ignored_functions = []
-
-    init = False
 
     def retrieve_function_name (self,pc_decimal):
         ''' 
@@ -42,6 +32,14 @@ class elf:
         for function in self.aux_func:
             if (function == pc_decimal):
                 return self.aux_func[function]
+
+    def retrieve_function_address (self,funcname):
+        ''' 
+        Return the name of the function which starts with a given addresses
+        '''
+        for function in self.func_bound_dict:
+            if (funcname in function):
+                return self.func_bound_dict[function]["start"]
 
     def retrieve_function_limit (self,pc_decimal,mode=0):
         ''' 
@@ -56,6 +54,31 @@ class elf:
             self.dprint("Binary Search failed finding correct candidate for function name at PC",hex(pc_decimal),self.filepath,colour="red")
             return None
 
+    def append(self, addendum):
+        self.func.update(addendum.func)
+        # self.func_bound_dict.update(appendum.func_bound_dict)
+
+        for function in addendum.func_bound_dict:
+            ammended_func_name = ((hex(int(function.split("/")[0],16)+self.endaddress))[2:].zfill(8)+"/"+function.split("/")[1])
+            self.func_bound_dict[ammended_func_name] = {"start":addendum.func_bound_dict[function]["start"]+self.endaddress,"end":addendum.func_bound_dict[function]["end"]+self.endaddress}
+            self.func_bound_begin[0].append(ammended_func_name)
+            self.func_bound_begin[1].append(self.func_bound_dict[ammended_func_name]["start"])
+            self.func_bound_begin[2].append(self.func_bound_dict[ammended_func_name]["end"])
+            # self.func_bound_begin =
+
+        for function in addendum.main_dictionary:
+            ammended_func_name = ((hex(int(function.split("/")[0],16)+self.endaddress))[2:].zfill(8)+"/"+function.split("/")[1])
+            self.main_dictionary[ammended_func_name] = {}
+
+            for pc_decimal in addendum.main_dictionary[function]:
+                self.main_dictionary[ammended_func_name][pc_decimal+self.endaddress] = addendum.main_dictionary[function][pc_decimal]
+
+            for pc_decimal in self.main_dictionary[ammended_func_name]:
+                self.main_dictionary[ammended_func_name][pc_decimal]["PC"] = hex(int(self.main_dictionary[ammended_func_name][pc_decimal]["PC"],16)+self.endaddress)[2:]
+                if ("Target_address" in self.main_dictionary[ammended_func_name][pc_decimal]):
+                    self.main_dictionary[ammended_func_name][pc_decimal]["Target_address"] += self.endaddress
+                
+        self.endaddress = pc_decimal + int(self.main_dictionary[ammended_func_name][pc_decimal]['WoE']/8)
 
 
 
@@ -66,8 +89,8 @@ class elf:
         self.rodata = 0
         self.gp = None
         self.tp = None
+        self.endaddress = 0
         objdump_para = ['riscv32-unknown-elf-objdump', '-t', '-T','-d', filepath]
-
         if section is not None:
             objdump_para.insert(1,"-j")
             objdump_para.insert(2,section)
@@ -84,21 +107,24 @@ class elf:
 
         if stderr is not None:
             print("Objdump is unable to decode the file used")
+            self.init = False
             return
         else:
             self.init = True
 
         shell_response = shellpipe.decode("utf-8")
 
-        self.main_dictionary.clear()
-        self.sections.clear()
-        self.func.clear()
-        self.aux_func.clear()
-        self.func_bound_dict.clear()
-        self.func_bound_begin = [[],[],[]]
-        self.other_list.clear()
-        self.aux_dictionary.clear()
         self.symboltable = True
+        self.main_dictionary = {}
+        self.sections = []
+        self.func = {}
+        self.aux_func = {}
+        self.func_bound_dict = {}
+        self.func_bound_begin = [[],[],[]]
+        self.other_list = {}
+        self.aux_dictionary = {}
+        self.ignored_functions = []
+        
         # Parse the output of objdump and get the functions from the symbol table
         shell_response_list = shell_response.split('\n')
 
@@ -124,6 +150,9 @@ class elf:
                 if (lparameter[5] == ".hidden"  and (len(funcs_name) == 0 or lparameter[6] in funcs_name)):
                     self.func[lparameter[0]+"/"+lparameter[6]] = lparameter[4]
                 elif (len(funcs_name) == 0 or lparameter[5] in funcs_name):
+                    # Hack around LLVM13 not assigning len correctly for msave_restore funcs 
+                    if (lparameter[5].startswith("__riscv") and int(lparameter[4]) == 0) : lparameter[4] = "999"
+                    # Assign the value for bound check 
                     self.func[lparameter[0]+"/"+lparameter[5]] = lparameter[4]
             elif (len(lparameter) > 5 and lparameter[5].startswith("__riscv")):
                 self.aux_func[int(lparameter[0],16)] = lparameter[5]
@@ -306,7 +335,7 @@ class elf:
                             list_size[function] += (self.main_dictionary[function][pc_decimal]['WoE']/8)
                         else:
                             list_size[function] = (self.main_dictionary[function][pc_decimal]['WoE']/8)
-                    elif (elf.main_dictionary[function][pc_decimal]["Instruction"] in req_functions):
+                    elif (self.main_dictionary[function][pc_decimal]["Instruction"] in req_functions):
                         complete_size += self.main_dictionary[function][pc_decimal]['WoE']
                         
                 
@@ -319,13 +348,14 @@ class elf:
         self.rodata = self.rodata + len
 
 
-    def construct_main_dict(self):
+    def construct_main_dict(self,parse_all=False):
         ''' 
         Parse the file disassembly and convert it to a itertable dictionary 
         '''
 
         function = ""
         HOBS_TO_MARK = list()
+        caddress = 0 
         for line in self.disassembly:
             line = line.split()
             if (len(line) < 2):
@@ -343,7 +373,6 @@ class elf:
             pc_decimal = int(pc, 16)
             operands = ""
             inst=""
-
             # If the line contains a new function name, then create a new function entry in the 
             if len(line) > 1 and line[1][-1] == ":":
                 function = line[0]+"/"+line[1][1:-2]
@@ -353,10 +382,10 @@ class elf:
                 self.main_dictionary[function][pc_decimal] = {'PC': pc,'HOB': True}
             # Otherwise, check if its a valid instruction 
             elif line[0][-1] == ":":
-                if function in self.func:              
+                if function in self.func or parse_all:              
 
                     # If no static symbol table, then don't bound check for now !! 
-                    if ( self.symboltable == True and (pc_decimal >  (int(function.split('/')[0],16) + int (self.func[function], 16)))):
+                    if ( parse_all == False and self.symboltable == True and (pc_decimal >  (int(function.split('/')[0],16) + int (self.func[function], 16)))):
                         continue
     
                     if pc_decimal not in self.main_dictionary[function]:
@@ -386,6 +415,8 @@ class elf:
                         self.main_dictionary[function][pc_decimal]['WoE'] = woe
 
                         category = utils.categorise_inst(inst)
+                        caddress = pc_decimal if (pc_decimal > caddress) else caddress
+
                         self.main_dictionary[function][pc_decimal]['Instruction'] = "c."+inst if (woe == 16 and inst[0:2] != "c.") else  inst
                         self.main_dictionary[function][pc_decimal]['Category'] = category
 
@@ -522,8 +553,12 @@ class elf:
             try:
                 self.main_dictionary[target_func][HOB]["HOB"] = True
             except KeyError:
-                if (self.verbosity > 1): print ("HOB at unparsed function", HOB)
+                self.dprint("HOB at unparsed function", HOB,colour="red")
             # TODO return a meaningfull return code !
+
+        #  Assign the end address of this dictionary !
+        funcname = self.retrieve_function_limit(caddress,1)
+        self.endaddress = caddress + int(self.main_dictionary[funcname][caddress]['WoE']/8)
         return True
     
 
@@ -813,10 +848,115 @@ class elf:
 
     def dprint(self,*args,**kargs):
         limit = kargs["level"] if ("level" in kargs) else 1
-        colours =  {"normal":'\033[0m',"yellow":'\033[91m',"red":'\033[93m'}
+        colours =  {"normal":'\033[0m',"yellow":'\033[93m',"red":'\033[91m'}
         msg_colour = kargs["colour"] if ("colour" in kargs) else "normal"
         if(self.verbosity >= limit):
             print(colours[msg_colour],*args,colours["normal"])
+
+
+    def find_epilogue_prologue_lw_sw (self):
+        stack_adj_push = list()
+        stack_adj_pop = list()
+        # Variables depending if compressed version is used or if normal version is used
+        store_inst = "sw" if (self.xlen == 32) else "sd"
+        load_inst = "lw" if (self.xlen == 32) else "ld"
+        inst_match = lambda inst, target_inst : (("c." in inst and inst[2:] == target_inst) or inst == target_inst)
+        Found_stack_adj = False
+        # Scan program for stack adjustments and append!!
+        for function in sorted(self.main_dictionary):
+            # Make sure we are not counting the ones in msr routines ! 
+            if ("__riscv_save" in function or "__riscv_restore" in function):
+                continue
+            for pc_decimal in sorted(self.main_dictionary[function]):
+                current_entry = self.main_dictionary[function][pc_decimal]
+                # If we see a new HOB, then make sure to disable writing to previous entry ! 
+                if ("HOB" in current_entry):
+                    Found_stack_adj = False
+                # Scan instruction to find add negative stack adjustment as indication of begining of PUSH instruction 
+                if ("Instruction" in current_entry and  inst_match(current_entry["Instruction"],"addi") 
+                    and "sp" in current_entry["Source"] and "sp" in current_entry['Destination'] and "-" in current_entry["Immediate"]):
+                    stack_adj_push.append({"Adj":current_entry, "Opt":[], "rcount_val":0,"Instruction":"","Embedded_moves":[]})
+                    Found_stack_adj = True
+                # Find all consecutive stack relative stores and assign them to last seen stack relative addi
+                elif ("Instruction" in current_entry and  inst_match(current_entry["Instruction"],store_inst) and Found_stack_adj
+                    and  current_entry["Source"][1] == "sp" and (utils.Categories_Reg(current_entry["Source"][0]) == "s" or current_entry["Source"][0] == "ra" )):
+                    if (int(current_entry["Immediate"])+int(stack_adj_push[-1]["Adj"]["Immediate"]) < 0):
+                        stack_adj_push[-1]["Opt"].append(current_entry)
+                # NOTE For embedded moves, Tariq says this is not needed as compiler can in theory shuffle registers around to fit them !!
+                #      current_entry['Destination'][0][1:] ==  current_entry["Source"][0][1:]
+                elif ("Instruction" in current_entry and current_entry["Instruction"] in ["mv", "c.mv"]  and Found_stack_adj and len(stack_adj_push[-1]["Opt"])>0
+                    and utils.Categories_Reg(current_entry['Destination'][0]) == "s" and utils.Categories_Reg(current_entry["Source"][0]) == "a"):
+                    stack_adj_push[-1]["Embedded_moves"].append(current_entry)
+
+            Found_stack_adj = False
+            Found_Return = {"Ret":None,"Return_value":None}
+            for pc_decimal in sorted(self.main_dictionary[function],reverse=True):
+                current_entry = self.main_dictionary[function][pc_decimal]
+                if ("Instruction" in current_entry and  inst_match(current_entry["Instruction"],"addi")  and "sp" in current_entry["Source"] 
+                    and "sp" in current_entry['Destination'] and "-" not in current_entry["Immediate"]):
+                    # If we detected ret before and didnt see any control flow discontinuities (new HOBs) add to existing entry, otherwise create new entry
+                    stack_adj_pop.append({"Adj":current_entry, "Opt":[], "rcount_val":0,"Instruction":"","Ret":Found_Return})
+                    Found_Return = {"Ret":None,"Return_value":None}
+                    Found_stack_adj = True
+                elif ("Instruction" in current_entry and Found_stack_adj and  inst_match(current_entry["Instruction"],load_inst)  
+                     and current_entry["Source"][0] == "sp" and (utils.Categories_Reg(current_entry['Destination'][0]) == "s" or current_entry['Destination'][0] == "ra") 
+                     and "Immediate" in stack_adj_pop[-1]["Adj"]):
+                    if  (int(current_entry["Immediate"]) + int(stack_adj_pop[-1]["Adj"]["Immediate"]) > 0):
+                        stack_adj_pop[-1]["Opt"].append(current_entry)
+                elif ("Instruction" in current_entry and inst_match(current_entry["Instruction"],"ret")):
+                    Found_stack_adj = False
+                    Found_Return["Ret"],Found_Return["Return_value"] = current_entry,None
+                elif ("Instruction" in current_entry and  current_entry["Instruction"] in ["li","c.li"] and 
+                        current_entry['Destination'][0] == "a0"):
+                    Found_Return["Return_value"] = current_entry
+                    if (Found_stack_adj == True):
+                        stack_adj_pop[-1]["Ret"]["Return_value"] = current_entry
+                elif ("HOB" in current_entry):
+                    Found_stack_adj = False
+                    Found_Return = {"Ret":None,"Return_value":None}
+                    # stack_adj_pop.append({"Adj":{}, "Opt":[],"Ret":current_entry, "rcount_val":0,"Instruction":""})
+                # If we see a new HOB, then make sure to append new entry FIXME maybe this should be a flag instead of wasting memorey !
+                
+
+        return (stack_adj_push,stack_adj_pop)
+
+
+    def emulate_msr_savings (self,both_encodings=False):
+        m_save_routines = list()
+        m_restore_routines = list()
+        alist =  [set(["ra", "s0","s1","s2"]),set(["ra", "s0","s1","s2","s3","s4","s5","s6"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11"])]
+
+        m_save_routines,m_restore_routines = self.find_epilogue_prologue_lw_sw()
+        rfunction = {0:("__riscv_save_0", " __riscv_restore_0"),
+                     1:("__riscv_save_4", " __riscv_restore_4"),
+                     2:("__riscv_save_10", " __riscv_restore_10"),
+                     3:("__riscv_save_12", " __riscv_restore_12") }
+        # sanity = []
+        for save in m_save_routines:
+            if (save["Opt"] == []) : continue
+            required_set = set([x["Source"][0] for x in save["Opt"]])
+            (current_set,Found,Wasted_stores) = utils.Searchset(required_set,alist)
+            if (Found):
+                self.dprint("MSR Emulation wasted",Wasted_stores, len(Wasted_stores),colour="yellow",level=2)
+                msr_address = self.retrieve_function_address(rfunction[alist.index(current_set)][0])
+                sequence = utils.generate_jump_instructions(msr_address , int(save["Opt"][0]["PC"],16),"t0")
+                save["JUMPSEQ"]= sequence
+
+        for restore in m_restore_routines:
+            if (restore["Opt"] == []) : continue
+            required_set = set([x["Destination"][0] for x in restore["Opt"]])
+            (current_set,Found,Wasted_loads) = utils.Searchset(required_set,alist)
+            self.dprint("MSR Emulation wasted",Wasted_loads, len(Wasted_loads),colour="yellow",level=2)
+            if (Found):
+                msr_address = self.retrieve_function_address(rfunction[alist.index(current_set)][0])
+                sequence = utils.generate_jump_instructions(msr_address , int(restore["Opt"][0]["PC"],16))
+                restore["JUMPSEQ"]= sequence
+            
+        return (m_save_routines,m_restore_routines)
+
+
 
 
     def find_push_pop (self,both_encodings=False):
@@ -824,128 +964,87 @@ class elf:
         stack_adj_pop = list()
         opt_empty = lambda opt: (len(opt["Adj"]) == 0 and len(opt["Opt"]) == 0 and opt["rcount_val"] == 0 )
         inst_match = lambda inst, target_inst : (("c." in inst and inst[2:] == target_inst) or inst == target_inst)
-        # Make sure we are not running pushpop analysis on MSR files as it requires non MSR files ! 
-        assert not("__riscv_save_0" in [x.split("/")[1] for x in self.func])
+        # Make sure we are not running pushpop analysis on MSR files as it requires non MSR files ! TODO create fake MSR ! 
+        assert not("__riscv_save_0" in [x.split("/")[1] for x in self.func]), self.filepath+" is compiled with MSR"
         # Variables depending if compressed version is used or if normal version is used
-        multiplier = (self.xlen/32)
         store_inst = "sw" if (self.xlen == 32) else "sd"
         load_inst = "lw" if (self.xlen == 32) else "ld"
-        maxstackadj = {"c.push":5*16,"c.popret":5*16,"c.pop":1*16,"push":31*16,"pop":31*16,"popret":31*16} 
-        # Scan program for stack adjustments and append!!
-        for function in sorted(self.main_dictionary):
-            for pc_decimal in sorted(self.main_dictionary[function]):
-                current_entry = self.main_dictionary[function][pc_decimal]
-                # If we see a new HOB, then make sure to append new entry
-                if ("HOB" in current_entry):
-                    stack_adj_push.append({"Adj":{}, "Opt":[], "rcount_val":0,"Instruction":"","Embedded_moves":[]})
-                # Scan instruction to find add negative stack adjustment as indication of begining of PUSH instruction 
-                # TODO check max value !
-                if ("Instruction" in current_entry and  inst_match(current_entry["Instruction"],"addi") 
-                    and "sp" in current_entry["Source"] and "sp" in current_entry['Destination'] and "-" in current_entry["Immediate"]):
-                    stack_adj_push.append({"Adj":current_entry, "Opt":[], "rcount_val":0,"Instruction":"","Embedded_moves":[]})
-                # Find all consecutive stack relative stores and assign them to last seen stack relative addi
-                elif ("Instruction" in current_entry and  inst_match(current_entry["Instruction"],store_inst) and len(stack_adj_push)>0 and (not opt_empty(stack_adj_push[-1]))
-                    and  current_entry["Source"][1] == "sp" and (utils.Categories_Reg(current_entry["Source"][0]) == "s" or current_entry["Source"][0] == "ra" )
-                    and (abs(int(current_entry["Immediate"])+int(stack_adj_push[-1]["Adj"]["Immediate"])) < (60*multiplier))):
-                    stack_adj_push[-1]["Opt"].append(current_entry)
-                # NOTE Tariq says this is not needed as compiler can in theory shuffle registers around to fit them !!
-                # and current_entry['Destination'][0][1:] ==  current_entry["Source"][0][1:]
-                elif ("Instruction" in current_entry and current_entry["Instruction"] in ["mv", "c.mv"] and len(stack_adj_push[-1]["Opt"])>0 
-                    and utils.Categories_Reg(current_entry['Destination'][0]) == "s" and utils.Categories_Reg(current_entry["Source"][0]) == "a"):
-                    stack_adj_push[-1]["Embedded_moves"].append(current_entry)
-                
-            for pc_decimal in sorted(self.main_dictionary[function],reverse=True):
-                current_entry = self.main_dictionary[function][pc_decimal]
-                if ("Instruction" in current_entry and  inst_match(current_entry["Instruction"],"addi")  and "sp" in current_entry["Source"] 
-                    and "sp" in current_entry['Destination'] and "-" not in current_entry["Immediate"]):
-                    # If we detected ret before and didnt see any control flow discontinuities (new HOBs) add to existing entry, otherwise create new entry
-                    if ("Ret" in stack_adj_pop[-1]):
-                        stack_adj_pop[-1]["Adj"] = current_entry
-                    else:
-                        stack_adj_pop.append({"Adj":current_entry, "Opt":[], "rcount_val":0,"Instruction":""})
+        maxstackadj = {"c.push":5*16,"c.popret":5*16,"c.pop":1*16,"push":31*16,"pop":31*16,"popret":31*16}
 
-                elif ("Instruction" in current_entry and len(stack_adj_pop) > 0 and (not opt_empty(stack_adj_pop[-1]))
-                 and  inst_match(current_entry["Instruction"],load_inst)  and current_entry["Source"][0] == "sp"
-                 and (utils.Categories_Reg(current_entry['Destination'][0]) == "s" or current_entry['Destination'][0] == "ra")
-                 and  ("Immediate" in stack_adj_pop[-1]["Adj"] and ( abs(int(current_entry["Immediate"]) - int(stack_adj_pop[-1]["Adj"]["Immediate"]) ) < (60*multiplier)))):
-                        stack_adj_pop[-1]["Opt"].append(current_entry) 
-                elif ("Instruction" in current_entry and  inst_match(current_entry["Instruction"],"ret")):
-                    stack_adj_pop.append({"Adj":{}, "Opt":[],"Ret":current_entry, "rcount_val":0,"Instruction":""})
-                elif ("Instruction" in current_entry and  current_entry["Instruction"] in ["li","c.li"] and 
-                        current_entry['Destination'][0] == "a0" and "ret_val" not in current_entry and len(stack_adj_pop)>0):
-                    stack_adj_pop[-1]["ret_val"] = current_entry
-                    # stack_adj_pop.append({"Adj":{}, "Opt":[],"Ret":current_entry, "rcount_val":0,"Instruction":""})
-                # If we see a new HOB, then make sure to append new entry FIXME maybe this should be a flag instead of wasting memorey !
-                elif ("HOB" in current_entry):
-                    stack_adj_pop.append({"Adj":{}, "Opt":[], "rcount_val":0,"Instruction":""})
 
-      
-        stack_adj_push = [adj for adj in stack_adj_push if ("Opt" in adj and len(adj["Opt"]) > 0) ]
-        stack_adj_pop = [adj for adj in stack_adj_pop if ("Opt" in adj and len(adj["Opt"]) > 0) ]
-        # Make sure the lists are sorted, and calculate the suitable rcount value !!
-        # TODO remove this and fix RAW information using max since we use sets 
-        for adj in stack_adj_push:
-            adj["Opt"] = sorted(adj["Opt"],key = lambda instruction : utils.ABI_Reg_Names.index(instruction["Source"][0]) )
-        for adj in stack_adj_pop:
-            adj["Opt"] = sorted(adj["Opt"],key = lambda instruction : utils.ABI_Reg_Names.index(instruction['Destination'][0]) )
+        stack_adj_push,stack_adj_pop = self.find_epilogue_prologue_lw_sw()
 
-        # This dictionary only contains the end range of rlist for each entries
-        # NOTE this is the new encoding, make sure we actually have that in the doc ! 
-        rlist = {"c.push": [ ("ra",), ("ra", "s0"),("ra", "s0-s1"),("ra", "s0-s2"),("ra", "s0-s3"),("ra", "s0-s5"),("ra", "s0-s7"),("ra", "s0-s11")],
-                 "push": [("ra",), ("ra", "s0"),("ra", "s0-s1"),("ra", "s0-s2"),("ra", "s0-s3"),("ra", "s0-s4"),("ra", "s0-s5"),("ra", "s0-s6"),
-                    ("ra", "s0-s7"),("ra", "s0-s8"),("ra", "s0-s9"),("ra", "s0-s10"),("ra", "s0-s11")]}
+        # NOTE this is very reptitive dict of sets for all options, its written like this so we dont construct them at runtime hurting eval time  ! 
+        rlist = {"c.push": [set(["ra"]),set(["ra", "s0"]),set(["ra", "s0","s1"]),set(["ra", "s0","s1","s2"]),
+                        set(["ra", "s0","s1","s2","s3"]),set(["ra", "s0","s1","s2","s3","s4","s5"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11"])],
+                "push": [set(["ra"]),set(["ra", "s0"]),set(["ra", "s0","s1"]),set(["ra","s0","s1","s2"]),
+                        set(["ra", "s0","s1","s2","s3"]),set(["ra", "s0","s1","s2","s3","s4"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5"]),set(["ra", "s0","s1","s2","s3","s4","s5","s6"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7","s8"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7","s8","s9"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10"]),
+                        set(["ra", "s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11"])
+                        ]
+                }
         rlist["c.popret"] = rlist["c.push"]
         rlist["c.pop"] = rlist["c.push"]
         rlist["pop"] = rlist["push"]
         rlist["popret"] = rlist["push"]
 
         # List of embedded moves combinations for both compressed and 32 bit encodings !
-        areg_list={ ("ra",):[]
-                    ,("ra", "s0"):("a0",)
-                    ,("ra", "s0-s1"):("a0","a1")
-                    ,("ra", "s0-s2"):("a0","a1","a2")
-                    ,("ra", "s0-s3"):("a0","a1","a2","a3")
-                    ,("ra", "s0-s4"):("a0","a1","a2","a3")  # NOTE Valid only in 32bit encoding ! 
-                    ,("ra", "s0-s5"):("a0","a1","a2","a3") 
-                    ,("ra", "s0-s6"):("a0","a1","a2","a3")  # NOTE Valid only in 32bit encoding ! 
-                    ,("ra", "s0-s7"):("a0","a1","a2","a3") 
-                    ,("ra", "s0-s8"):("a0","a1","a2","a3")  # NOTE Valid only in 32bit encoding ! 
-                    ,("ra", "s0-s9"):("a0","a1","a2","a3")  # NOTE Valid only in 32bit encoding ! 
-                    ,("ra", "s0-s10"):("a0","a1","a2","a3") # NOTE Valid only in 32bit encoding ! 
-                    ,("ra", "s0-s11"):("a0","a1","a2","a3")}             
+        areg_list={  "ra":[],
+                     "s0":("a0",),
+                     "s1":("a0","a1"),
+                     "s2":("a0","a1","a2"),
+                     "s3":("a0","a1","a2","a3"),
+                     "s4":("a0","a1","a2","a3"),  # NOTE Valid only in 32bit encoding ! 
+                     "s5":("a0","a1","a2","a3"), 
+                     "s6":("a0","a1","a2","a3"),  # NOTE Valid only in 32bit encoding ! 
+                     "s7":("a0","a1","a2","a3"), 
+                     "s8":("a0","a1","a2","a3"),  # NOTE Valid only in 32bit encoding ! 
+                     "s9":("a0","a1","a2","a3"),  # NOTE Valid only in 32bit encoding ! 
+                     "s10":("a0","a1","a2","a3"), # NOTE Valid only in 32bit encoding ! 
+                     "s11":("a0","a1","a2","a3")}             
        # List of possible ret_value combinations for 
         ret_value = {"c.popret":("0",),"c.pop":(),"pop":("-1","1","0"),"popret":("-1","1","0")}
         #  Fitting stage (Make sure what we replace matches the encoding)
-        def Searchset(target_instruction): 
-            Set_Found = False
-            Wasted_ops = 0
-            for current_set in rlist[target_instruction]:
-                current_set_extended = set([current_set[0]]) if (len(current_set) == 1) else set([current_set[0]]+utils.unroll_reg(current_set[1]))
-                if (len(required_set - current_set_extended) == 0):
-                    Set_Found = True
-                    Wasted_ops = (current_set_extended - required_set)
-                    break
-            return (current_set,Set_Found,Wasted_ops)
+        
         Unmatch = 0
         for adj in stack_adj_push:   
             # Find the required register space and additional space aligned to 16 bytes
             required_set = set([x["Source"][0] for x in adj["Opt"]])
             register_space = int(self.xlen/8)*len(required_set)
             additional_space = ceil((abs(int(adj["Adj"]["Immediate"])) - register_space)/16)*16
-            # TODO check if we can introduce an addi that makes it fit stack adjustment #
-            # TODO Maybe we need to remove ra enable bit and instead increase return value range ! 
-
-            # Make sure ra is there for compressed version
+            # NOTE This benchmarking code wont measure the performance mode of normal push instructions (which waste less store and load instructions !)
             inst = "push"
             Found = False
-            if "ra" in required_set and additional_space <= maxstackadj["c.push"]:
+            # Check if compressed stack adjustment is enough !
+            if  additional_space <= maxstackadj["c.push"]:
                 inst = "c."+inst
-            elif not (both_encodings and additional_space <= maxstackadj["push"]):
-                inst = "either c.push or push" if both_encodings else "c.push"
-                self.dprint("Found this chain, does not fit",inst,",".join(sorted(required_set,key=lambda x : utils.reg_order(x))),adj["Adj"]["Immediate"],additional_space,register_space)
-                continue
+            # if not, if we have enabled normal push and required stack adj is less than max, then we use push
+            # Otherwise try to introduce ADDI16SP
+            elif not(both_encodings and additional_space <= maxstackadj["push"]):
+                inst = "c.push" if ((additional_space - maxstackadj["c.push"] < 512) or not both_encodings) else "push"
+                additional_stack_adj = additional_space - maxstackadj[inst]
+                # If we are out of range for stack adjustment, then check by how much and introduce ADDI16SP
+                if (additional_stack_adj < 512):
+                    adj["ADDI16SP"] = {"Immediate":-additional_stack_adj,"WoE":16}
+                    self.dprint("Needed ADDI16SP at around",adj["Adj"]["PC"],"for ",additional_stack_adj,colour="red" )
+                else:
+                    inst = "c.push"
+                    additional_stack_adj = additional_space - maxstackadj[inst]
+                    if (additional_stack_adj < 2**11):
+                        adj["ADDI16SP"] = {"Immediate":-additional_stack_adj,"WoE":32,"Instruction":"li"}
+                        self.dprint("Needed ADDI16SP at around",adj["Adj"]["PC"],"for ",additional_stack_adj,colour="red" )
+                    else:
+                        self.dprint("Additional  ADDI16SP Out of range for",inst," at around",adj["Adj"]["PC"],"needed more",additional_stack_adj,colour="red" )
+                        continue
+
             # Search the instruction to find the best correcsponding set ! 
-            (current_set,Found,Wasted_moves) = Searchset(inst)
+            (current_set,Found,Wasted_stores) = utils.Searchset(required_set,rlist[inst])
             assert(Found)
             adj["Instruction"] = inst
             adj['WoE'] = 16 if ("c." in inst) else 32
@@ -953,29 +1052,18 @@ class elf:
             # Check embedded moves and see wastage !  NOTE we dont need to check if there is any because there is no 
             # disable flag for them in compressed instructions ! and len(adj["Embedded_moves"]) > 1
             needed_embedded_moves = set([x["Source"][0] for x in adj["Embedded_moves"]])
-
-            required_embedded_moves = set(areg_list[current_set])
-            wasted_embedded_moves = len(required_embedded_moves-needed_embedded_moves)
-
-            # Make sure we disable embedded moves if we dont gain any code savings from them
-            if (len(required_embedded_moves) == wasted_embedded_moves and inst == "push"):
-                required_embedded_moves = set()
-                wasted_embedded_moves = 0
-                
-            self.dprint("Found embedded moves for",inst,needed_embedded_moves,"Fitting to embedded moves",required_embedded_moves,"for sreg",current_set,
-            "Saved",len(required_embedded_moves)-wasted_embedded_moves,"Wasted",wasted_embedded_moves)
+            required_embedded_moves = set(areg_list[sorted(current_set,key = lambda reg : utils.ABI_Reg_Names.index(reg))[-1]])
+            
             # Modify structure to remove moves that wont fit so we dont remove them ! 
             adj["Embedded_moves"] = [x for x in adj["Embedded_moves"] if x["Source"][0] in required_embedded_moves]
-            # We have a specific enable bit for RA ! thus RA is optional for 32bit encoding 
-            if ("ra" in Wasted_moves and "c." not in inst):
-                Waste = len(Wasted_moves)-1
-            else:
-                Waste = len(Wasted_moves)
-
             # RAW information for tuning encoding
             if(self.verbosity > 1):
                 Found_statements = utils.roll_regs([x["Source"][0] for x in adj["Opt"]])
-                self.dprint("Found",inst,Found_statements,":and fitted:",current_set,":for stack adj",adj["Adj"]["Immediate"], "and wasted",Waste, "needed ",utils.number_of_required_bits(int(additional_space/16),"unsigned"))
+                self.dprint("Found",inst,Found_statements,":and fitted:",current_set,":for stack adj",adj["Adj"]["Immediate"], "and wasted",Wasted_stores, 
+                            "needed ",utils.number_of_required_bits(int(additional_space/16),"unsigned"))
+                wasted_embedded_moves = len(required_embedded_moves-needed_embedded_moves)
+                self.dprint("Found embedded moves for",inst,needed_embedded_moves,"Fitting to embedded moves",required_embedded_moves,"for sreg",current_set,
+                            "Saved",len(required_embedded_moves)-wasted_embedded_moves,"Wasted",wasted_embedded_moves)
             # End of RAW information for tuning encoding
 
         for adj in stack_adj_pop:
@@ -985,55 +1073,47 @@ class elf:
             additional_space = ceil((abs(int(adj["Adj"]["Immediate"])) - register_space)/16)*16
             
             # Decide if we are matching to POP or POPRET
-            inst = "popret" if ("Ret" in adj) else "pop"
-            # Make sure stack adj is within range ! 
-            if "ra" in required_set and additional_space <= maxstackadj[("c."+inst)]:
+            inst = "popret" if (adj["Ret"]["Ret"] != None) else "pop"
+            # For pop/ popret we need to have ra in the list, otherwise we cannot fit it since ra is allways popped !
+            if "ra" not in required_set:
+                continue
+            elif additional_space <= maxstackadj[("c."+inst)]:
                 inst = "c."+inst
             elif not (both_encodings and additional_space <= maxstackadj[inst]):
-                inst = ("Either "+inst+" or c."+inst) if both_encodings else ("c."+inst)
-                self.dprint ("Found this chain does not fit",inst,",".join(sorted(required_set,key=lambda x : utils.reg_order(x))),adj["Adj"]["Immediate"],additional_space,register_space)
-                continue
+                inst = "c."+inst if ((additional_space - maxstackadj["c."+inst] < 496) or not both_encodings) else inst
+                additional_stack_adj = additional_space - maxstackadj[inst]
+                # If we are out of range for stack adjustment, then check by how much and introduce ADDI16SP
+                if (additional_stack_adj < 496):
+                    adj["ADDI16SP"] = {"Immediate":additional_stack_adj,"WoE":16}
+                    self.dprint("Needed ADDI16SP at around",adj["Adj"]["PC"],"for ",additional_stack_adj,colour="red" )
+                else:
+                    if "c." not in inst: inst = "c." + inst
+                    additional_stack_adj = additional_space - maxstackadj[inst]
+                    if (additional_stack_adj < 2**11):
+                        adj["ADDI16SP"] = {"Immediate":-additional_stack_adj,"WoE":32,"Instruction":"li"}
+                        self.dprint("Needed ADDI16SP at around",adj["Adj"]["PC"],"for ",additional_stack_adj,colour="red" )
+                    else:
+                        self.dprint("Additional  ADDI16SP Out of range for",inst," at around",adj["Adj"]["PC"],"needed more",additional_stack_adj,colour="red" )
+                        continue
 
             # Search the instruction to find the best correcsponding set that fits all required registers! 
-            (current_set,Found,Wasted_moves) = Searchset(inst)
-            # If we didnt find corresponding a set that fits all (c.pop, then remove c. and try again if both is enabled)
-            if (not(Found) and "c." in inst):
-                if both_encodings:
-                    (current_set,Found,Wasted_moves)= Searchset(inst[2:])
-                    self.dprint("Converted c.pop to pop for register out of range ! ")
-                    assert(Found)
-                    inst = inst[2:]
-                else:
-                    self.dprint ("Found this chain does not fit",inst,",".join(sorted(required_set,key=lambda x : utils.reg_order(x))),adj["Adj"]["Immediate"],additional_space,register_space)
-                    continue
-
-            
+            (current_set,Found,Waste) = utils.Searchset(required_set,rlist[inst])
+            assert(Found)
+        
             adj["Instruction"] = inst
             adj['WoE'] = 16 if ("c." in inst) else 32
             adj["rcount_val"] = current_set
 
-            # We have a specific enable bit for RA ! 
-            if ("ra" in Wasted_moves and "c." not in inst):
-                Waste = len(Wasted_moves)-1
-            else:
-                Waste = len(Wasted_moves)
-            # Make sure the return value is one of the possible options 
-            if ("ret_val" in adj and not(adj["ret_val"]["Instruction"] in ["c.li","li"] and adj["ret_val"]["Immediate"] in ret_value[inst])):
-                self.dprint("Rejected ",adj["ret_val"],"because its not allowed for", inst)
-                del adj["ret_val"]
+            if ((adj["Ret"]["Ret"] != None and adj["Ret"]["Return_value"] != None ) and not(adj["Ret"]["Return_value"]["Immediate"] in ret_value[inst])):
+                self.dprint("Rejected ",adj["Ret"]["Return_value"]["Immediate"]," as a return value because its not allowed for", inst,colour="yellow")
+                adj["Ret"]["Return_value"] = None
                 
             # RAW information for tuning encoding
-            if(self.verbosity > 0 and Found):
+            if(self.verbosity > 1):
                 Found_statements = utils.roll_regs([x['Destination'][0] for x in adj["Opt"]])
                 self.dprint("Found",inst ,Found_statements,":and fitted:",current_set,":for stack adj",adj["Adj"]["Immediate"], "and wasted", Waste, "needed ",utils.number_of_required_bits(int(additional_space/16),"unsigned"))
             # End of RAW information for tuning encoding
 
-        # RAW information for tuning encoding
-        if (self.verbosity > 1):
-            ret_values =  [x["ret_val"]["Source"][0] for x in stack_adj_pop if "ret_val" in x and x["ret_val"]["Instruction"]=="c.mv" and x["Instruction"] in ["pop","popret","c.pop","c.popret"]]
-            ret_values = ret_values +  [x["ret_val"]["Immediate"] for x in stack_adj_pop if "ret_val" in x and x["ret_val"]["Instruction"]=="c.li" and x["Instruction"] in ["pop","popret","c.pop","c.popret"]]
-            embedded_moves_stats = [y["Debug"] for x in stack_adj_push for y in x["Embedded_moves"]]
-        # End of RAW information for tuning encoding
 
 
         return (stack_adj_push,stack_adj_pop)
@@ -1080,7 +1160,9 @@ class elf:
            Mode 1 is used for a single list of instruction, where they will all be removed and the last one be updated 
            Mode 2 is used for a single instruction modifications where it replaces fields given in passed optimization
            Mode 4 is used for a single list of instruction, where they will all be removed and the first one be updated '''
-        if (mode == 0):
+        if (len(old_instructions) ==0):
+            return
+        elif (mode == 0):
             for chain in old_instructions:
                 function_name = self.retrieve_function_limit(int(chain[0]['PC'],16),1)
                 if (function_name == None):
@@ -1095,9 +1177,10 @@ class elf:
                         assert AssertionError(instruction_tbr['PC'] == instruction['PC'])
                     else:
                         self.main_dictionary[function_name][int(instruction['PC'],16)].update(optimization)
-        elif (mode == 1):
-            for i,instruction in enumerate(old_instructions):
-                function_name = self.retrieve_function_limit(int(instruction['PC'],16),1)
+        elif (mode == 1 or mode == 4):
+            old_instructions_itr = reversed(old_instructions) if (mode==4) else old_instructions
+            function_name = self.retrieve_function_limit(int(old_instructions[0]['PC'],16),1)
+            for i,instruction in enumerate(old_instructions_itr):
                 if (function_name == None):
                     continue
                 if (i < len(old_instructions)-1):
@@ -1111,18 +1194,6 @@ class elf:
                 if (function_name == None):
                     continue  
                 self.main_dictionary[function_name][int(instruction['PC'],16)].update(optimization)
-        elif (mode == 4):
-            # TODO Check if we ever need to get it more than once ?! 
-            function_name = self.retrieve_function_limit(int(old_instructions[0]['PC'],16),1)
-            if (function_name == None):
-                    return
-            for i,instruction in enumerate(old_instructions):
-                if (i == 0):
-                    self.main_dictionary[function_name][int(instruction['PC'],16)].update(optimization)
-                else:
-                    instruction_tbr = self.main_dictionary[function_name].pop(int(instruction['PC'],16))
-                    assert (instruction_tbr['PC'] == instruction['PC'])
-                
 
 
 

@@ -5,6 +5,7 @@ __version__ = "0.4.0"
 
 
 
+
 from collections import Counter
 import re
 
@@ -100,7 +101,6 @@ hexadecimal_ptn = re.compile('[a-f0-9]+$')
 ABI_Reg_Names = ["zero","ra","sp","gp","tp","t0","t1","t2","t3","t4","t5","t6","s0","s1","s2","s3","s4","s5","s6","s7","s8","s9","s10","s11","a0","a1","a2","a3","a4","a5","a6","a7"]
 Reg_Names = {"zero":"x0","ra":"x1","sp":"x2","gp":"x3","tp":"x4","t0":"x5","t1":"x6","t2":"x7","s0":"x8","s1":"x9","a0":"x10","a1":"x11","a2":"x12","a3":"x13","a4":"x14","a5":"x15","a6":"x16","a7":"x17","s2":"x18","s3":"x19","s4":"x20","s5":"x21","s6":"x22","s7":"x23","s8":"x24","s9":"x25","s10":"x26","s11":"x27","t3":"x28","t4":"x29","t5":"x30","t6":"x31"}
 
-reg_order = lambda x : int(Reg_Names[x][1:])
 
 def Categories_Reg(reg):
     Special = ["zero","ra","sp","gp","tp"]
@@ -236,6 +236,16 @@ def fit_in_field(offset,signedness,i):
         bitlen = 1 + s_offset.bit_length() if (signedness == "signed") else s_offset.bit_length()
         return (bitlen <= i)
 
+def Searchset(required_set,search_space): 
+    Set_Found = False
+    Wasted_ops = 0
+    for current_set in search_space:
+        if (len(required_set - current_set) == 0):
+            Set_Found = True
+            Wasted_ops = (current_set - required_set)
+            break
+    return (current_set,Set_Found,Wasted_ops)
+
 def number_of_required_bits(number,signedness):
     ''' Returns the number of bits required  to fit a number, if a number is a negative and we are trying to fit it in 
     an unsigned field, then we return None '''
@@ -245,3 +255,26 @@ def number_of_required_bits(number,signedness):
         s_offset = number + 1 if (number < 0 and signedness == "signed") else number
         bitlen = 1 + s_offset.bit_length() if (signedness == "signed") else s_offset.bit_length()
         return bitlen
+
+def generate_jump_instructions (msr_address,PC,linkregister = None):
+
+    delta = msr_address - PC
+    if (linkregister == None):
+        if(fit_in_field(delta,"signed",12)):
+            return [{"Instruction":"c.j","WoE":16,"Target_address":delta}]
+        elif (fit_in_field(delta,"signed",21)):
+            return [{"Instruction":"j","WoE":32,"Target_address":delta}]
+        else:
+            auipc_address = (msr_address&0xfffff000 >> 12)
+            jal_address = (msr_address&0xfff)
+            return [{"Instruction":"auipc","WoE":32,"Target_address":auipc_address},{"Instruction":"j","WoE":32,"Target_address":jal_address}]
+    else:
+        if (linkregister == "ra" and fit_in_field(delta,"signed",12)):
+            return [{"Instruction":"c.jal","WoE":16,"Target_address":delta}]
+        elif (fit_in_field(delta,"signed",21)):
+            return [{"Instruction":"jal","WoE":32,"Target_address":delta}]
+        else:
+            auipc_address = (msr_address&0xfffff000 >> 12)
+            jal_address = (msr_address&0xfff)
+            return [{"Instruction":"auipc","WoE":32,"Target_address":auipc_address},{"Instruction":"jal","WoE":32,"Target_address":jal_address}]
+    

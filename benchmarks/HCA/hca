@@ -5,6 +5,7 @@ __copyright__ = "Copyright 2021, Huawei R&D Bristol"
 __license__ = "BSD 2-Clause"
 __version__ = "0.4.0"
 
+
 from elf import elf
 import os
 import sys
@@ -34,7 +35,7 @@ parser.add_argument("-j", "--sections", dest='sections',
 # helpfull when we call script from symbolic link ! 
 pwd = os.environ["PWD"]
 
-
+TBLJAL_duplicates = {}
 def main():
 
     args = parser.parse_args()
@@ -71,7 +72,6 @@ def main():
         program.dprint("Processing", elfname.split("/")[-1],colour="yellow")
         program.construct_main_dict()
         original_dict_size = program.calculate_dict_size()
-
         for action in args.actions:
 
             options = action.split(",")[1:]
@@ -81,7 +81,7 @@ def main():
                 if (len(options) == 0):
                     # size = program.calculate_exec_size()
                     current_dict_size = program.calculate_dict_size() + program.rodata
-                    saving_percentage = str("{:.2f}".format((1-(current_dict_size/original_dict_size))*100)) if (original_dict_size > 0) else "0.00"
+                    saving_percentage = str("{:.3f}".format((1-(current_dict_size/original_dict_size))*100)) if (original_dict_size > 0) else "0.000"
 
                     # The following prints executable sections sizes, the dictionary size and the optimized dictionary size 
                     if (args.resultsdir is None):
@@ -99,6 +99,15 @@ def main():
 
             elif (action == "dict"):
                 program.print_dict()
+
+            elif (action == "append"):
+                if (options is None):
+                    print("Append need name of object file passed in its options")
+                    sys.exit(-7)
+                lib = "/".join(__file__.split("/")[:-1])+"/"+options[0]
+                addendum_object = elf(lib,pwd)
+                addendum_object.construct_main_dict(parse_all=True)
+                program.append(addendum_object)
 
             elif (action == "peek"):
                 if (options is None):
@@ -194,27 +203,65 @@ def main():
                     program.apply_optimization(old_instructions=filtered_zext,optimization={"Instruction":action.replace("_","."),'WoE':16},mode=0)
 
             elif (action in ["beqi","bnei","bgei","bgeui","blti","bltui"]):
-                # cmpimm[4:0] == utils.fit_in_field(int(instruction["Immediate"]),"unsigned",5)
-                # Offset range is same as normal SB class instructions, thus we don't need to check for it
                 load_immediate = program.find_source_dependencies(mode=0,target_inst=[action[:-1]],woe_insensitive=True)
                 branch_loads = utils.filter_instruction_chains(load_immediate,["li"],woe_insensitive=True,additional_condition= (lambda instruction: utils.fit_in_field(int(instruction["Immediate"]),"unsigned",5)))
                 program.apply_optimization(old_instructions=branch_loads,optimization={"Instruction":action,'WoE':32},mode=0)
+
+                # Immediate Length evaluation
+                # immediates_bits = [utils.number_of_required_bits(int(load[0]["Immediate"]),"unsigned") for load in branch_loads]
+                # immediates = [int(load[0]["Immediate"]) for load in branch_loads]
+                # action_responses.append(Counter(immediates))
+                # End of Immediate Len Evaluation ! 
             elif (action == "pushpop"):
                 compressed = True if (len(options) > 0) else False 
                 (push,pop) = program.find_push_pop(compressed)
                 for adj in push:
                     if(adj["rcount_val"] != 0):
-                        program.apply_optimization([adj["Adj"]]+adj["Opt"]+adj["Embedded_moves"], {
-                                                   "Instruction": adj["Instruction"], 'WoE': adj['WoE'], "Source": adj["rcount_val"]}, 1)
+                        if ("ADDI16SP" in adj):
+                            program.apply_optimization([adj["Adj"]], adj["ADDI16SP"], 2)
+                            push_tbr = []
+                        else:
+                            push_tbr = [adj["Adj"]]
+                        push_tbr += adj["Opt"] + adj["Embedded_moves"]
+                        # Update last first one because PUSH saved register should happen first thing in a called register thus mode 4
+                        program.apply_optimization(push_tbr, {
+                                                   "Instruction": adj["Instruction"], 'WoE': adj['WoE'], "Source": adj["rcount_val"]}, 4)
                 for adj in pop:
                     if(adj["rcount_val"] != 0):
-                        pop_tbr = []
-                        pop_tbr += [adj["Adj"]]
+                        if ("ADDI16SP" in adj):
+                            program.apply_optimization([adj["Adj"]], adj["ADDI16SP"], 2)
+                            pop_tbr = []
+                        else:
+                            pop_tbr = [adj["Adj"]]
                         pop_tbr += adj["Opt"]
-                        if ("Ret" in adj): pop_tbr += [adj["Ret"]]
-                        if ("ret_val" in adj): pop_tbr += [adj["ret_val"]]
+                        if (adj["Ret"]["Return_value"] != None ): pop_tbr += [adj["Ret"]["Return_value"]]
+                        if (adj["Ret"]["Ret"] != None ): pop_tbr += [adj["Ret"]["Ret"]]
+                        # One would expect that restoting the saved register is the last thing todo, thus mode 1 
                         program.apply_optimization(pop_tbr, {
                                                     "Instruction": adj["Instruction"], 'WoE': adj['WoE'], 'Destination': adj["rcount_val"]}, 1)
+                        
+            elif (action == "msr"):
+                saves = 0
+                (save,restore) = program.emulate_msr_savings()
+                for adj in save:
+                    if ("JUMPSEQ" not in adj):
+                        continue
+                    else:
+                        saves += 1
+                        # FIXME this wont insert AUIPCs correctly returned by emulate method as in some cases we would need to update three entries while we have only 2 
+                        # If we are saving a single register like GCC does !!!
+                        woe = adj["JUMPSEQ"][0]['WoE'] if (len (adj["JUMPSEQ"]) == 1) else 64
+                        program.apply_optimization([adj['Adj']]+ adj['Opt'], {
+                                                    "Instruction": adj["JUMPSEQ"][0]["Instruction"], 'WoE': woe, "Target_address": adj["JUMPSEQ"][0]["Target_address"]}, 4)
+                        woe_replacment  = (adj['Adj']["WoE"]+ sum([x["WoE"] for x in adj['Opt']]))/8
+                        program.dprint("Replaced", woe_replacment,"by",woe/8,colour="red")
+                for adj in restore:
+                    if ("JUMPSEQ" not in adj): 
+                            continue
+                    else:
+                        woe = adj["JUMPSEQ"][0]['WoE'] if (len (adj["JUMPSEQ"]) == 1) else 64
+                        program.apply_optimization([adj['Adj']]+ adj['Opt'], {
+                                                    "Instruction": adj["JUMPSEQ"][0]["Instruction"], 'WoE': woe, "Target_address": adj["JUMPSEQ"][0]["Target_address"]}, 1)
                         
             # Instruction frequency, used to check the frequency of instruction occurrences therough a given file, or within a given instruction category ! 
             elif (action == "instfreq"):
@@ -303,6 +350,7 @@ def main():
                 table_jump_frequency = change_weights(Counter(table_jump))
 
                 jmp_frequency_selection  = ([jmp[0] for jmp in Counter(table_jump_frequency).most_common(tbljal_boundary[action][1]) if jmp[1] > 0])
+   
                 selected_jalr_jr = list()
                 selected_jal_j = list()
                 for jump in JALR_JR:
@@ -370,6 +418,7 @@ def main():
                 print("Action:",action,"not supported")
 
     # Format and outputs the results from all the previous actions !
+    
     if (args.resultsdir is None):
         fd = sys.stdout
     else:
