@@ -14,7 +14,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 [NOTE]
 
-  This document is in a *stable* state but will certainly change before ratification.
+  This document is in a *stable* state but will certainly change before ratification, as some custom encodings are in use.
 
 == Spec update history
 
