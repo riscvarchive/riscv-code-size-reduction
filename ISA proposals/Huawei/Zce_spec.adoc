@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.11
-Version 0.41.11
+= RISC-V Zce code-size reduction extension proposal v0.41.12
+Version 0.41.12
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -20,6 +20,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.41.12 | Simplify table jump CSRs (https://github.com/riscv/riscv-code-size-reduction/issues/84[github issue]) and enhance the table jump pesudo-code to include debug triggers/haltreq/step
 | 0.41.11 | Change memory order for PUSH/POP (https://github.com/riscv/riscv-code-size-reduction/issues/99[github issue])
 | 0.41.10 | Change definition of C.TBLJ* exceptions
 | 0.41.9  | Update Zcee definition to include C.MUL
@@ -70,7 +71,7 @@ This document describes the `Zce` extension to reduce code-size.
 * `BEQI/BNEI` should have `nzuimm` instead of `uimm`, will fix after prototyping phase
 * `MULI` has a temporary encoding
 * should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
-* `xTBLJALVEC` need addresses to be allocated
+* `TBLJALVEC` need addresses to be allocated
 * EABI spec is not frozen - so it's not clear which formats of PUSH.E etc that I need
 ** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s7, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
 * May need an EABI version of `C.MVA01S07`
@@ -1088,7 +1089,7 @@ Calls to each function are categorised as shown in <<tbljalsavings>>.
 
   `C.JAL` is not included as there's no code-size saving for RV32 and it's not available for RV64
 
-Each function is called by using one of the three link registers. The total saving per function is calculated by looking at all the times it is called, as follows:
+Each function is called by using one of the three link registers. The total saving per function is calculated by counting the number of calls and adding up the total saving from each replacement of the existing sequence with `C.TBLJ*`, as follows:
 [source,sourceCode,text]
 ----
 saving_per_function_c_tblj    = A * 2 + B * 6 - 2*(XLEN-8)
@@ -1100,62 +1101,52 @@ The functions are sorted so that the one with the highest saving is in table ent
 
 [NOTE]
 
-  This algorithm assumes that each function is only called with one link register.
+  This algorithm assumes that each function is only called with one link register. If the same funciton is called with more than one link register, then it must have two entries in the table.
 
 This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. Only caching a few entries will greatly improve the performance.
 
 === CSRs
 
-The following set of CSRs is required to control the jump table. 
+The CSR is required to control the jump table, and it forms part of the current context. The jump table and `TBLJALVEC` must be configured before the first `C.TBLJ*` instruction is executed.
 
 [NOTE]
 
-  The addresses are for custom CSRs, correct CSR addresses need to be specified.
+  The address is for a custom CSR, a correct CSR address need to be specified.
 
-[#xTBLJALVEC-table]
-.`xTBLJALVEC` definition
+[#TBLJALVEC-table]
+.`TBLJALVEC` definition
 [width="100%",options=header]
 |============================================================================================================
-|Address |XLEN-1:6       |5:2   | 1: 0  | CSR        | Permissions | Status
-|  0x7c0 |base[XLEN-1:6] |scale | mode  | MTBLJALVEC | MRW         | Required if jump table mode is implemented
-|  0xbc0 |base[XLEN-1:6] |scale | mode  | STBLJALVEC | MRW         | Required if S-mode is implemented
-|  0x800 |base[XLEN-1:6] |scale | mode  | UTBLJALVEC | MRW         | Optional
+|Address |XLEN-1:6       |5:0   | CSR        | Permissions | Status
+|  0x800 |base[XLEN-1:6] |config| TBLJALVEC  | URW         | Required
 |============================================================================================================
 
-* M-mode always uses `MTBLJALVEC.base`
-* S-mode always uses `STBLJALVEC.base`
-* U-mode uses `UTBLJALVEC.base` if implemented, otherwise `STBLJALVEC.base` if implemented, otherwise `MTBLJALVEC.base`
+`TBLJALVEC.base` is a virtual address, whenever virtual memory is enabled.
 
-`xTBLJALVEC.base` is a virtual address, whenever virtual memory is enabled (i.e. S and U-modes only if implemented and enabled).
+Using `TBLJALVEC.base` in the pseudo code below implicitly assumes that `TBLJALVEC.base[5:0]=0`. This is consistent with the description of `xTVEC` in the Unprivileged ISA manual.
 
-Using `xTBLJALVEC.base` in the pseudo code below implicitly assumes that `xTBLJALVEC.base[5:0]=0`. This is consistent with the description of `xTVEC` in the Unprivileged ISA manual.
+`TBLJALVEC.base` is naturally aligned for all legal values of `XLEN`.
 
-`xTBLJALVEC.base` is naturally aligned for all legal values of `XLEN`.
+The memory pointed to by `TBLJALVEC.base` only requires eXecute permission. Read/Write access is not required once the jump table/vector table has been configured.
 
-The memory pointed to by `xTBLJALVEC.base` only requires eXecute permission. Read/Write access is not required once the jump table/vector table has been configured.
-
-[#xTBLJALVEC-mode-table]
-.`xTBLJALVEC.mode` definition
+[#TBLJALVEC-config-table]
+.`TBLJALVEC.config` definition
 [width="100%",options=header]
 |=============================================================================================
-| Mode | Comment
-| 00   | Jump table mode
-| 01   | *reserved for <<vector-table-mode>>*
-| 10   | *reserved for <<emulation-mode>>*
-| 11   | *reserved*
+| TBLJALVEC.config | Comment
+| 000000 | Jump table mode
+| others | *reserved for future standard use*
 |=============================================================================================
 
-`xTBLJALVEC.mode` is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to attempt to program different modes and read back the values to see which are available. Jump table mode _must_ be implemented.
-
-`xTBLJALVEC.scale` is also WARL, and reads as zero. It is reserved for Vector Table Mode, see <<vector-table-mode>>.
+`TBLJALVEC.config` is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to attempt to program different modes and read back the values to see which are available. Jump table mode _must_ be implemented.
 
 === Jump table mode
 
-In jump table mode the behaviour is to load the target address from `xTBLJALVEC.base` with an offset which is `XLEN/8` times the parameter passed to the instruction.
+In jump table mode the behaviour is to load the target address from `TBLJALVEC.base` with an offset which is `XLEN/8` times the parameter passed to the instruction.
 
 The actual functions are not moved in memory, the jump table lookup is only to give a reference to them using a 16-bit encoding.
 
-Jump table mode is easy to implement in the linker and doesn't affect the compiler as it is only a link time optimisation. 
+Jump table mode is implemented in the linker and doesn't affect the compiler, as it is only a link time optimisation. 
 
 ==== Pseudo-code for jump table mode
 
@@ -1170,28 +1161,73 @@ Jump table mode is easy to implement in the linker and doesn't affect the compil
 # index8 is the field from the encoding, not the index passed to the C.TBLJ* in the assembler
 
 switch(XLEN) {
-  32:  table_address[XLEN-1:0] = xTBLJALVEC.base + index8<<2;
-  64:  table_address[XLEN-1:0] = xTBLJALVEC.base + index8<<3;
-  128: table_address[XLEN-1:0] = xTBLJALVEC.base + index8<<4;
+  32:  table_address[XLEN-1:0] = TBLJALVEC.base + index8<<2;
+  64:  table_address[XLEN-1:0] = TBLJALVEC.base + index8<<3;
+  128: table_address[XLEN-1:0] = TBLJALVEC.base + index8<<4;
 }
 
-if (!can_access_instruction_memory(table_address)) {
-  take_memory_exception(table_address);
+//check for debug mode entry, trigger with timing=0 and action=1, haltreq or step
+if ((debug_trigger(table_address) && MCONTROL.timing==0 && MCONTROL.action==1) || 
+    external_debug_haltreq() || DCSR.step==1) {
+  DPC        = current_PC;
+  DCSR.cause = DCSR.step==1 ? 4 : external_debug_haltreq() ? 3 : 2;
+  enter_debug_mode();
+//check for breakpoint trigger which takes an exception with timing=0
+} else if ((debug_trigger(table_address) && MCONTROL.timing==0) || 
+            !can_access_instruction_memory(table_address)) {
+  MEPC   = current_PC;
+  MTVAL  = table_address;
+  MCAUSE = debug_trigger(table_address) ? BREAKPOINT : INSTRUCTION_ACCESS_FAULT;
+  take_exception();
+} else {
+  //access the jump table
+  switch(XLEN) {
+    32:  LW target_address, InstMemory[table_address][XLEN-1:0];
+    64:  LD target_address, InstMemory[table_address][XLEN-1:0];
+    128: LQ target_address, InstMemory[table_address][XLEN-1:0];
+  }
+  
+  //don't use haltreq or step here, only check the addresses
+  //check for table_address after reading if timing=1
+  if (debug_trigger(table_address) && MCONTROL.timing==1 && MCONTROL.action==1) {
+    DPC        = current_PC;
+    DCSR.cause = 2;
+    enter_debug_mode();
+  } else if (debug_trigger(table_address) && MCONTROL.timing==1) {
+    MEPC       = current_PC;
+    MTVAL      = table_address;
+    MCAUSE     = BREAKPOINT;
+    take_exception();
+  } else if ((debug_trigger(target_address) && MCONTROL.timing==0 && MCONTROL.action==1) {
+    DPC        = target_address;
+    DCSR.cause = 2;
+    enter_debug_mode();
+  } else if (((debug_trigger(target_address) && MCONTROL.timing==0) || 
+               !can_access_instruction_memory(target_address)) {
+    MEPC       = target_address;
+    MTVAL      = target_address;
+    MCAUSE     = debug_trigger(target_address) ? BREAKPOINT : INSTRUCTION_ACCESS_FAULT;
+    take_exception();
+  } else {
+    //jump to the target address
+    switch(opcode) {
+      C.TBLJALM: JALR t0,   target_address[XLEN-1:0]&~0x1;
+      C.TBLJ:    JALR zero, target_address[XLEN-1:0]&~0x1;
+      C.TBLJAL:  JALR ra,   target_address[XLEN-1:0]&~0x1;
+    }
+  }
 }
 
-switch(XLEN) {
-  32:  LW target_address, InstMemory[table_address][XLEN-1:0];
-  64:  LD target_address, InstMemory[table_address][XLEN-1:0];
-  128: LQ target_address, InstMemory[table_address][XLEN-1:0];
-}
-
-if (!can_access_instruction_memory(target_address)) {
-  take_memory_exception(target_address);
-}
-switch(opcode) {
-  C.TBLJALM: JALR t0,   target_address[XLEN-1:0]&~0x1;
-  C.TBLJ:    JALR zero, target_address[XLEN-1:0]&~0x1;
-  C.TBLJAL:  JALR ra,   target_address[XLEN-1:0]&~0x1;
+//check the target_address afterwards if timing=1
+if (((debug_trigger(target_address) && MCONTROL.timing==1 && MCONTROL.action==1)) {
+  DPC        = target_address;
+  DCSR.cause = 2;
+  enter_debug_mode();
+} else if ((debug_trigger(target_address) && MCONTROL.timing==1) {
+  MEPC       = target_address;
+  MTVAL      = target_address;
+  MCAUSE     = BREAKPOINT;
+  take_exception();
 }
 ----
 
@@ -1199,9 +1235,9 @@ For the `vsprintf` example above, the jump table contains the following for `RV3
 
 [source,sourceCode,text]
 ----
-xTBLJALVEC.base+ 32(index  0) = # 100064a <__riscv_save_0>    # called with C.TBLJALM #0 (index8=0  in the encoding)
-xTBLJALVEC.base+  0(index  8) = # 100066c <__riscv_restore_0> # called with C.TBLJ    #0 (index8=8  in the encoding)
-xTBLJALVEC.base+256(index 64) = #  e08433 <vsnprintf>         # called with C.TBLJAL  #0 (index8=64 in the encoding)
+TBLJALVEC.base+ 32(index  0) = # 100064a <__riscv_save_0>    # called with C.TBLJALM #0 (index8=0  in the encoding)
+TBLJALVEC.base+  0(index  8) = # 100066c <__riscv_restore_0> # called with C.TBLJ    #0 (index8=8  in the encoding)
+TBLJALVEC.base+256(index 64) = #  e08433 <vsnprintf>         # called with C.TBLJAL  #0 (index8=64 in the encoding)
 ----
 
 ==== Exceptions for jump table mode
@@ -1231,7 +1267,7 @@ When single stepping across a `C.TBLJ*` instruction, execution stops before the 
 
 ==== Context Switching for jump table mode
 
-The `xTBLJALVEC` CSRs form part of the current context, and so will need to be saved and restored. It is also possible for the jump table to have a single configuration for all contexts, but in general `xTBLJALVEC` is considered part of the context.
+The `TBLJALVEC` CSR forms part of the current context, and so will need to be saved and restored.
 
 ==== Caching for jump table mode
 
@@ -1244,11 +1280,11 @@ Vector table mode is very similar to vectored interrupt handling. The target add
 
 Vector table mode is similar to the mechanism for the interrupt handler vector. The jump is direct to the destination. However the compiler would have to be aware as it will have to try to fit functions into the table, as each entry is a fixed size so it's not so obviously implementable in the toolchain. We may find other reasons for having this mode. TBD.
 
-`xTBLJALVEC.scale` controls the scale. It is a read/write field instead of WARL.
+`TBLJALVEC.scale` controls the scale. It is a read/write field instead of WARL.
 
 [width="40%",options=header]
 |==================================================================
-|`xTBLJALVEC.scale`| `tablescale` 
+|`TBLJALVEC.scale`| `tablescale` 
 | 0                | 8-bytes
 | 1                | 16-bytes
 | 2                | 32-bytes
@@ -1257,7 +1293,7 @@ Vector table mode is similar to the mechanism for the interrupt handler vector. 
 | 10+              | *reserved*
 |==================================================================
 
-Note that `tablescale = 1<<(xTBLJALVEC.scale+3)`
+Note that `tablescale = 1<<(TBLJALVEC.scale+3)`
 
 ==== Pseudo-code for vector table mode
 
@@ -1270,9 +1306,9 @@ Note that `tablescale = 1<<(xTBLJALVEC.scale+3)`
 # Mem is byte indexed
 # n is the immediate operand passed to c.tblj*
 switch(opcode) {
-  C.TBLJ:    JALR zero, InstMemory[xTBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
-  C.TBLJAL:  JALR ra,   InstMemory[xTBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
-  C.TBLJALM: JALR t0,   InstMemory[xTBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
+  C.TBLJ:    JALR zero, InstMemory[TBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
+  C.TBLJAL:  JALR ra,   InstMemory[TBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
+  C.TBLJALM: JALR t0,   InstMemory[TBLJALVEC.base + n*tablescale][XLEN-1:0]&~0x1;
 }
 ----
 
@@ -1281,19 +1317,19 @@ switch(opcode) {
 Because this method doesn't have the jump table - the code is actually placed in the table. If the code is too large to fit then it will have to call a routine outside the table, or use more than one entry which invalidates one or more table entries.
 This avoids an additional redirection to get to the actual code, assuming the whole body of the code actually fits in the table.
 
-Setting `xTBLJALVEC.scale` to specific values does not set a requirement on the alignment of `xTBLJALVEC.base`. For example if `tablescale=4096`, `xTBLJALVEC.base` does _not_ need to be 4096-byte aligned. 
+Setting `TBLJALVEC.scale` to specific values does not set a requirement on the alignment of `TBLJALVEC.base`. For example if `tablescale=4096`, `TBLJALVEC.base` does _not_ need to be 4096-byte aligned. 
 
-If `tablescale` is set to 4096 then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `xTBLJALVEC` must be changed by machine mode only so as the table refers to the system as a whole.
+If `tablescale` is set to 4096 then this allows each entry in the table to be owned by different privilege domain, which can manange its own code. `TBLJALVEC` must be changed by machine mode only so as the table refers to the system as a whole.
 
 In a way this approach is similar to a *flash patch* mechanism, where the code can be patched by replacing an instruction with a `C.TBLJALM` instruction to call an alternative routine to fix a bug, or add functionality. Although this requires write permission on the code area so cannot work on a boot ROM for example, but it can form the basis of such a mechanism.
 
-For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `xTBLJALVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is 136 bytes, but will shrink to 128-bytes or smaller by use of `c.tbljal` so I have allocated 4 entries to it.
+For the `vsprintf` example above `riscv_save_0` / `riscv_restore_0` each take 12 bytes, and `TBLJALVEC.scale=1` (16 bytes per entry) so the actual code is placed in the table. `vsprintf` is 136 bytes, but will shrink to 128-bytes or smaller by use of `c.tbljal` so I have allocated 4 entries to it.
 
 [source,sourceCode,text]
 ----
 
 # index 0 (JAL t0 called by C.TBLJALM #0 (index8=0 in the encoding))
-xTBLJALVEC.base+32  <__riscv_save_0>:
+TBLJALVEC.base+32  <__riscv_save_0>:
  	1141                	addi	sp,sp,-16
  	c04a                	sw	s2,0(sp)
  	c226                	sw	s1,4(sp)
@@ -1302,7 +1338,7 @@ xTBLJALVEC.base+32  <__riscv_save_0>:
  	8282                	jr	t0
 
 #index 8 (JAL zero called by C.TBLJ #0 (index8=8 in the encoding))
-xTBLJALVEC.base+0 <__riscv_restore_0>:
+TBLJALVEC.base+0 <__riscv_restore_0>:
  	4902                	lw	s2,0(sp)
  	4492                	lw	s1,4(sp)
  	4422                	lw	s0,8(sp)
@@ -1311,7 +1347,7 @@ xTBLJALVEC.base+0 <__riscv_restore_0>:
  	8082                	ret
 
 # index 64-67 (JAL ra called by C.TBLJAL #0 (index8=64 in the encoding))
-xTBLJALVEC.base+48: <vsnprintf>
+TBLJALVEC.base+48: <vsnprintf>
   	xxxx                	tbljalm #0 ;# call to <__riscv_save_0>
   ...  up to 128-byte function body ...
   	xxxx                	tblj #0 ;# call to <__riscv_restore_0>
@@ -1339,7 +1375,7 @@ _There are concerns about overwriting the temporary registers so this may be rej
 
 [source,sourceCode,text]
 ----
-t4 = xTBLJALVEC.base;
+t4 = TBLJALVEC.base;
 t5 = n;       #table index
 JALR t4, t4;  # t4 gets PC+2 for c.tbljal, PC+4 for tbljal
 ----
@@ -2830,7 +2866,7 @@ Implementations may choose for the sequences to be uninterruptible, or to be int
 
 Table jump is quite simple architecturally. 
 
-`c.tblj* n;` references memory address `m = InstMemory[xTBLJALVEC + n * XLEN/8]`
+`c.tblj* n;` references memory address `m = InstMemory[TBLJALVEC + n * XLEN/8]`
 
 The core jumps to address `m`, and links to the relevant link register.
 
