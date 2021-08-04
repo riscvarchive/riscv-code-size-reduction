@@ -41,31 +41,6 @@ This document describes the `Zce` extension to reduce code-size.
 |         | bug fix: C.TBLJ and C.TBLJALM were reserved in the encoding table and example usage
 |         | add compiler switches for the prototype compiler
 | 0.40    | *Stable version for toolchain/simulator prototyping*
-|         | Split C.TBLJAL into C.TBLJ, C.TBLJAL, C.TBLJALM. The encoding is the same, the link register is chosen based on the table index.
-| 0.34    | Update encodings as requested by John Hauser for 16-bit encodings 
-|         | Update C.TBLJAL encoding
-|         | Change C.PUSH etc encodings, and adjust register lists and spimm ranges. No change to 32-bit encodings.
-|         | Put BEQI/BNEI in the BRANCH major opcode with funct3=01x, update branch offset range and make comparison immediate unsigned
-|         | Reinstate C.MVA01S07 (will get renamed at some point)
-|         | remove MULIW, ADDIADD*, MULIADD*, change encoding for MULI
-|         | Add C.LB, C.LH
-|         | Remove LWTP/SWTP/LDTP/SDTP
-|         | remove TBLJAL - 0.01% benefit occasionally
-|         | Mark DECBNEZ as "limited value" - we may well remove it in the future
-| 0.33    | s0 as a return value is UNSAFE for pop/popret, as the sequence is not restartable. Only returning constant values 0/1/-1 (only 0 for C.POPRET)
-|         | Simplify PUSH/POP/POPRET to remove ra option (very rare not to include ra)
-|         | Increase PUSH/C.PUSH embedded moves to include a3, and make them consistent with between PUSH and C.PUSH (PUSH has the option not to do any so as not to waste performance).
-|         | John Hauser feedback: Update encodings for C.SB/C.SH/C.LBU/C.LHU/C.DECBNEZ
-|         | *Warning* C.PUSH/C.POP/C.POPRET encodings will change in the next revision
-| 0.32    | Replace DECBGEZ with DECBNEZ as it's better for the compiler
-|         | For C.PUSH/C.POPRET change register list to include s7 instead of s8 as it greatly reduces the number of wasted load/stores (16% for debian, 4% for the other benchmarks) and has no effect on code-size
-|         | Fix POP/POPRET pseudo-code - it was doing "mv a0, s0" _after_ "ld s0,sp(n)" instead of before so the return value would have been wrong
-|         | for C.POPRET change ret_val to only be "mv a0, s0" not "mv a0, 0" as s0 is more commonly used
-|         | For PUSH also allow "mv s3, a3" up to "mv s6, a6", I'd forgotten to allocate 4 encodings
-|         | For C.PUSH increase the embedded moves to include s3 to improve the code-size reduction.
-|         | tighten up the Memory[] used in the semantics to specify that it's XLEN bits wide, and whether it's Instruction or Data memory as the endianness handling may be different (according to Allen Baum)
-| 0.31    | Fix Allen Baum's feedback including removing Zba/Zbb requirement and making them a recommendation only. There's no written policy requiring 32-bit versions of 16-bit encodings as far as I know, and we're not planning to fully benchmark Zba/Zbb for code-size.
-| 0.30    | careful proofreading and updated C.POP encoding for simpler decode
 |===================================================================
 
 == Github issues (may not be a complete list)
@@ -96,37 +71,37 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |===============================================================================
 |Instruction|RV32|RV64|RV128|Extension|Notes
 6+|Zcee subset
-|C.SEXT.B|✓|✓|✓|Zcea/Zcee|
-|C.SEXT.H|✓|✓|✓|Zcea/Zcee|
-|C.SEXT.W| |✓|✓|Zcea/Zcee|pseudo-instruction
-|C.ZEXT.B|✓|✓|✓|Zcea/Zcee|
-|C.ZEXT.H|✓|✓|✓|Zcea/Zcee|
-|C.ZEXT.W| |✓|✓|Zcea/Zcee|
+|C.SEXT.B|y|y|y|Zcea/Zcee|
+|C.SEXT.H|y|y|y|Zcea/Zcee|
+|C.SEXT.W| |y|y|Zcea/Zcee|pseudo-instruction
+|C.ZEXT.B|y|y|y|Zcea/Zcee|
+|C.ZEXT.H|y|y|y|Zcea/Zcee|
+|C.ZEXT.W| |y|y|Zcea/Zcee|
 6+|Require M or Zmmul to be inferred
-|C.MUL|✓|✓|✓|Zcea/Zcee|requires M or Zmmul
-|MULI|✓|✓|✓|Zcea|requires M or Zmmul
+|C.MUL|y|y|y|Zcea/Zcee|requires M or Zmmul
+|MULI|y|y|y|Zcea|requires M or Zmmul
 6+|other 16-bit encodings
-|C.MVA01S07| |✓|✓|Zcea|
-|C.NOT|✓|✓|✓|Zcea|
-|C.NEG|✓|✓|✓|Zcea|
-|C.TBLJ|✓|✓|✓|Zcea|
-|C.TBLJAL|✓|✓|✓|Zcea|
-|C.TBLJALM|✓|✓|✓|Zcea|
-|C.PUSH|✓|✓|✓|Zcea|
-|C.POP|✓|✓|✓|Zcea|
-|C.POPRET|✓|✓|✓|Zcea|
-|C.PUSH.E|✓| | |Zcea|
-|C.POP.E|✓| | |Zcea|
-|C.POPRET.E|✓| | |Zcea|
+|C.MVA01S07| |y|y|Zcea|
+|C.NOT|y|y|y|Zcea|
+|C.NEG|y|y|y|Zcea|
+|C.TBLJ|y|y|y|Zcea|
+|C.TBLJAL|y|y|y|Zcea|
+|C.TBLJALM|y|y|y|Zcea|
+|C.PUSH|y|y|y|Zcea|
+|C.POP|y|y|y|Zcea|
+|C.POPRET|y|y|y|Zcea|
+|C.PUSH.E|y| | |Zcea|
+|C.POP.E|y| | |Zcea|
+|C.POPRET.E|y| | |Zcea|
 6+|other 32-bit encodings
-|PUSH|✓|✓|✓|Zcea|
-|POP|✓|✓|✓|Zcea|
-|POPRET|✓|✓|✓|Zcea|
-|PUSH.E|✓| | |Zcea|
-|POP.E|✓| | |Zcea|
-|POPRET.E|✓| | |Zcea|
-|BEQI|✓|✓|✓|Zcea|
-|BNEI|✓|✓|✓|Zcea|
+|PUSH|y|y|y|Zcea|
+|POP|y|y|y|Zcea|
+|POPRET|y|y|y|Zcea|
+|PUSH.E|y| | |Zcea|
+|POP.E|y| | |Zcea|
+|POPRET.E|y| | |Zcea|
+|BEQI|y|y|y|Zcea|
+|BNEI|y|y|y|Zcea|
 |===============================================================================
 
 [#zceb]
@@ -135,18 +110,18 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |===============================================================================
 |Instruction|RV32|RV64|RV128|Extension|Notes
 6+| 16-bit encodings
-|C.DECBNEZ|✓|✓| |Zceb|incompatible with D
-|C.LBU|✓|✓| |Zceb|incompatible with D
-|C.LHU|✓|✓| |Zceb|incompatible with D
-|C.LB|✓|✓| |Zceb|incompatible with D
-|C.LH|✓|✓| |Zceb|incompatible with D
-|C.SB|✓|✓| |Zceb|incompatible with D
-|C.SH|✓|✓| |Zceb|incompatible with D
+|C.DECBNEZ|y|y| |Zceb|incompatible with D
+|C.LBU|y|y| |Zceb|incompatible with D
+|C.LHU|y|y| |Zceb|incompatible with D
+|C.LB|y|y| |Zceb|incompatible with D
+|C.LH|y|y| |Zceb|incompatible with D
+|C.SB|y|y| |Zceb|incompatible with D
+|C.SH|y|y| |Zceb|incompatible with D
 6+| 32-bit encodings
-|LWGP|✓|✓|✓|Zceb|incompatible with D
-|SWGP|✓|✓|✓|Zceb|incompatible with D
-|LDGP| |✓|✓|Zceb|incompatible with D
-|SDGP| |✓|✓|Zceb|incompatible with D
+|LWGP|y|y|y|Zceb|incompatible with D
+|SWGP|y|y|y|Zceb|incompatible with D
+|LDGP| |y|y|Zceb|incompatible with D
+|SDGP| |y|y|Zceb|incompatible with D
 |===============================================================================
 
 `Zcea/Zceb` are compatible with both the `I` and `E` extensions. 
@@ -164,7 +139,7 @@ For example:
 * `C.FSD`, `C.SQ`, and `{C.LBU, C.SB}` share opcodes, so for different configurations the encodings represent:
 ** `C.FSD` for `RV32CD/RV64CD`
 ** `C.SQ`  for `RV128C`
-** `{C.LBU, C.SB}` for `RV32C_Zceb, RV64C_Zceb， RV32C_Zceb_Zdinx, RV64C_Zceb_Zdinx`
+** `{C.LBU, C.SB}` for `RV32C_Zceb, RV64C_Zceb, RV32C_Zceb_Zdinx, RV64C_Zceb_Zdinx`
 ** illegal encoding for `RV32C, RV64C`, as neither `D` nor `Zce` was specified
 
 The shared encoding column in the tables assigns an arbitrary number to show which encodings are grouped together (I can't find a better way of highlighting groups of cells in the table in adoc format). `Zce` instructions are in *bold*.
@@ -178,45 +153,45 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 [width="100%",options=header]
 |===============================================================================
 |Enc[15:13]|Instruction|shared encoding group|Ext Subset|RV32|RV64|RV128|Extension
-|000       |C.ADDI4SPN| |Zci |✓|✓ |✓  |C
+|000       |C.ADDI4SPN| |Zci |y|y |y  |C
 
-|001       |C.FLD     |1|Zcd |✓|✓ |   |C+D
-|001       |C.LQ      |1|Zcq |  |  |✓  |C
-|001       |*C.LBU*    |1|*Zceb*|✓|✓| |C+*Zceb*
-|001       |*C.LHU*    |1|*Zceb*|✓|✓| |C+*Zceb*
+|001       |C.FLD     |1|Zcd |y|y |   |C+D
+|001       |C.LQ      |1|Zcq |  |  |y  |C
+|001       |*C.LBU*    |1|*Zceb*|y|y| |C+*Zceb*
+|001       |*C.LHU*    |1|*Zceb*|y|y| |C+*Zceb*
 
-|010       |C.LW      | |Zci |✓|✓ |✓  |C
+|010       |C.LW      | |Zci |y|y |y  |C
 
-|011       |C.FLW     |2|Zcf |✓|   |   |C+F
-|011       |C.LD      |2|Zc64/Zc128| |✓|✓|C
+|011       |C.FLW     |2|Zcf |y|   |   |C+F
+|011       |C.LD      |2|Zc64/Zc128| |y|y|C
 
-|100       |*C.POP*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.POPRET*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.PUSH*    | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.POP*     | |*Zcea*|	y|	y|	y|	C+*Zcea*
+|100       |*C.POPRET*  | |*Zcea*|	y|	y|	y|	C+*Zcea*
+|100       |*C.PUSH*    | |*Zcea*|	y|	y|	y|	C+*Zcea*
 
-|100       |*C.POP.E*   | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.POPRET.E*| |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.PUSH.E*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.POP.E*   | |*Zcea*|	y|	y|	y|	C+*Zcea*
+|100       |*C.POPRET.E*| |*Zcea*|	y|	y|	y|	C+*Zcea*
+|100       |*C.PUSH.E*  | |*Zcea*|	y|	y|	y|	C+*Zcea*
 
-|100       |*C.TBLJ*    | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.TBLJAL*  | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.TBLJALM* | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.SEXT.B*  | |*Zcea/Zcee*|	✓|	✓|	✓|	C+*Zcea/Zcee*
-|100       |*C.SEXT.H*  | |*Zcea/Zcee*|	✓|	✓|	✓|	C+*Zcea/Zcee*
-|100       |*C.ZEXT.B*  | |*Zcea/Zcee*|	✓|	✓|	✓|	C+*Zcea/Zcee*
-|100       |*C.ZEXT.H*  | |*Zcea/Zcee*|	✓|	✓|	✓|	C+*Zcea/Zcee*
-|100       |*C.NOT*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
-|100       |*C.NEG*     | |*Zcea*|	✓|	✓|	✓|	C+*Zcea*
+|100       |*C.TBLJ*    | |*Zcea*|	y|	y|	y|	C+*Zcea*
+|100       |*C.TBLJAL*  | |*Zcea*|	y|	y|	y|	C+*Zcea*
+|100       |*C.TBLJALM* | |*Zcea*|	y|	y|	y|	C+*Zcea*
+|100       |*C.SEXT.B*  | |*Zcea/Zcee*|	y|	y|	y|	C+*Zcea/Zcee*
+|100       |*C.SEXT.H*  | |*Zcea/Zcee*|	y|	y|	y|	C+*Zcea/Zcee*
+|100       |*C.ZEXT.B*  | |*Zcea/Zcee*|	y|	y|	y|	C+*Zcea/Zcee*
+|100       |*C.ZEXT.H*  | |*Zcea/Zcee*|	y|	y|	y|	C+*Zcea/Zcee*
+|100       |*C.NOT*     | |*Zcea*|	y|	y|	y|	C+*Zcea*
+|100       |*C.NEG*     | |*Zcea*|	y|	y|	y|	C+*Zcea*
 
-|101       |C.FSD     |3|Zcd|✓|✓| |C+D
-|101       |C.SQ      |3|Zcq| | |✓|D
-|101       |*C.SB*    |3|*Zceb*|✓|✓| |C+*Zceb*
-|101       |*C.SH*    |3|*Zceb*|✓|✓| |C+*Zceb*
+|101       |C.FSD     |3|Zcd|y|y| |C+D
+|101       |C.SQ      |3|Zcq| | |y|D
+|101       |*C.SB*    |3|*Zceb*|y|y| |C+*Zceb*
+|101       |*C.SH*    |3|*Zceb*|y|y| |C+*Zceb*
 
-|110       |C.SW      | |Zci|✓|✓|✓|C
+|110       |C.SW      | |Zci|y|y|y|C
 
-|111       |C.FSW     |4|Zcf|✓| | |C+F
-|111       |C.SD      |4|Zc64/Zc128| |✓|✓|C
+|111       |C.FSW     |4|Zcf|y| | |C+F
+|111       |C.SD      |4|Zc64/Zc128| |y|y|C
 |===============================================================================
 
 [#zce_quad1]
@@ -225,43 +200,43 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |===============================================================================
 |Enc[15:13]|Instruction|shared encoding group|Ext Subset|RV32|RV64|RV128|Extension
 
-|000       |C.NOP	| |Zci	|✓	|✓	|✓	|C
-|000       |C.ADDI	| |Zci	|✓	|✓	|✓	|C
+|000       |C.NOP	| |Zci	|y	|y	|y	|C
+|000       |C.ADDI	| |Zci	|y	|y	|y	|C
 
 
-|001       |C.JAL	        |5|Zc32	        |✓	|	|	|C
-|001       |C.ADDIW (rd=0:RSV)  |5|Zc64/Zc128	|	|✓	|✓	|C
+|001       |C.JAL	        |5|Zc32	        |y	|	|	|C
+|001       |C.ADDIW (rd=0:RSV)  |5|Zc64/Zc128	|	|y	|y	|C
 
-|010       |C.LI (rd=0:HINT) | |Zci	|✓	|✓	|✓	|C
-
-
-|011       |C.ADDI16SP (nzimm=0:RSV)	| | Zci	|✓	|✓	|✓	|C
-|011       |C.LUI (nzimm=0: RSV; rd=0:HINT)	| |Zci	|✓	|✓	|✓	|C
+|010       |C.LI (rd=0:HINT) | |Zci	|y	|y	|y	|C
 
 
-|100       |C.SRLI (RV32:NSE, nzuimm[5]=1)        |6|Zc32/Zc64	|✓	|✓	|	|C
-|100       |C.SRLI64 (RV32:HINT)                  |6|Zc128	|	|	|✓	|C
-|100       |C.SRAI (RV32:NSE, nzuimm[5]=1)        |7|Zc32/Zc64	|✓	|✓	|	|C
-|100       |C.SRAI64 (RV32/64:HINT)               |7|Zc128	|	|	|✓       |C
-|100       |C.ANDI                                | |Zci	|✓	|✓	|✓	|C
-|100       |C.SUB                                 | |Zci	|✓	|✓	|✓	|C
-|100       |C.XOR                                 | |Zci	|✓	|✓	|✓	|C
-|100       |C.OR                                  | |Zci	|✓	|✓	|✓	|C
-|100       |C.AND                                 | |Zci	|✓	|✓	|✓	|C
-|100       |C.SUBW (RV32:RSV)                     | |Zc64/Zc128	|	|✓	|✓	|C
-|100       |C.ADDW (RV32:RSV)                     | |Zc64/Zc128	|	|✓	|✓	|C
-
-|100       |C.MUL                                 | |Zcea/Zcee	|	|✓	|✓	|M+C+*Zcea/Zcee*
-|100       |C.MVA01S07                            | |Zcea	|	|✓	|✓	|C+*Zcea*
+|011       |C.ADDI16SP (nzimm=0:RSV)	| | Zci	|y	|y	|y	|C
+|011       |C.LUI (nzimm=0: RSV; rd=0:HINT)	| |Zci	|y	|y	|y	|C
 
 
-|101       |C.J	       | |Zci	|✓	|✓	|✓	|C
+|100       |C.SRLI (RV32:NSE, nzuimm[5]=1)        |6|Zc32/Zc64	|y	|y	|	|C
+|100       |C.SRLI64 (RV32:HINT)                  |6|Zc128	|	|	|y	|C
+|100       |C.SRAI (RV32:NSE, nzuimm[5]=1)        |7|Zc32/Zc64	|y	|y	|	|C
+|100       |C.SRAI64 (RV32/64:HINT)               |7|Zc128	|	|	|y       |C
+|100       |C.ANDI                                | |Zci	|y	|y	|y	|C
+|100       |C.SUB                                 | |Zci	|y	|y	|y	|C
+|100       |C.XOR                                 | |Zci	|y	|y	|y	|C
+|100       |C.OR                                  | |Zci	|y	|y	|y	|C
+|100       |C.AND                                 | |Zci	|y	|y	|y	|C
+|100       |C.SUBW (RV32:RSV)                     | |Zc64/Zc128	|	|y	|y	|C
+|100       |C.ADDW (RV32:RSV)                     | |Zc64/Zc128	|	|y	|y	|C
+
+|100       |C.MUL                                 | |Zcea/Zcee	|	|y	|y	|M+C+*Zcea/Zcee*
+|100       |C.MVA01S07                            | |Zcea	|	|y	|y	|C+*Zcea*
 
 
-|110       |C.BEQZ	| |Zci	|✓	|✓	|✓	|C
+|101       |C.J	       | |Zci	|y	|y	|y	|C
 
 
-|111       |C.BNEZ	| |Zci	|✓	|✓	|✓	|C
+|110       |C.BEQZ	| |Zci	|y	|y	|y	|C
+
+
+|111       |C.BNEZ	| |Zci	|y	|y	|y	|C
 |===============================================================================
 
 [#zce_quad2]
@@ -270,26 +245,26 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |======================================================================================================
 |Enc[15:13]|Instruction|shared encoding group|Ext Subset|RV32|RV64|RV128|Extension
 
-|000       |C.SLLI (rd=0:HINT; RV32 && nzuimm[5]=1:NSE)| 8|Zc32/Zc64	|✓	|✓	|	|C
-|000       |C.SLLI64 (RV32/64 or rd=0:HINT)	       | 8|Zc128	        |	|	|✓	|C
-|001       |C.FLDSP	                               | 9|Zcd	        |✓	|✓	|	|C+D
-|001       |C.LQSP (rd=0:RSV)	                     | 9|Zc128	        |	|	|✓	|C
-|001       |*C.LB*                                 | 9|N/A 	|✓	|✓	| 	|C+*Zceb*
-|001       |*C.LH*                                 | 9|N/A 	|✓	|✓	| 	|C+*Zceb*
-|010       |C.LWSP (rd=0:RSV)	                     |  |Zci	        |✓	|✓	|✓	|C
-|011       |C.FLWSP	                               |10|Zcf	        |✓	|	|	|C+F
-|011       |C.LDSP (rd=0:HINT)	                   |10|Zc64/Zc128	|	|✓	|✓	|C
-|100       |C.JR     (rd=0:RSV)	                   |  |Zci   	|✓	|✓	|✓	|C
-|100       |C.MV   (rd=0:HINT)	                   |  |Zci   	|✓	|✓	|✓	|C
-|100       |C.EBREAK	                             |  |Zci   	|✓	|✓	|✓	|C
-|100       |C.JALR	                               |  |Zci   	|✓	|✓	|✓	|C
-|100       |C.ADD (rd=0:HINT)	                     |  |Zci   	|✓	|✓	|✓	|C
-|101       |C.FSDSP	                               |11|Zcd	        |✓	|✓	|	|C+D
-|101       |C.SQSP	                               |11|Zc128		|       | 	|✓	|C
-|101       |*C.DECBNEZ*	                           |11|*Zceb*	|✓	|✓	| 	|C+*Zceb*
-|110       |C.SWSP	                               |  |Zci	        |✓	|✓	|✓	|C
-|111       |C.FSWSP	                               |12|Zcf	        |✓	|	|	|C+F
-|111       |C.SDSP	                               |12|Zc128	        |	|✓	|✓	|C
+|000       |C.SLLI (rd=0:HINT; RV32 && nzuimm[5]=1:NSE)| 8|Zc32/Zc64	|y	|y	|	|C
+|000       |C.SLLI64 (RV32/64 or rd=0:HINT)	       | 8|Zc128	        |	|	|y	|C
+|001       |C.FLDSP	                               | 9|Zcd	        |y	|y	|	|C+D
+|001       |C.LQSP (rd=0:RSV)	                     | 9|Zc128	        |	|	|y	|C
+|001       |*C.LB*                                 | 9|N/A 	|y	|y	| 	|C+*Zceb*
+|001       |*C.LH*                                 | 9|N/A 	|y	|y	| 	|C+*Zceb*
+|010       |C.LWSP (rd=0:RSV)	                     |  |Zci	        |y	|y	|y	|C
+|011       |C.FLWSP	                               |10|Zcf	        |y	|	|	|C+F
+|011       |C.LDSP (rd=0:HINT)	                   |10|Zc64/Zc128	|	|y	|y	|C
+|100       |C.JR     (rd=0:RSV)	                   |  |Zci   	|y	|y	|y	|C
+|100       |C.MV   (rd=0:HINT)	                   |  |Zci   	|y	|y	|y	|C
+|100       |C.EBREAK	                             |  |Zci   	|y	|y	|y	|C
+|100       |C.JALR	                               |  |Zci   	|y	|y	|y	|C
+|100       |C.ADD (rd=0:HINT)	                     |  |Zci   	|y	|y	|y	|C
+|101       |C.FSDSP	                               |11|Zcd	        |y	|y	|	|C+D
+|101       |C.SQSP	                               |11|Zc128		|       | 	|y	|C
+|101       |*C.DECBNEZ*	                           |11|*Zceb*	|y	|y	| 	|C+*Zceb*
+|110       |C.SWSP	                               |  |Zci	        |y	|y	|y	|C
+|111       |C.FSWSP	                               |12|Zcf	        |y	|	|	|C+F
+|111       |C.SDSP	                               |12|Zc128	        |	|y	|y	|C
 |======================================================================================================
 
 == Allocation of new 16-bit encodings
@@ -327,44 +302,44 @@ All previously reserved 16-bit encodings are in the tables below, showing how ma
 .spare 16-bit encodings for RV32/RV64
 [width="100%",options=header]
 |================================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension
-3+|  100     3+|000        8+|xxxx                            2+| 00    |56/256  | `Zcea` (40 `Zcee`)
-3+|  100     3+|001        8+|xxxx                            2+| 00    |0/256   | *reserved*
-3+|  100     3+|010        8+|xxxx                            2+| 00    |120/256 | `Zcea`
-3+|  100     3+|011        8+|xxxx                            2+| 00    |256/256 | `Zcea`
-3+|  100     3+|1xx        8+|xxxx                            2+| 00    |0/1024  | *reserved*
-3+|  011       | 0 5+|xxxxx             5+|11111              2+| 01    |0/32    | *reserved*
-3+|  100     3+|111  3+|xxx   |1  4+|xxx                      2+| 01    |64/128  | `Zcea` (56 `Zcee`)
-3+|  100     6+|000000                  5+|non-zero           2+| 10    |0/31    | *reserved*
+| 15:13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1:0 |code points| sub-extension
+|  100  3+|000        8+|xxxx                            | 00    |56/256  | `Zcea` (40 `Zcee`)
+|  100  3+|001        8+|xxxx                            | 00    |0/256   | *reserved*
+|  100  3+|010        8+|xxxx                            | 00    |120/256 | `Zcea`
+|  100  3+|011        8+|xxxx                            | 00    |256/256 | `Zcea`
+|  100  3+|1xx        8+|xxxx                            | 00    |0/1024  | *reserved*
+|  011    | 0 5+|xxxxx             5+|11111              | 01    |0/32    | *reserved*
+|  100  3+|111  3+|xxx   |1  4+|xxx                      | 01    |64/128  | `Zcea` (56 `Zcee`)
+|  100  6+|000000                  5+|non-zero           | 10    |0/31    | *reserved*
 |================================================================================================
 
 [#spare encodings RV32]
 .spare 16-bit encodings for RV32 only (mainly out of range shifts)
 [width="100%",options=header]
 |================================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension         
-3+|  100     2+|10  9+|xxx                                      2+| 01  |0/512  | *reserved*
-3+|  100     3+|111  3+|xxx   |0  4+|xxx                        2+| 01  |0/128  | *reserved*
-3+|  000       | 1   5+| non-zero            5+|xxx             2+| 10  |0/992  | *reserved*  
+| 15:13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1:0 |code points| sub-extension
+|  100     2+|10  9+|xxx                                 | 01  |0/512  | *reserved*
+|  100     3+|111  3+|xxx   |0  4+|xxx                   | 01  |0/128  | *reserved*
+|  000       | 1   5+| non-zero            5+|xxx        | 10  |0/992  | *reserved*  
 |================================================================================================
 
 [#spare encodings RV64]
 .spare 16-bit encodings for RV64 only (ADDIW with zero destination)
 [width="100%",options=header]
 |================================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points| sub-extension  
-3+| 001        | x 5+|00000             5+| xxxxx             2+|01     |0/64 | *reserved*
+| 15:13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1:0 |code points| sub-extension
+| 001        | x 5+|00000             5+| xxxxx          |01   |0/64 | *reserved*
 |================================================================================================
 
 [#spare encodings D]
 .spare 16-bit encodings reused from the D-extension
 [width="100%",options=header]
 |================================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |code points|sub-extension  
-3+| 001        11+|xxx                                        2+|00     |2048/2048| `Zceb`
-3+| 101        11+|xxx                                        2+|00     |2048/2048| `Zceb`
-3+| 001        11+|xxx                                        2+|10     |2048/2048| `Zceb`
-3+| 101        11+|xxx                                        2+|10     |2047/2048| `Zceb`
+| 15:13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1:0 |code points| sub-extension
+| 001        11+|xxx                                     |00     |2048/2048| `Zceb`
+| 101        11+|xxx                                     |00     |2048/2048| `Zceb`
+| 001        11+|xxx                                     |10     |2048/2048| `Zceb`
+| 101        11+|xxx                                     |10     |2047/2048| `Zceb`
 |================================================================================================
 
 In total in the existing RVC (16-bit) encoding space:
@@ -389,29 +364,29 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 .monadic simple instructions 16-bit encodings
 [width="100%",options=header]
 |=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|monadic with single source/dest, room for 3 more encodings
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 000     2+| 00  | C.ZEXT.B
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 001     2+| 00  | C.SEXT.B
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 010     2+| 00  | C.ZEXT.H
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 011     2+| 00  | C.SEXT.H
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 100     2+| 00  | C.ZEXT.W
-3+|  100     3+| 000 3+| xxx      2+| 00  3+| 101     2+| 00  | *reserved*
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 110     2+| 00  | C.NEG (see Zcea)
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 111     2+| 00  | C.NOT (see Zcea)
-3+|  100     3+| 000 3+| xxx      2+| 01  3+| xxx     2+| 00  | *reserved*
-3+|  100     3+| 000 3+| xxx      2+| 1x  3+| xxx     2+| 00  | *reserved*
+| 15:13 | 12:10 | 9:7  | 6:5  | 4:2 | 1:0 |instruction         
+7+|monadic with single source/dest, room for 3 more encodings
+| 100   | 000   | rd'   | 00  | 000 | 00  | C.ZEXT.B
+| 100   | 000   | rd'   | 00  | 001 | 00  | C.SEXT.B
+| 100   | 000   | rd'   | 00  | 010 | 00  | C.ZEXT.H
+| 100   | 000   | rd'   | 00  | 011 | 00  | C.SEXT.H
+| 100   | 000   | rd'   | 00  | 100 | 00  | C.ZEXT.W
+| 100   | 000   | xxx   | 00  | 101 | 00  | *reserved*
+| 100   | 000   | rd'   | 00  | 110 | 00  | C.NEG (see Zcea)
+| 100   | 000   | rd'   | 00  | 111 | 00  | C.NOT (see Zcea)
+| 100   | 000   | xxx   | 01  | xxx | 00  | *reserved*
+| 100   | 000   | xxx   | 1x  | xxx | 00  | *reserved*
 |=============================================================================================
 
 [#dyadic-16encodings]
 .dyadic simple instructions 16-bit encodings
 [width="100%",options=header]
 |=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100     3+| 111        3+| rd'     2+| 10    3+| rs2'    2+| 01    | C.MUL
+| 15:13 | 12:10 | 9:7  | 6:5  | 4:2 | 1:0 |instruction         
+|  100  | 111   | rd'  | 10   | rs2'| 01  | C.MUL
 |=============================================================================================
 
-[#monsemantics]
+[#monsemantics_zcee]
 .simple instruction semantics
 [width="100%",options=header]
 |=======================================================================
@@ -429,7 +404,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 
   The expansion of `c.neg` puts `rd` onto `rs2`, unlike the other expansions which put `rd` onto `rs1`, and so requires additional muxing during the expansion
 
-[#mon-32bit]
+[#mon-32bit-zcee]
 .simple instruction 32-bit equivalent instructions/pseudo-instructions
 [width="100%",options=header]
 |======================================================================================================
@@ -449,7 +424,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 
 [NOTE]
 
-  Implementing `Zba` and `Zbb` to get the 32-bit encodings from <<mon-32bit>> is not required by this specification.
+  Implementing `Zba` and `Zbb` to get the 32-bit encodings from <<mon-32bit-zcee>> is not required by this specification.
 
 Assembly Examples
 
@@ -483,17 +458,16 @@ These instructions have no conflicts with other extensions, they use previously 
 
 These instructions are 16-bit versions of existing 32-bit instructions, from the `I/E`-extension.
 
-[#monadic-16encodings]
+[#monadic-16encodings_not_neg]
 .monadic simple instructions 16-bit encodings
 [width="100%",options=header]
 |=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-17+|monadic with single source/dest, room for 3 more encodings
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 110     2+| 00  | C.NEG
-3+|  100     3+| 000 3+| rd'      2+| 00  3+| 111     2+| 00  | C.NOT
+| 15:13 | 12:10 | 9:7  | 6:5  | 4:2 | 1:0 |instruction         
+|  100  | 000   | rd'  | 00   | 110 | 00  | C.NEG
+|  100  | 000   | rd'  | 00   | 111 | 00  | C.NOT
 |=============================================================================================
 
-[#monsemantics]
+[#monsemantics_not_neg]
 .simple instruction semantics
 [width="100%",options=header]
 |=======================================================================
@@ -506,7 +480,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from the
 
   The expansion of `c.neg` puts `rd` onto `rs2`, unlike the other expansions which put `rd` onto `rs1`, and so requires additional muxing during the expansion
 
-[#mon-32bit]
+[#mon-32bit_not_neg]
 .simple instruction 32-bit equivalent instructions/pseudo-instructions
 [width="100%",options=header]
 |======================================================================================================
@@ -597,8 +571,8 @@ The EABI mapping may not be so simple, TBD.
 .`C.MVA01S07` 16-bit encodings
 [width="100%",options=header]
 |=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100     3+| 111        3+| sreg1   2+| 11    3+| sreg2   2+| 01    | C.MVA01S07
+| 15:13 | 12:10 | 9:7   | 6:5 | 4:2   | 1:0   |instruction         
+|  100  | 111   | sreg1 | 11  | sreg2 | 01    | C.MVA01S07
 |=============================================================================================
 
 [#mva_semantics]
@@ -646,7 +620,7 @@ c.mva01s07 s0, s0; # mv a0, s0; mv a1, s0
 |MULI        | mul rd, rs1, imm           
 |=====================================
 
-[#arithmetic_semantics]
+[#muli_semantics]
 .`MULI` semantics
 [width="100%",options=header]
 |=======================================================================
@@ -729,7 +703,7 @@ See <<proposed-16bit-encodingsI-1>> for the encodings.
 
 === B-extension recommended subsets for code-size reduction
 
-The 32-bit encodings for `C.SEXT.*` and `C.ZEXT.*` from `Zcee` (see <<mon-32bit>>) are in `Zba` and `Zbb`.
+The 32-bit encodings for `C.SEXT.*` and `C.ZEXT.*` from `Zcee` (see <<mon-32bit_not_neg>>) are in `Zba` and `Zbb`.
 
 It is recommended to implement both `Zba` and `Zbb` for code-size reduction, but not required by `Zce`. They contain useful instructions for example:
 
@@ -781,9 +755,9 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 .proposed 16-bit encodings for dec-and-branch
 [width="100%",options=header]
 |=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  101          3+|nzuimm[6:4] 3+| rd' 3+|nzuimm[3:1] 2+|scale 2+| 10 | C.DECBNEZ
-3+|  101          3+|000         3+| rd'  3+|000        2+|scale 2+| 10 | *reserved*
+| 15:13 | 12:10      | 9:7 | 6:4        | 3:2  | 1:0 |instruction         
+|  101  |nzuimm[6:4] | rd' |nzuimm[3:1] |scale | 10 | C.DECBNEZ
+|  101  |000         | rd' |000         |scale | 10 | *reserved*
 |=============================================================================================
 
 [#deccmpbrsemantics]
@@ -911,13 +885,13 @@ These instructions conflict with the `D`-extension. If `D` is implemented, these
 .proposed 16-bit encodings for load/store byte/half
 [width="100%",options=header]
 |=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  001       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rd'   2+| 00 | C.LBU
-3+|  001       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rd'   2+| 00 | C.LHU
-3+|  001       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rd'   2+| 10 | C.LB
-3+|  001       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rd'   2+| 10 | C.LH
-3+|  101       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SB
-3+|  101       |1 2+|uimm[4:3] 3+| rs1' 2+|uimm[2:1] 3+|rs2'  2+| 00 | C.SH
+| 15:13  | 12 | 11:10    | 9:7  | 6:5      |4:2   | 1:0|instruction         
+|  001   |0   |uimm[0,3] | rs1' |uimm[2:1] |rd'   | 00 | C.LBU
+|  001   |1   |uimm[4:3] | rs1' |uimm[2:1] |rd'   | 00 | C.LHU
+|  001   |0   |uimm[0,3] | rs1' |uimm[2:1] |rd'   | 10 | C.LB
+|  001   |1   |uimm[4:3] | rs1' |uimm[2:1] |rd'   | 10 | C.LH
+|  101   |0   |uimm[0,3] | rs1' |uimm[2:1] |rs2'  | 00 | C.SB
+|  101   |1   |uimm[4:3] | rs1' |uimm[2:1] |rs2'  | 00 | C.SH
 |=============================================================================================
 
 [NOTE]
@@ -1038,10 +1012,10 @@ These instructions use a previously reserved encoding.
 .C.TBLJAL 16-bit encoding
 [width="100%",options=header]
 |=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10  | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |instruction         
-3+|  100       3+| 010       8+|index8<8                       2+| 00    | C.TBLJALM
-3+|  100       3+| 010       8+|index8>=8 && index8<64         2+| 00    | C.TBLJ
-3+|  100       3+| 010       8+|index8>=64                     2+| 00    | C.TBLJAL
+| 15:13 | 12:10  | 9:2                   | 1:0   |instruction         
+|  100  | 010    |index8<8               | 00    | C.TBLJALM
+|  100  | 010    |index8>=8 && index8<64 | 00    | C.TBLJ
+|  100  | 010    |index8>=64             | 00    | C.TBLJAL
 |=============================================================================================
 
 [#tbljal16bitassemblersyntax]
@@ -1494,9 +1468,9 @@ The `.E` forms are not available on RV64I or RV128I. Any encodings with a `.E` s
 [width="100%",options=header]
 |=========================================================================================================================
 | Base architecture | UABI | EABI | Notes
-| RV32I             | ✓    | ✓   | Full support of both ABIs required
-| RV32E             |       | ✓   | Binary can execute on RV32I
-| RV64I/RV128I      | ✓    |      | No EABI support on RV64I/RV128I
+| RV32I             | y    | y   | Full support of both ABIs required
+| RV32E             |       | y   | Binary can execute on RV32I
+| RV64I/RV128I      | y    |      | No EABI support on RV64I/RV128I
 |=========================================================================================================================
 
 Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for RV32E may be executed on an RV32I core. 
@@ -1898,25 +1872,25 @@ if (opcode == "POPRET"   or
 [width="100%",options=header]
 |=========================================================================================================================
 |instruction                       | RV32I | RV32E | RV64I/RV128I
-|POP          {ra}                 | ✓ | ✓ | ✓
-|POP          {[ra,] s0}           | ✓ | ✓ | ✓
-|POP          {[ra,] s0-s1}        | ✓ | ✓ | ✓
-|POP          {[ra,] s0-s2}        | ✓ |   | ✓
-|POP.E        {[ra,] s0-s2}        | ✓ | ✓ | 
-|POPRET       {ra}                 | ✓ | ✓ | ✓ 
-|POPRET       {[ra,] s0}           | ✓ | ✓ | ✓
-|POPRET       {[ra,] s0-s1}        | ✓ | ✓ | ✓
-|POPRET       {[ra,] s0- _sN_}     | ✓ |   | ✓
-|POPRET.E     {[ra,] s0-s2}        | ✓ | ✓ | 
-|POPRET.E     {[ra,] s3, s0-s2}    | ✓ | ✓ | 
-|POPRET.E     {[ra,] s3-s4, s0-s2} | ✓ | ✓ | 
-|PUSH         {ra}                 | ✓ | ✓ | ✓ 
-|PUSH         {[ra,] s0}           | ✓ | ✓ | ✓ 
-|PUSH         {[ra,] s0-s1}        | ✓ | ✓ | ✓ 
-|PUSH         {[ra,] s0- _sN_}     | ✓ |   | ✓ 
-|PUSH.E       {[ra,] s0-s2}        | ✓ | ✓ |   
-|PUSH.E       {[ra,] s3, s0-s2}    | ✓ | ✓ |  
-|PUSH.E       {[ra,] s3-s4, s0-s2} | ✓ | ✓ |   
+|POP          {ra}                 | y | y | y
+|POP          {[ra,] s0}           | y | y | y
+|POP          {[ra,] s0-s1}        | y | y | y
+|POP          {[ra,] s0-s2}        | y |   | y
+|POP.E        {[ra,] s0-s2}        | y | y | 
+|POPRET       {ra}                 | y | y | y 
+|POPRET       {[ra,] s0}           | y | y | y
+|POPRET       {[ra,] s0-s1}        | y | y | y
+|POPRET       {[ra,] s0- _sN_}     | y |   | y
+|POPRET.E     {[ra,] s0-s2}        | y | y | 
+|POPRET.E     {[ra,] s3, s0-s2}    | y | y | 
+|POPRET.E     {[ra,] s3-s4, s0-s2} | y | y | 
+|PUSH         {ra}                 | y | y | y 
+|PUSH         {[ra,] s0}           | y | y | y 
+|PUSH         {[ra,] s0-s1}        | y | y | y 
+|PUSH         {[ra,] s0- _sN_}     | y |   | y 
+|PUSH.E       {[ra,] s0-s2}        | y | y |   
+|PUSH.E       {[ra,] s3, s0-s2}    | y | y |  
+|PUSH.E       {[ra,] s3-s4, s0-s2} | y | y |   
 |=========================================================================================================================
 
 [NOTE]
@@ -1925,7 +1899,7 @@ if (opcode == "POPRET"   or
 
 [NOTE]
 
-  If there is no ✓ in a cell then the encoding is *reserved* on that architecture
+  If there is no y in a cell then the encoding is *reserved* on that architecture
 
 All the `.E` instructions and pseudo-instructions are valid for `RV32I/RV32E`, none are valid for `RV64I/RV128I`
 
@@ -2008,25 +1982,25 @@ These instructions have no conflicts with other extensions, they use previously 
 [width="100%",options=header]
 |=========================================================================================================================
 |instruction                      | RV32I | RV32E | RV64I/RV128I
-|C.POP        {ra}                | ✓ | ✓ | ✓
-|C.POP        {ra, s0}            | ✓ | ✓ | ✓
-|C.POP        {ra, s0-s1}         | ✓ | ✓ | ✓
-|C.POP        {ra, s0-s2}         | ✓ |   | ✓
-|C.POP.E      {ra, s0-s2}         | ✓ | ✓ | 
-|C.POPRET     {ra}                | ✓ | ✓ | ✓ 
-|C.POPRET     {ra, s0}            | ✓ | ✓ | ✓
-|C.POPRET     {ra, s0-s1}         | ✓ | ✓ | ✓
-|C.POPRET     {ra, s0- _sN_}      | ✓ |    | ✓
-|C.POPRET.E   {ra, s0-s2}         | ✓ | ✓ | 
-|C.POPRET.E   {ra, s3, s0-s2}     | ✓ | ✓ | 
-|C.POPRET.E   {ra, s3-s4, s0-s2}  | ✓ | ✓ | 
-|C.PUSH       {ra}                | ✓ | ✓ | ✓ 
-|C.PUSH       {ra, s0}            | ✓ | ✓ | ✓ 
-|C.PUSH       {ra, s0-s1}         | ✓ | ✓ | ✓ 
-|C.PUSH       {ra, s0- _sN_}      | ✓ |   | ✓ 
-|C.PUSH.E     {ra, s0-s2}         | ✓ | ✓ |   
-|C.PUSH.E     {ra, s3, s0-s2}     | ✓ | ✓ |  
-|C.PUSH.E     {ra, s3-s4, s0-s2}  | ✓ | ✓ |   
+|C.POP        {ra}                | y | y | y
+|C.POP        {ra, s0}            | y | y | y
+|C.POP        {ra, s0-s1}         | y | y | y
+|C.POP        {ra, s0-s2}         | y |   | y
+|C.POP.E      {ra, s0-s2}         | y | y | 
+|C.POPRET     {ra}                | y | y | y 
+|C.POPRET     {ra, s0}            | y | y | y
+|C.POPRET     {ra, s0-s1}         | y | y | y
+|C.POPRET     {ra, s0- _sN_}      | y |    | y
+|C.POPRET.E   {ra, s0-s2}         | y | y | 
+|C.POPRET.E   {ra, s3, s0-s2}     | y | y | 
+|C.POPRET.E   {ra, s3-s4, s0-s2}  | y | y | 
+|C.PUSH       {ra}                | y | y | y 
+|C.PUSH       {ra, s0}            | y | y | y 
+|C.PUSH       {ra, s0-s1}         | y | y | y 
+|C.PUSH       {ra, s0- _sN_}      | y |   | y 
+|C.PUSH.E     {ra, s0-s2}         | y | y |   
+|C.PUSH.E     {ra, s3, s0-s2}     | y | y |  
+|C.PUSH.E     {ra, s3-s4, s0-s2}  | y | y |   
 |=========================================================================================================================
 
 [NOTE]
@@ -2035,7 +2009,7 @@ These instructions have no conflicts with other extensions, they use previously 
 
 [NOTE]
 
-  If there is no ✓ in a cell then the encoding is *reserved* on that architecture
+  If there is no y in a cell then the encoding is *reserved* on that architecture
 
 All the `.E` instructions and pseudo-instructions are valid for `RV32I/RV32E`, none are valid for `RV64I/RV128I`
 
@@ -2911,7 +2885,7 @@ To be a legal encoding:
 1.  The total stack adjustment must be negative for `PUSH.[FDQ]` and positive for `POP.[FDQ]/POPRET.[FDQ]`
 2.  The total stack adjustment must be in range (see <<spimm>>) and must be a multiple of 16
 3.  The register lists must be valid (see above)
-7.  For `POPRET.[FDQ]`, `rfsreg_list` must include `ra`
+4.  For `POPRET.[FDQ]`, `rfsreg_list` must include `ra`
 
 Additionally:
 
@@ -3046,7 +3020,7 @@ if (opcode == "POPRET") {
 }
 ----
 
-[#pushpoppopret32bitencodings]
+[#pushfdqpoppopret32bitencodings]
 ==== 32-bit Encodings
 
 [NOTE]
@@ -3157,7 +3131,7 @@ The registers in the `reg_list` are controlled by these fields
 
 Note that `frlist`, `mv` and `ret_val` are in the same location in the encoding.
 
-[#32bit-frlist]
+[#32bit-frlistfdq]
 .`frlist` values for the 32-bit encodings for `PUSH.[FDQ], POP.[FDQ], POPRET.[FDQ]`
 [options="header"]
 |=====================
@@ -3172,7 +3146,7 @@ See <<32bit-mv>> for `mv`.
 
 See <<32bit-ra>> for `ra`.
 
-[#32bit-frlist]
+[#32bit-rlistfdq]
 .`rlist` field values for PUSH.[FDQ]/POP.[FDQ]/POPRET.[FDQ]
 [options="header"]
 |==========================
@@ -3410,7 +3384,7 @@ sh  a5,20(sp)   # Memory(sp+20)[15:0] = a5[15:0]
 
 The encodings are cheap, but the benefit is low.
 
-[#dyadic-16encodings]
+[#dyadic-16encodings-lsbnot-lsbset]
 .simple instructions 16-bit encodings
 [width="100%",options=header]
 |=============================================================================================
@@ -3419,7 +3393,7 @@ The encodings are cheap, but the benefit is low.
 3+|  100       | 0  | 0  | 1 3+| rs1'/rd' | 0  | 0  3+| 111     2+| 00  | C.LSBSET
 |=============================================================================================
 
-[#monsemantics]
+[#monsemantics_lsbnot_lsbset]
 .simple instruction semantics
 [width="100%",options=header]
 |=======================================================================
