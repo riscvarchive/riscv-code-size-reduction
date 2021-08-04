@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.41.12
-Version 0.41.12
+= RISC-V Zce code-size reduction extension proposal v0.50
+Version 0.50
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -20,6 +20,8 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.50    | release version.
+|         | fix https://github.com/riscv/riscv-code-size-reduction/issues/103 (BEQI/BNEI format)
 | 0.41.12 | Simplify table jump CSRs (https://github.com/riscv/riscv-code-size-reduction/issues/84[github issue]) and enhance the table jump pesudo-code to include debug triggers/haltreq/step
 | 0.41.11 | Change memory order for PUSH/POP (https://github.com/riscv/riscv-code-size-reduction/issues/99[github issue])
 | 0.41.10 | Change definition of C.TBLJ* exceptions
@@ -66,15 +68,12 @@ This document describes the `Zce` extension to reduce code-size.
 | 0.30    | careful proofreading and updated C.POP encoding for simpler decode
 |===================================================================
 
-== Issues
+== Github issues (may not be a complete list)
 
-* `BEQI/BNEI` should have `nzuimm` instead of `uimm`, will fix after prototyping phase
-* `MULI` has a temporary encoding
-* should the fault handling in `push/pop/popret` be profile defined, or is platform defined ok?
-* `TBLJALVEC` need addresses to be allocated
-* EABI spec is not frozen - so it's not clear which formats of PUSH.E etc that I need
-** currently s4 is the maximum EABI saved register, which doesn't match a 16-bit format register list (which end at s3, s5, s7, s11) I'd prefer it if the register lists match for the UABI and EABI for a simpler spec.
-* May need an EABI version of `C.MVA01S07`
+* https://github.com/riscv/riscv-code-size-reduction/issues/106[MULI has a temporary encoding]
+* https://github.com/riscv/riscv-code-size-reduction/issues/105[TBLJALVEC needs address to be allocated]
+* https://github.com/riscv/riscv-code-size-reduction/issues/104[EABI spec is not frozen - so it's not clear which formats of PUSH.E/POP.E/POPRET.E etc that are needed]
+* https://github.com/riscv/riscv-code-size-reduction/issues/102[May need an EABI version of C.MVA01S07]
 
 == `Zce` configurations
 
@@ -673,7 +672,7 @@ muli     a0, a1, 2     # a0 = a1 * 2
 
 [NOTE]
 
-  This should be a `nzuimm` as if `uimm==0` then `BEQ/BNE rs1, zero, offset` can be used.
+  The encoding is not valid if `nzuimm=0` as `BEQ/BNE rs1, zero, offset` can be used instead.
 
 The encodings allow a comparison of a register and an immediate value. `BEQI` in particular is very useful for _switch_ statements. 
 
@@ -681,9 +680,9 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 .proposed 32-bit encodings for `BEQI/BNEI`
 [width="100%",options=header]
 |=========================================================================================================================
-|  31:25             |24:20       |19:15 | 14:12   | 11:7              | 6 : 0 | instruction
-| offset[12,10:5]    |uimm[4:0]   | rs1  | 010     | offset[4:1,11]    |1100011| BEQI
-| offset[12,10:5]    |uimm[4:0]   | rs1  | 011     | offset[4:1,11]    |1100011| BNEI
+|  31:25             |24:20 |19:15       | 14:12   | 11:7              | 6 : 0 | instruction
+| offset[12,10:5]    | rs2  |nzuimm[4:0] | 010     | offset[4:1,11]    |1100011| BEQI
+| offset[12,10:5]    | rs2  |nzuimm[4:0] | 011     | offset[4:1,11]    |1100011| BNEI
 |=========================================================================================================================
 
 [#compare-immediate branch_semantics]
@@ -691,8 +690,8 @@ The encodings allow a comparison of a register and an immediate value. `BEQI` in
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| BEQI          | if (rs1==zero_ext(uimm)) target_pc=PC+offset; else target_pc=PC+4;
-| BNEI          | if (rs1!=zero_ext(uimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BEQI          | if (rs2==zero_ext(nzuimm)) target_pc=PC+offset; else target_pc=PC+4;
+| BNEI          | if (rs2!=zero_ext(nzuimm)) target_pc=PC+offset; else target_pc=PC+4;
 |=======================================================================
 
 Assembly Examples
@@ -1451,7 +1450,7 @@ with `PUSH/POPRET` this reduces to
 2040545c:	70000937          	lui	s2,0x70000
 20405460:	62090613          	addi	a2,s2,1568 # 70000620 <prng>
 <function body>
-20405496:	<16-bit>                popret	 {ra,s0-s2},{0} 16
+20405496:	<16-bit>                popret	 {ra,s0-s2},{0}, 16
 
 ----
 
