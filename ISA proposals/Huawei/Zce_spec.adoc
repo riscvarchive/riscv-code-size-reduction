@@ -1,5 +1,5 @@
-= RISC-V Zce code-size reduction extension proposal v0.50
-Version 0.50
+= RISC-V Zce code-size reduction extension proposal v0.50.1
+Version 0.50.1
 :doctype: book
 :encoding: utf-8
 :lang: en
@@ -20,6 +20,7 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.50.1  | fix typo - all instructions are available in RV32 (some tables said otherwise)
 | 0.50    | release version.
 |         | fix https://github.com/riscv/riscv-code-size-reduction/issues/103 (BEQI/BNEI format)
 | 0.41.12 | Simplify table jump CSRs (https://github.com/riscv/riscv-code-size-reduction/issues/84[github issue]) and enhance the table jump pesudo-code to include debug triggers/haltreq/step
@@ -81,7 +82,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |C.MUL|y|y|y|Zcea/Zcee|requires M or Zmmul
 |MULI|y|y|y|Zcea|requires M or Zmmul
 6+|other 16-bit encodings
-|C.MVA01S07| |y|y|Zcea|
+|C.MVA01S07|y|y|y|Zcea|
 |C.NOT|y|y|y|Zcea|
 |C.NEG|y|y|y|Zcea|
 |C.TBLJ|y|y|y|Zcea|
@@ -226,8 +227,8 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 |100       |C.SUBW (RV32:RSV)                     | |Zc64/Zc128	|	|y	|y	|C
 |100       |C.ADDW (RV32:RSV)                     | |Zc64/Zc128	|	|y	|y	|C
 
-|100       |C.MUL                                 | |Zcea/Zcee	|	|y	|y	|M+C+*Zcea/Zcee*
-|100       |C.MVA01S07                            | |Zcea	|	|y	|y	|C+*Zcea*
+|100       |C.MUL                                 | |Zcea/Zcee	|y |y	|y	|M+C+*Zcea/Zcee*
+|100       |C.MVA01S07                            | |Zcea	|y |y	|y	|C+*Zcea*
 
 
 |101       |C.J	       | |Zci	|y	|y	|y	|C
