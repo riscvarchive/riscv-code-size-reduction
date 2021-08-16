@@ -416,7 +416,7 @@ These instructions are 16-bit versions of existing 32-bit instructions, from eit
 |C.SEXT.H    | sext.h rd, rs1        | all regs x8-x15, rd=rs1            | Zbb
 |C.MUL       | mul    rd, rs1, rs2   | all regs x8-x15, rd=rs1            | I or E
 4+|RV64/RV128 only
-|C.ZEXT.W    | zext.h rd, rs1        | all regs x8-x15, rd=rs1            | Zba
+|C.ZEXT.W    | zext.w rd, rs1        | all regs x8-x15, rd=rs1            | Zba
 |======================================================================================================
 
 [NOTE]
