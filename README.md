@@ -3,11 +3,7 @@ Welcome to the RISC-V Code Size Reduction Group
 
 _If you can't measure it you can't improve it_
 
-This is the current proposal for Zcee:
-
-- [Zcee ISA proposal](https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zcee.pdf)
-
-This is the current proposal for reducing code size, including Zcee:
+This is the current proposal for reducing code size:
 
 - [Zce ISA proposal](https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20proposals/Huawei/Zce_spec.adoc)
 
