@@ -766,7 +766,7 @@ This instruction is a combined decrement and branch, used for inferring loops wi
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| C.DECBNEZ     | rd' = rd' - (1<<scale); bnez rd', zero, -zero_ext(nzuimm);
+| C.DECBNEZ     | rd' = rd' - (1<<scale); bnez rd', -zero_ext(nzuimm);
 |=======================================================================
 
 [#v1.0-32bit]
@@ -815,7 +815,7 @@ The 16-bit encoding and specification is in <<decbr16>>.
 [width="100%",options=header]
 |=======================================================================
 |instruction    | definition
-| DECBNEZ       | rd = rd - (1<<scale); bnez rd, zero, sign_ext(imm);
+| DECBNEZ       | rd = rd - (1<<scale); bnez rd, sign_ext(imm);
 |=======================================================================
 
 Assembly Example
