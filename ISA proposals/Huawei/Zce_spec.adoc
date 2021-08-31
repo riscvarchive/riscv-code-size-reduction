@@ -936,11 +936,11 @@ These instructions conflict with the `D`-extension. If `D` is implemented, these
 Assembly Examples
 [source,sourceCode,text]
 ----
-lbu a5,10(a4)   # a5 = zero_ext(DataMemory(a4+20)[ 7:0])
+lbu a5,10(a4)   # a5 = zero_ext(DataMemory(a4+10)[ 7:0])
 lhu a5,20(a4)   # a5 = zero_ext(DataMemory(a4+20)[15:0])
-lb  a5,10(a4)   # a5 = sign_ext(DataMemory(a4+20)[ 7:0])
+lb  a5,10(a4)   # a5 = sign_ext(DataMemory(a4+10)[ 7:0])
 lh  a5,20(a4)   # a5 = sign_ext(DataMemory(a4+20)[15:0])
-sb  a5,10(a4)   # DataMemory(a4+20)[ 7:0] = a5[ 7:0]
+sb  a5,10(a4)   # DataMemory(a4+10)[ 7:0] = a5[ 7:0]
 sh  a5,20(a4)   # DataMemory(a4+20)[15:0] = a5[15:0]
 ----
 
