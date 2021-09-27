@@ -840,7 +840,7 @@ These instructions reuse the encodings for `FLD/FSD`.
    Restrictions in the GCC toolchain mean that the full range of `gp` cannot be used for the standard `LW/SW` instructions, in case linker relaxation means that the `gp` relative addresses moves out of range. This will still be the case with `LWGP, SWGP` but the range is so much larger that the impact will be minimal. https://github.com/riscv/riscv-gnu-toolchain/issues/497[See this github issue]. This issue means that with the current RISC-V ISA the full 4KB range cannot be accessed using `gp` using GCC so the benefit is lower than might be expected.
 
 [Zceb-32bit-encodings]
-.proposed 32-bit encodings for `LWGP/SWGP/LWTP/SWTP` and `LDGP/SDGP/LDTP/SDTP`
+.proposed 32-bit encodings for `LWGP/SWGP` and `LDGP/SDGP`
 [width="100%",options=header]
 |=========================================================================================================================
 | 31:29|28:25   |24:20      |19:15 | 14:12   | 11:7  | 6 : 0 | instruction
