@@ -1,4 +1,4 @@
-= RISC-V Zce code-size reduction extension proposal v0.50.1
+= RISC-V Zce code-size reduction extension proposal v0.51
 Version 0.50.1
 :doctype: book
 :encoding: utf-8
@@ -20,6 +20,8 @@ This document describes the `Zce` extension to reduce code-size.
 
 |===================================================================
 | version | change
+| 0.51    | remove areg_list from PUSH/C.PUSH (https://github.com/riscv/riscv-code-size-reduction/issues/116), add C.MVS07A01 instead
+|         | remove ret_val from POP (https://github.com/riscv/riscv-code-size-reduction/issues/115)
 | 0.50.1  | fix typo - all instructions are available in RV32 (some tables said otherwise)
 | 0.50    | release version.
 |         | fix https://github.com/riscv/riscv-code-size-reduction/issues/103 (BEQI/BNEI format)
@@ -83,6 +85,7 @@ image::https://github.com/riscv/riscv-code-size-reduction/blob/master/ISA%20prop
 |MULI|y|y|y|Zcea|requires M or Zmmul
 6+|other 16-bit encodings
 |C.MVA01S07|y|y|y|Zcea|
+|C.MVS07S01|y|y|y|Zcea|
 |C.NOT|y|y|y|Zcea|
 |C.NEG|y|y|y|Zcea|
 |C.TBLJ|y|y|y|Zcea|
@@ -229,6 +232,7 @@ The shared encoding column in the tables assigns an arbitrary number to show whi
 
 |100       |C.MUL                                 | |Zcea/Zcee	|y |y	|y	|M+C+*Zcea/Zcee*
 |100       |C.MVA01S07                            | |Zcea	|y |y	|y	|C+*Zcea*
+|100       |C.MVS07A01                            | |Zcea	|y |y	|y	|C+*Zcea*
 
 
 |101       |C.J	       | |Zci	|y	|y	|y	|C
@@ -287,6 +291,7 @@ This section gives a short-hand lookup of exactly where the new encodings are al
 
 | |100    |111    |01   |C.MUL
 | |100    |111    |01   |C.MVA01S07
+| |100    |111    |01   |C.MVS07A01
 
 |9|001    |0xx    |10   |C.LB
 |9|001    |1xx    |10   |C.LH
@@ -502,16 +507,17 @@ not a5, a5      # a5 = ~a5 bitwise inversion
 neg a5, a5      # a5 = -a5 two's complement inversion
 ----
 
-=== C.MVA01S07
+=== C.MVA01S07, C.MVS07A01
 
-Register moves are the most common in GCC output in both the benchmark suite and the Debian distro. This instruction combines very common pairs of moves into a single 16-bit encoding:
+Register moves are the most common in GCC output in both the benchmark suite and the Debian distro. These instructions combine very common pairs of moves into a single 16-bit encoding:
 
 * move from two `s[0-7]` registers into `a0` and `a1`.
+* move from `a0` and `a1` into two `s[0-7]` registers.
 
 Similar to `PUSH/POP` this instruction uses ABI names for the registers. The mapping from `s` to `x` number is simple. For `RV32_Zdinx` a paired register write port is required already. For other configurations the microarchitecture can:
 
 * split the instructions into an uninterruptable sequence of two `mv` instructions to avoid the second write port
-* add a paired write port for `a0` and `a1` only. Because the instruction only writes these two registers, only one paired write port is needed. This is much cheaper than allowing paired writes to the whole register file.
+* allow two write ports into `a0-a1,s0-s7` only to avoid an addiitonal write port to any X register
 
 [source,sourceCode,text]
 ----
@@ -540,15 +546,15 @@ Similar to `PUSH/POP` this instruction uses ABI names for the registers. The map
 
 [NOTE]
 
-  Combining a2 and a3 into a double move isn't beneficial enough in general to include in the ISA
+  Combining a2 and a3 into a double move in either direction isn't beneficial enough in general to include in the ISA
 
 [NOTE]
 
-  We may need an EABI version of this instruction. TBD.
+  We may need EABI versions of these instructions. TBD.
 
 [NOTE]
 
-  There is no 32-bit instruction, because a 32-bit form would add no value.
+  There are no 32-bit instructions, because 32-bit forms would add no value.
 
 Mapping from the `s` register number to the `x` register index is simple for the UABI:
 
@@ -569,27 +575,32 @@ xreg[4:0] = {sreg[2:1]>0,sreg[2:1]==0,sreg[2:0]};
 The EABI mapping may not be so simple, TBD.
 
 [#mva-16encodings]
-.`C.MVA01S07` 16-bit encodings
+.`C.MVA01S07, C.MVS07A01` 16-bit encodings
 [width="100%",options=header]
 |=============================================================================================
 | 15:13 | 12:10 | 9:7   | 6:5 | 4:2   | 1:0   |instruction         
 |  100  | 111   | sreg1 | 11  | sreg2 | 01    | C.MVA01S07
+|  100  | 111   | sreg1*| 10  | sreg2*| 01    | C.MVS07S01
 |=============================================================================================
 
+* Illegal instruction if `sreg1==sreg2`, so 56 code-points not 64
+
 [#mva_semantics]
-.`C.MVA01S07` semantics
+.`C.MVA01S07, C.MVS07A01` semantics
 [width="100%",options=header]
 |=======================================================================
 |instruction  | definition
 | C.MVA01S07  | mv a0, s[sreg1];  mv a1, s[sreg2]
+| C.MVS07S01  | mv s[sreg1], a0;  mv s[sreg2], a1
 |=======================================================================
 
 [#mva_syntax]
-.`C.MVA01S07` assembler syntax
+.`C.MVA01S07, C.MVS07A01` assembler syntax
 [width="100%",options=header]
 |======================================================================================================
 |instruction | example assembler syntax | requirements for 16-bit encoding   | 32-bit extension
 |C.MVA01S07  | c.mva01s07 sreg1, sreg2  | none                               | N/A
+|C.MVS07A01  | c.mvs07s01 sreg1, sreg2  | none                               | N/A
 |======================================================================================================
 
 Assembly examples.
@@ -597,6 +608,8 @@ Assembly examples.
 ----
 # c.mva01s07: sreg1 = 0; sreg2 = 0;
 c.mva01s07 s0, s0; # mv a0, s0; mv a1, s0
+# c.mvs07a01: sreg1 = 0; sreg2 = 1;
+c.mvs07a01 s0, s0; # mv s0, a0; mv s1, a1
 ----
 
 === MULI
@@ -1454,8 +1467,8 @@ The `PUSH/POP/POPRET/C.PUSH/C.POP/C.POPRET` instructions support the UABI. The `
 
 Where the `X` register list is the same for both ABIs the EABI version is a pseudo-instruction, where the `X` register list is different it has a different encoding, for example: 
 
-* `c.pop.e {ra, s0}, {}, 32` is a pseudo-instruction for `c.pop {ra, s0}, {}, 32`
-* `c.pop.e {ra, s0-s2}, {}, 32` has a different encoding to `c.pop {ra, s0-s2}, {}, 32`
+* `c.pop.e {ra, s0}, 32` is a pseudo-instruction for `c.pop {ra, s0}, 32`
+* `c.pop.e {ra, s0-s2}, 32` has a different encoding to `c.pop {ra, s0-s2}, 32`
 
 It is recommended that:
 
@@ -1484,27 +1497,27 @@ Code compiled for RV32I may be compiled for the UABI or EABI. Code compiled for 
 
 . The `PUSH` instruction 
 ** pushes(stores)  the registers specified in `reg_list` to the stack
-** if `areg_list` is included, moves the registers in the `areg_list` into `s` registers
-*** `areg_list` is determined automatically from `rlist`, it cannot be arbitrarily specified. The definition is in <<pushpop32bitsyntax>>.
 ** adjusts the stack pointer by the `stack_adjustment` 
 
 . The `POP` instruction 
 ** pops(loads) the registers in `reg_list` from the stack
+** adjusts the stack pointer by the `stack_adjustment`.
+
+. The `POPRET` instruction
+** pops(loads) the registers in `reg_list` from the stack
 ** if `ret_val` is included, moves the specified constant value into `a0` as the return value
 ** adjusts the stack pointer by the `stack_adjustment`.
 
-. `POPRET` has the same behaviour as `POP`, followed by `RET`.
-
 32-bit and 16-bit forms of all instructions are available, the assembler should choose the 16-bit form if the parameters permit.
 
-The registers in `reg_list` and `areg_list` are comma separated lists and must not be empty.
+The registers in `reg_list` is a comma separated list and must not be empty.
 
 The assembler/disassembler can choose whether to include the `c.` prefix for 16-bit encodings. The recommendation is to exclude it.
 
 [#pushpop32bitsyntax]
 ==== 32-bit encoding assembler syntax
 
-There are different definitions for the register lists in use (`reg_list_32u/reg_list_16u/reg_list_e`). In all cases the requirements of `areg_list` are the same - and so it is only specified only once with respect to `reg_list_*` to avoid replication.
+There are different definitions for the register lists in use (`reg_list_32u/reg_list_16u/reg_list_e`). 
 
 The stack adjustment range varies between encodings. The syntax `stack_adjustment_0_N` is used. The stack adjustment value must be the total memory required for the registers in `reg_list_*` rounded up to a multiple of 16-bytes, plus an additional 0 to `N` * 16-bytes. Also see <<spimm>>.
 
@@ -1514,15 +1527,7 @@ This syntax is for the 32-bit encodings, for the UABI
 ----
 <ret_val_32>     ::= "" | 0 | 1 | -1
 <sreg_list_32u>  ::=      <s0>  | <s0-sN>   (where N is in the range [1, 11])
-<areg_list>      ::= "" | <a0>  | <a0-aP>   (where P is in the range [1, 3])
 <reg_list_32u>   ::= <ra> ["," <sreg_list_32u>]
-
-//L is the length of the encoding - 16 or 32 - so <reg_list_Lu> can represent <reg_list_16u> or <reg_list_32u>
-//Only certain combinations of <reg_list_Lu> and <areg_list> are allowed.
-
-if (<reg_list_Lu>=="ra")         <areg_list>=""
-if (<reg_list_Lu>=="ra, s0")     <areg_list>="a0"
-if (<reg_list_Lu>=="ra, s0-sN")  <areg_list>="a0-aP" (where if (N<4) P=N; else P=3;)
 
 //<reg_list_Lu> can also be expressed using X registers using the standard UABI mapping
 
@@ -1532,22 +1537,12 @@ if (<reg_list_Lu>=="ra, s0-s1")  <xreg_list_Lu>="x1, x8-x9"
 if (<reg_list_Lu>=="ra, s0-s2")  <xreg_list_Lu>="x1, x8-x9, x18"
 if (<reg_list_Lu>=="ra, s0-sN")  <xreg_list_Lu>="x1, x8-x9, x18-xM" (where M=N+16 and N is in the range [3, 11])
 
-//<areg_list> can also be expressed using X registers using the standard UABI mapping
-
-if (<reg_list_Lu>=="ra")         <xareg_list>=""
-if (<reg_list_Lu>=="ra, s0")     <xareg_list>="x10"
-if (<reg_list_Lu>=="ra, s0-sN")  <xareg_list>="x10-xP" (where if (N<4) P=N+10; else P=13;)
-
 //legal syntax for 32-bit encodings. 
-//Note that <areg_list>/<xareg_list> is optional for push, 
 //and that both register lists must use either ABI names or `x` numbers.
 
-push         {<reg_list_32u>},  {"" | <areg_list>},  -stack_adjustment_0_31
-push         {<xreg_list_32u>}, {"" | <xareg_list>}, -stack_adjustment_0_31
-
-popret       {<reg_list_32u> | <xreg_list_32u>},  {ret_val_32}, stack_adjustment_0_31
-
-pop          {<reg_list_32u> | <xreg_list_32u>},  {ret_val_32}, stack_adjustment_0_31
+push         {<reg_list_32u> | <xreg_list_32u>},              -stack_adjustment_0_31
+popret       {<reg_list_32u> | <xreg_list_32u>}, {ret_val_32}, stack_adjustment_0_31
+pop          {<reg_list_32u> | <xreg_list_32u>},               stack_adjustment_0_31
 
 ----
 
@@ -1564,9 +1559,9 @@ if (<reg_list_e>=="ra, s0-s2")        <xreg_list_e>="x1, x8-x9, x14"
 if (<reg_list_e>=="ra, s3, s0-s2")    <xreg_list_e>="x1, x6, x8-x9, x14"
 if (<reg_list_e>=="ra, s3-s4, s0-s2") <xreg_list_e>="x1, x6-x9, x14"
 
-push.e         {<reg_list_e> | <xreg_list_e>}, {"" | <areg_list>}, -stack_adjustment_0_31
-popret.e       {<reg_list_e> | <xreg_list_e>}, {ret_val_32},        stack_adjustment_0_31
-pop.e          {<reg_list_e> | <xreg_list_e>}, {ret_val_32},        stack_adjustment_0_31
+push.e         {<reg_list_e> | <xreg_list_e>},               -stack_adjustment_0_31
+popret.e       {<reg_list_e> | <xreg_list_e>}, {ret_val_32},  stack_adjustment_0_31
+pop.e          {<reg_list_e> | <xreg_list_e>},                stack_adjustment_0_31
 
 ----
 
@@ -1583,28 +1578,24 @@ This syntax is for the 16-bit encodings, for the UABI. The rules stated above fo
 <sreg_list_16u>  ::= <s0>  | <s0-sN>   (where N is 1,2,3,5,7,11)
 <reg_list_16u>   ::= <ra> ["," <sreg_list_16u>]
 
-c.push       {<reg_list_16u>},  {<areg_list>},  -stack_adjustment_0_5
-c.push       {<xreg_list_16u>}, {<xareg_list>}, -stack_adjustment_0_5
+c.push       {<reg_list_16u>},  -stack_adjustment_0_5
+c.push       {<xreg_list_16u>}, -stack_adjustment_0_5
 
 c.popret     {<reg_list_16u> | <xreg_list_16u>}, {"" | 0}, stack_adjustment_0_5
-c.pop        {<reg_list_16u> | <xreg_list_16u>}, {},       stack_adjustment_0_1
+c.pop        {<reg_list_16u> | <xreg_list_16u>},           stack_adjustment_0_1
 
 ----
 
 This syntax is for the 16-bit encodings, for the EABI. All variables have been previously defined.
 
-[NOTE]
-
-  `areg_list` is required for `c.push`. If no register moves are required then the 32-bit encoding `push` is required instead.
-
 [source,sourceCode,text]
 ----
 
-c.push.e     {<reg_list_e>},  {<areg_list>},  -stack_adjustment_0_5
-c.push.e     {<xreg_list_e>}, {<xareg_list>}, -stack_adjustment_0_5
+c.push.e     {<reg_list_e>},  -stack_adjustment_0_5
+c.push.e     {<xreg_list_e>}, -stack_adjustment_0_5
 
 c.popret.e   {<reg_list_e> | <xreg_list_e>}, {"" | 0},       stack_adjustment_0_5
-c.pop.e      {<reg_list_e> | <xreg_list_e>}, {},             stack_adjustment_0_1
+c.pop.e      {<reg_list_e> | <xreg_list_e>},                 stack_adjustment_0_1
 
 ----
 
@@ -1613,15 +1604,15 @@ Examples of valid 16-bit encodings for RV32I or RV64I using the UABI:
 [source,sourceCode,text]
 ----
 
-c.push   {ra},                {},         -16; //store ra;                                                decrement sp by 16
-c.push   {ra,s0},             {a0},       -32; //store ra,s0;     mv s0,a0;                               decrement sp by 32
-c.push   {ra,s0-s1},          {a0-a1},    -96; //store ra,s0-s1;  mv s0,a0; mv s1,a1;                     decrement sp by 96
-c.push   {x1, x8-x9, x18-x13},{x10-x13}, -128; //store ra,s0-s11; mv s0,a0; mv s1,a1; mv s2,a2; mv s3,a3; decrement sp by 128
+c.push   {ra},                  -16; //store ra;        decrement sp by 16
+c.push   {ra,s0},               -32; //store ra,s0;     decrement sp by 32
+c.push   {ra,s0-s1},            -96; //store ra,s0-s1;  decrement sp by 96
+c.push   {x1, x8-x9, x18-x13}, -128; //store ra,s0-s11; decrement sp by 128
 
-c.pop    {ra}, {},    16;  //load  ra;        increment sp by 16
+c.pop    {ra},        16;  //load  ra;        increment sp by 16
 c.popret {x1}, {},    16;  //load  ra;        increment sp by 16; jump to ra
 
-c.pop    {ra,s0},    {},  32;  //load  ra,s0;     increment sp by 32
+c.pop    {ra,s0},         32;  //load  ra,s0;     increment sp by 32
 c.popret {x1, x8},   {0}, 32;  //load  ra,s0;     increment sp by 32; li a0, 0; jump to ra
 c.popret {ra,s0-s3}, {},  96;  //load  ra,s0-s3;  increment sp by 96;           jump to ra
 c.popret {ra,s0-s11},{}, 128;  //load  ra,s0-s11; increment sp by 128;          jump to ra
@@ -1630,9 +1621,8 @@ c.popret {ra,s0-s11},{}, 128;  //load  ra,s0-s11; increment sp by 128;          
 
 For example
 
-. `c.push   {ra,s0-s2}, {a0-a2},  -64` can use a 16-bit encoding
-. `push     {ra,s0-s2}, {},       -64` must use a 32-bit encoding as `<areg_list>` is null 
-. `push     {ra,s0-s2}, {a0-a2}, -256` can use a 32-bit encoding as the `stack_adjustment` is out of range for `c.push`
+. `c.push   {ra,s0-s2},   -64` can use a 16-bit encoding
+. `push     {ra,s0-s2},  -256` can use a 32-bit encoding as the `stack_adjustment` is out of range for `c.push`
 .. a `c.addi16sp; c.push` sequence achieves the same code-size
 . `c.popret {ra,s0-s2}, {0},       32` can use a 16-bit encoding
 . `popret   {ra,s0-s2}, {1},       32` must use a 32-bit encoding as `c.popret` only supports `0` as the `ret_val` value
@@ -1698,28 +1688,6 @@ for(i=31;i>=0;i--)  {
   }
 }
 //The sequence must be uninterruptible from this point
-
-if (xareg_list[10]) { //if x10/a0 is in [x]areg_list
-   asm("mv x8, x10");
-  }
-if (xareg_list[11]) { //if x11/a1 is in [x]areg_list
-   asm("mv x9, x11");
-  }
-//if x12 is in xreg_list
-if (xareg_list[12]) { //if x12/a2 is in [x]areg_list
-   if (opcode == "PUSH.E" or opcode == "C.PUSH.E") {
-     asm("mv x14, x12");
-  } else {
-     asm("mv x18, x12");
-  }
-//if x13 is in xreg_list
-if (xareg_list[13]) { //if x13/a3 is in [x]areg_list
-   if (opcode == "PUSH.E" or opcode == "C.PUSH.E") {
-     asm("mv x6, x13");
-  } else {
-     asm("mv x19, x13");
-  }
-}
 sp+=stack_adjustment; //decrement
 ----
 
@@ -1760,12 +1728,17 @@ for(i=31;i>=0;i--)  {
     }
   }
 }
-if (ret_val) {
-   switch(ret_val) {
-      "0":  asm("li a0, 0");
-      "1":  asm("li a0, 1");
-      "-1": asm("li a0, -1");
-   }
+if (opcode == "POPRET"   or 
+    opcode == "POPRET.E" or 
+    opcode == "C.POPRET" or 
+    opcode == "C.POPRET.E") { 
+  if (ret_val) {
+     switch(ret_val) {
+        "0":  asm("li a0, 0");
+        "1":  asm("li a0, 1");
+        "-1": asm("li a0, -1");
+     }
+  }
 }
 //The sequence must be uninterruptible from this point
 sp+=stack_adjustment; //increment
@@ -1794,11 +1767,11 @@ if (opcode == "POPRET"   or
 .push/pop/popret 32-bit encodings
 [options="header",width="100%"]
 |================================================================================================
-| 31:22          |21|20   |19:16        |15 | 14:12   | 11: 7      | 6 : 0 | instruction
-|0000000000      |0 |areg |rlist (0-12) |0  | 100     | spimm[8:4] |0101011| PUSH
-|0000000000      |0 |areg |rlist (13-15)|0  | 100     | spimm[8:4] |0101011| PUSH.E
-|0000000000     2+|ret_val |rlist (0-12) |0  | 101     | spimm[8:4] |0101011| POP
-|0000000000     2+|ret_val |rlist (13-15)|0  | 101     | spimm[8:4] |0101011| POP.E
+| 31:22          |21|20    |19:16        |15 | 14:12   | 11: 7      | 6 : 0 | instruction
+|0000000000      |0 |areg  |rlist (0-12) |0  | 100     | spimm[8:4] |0101011| PUSH
+|0000000000      |0 |areg  |rlist (13-15)|0  | 100     | spimm[8:4] |0101011| PUSH.E
+|0000000000     2+|00      |rlist (0-12) |0  | 101     | spimm[8:4] |0101011| POP
+|0000000000     2+|00      |rlist (13-15)|0  | 101     | spimm[8:4] |0101011| POP.E
 |0000000000     2+|ret_val |rlist (0-12) |0  | 110     | spimm[8:4] |0101011| POPRET
 |0000000000     2+|ret_val |rlist (13-15)|0  | 110     | spimm[8:4] |0101011| POPRET.E
 |================================================================================================
@@ -1807,17 +1780,8 @@ if (opcode == "POPRET"   or
 
   `rlist>12` gives register lists which only map to the EABI because the `X` register mapping is different for `s2-s4`, hence the `.E` suffix
 
-[#32-bit-areg]
-.`areg` values for the 32-bit encoding of `PUSH, PUSH.E`
-[options="header"]
-|=========================================
-|`areg`  |Comment
-| 0      |`areg_list` is empty
-| 1      |`areg_list` is determined from `rlist` (see <<32-bit-areg-list>>)
-|=========================================
-
 [#32bit-ret_val]
-.`ret_val` values for the 32-bit encodings for `POP, POPRET, POP.E, POPRET.E`
+.`ret_val` values for the 32-bit encodings for `POPRET, POPRET.E`
 [options="header"]
 |=========================================
 |return value      |ABI names  
@@ -1851,21 +1815,6 @@ if (opcode == "POPRET"   or
 | 13     |ra, s0-s2        | EABI     
 | 14     |ra, s3, s0-s2    | EABI     
 | 15     |ra, s3-s4, s0-s2 | EABI      
-|==========================
-
-[#32-bit-areg-list]
-.`areg_list` values for the 32-bit encoding of `PUSH, PUSH.E`
-[options="header"]
-|==========================
-|areg     |rlist  | areg_list
-| 0       | x     |empty          
-| 1       | 0     |empty
-| 1       | 1     |a0
-| 1       | 2     |a0-a1
-| 1       | 3     |a0-a2
-| 1       | 4-12  |a0-a3
-| 1       | 13    |a0-a2
-| 1       | 14-15 |a0-a3
 |==========================
 
 [#proposed-32bit-encodingsI-2]
@@ -1942,34 +1891,8 @@ These instructions have no conflicts with other extensions, they use previously 
 
   * `spimm0_5[6:4]` has legal values of 0 to 5, which maps to stack adjustments of 0 to 80 as bits [6:4] are specified.
 
-[#rlist3-table]
-.`rlist3` values for the 16-bit encodings
-[options="header",width=100%]
-|============================
-|rlist3| reg_list_16u    | areg_list (C.PUSH only)
-|0     |ra         | empty
-|1     |ra, s0     | a0
-|2     |ra, s0-s1  | a0-a1
-|3     |ra, s0-s2  | a0-a2
-|4     |ra, s0-s3  | a0-a3
-|5     |ra, s0-s5  | a0-a3
-|6     |ra, s0-s7  | a0-a3
-|7     |ra, s0-s11 | a0-a3
-|============================
-
-[#rlist2-table]
-.`rlist2` values for the 16-bit encodings
-[options="header",width=100%]
-|============================
-|rlist2| reg_list_e      | areg_list (C.PUSH.E only)
-|0     |ra, s0-s2        | a0-a2
-|1     |ra, s3, s0-s2    | a0-a3
-|2     |ra, s3-s4, s0-s2 | a0-a3
-|3     2+|*reserved*
-|============================
-
 [#ret0-table]
-.`ret0` values for the 16-bit encodings
+.`ret0` values for `C.POPRET, C.POPRET.E`
 [options="header",width=100%]
 |=========================================
 |return value      |ABI names  
@@ -2331,7 +2254,6 @@ For `C.POPRET/POPRET`, use `POPRET` if:
 For `C.POP/POP`, use `POP` if
 
 1. The total stack adjustment (see <<#total-stack-rv32>>, <<total-stack-rv64>>) is out of range for `C.POP`, but in range for `POP`.
-2. The return value is `0, 1` or `-1`.
 
 _Example 1_ The 16-bit encoding includes too many register moves.
 
@@ -2419,7 +2341,7 @@ In this case the 16-bit encoding is inferior in the epilogue - because it includ
 
 [source,sourceCode,text]
 ----
-c.push  {ra, s0-s5}, {a0-a3}, -64
+c.push  {ra, s0-s5}, -64
 ----
 
 Encoding: rlist=5, spimm=32
@@ -2435,10 +2357,6 @@ sw  s2, -16(sp);
 sw  s1, -20(sp);
 sw  s0, -24(sp); 
 sw  ra, -28(sp);
-mv  s0, a0;
-mv  s1, a1;
-mv  s2, a2;
-mv  s3, a3;
 addi sp, sp, -64;
 ----
 
@@ -2446,7 +2364,7 @@ addi sp, sp, -64;
 
 [source,sourceCode,text]
 ----
-c.push {ra, s0-s1}, {a0-a1}, -32
+c.push {ra, s0-s1}, -32
 ----
 
 Encoding: rlist=2, spimm=16
@@ -2458,8 +2376,6 @@ Equivalent sequence:
 sw  s1, -4(sp);
 sw  s0, -8(sp); 
 sw  ra, -12(sp);
-mv s0, a0;
-mv s1, a1;
 addi sp, sp, -32;
 ----
 
@@ -2467,7 +2383,7 @@ addi sp, sp, -32;
 
 [source,sourceCode,text]
 ----
-c.pop   {ra, s0-s7}, {}, 160
+c.pop   {ra, s0-s7}, 160
 ----
 
 Encoding: rlist=6, spimm=112 
@@ -2719,6 +2635,7 @@ Therefore the compiler switches in <<compilerswitches>> are available, each one 
 | -mzce-cnot         | C.NOT
 | -mzce-cneg         | C.NEG
 | -mzce-cmva01s07    | C.MVA01S07
+| -mzce-cmvs07a01    | C.MVS07A01
 | -mzce-cdecbnez     | C.DECBNEZ
 | -mzce-decbnez      | DECBNEZ
 |==============================================================================
@@ -2779,12 +2696,9 @@ Therefore the coverage is the same as for `ADDI/BGEZ` combined, noting the limit
 [options="header",width=100%]
 |==============================================================================
 |Instruction|Variables                                        | Coverage bins
-| PUSH (`mv`=0) | `rlist`(0 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 416
-| PUSH (`mv`=1) | `rlist`(1 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 384
-| PUSH (`mv`=2) | `rlist`(2 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 352
-| PUSH (`mv`=3) | `rlist`(3 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 288
-| POP         | `rlist`(0 to 12) x `ret_val` (0 to 3) x `ra` (0 to 1) x `spimm` (0 to 15) | 1664
-| POPRET      | `rlist`(0 to 12) x `ret_val` (0 to 3) x `spimm` (0 to 15) | 834
+| PUSH          | `rlist`(0 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 416
+| POP           | `rlist`(0 to 12) x `ra` (0 to 1) x `spimm` (0 to 15) | 416
+| POPRET        | `rlist`(0 to 12) x `ret_val` (0 to 3) x `spimm` (0 to 15) | 834
 |==============================================================================
 
 The 16-bit encodings have ffar ewer coverage bins:
