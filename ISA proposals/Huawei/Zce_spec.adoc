@@ -2611,16 +2611,15 @@ Performance is expected to be significantly higher using PUSH/POP than the softw
 If `Zcea/Zceb/Zcee` are specified, then the compiler will include all the instructions from the relevant subsets.
 It is also useful to be able to select instructions in a more fine-grained way to help with benchmarking and analysis work, especially when analysing the results of the prototype compiler.
 Therefore the compiler switches in <<compilerswitches>> are available, each one is used to enable a specific list of instructions.
+Some of the switches are needed for the linker (e.g. `LWGP` and `TBLJ*`).
 
 [#compilerswitches]
 .Compiler switches for Zce
 [options="header",width=100%]
 |==============================================================================
 | Switch             | Enabled instructions
-| -mzce-cpush-cpop   | C.PUSH, C.POP, C.POPRET
-| -mzce-push-pop     | PUSH.E, POP.E, POPRET.E
-| -mzce-cpushe-cpope | C.PUSH.E, C.POP.E, C.POPRET.E
-| -mzce-pushe-pope   | PUSH.E, POP.E, POPRET.E
+| -mzce-push-pop     | C.PUSH, C.POP, C.POPRET, PUSH, POP, POPRET
+| -mzce-pushe-pope   | C.PUSH.E, C.POP.E, C.POPRET.E, PUSH.E, POP.E, POPRET.E
 | -mzce-tbljal       | C.TBLJ, C.TBLJAL, C.TBLJALM
 | -mzce-clbhu        | C.LBU, C.LHU
 | -mzce-clbh         | C.LB, C.LH
