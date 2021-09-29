@@ -609,7 +609,7 @@ Assembly examples.
 # c.mva01s07: sreg1 = 0; sreg2 = 0;
 c.mva01s07 s0, s0; # mv a0, s0; mv a1, s0
 # c.mvs07a01: sreg1 = 0; sreg2 = 1;
-c.mvs07a01 s0, s0; # mv s0, a0; mv s1, a1
+c.mvs07a01 s0, s1; # mv s0, a0; mv s1, a1
 ----
 
 === MULI
