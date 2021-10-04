@@ -21,7 +21,7 @@ Encoding (RV32, RV64, RV128)::
 ....
 
 Description::
-This instruction multiplies XLEN bits of the source operands from _rsd'_ and _rs2'_ and writes the lowest XLEN bits of the result to _rsd'_. Both operands are from the 8-register set x8-x15.
+This instruction  multiplies XLEN bits of the source operands from _rsd'_ and _rs2'_ and writes the lowest XLEN bits of the result to _rsd'_. Both operands are from the 8-register set x8-x15.
 
 Prerequisites::
 The C-extension and either M or Zmmul must also be configured.
