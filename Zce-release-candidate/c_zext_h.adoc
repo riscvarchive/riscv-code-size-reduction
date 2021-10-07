@@ -1,5 +1,5 @@
-[#insns-c_zext_h,reftext="Zero extend halfword, 16-bit encoding"]
 <<<
+[#insns-c_zext_h,reftext="Zero extend halfword, 16-bit encoding"]
 === c.zext.h
 
 Synopsis::

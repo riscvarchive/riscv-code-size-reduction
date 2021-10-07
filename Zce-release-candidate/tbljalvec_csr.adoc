@@ -1,0 +1,54 @@
+<<<
+[#csrs-tbljalvec,reftext="tbljalvec CSR, table jump base vector and control register"]
+=== TBLJALVEC CSR
+
+Synopsis::
+Table jump base vector and control register
+
+Address::
+TBD
+
+Permissions::
+URW
+
+Format (RV32, RV64, RV128)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  6, name: 'config',    attr: ['CONFIGURATION'] },
+    { bits: 26, name: 'XLEN-1:6',  attr: ['base[XLEN-1:6]'] },
+],config:{bits:32}}
+....
+
+Description::
+
+_TBLJALVEC.base_ is a virtual address, whenever virtual memory is enabled.
+
+Using _TBLJALVEC.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
+
+The memory pointed to by _TBLJALVEC.base_ only requires eXecute permission. Read/Write access is not required once the jump table/vector 
+table has been configured. If code is to be emulated then Read access is also required, but the table jump instructions themselves don't require this.
+
+[#TBLJALVEC-config-table]
+._TBLJALVEC.config_ definition
+[width="60%",options=header]
+|=============================================================================================
+| TBLJALVEC.config | Comment
+| 000000 | Jump table mode
+| others | *reserved for future standard use*
+|=============================================================================================
+
+_TBLJALVEC.config_ is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to 
+attempt to program different modes and read back the values to see which are available. Jump table mode _must_ be implemented.
+
+Included in::
+[%header,cols="4,2,2"]
+|===
+|Extension
+|Minimum version
+|Lifecycle state
+
+|Zces (<<Zces>>)
+|0.51
+|Plan
+|===

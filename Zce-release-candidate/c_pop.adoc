@@ -1,0 +1,189 @@
+<<<
+[#insns-c_pop,reftext="c.pop: pop registers from the stack, 16-bit encoding"]
+=== c.pop
+
+Synopsis::
+Pop registers, 16-bit encoding
+
+Mnemonic::
+c.pop _{reg_list}, stack_adj_
+
+Encoding (RV32, RV64, RV128)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  2, name: 0x0,      attr: ['OP=C0'] },
+    { bits:  3, name: 'rlist3', attr: ['reg_list'] },
+    { bits:  2, name: 0x2,      attr: []},
+    { bits:  1, name: 'spimm\[4\]',  attr: [] },
+    { bits:  8, name: 0x8f,     attr: ['FUNCT6'] },
+],config:{bits:16}}
+....
+
+[NOTE]
+
+  _spimm0_5_ is only valid for _c.pop_ for values 0-5. Values 6 and 7 map onto _different_ encodings.
+
+Syntax::
+
+[source,sail]
+--
+c.pop {<reg_list_16u> | <xreg_list_16u>}, <stack_adj>
+--
+
+The variables used in the syntax are defined below.
+
+[source,sail]
+--
+<reg_list_16u> ::= <ra> ["," <s0>  | <s0-sN> ] (where N is 1,2,3,5,7,11)
+
+if (<reg_list_16u>=="ra")         <xreg_list_16u>="x1"
+if (<reg_list_16u>=="ra, s0")     <xreg_list_16u>="x1, x8"
+if (<reg_list_16u>=="ra, s0-s1")  <xreg_list_16u>="x1, x8-x9"
+if (<reg_list_16u>=="ra, s0-s2")  <xreg_list_16u>="x1, x8-x9, x18"
+if (<reg_list_16u>=="ra, s0-sN")  <xreg_list_16u>="x1, x8-x9, x18-xM" (where M=N+16 and N is 3,5,7,11)
+
+if (<reg_list_16u>=="ra")          <stack_adj>=[16|32]
+if (<reg_list_16u>=="ra, s0")      <stack_adj>=[16|32]
+if (<reg_list_16u>=="ra, s0-s1")   <stack_adj>=[16|32]
+if (<reg_list_16u>=="ra, s0-s2")   <stack_adj>=[16|32]
+if (<reg_list_16u>=="ra, s0-s3")   <stack_adj>=[32|48]
+if (<reg_list_16u>=="ra, s0-s5")   <stack_adj>=[32|48]
+if (<reg_list_16u>=="ra, s0-s7")   <stack_adj>=[48|64]
+if (<reg_list_16u>=="ra, s0-s11")  <stack_adj>=[64|96]
+--
+
+Description::
+This instruction pop (loads) the registers in _reg_list_ from stack memory, and then adjusts the stack pointer by _stack_adj_. 
+For further information see <<insns-pushpop>>.
+
+<<<
+Field decoding::
+
+The mapping from the _rlist3_ and _spimm0_5_ fields in the encoding are as shown below.
+
+[#c_pop_rlist3_decode]
+._rlist3_ decoding 
+[options="header",width=60%]
+|============================
+|rlist3  |reg_list_16u |stack_adj_base
+|0       |ra           |16
+|1       |ra, s0       |16
+|2       |ra, s0-s1    |16
+|3       |ra, s0-s2    |16
+|4       |ra, s0-s3    |32
+|5       |ra, s0-s5    |32
+|6       |ra, s0-s7    |48
+|7       |ra, s0-s11   |64
+|============================
+
+_stack_adj_base_ covers enough 16-byte blocks of memory to cover the registers in _reg_list_16u_. 
+_spimm_ is used to allocate extra stack space in 16-byte blocks. 
+The total stack adjustment is calculated as shown.
+
+[source,sail]
+--
+stack_adj = stack_adj_base+spimm[4]*16
+--
+
+Prerequisites::
+The C-extension must also be configured.
+
+<<<
+
+Operation::
+[source,sail]
+--
+//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
+
+//RV64/RV128 must have a 16-byte aligned sp
+if (misa.MXL>=2 && sp[3:0]) {take_illegal_instruction_exception();}
+//RV32I might be using the EABI (8-byte alignment) or UABI (16-byte alignment, so in hardware we can only check for 8)
+if (misa.MXL==1 && sp[2:0]) {take_illegal_instruction_exception();}
+
+if (misa.MXL==1) {bytes=4;}
+if (misa.MXL==2) {bytes=8;}
+else             {bytes=16;}
+addr=sp+stack_adjustment-bytes;
+switch(bytes) {
+  4:  asm("lw ra, 0(addr)");
+  8:  asm("ld ra, 0(addr)");
+  16: asm("lq ra, 0(addr)");
+}
+for(i=31;i>=0;i--)  {
+  //if register i is in xreg_list
+  if (xreg_list[i]) {
+    addr-=bytes;
+    switch(bytes) {
+      4:  asm("lw s[i], 0(addr)");
+      8:  asm("ld s[i], 0(addr)");
+      16: asm("lq s[i], 0(addr)");
+    }
+  }
+}
+//The sequence must be uninterruptible from this point
+sp+=stack_adjustment; //increment
+--
+
+<<<
+
+Assembly examples::
+
+[source,sail]
+--
+c.pop   {ra, s0-s7}, 160
+--
+
+Encoding: _rlist3_=6, _spimm[4]_=0
+Equivalent sequence:
+
+[source,sail]
+--
+lw   s7, 44(sp);
+lw   s6, 40(sp);  
+lw   s5, 36(sp);  
+lw   s4, 32(sp);  
+lw   s3, 28(sp);  
+lw   s2, 24(sp);  
+lw   s1, 20(sp);  
+lw   s0, 16(sp);  
+lw   ra, 12(sp);  
+addi sp, sp, 48;
+ret
+--
+
+[source,sail]
+--
+c.pop   {ra, s0-s7}, 160
+--
+
+Encoding: _rlist3_=6, _spimm[4]_=1
+
+Equivalent sequence:
+
+[source,sail]
+--
+lw   s7, 60(sp);
+lw   s6, 56(sp);  
+lw   s5, 52(sp);  
+lw   s4, 48(sp);  
+lw   s3, 44(sp);  
+lw   s2, 40(sp);  
+lw   s1, 36(sp);  
+lw   s0, 32(sp);  
+lw   ra, 28(sp);  
+addi sp, sp, 64;
+ret
+--
+
+Included in::
+[%header,cols="4,2,2"]
+|===
+|Extension
+|Minimum version
+|Lifecycle state
+
+|Zces (<<Zces>>)
+|0.51
+|Plan
+|===

@@ -1,0 +1,166 @@
+<<<
+
+[#insns-tablejump,reftext="Table Jump Instructions"]
+== Table Jump Instructions
+
+These instructions are collectively referred to as table jump: 
+
+* <<#insns-c_tblj>> 
+* <<#insns-c_tbljal>> 
+* <<#insns-c_tbljalm>> 
+
+Common details for these instructions are in this section.
+
+=== Table Jump Overview
+
+Table jump is a form of dictionary compression used to reduce the code size of JAL / AUIPC+JALR / JR / AUIPC+JR instructions.
+
+Function calls and jumps to fixed labels typically take 32-bit or 64-bit instruction sequences.
+
+This example uses GCC10 output:
+
+[source,SAIL]
+----
+00e084be <function>:
+  #64-bit AUIPC/JALR sequence
+  e084be:	001f8317            auipc t1,0x1f8
+  e084c2:	18a302e7            jalr  t0,394(t1) # 1000648 <__riscv_save_0>
+  
+  e084c6:	86b2                mv    a3,a2
+  e084c8:	862e                mv    a2,a1
+  e084ca:	800005b7            lui   a1,0x80000
+  e084ce:	fff5c593            not   a1,a1
+  
+  #32-bit JAL
+  e084d2:	f61ff0ef            jal   ra,e08432 <function2> 
+  
+  #64-bit AUIPC/JALR sequence
+  e084d6:	001f8317            auipc t1,0x1f8
+  e084da:	19630067            jr    406(t1) # 100066c <__riscv_restore_0>
+----
+
+using Table Jump we can reduce this as follows (accepting gaps in the PCs as code has been deleted)
+
+[source,SAIL]
+----
+00e084be <vsprintf>:
+  e084be:	<16-bit>            tbljalm #x ;#<maps to __riscv_save_0>
+  
+  e084c6:	86b2                mv     a3,a2
+  e084c8:	862e                mv     a2,a1
+  e084ca:	800005b7            lui	   a1,0x80000
+  e084ce:	fff5c593            not	   a1,a1
+  
+  e084d2:	<16-bit>            tbljal #y ;#<maps to function2>
+  
+  e084da:	<16-bit>            tblj   #z ;#<maps to __riscv_restore_0>
+----
+
+There is a single lookup table of up to 256 addresses for Table Jump, which is built by the linker. The linker then substitutes the code as shown in the example above where the 32-byte function is reduced to 18-bytes giving ~ 56% saving. Clearly the lookup table takes some space, but this is a minimal overhead for repeated functions such as the save/restore routines. 
+
+Table jump allows the linker to:
+
+* replace 32-bit J calls with C.TBLJ
+* replace 32-bit JAL ra calls with C.TBLJAL
+* replace 32-bit JAL t0 calls with C.TBLJALM (M for Millicode)
+* replace 64-bit AUIPC/JR calls to fixed locations with C.TBLJ
+* replace 64-bit AUIPC/JALR ra calls to fixed locations with C.TBLJAL
+* replace 64-bit AUIPC/JALR t0 calls to fixed locations with C.TBLJALM
+** The AUIPC+JR/JALR sequence is used because the offset from the PC is out of the ±1MB range.
+
+=== TBLJALVEC
+
+The base of the table is in the TBLJALVEC CSR (see <<csrs-tbljalvec>>), each table entry is XLEN bits.
+
+The table entry number is from the _index8_ field in the encoding, which controls the link register.
+
+* C.TBLJALM: entries 0-7,    link to _t0_
+* C.TBLJ   : entries 8-63,   link to _zero_
+* C.TBLJAL : entries 64-255, link to _ra_
+
+Note that the LSB of every jump table entry is _ignored_ which matches standard JALR behaviour.
+
+If the same function is called with and without linking then it must have two entries in the table. 
+This case does happen in practice but only affects a small number of entries so it does not waste much space in the table. It is typically caused by the same function being called with and without tail calling.
+
+[#tablejump-algorithm]
+=== Recommended algorithm for allocating entries in the jump table
+
+Calls to each function are categorised as shown in <<tablejump-savings>>.
+
+[#tablejump-savings]
+.Table jump code size saving for each function call replacement
+[width="100%",options=header]
+|=======================================================================================================================
+| original sequence | Table Jump saving  
+| J                 | A*2-(XLEN/8) bytes 
+| AUIPC+JR          | B*6-(XLEN/8) bytes 
+| JAL ra            | C*2-(XLEN/8) bytes 
+| AUIPC+JALR ra     | D*6-(XLEN/8) bytes 
+| JAL t0            | E*2-(XLEN/8) bytes 
+| AUIPC+JALR t0     | F*6-(XLEN/8) bytes 
+|=======================================================================================================================
+
+Each function is called by using one of the three link registers. The total saving per function is calculated by counting the number of calls and adding up the total saving from each replacement of the existing sequence with a Table Jump instruction, as follows:
+[source,sourceCode,text]
+----
+saving_per_function_c_tblj    = A * 2 + B * 6 - 2*(XLEN-8)
+saving_per_function_c_tbljal  = C * 2 + D * 6 - 2*(XLEN-8)
+saving_per_function_c_tbljalm = E * 2 + F * 6 - 2*(XLEN-8)
+----
+
+The functions are sorted so that the one with the highest saving is in table entry 0, the second highest in entry 1 etc. for that encoding.
+
+[NOTE]
+
+  This algorithm assumes that each function is only called with one link register. If the same function is called with more than one link register, then it must have two entries in the table.
+
+This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. Only caching a few entries will greatly improve the performance.
+
+[#tablejump-fault-handling]
+=== Table Jump Fault handling
+
+Table Jump involves two instruction fetches from a single instruction, and either fetch can cause a fault.
+
+The sequence required to execute the table jump instruction may be interrupted, or may not be able to start execution for several reasons.
+
+* virtual memory page fault or PMP fault
+** these can be detected before execution, or during execution if the memory addresses cross a page/PMP boundary
+** MTVAL is set to any address which causes the fault
+* watchpoint trigger
+** these can be detected before execution, or during execution depending on the trigger type (load data triggers require the sequence to have started executing, for example)
+** MTVAL is set to any address which causes the fault
+* external debug halt
+** the halt can treat the whole sequence atomically, or interrupt mid sequence (implementation defined)
+* debug halt caused by a trigger
+** same comment as watchpoint trigger above
+* load access fault
+** these are detected while the sequence is executing
+** MTVAL is set to the fault address.
+* store access fault (precise or imprecise)
+** these may be detected while the sequence is executing, or afterwards if imprecise
+** MTVAL is set to the fault address.
+* interrupts
+** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
+
+In all case MEPC contain the PC of the table jump instruction, and MCAUSE is set as expected for the type of fault.
+
+For debug halts DPC is set to the PC of the table jump instruction.
+
+This seciton gives an overview of the behaviour, the exact operation is documented in the SAIL code for each instruction
+
+* <<insn-c_tbljalm-SAIL>>
+* <<insn-c_tbljal-SAIL>>
+* <<insn-c_tblj-SAIL>>
+
+Included in::
+[%header,cols="4,2,2"]
+|===
+|Extension
+|Minimum version
+|Lifecycle state
+
+|Zces (<<#zces>>)
+|0.51
+|Plan
+|===
