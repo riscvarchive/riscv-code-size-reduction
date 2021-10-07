@@ -41,6 +41,14 @@ table has been configured. If code is to be emulated then Read access is also re
 _TBLJALVEC.config_ is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to 
 attempt to program different modes and read back the values to see which are available. Jump table mode _must_ be implemented.
 
+Architectural State::
+
+TBLJALVEC adds architectural state to the context, therefore must be saved/restore on context switch. 
+
+Additional architectural state requires a state enable to be allocated. 
+Accesses when the state is disabled will throw an illegal instruction exception.
+The state enable is not specified in this document.
+
 Included in::
 [%header,cols="4,2,2"]
 |===

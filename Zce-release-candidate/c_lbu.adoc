@@ -6,34 +6,27 @@ Synopsis::
 Load unsigned byte, 16-bit encoding
 
 Mnemonic::
-c.lbu _rd'_, _uimm_(_rs1'_)
+c.lbu _rd'_, _uimm_(_rs1''_)
 
 Encoding (RV32, RV64, RV128)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x0, attr: ['C1'] },
+    { bits:  2, name: 0x0, attr: ['C0'] },
     { bits:  3, name: 'rd\'' },
-    { bits:  2, name: 'uimm[2,1]' },
-    { bits:  3, name: 'rs1\'' },
-    { bits:  2, name: 'uimm[0,3]' },
-    { bits:  1, name: 0x0, attr: ['TBD'] },
+    { bits:  2, name: 'uimm[2:1]' },
+    { bits:  3, name: 'rs1\'\'' },
+    { bits:  2, name: 'uimm[0|3]' },
+    { bits:  1, name: 0x0 },
     { bits:  3, name: 0x1, attr: ['FUNCT3'] },
 ],config:{bits:16}}
 ....
 
-
-.Encoding (RV32, RV64, RV128) as wavedrom doesn't render on github
-[width="100%",options=header]
-|=============================================================================================
-| 15 | 14 | 13 | 12 | 11 | 10 | 9 | 8 | 7 | 6  | 5  | 4 | 3 | 2 | 1 | 0 |name 
-3+|  001       |0 2+|uimm[0,3] 3+| rs1' 2+|uimm[2:1] 3+|rd'   2+| 00    | C.LBU
-|=============================================================================================
-
-
 Description::
-This instruction loads a byte from the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. The resulting byte is zero extended to XLEN bits and is written to _rd'_. 
-Both operands are from the 8-register set x8-x15.
+This instruction loads a byte from the memory address formed by adding _rs1''_ to the zero extended immediate _uimm_. The resulting byte is zero extended to XLEN bits and is written to _rd'_. 
+
+[NOTE]
+  _rd'_ is from the standard 8-register set x8-x15. _rs1''_ replaces x12 (a2) with x2 (sp) for additional code size saving. Therefore the 8-register set is x8-x11,x2,x13-x15.
 
 Prerequisites::
 The C-extension. This encoding conflicts with the D-extension, but there is no conflict with Zdinx if double-precision arithmetic is required.
@@ -41,7 +34,11 @@ The C-extension. This encoding conflicts with the D-extension, but there is no c
 Operation::
 [source,sail]
 --
-<non-trivial code - needs linking to SAIL model>
+//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
+
+rd    = encoding[9:7]+8;
+rs1   = encoding[4:2]==4 ? 2 : 8+encoding[4:2];
+X(rd) = zext(mem[X(rs1)+zext(imm)][7:0]);
 --
 
 Included in::
@@ -52,6 +49,6 @@ Included in::
 |Lifecycle state
 
 |Zceb (<<#zceb>>)
-|0.41.8
+|0.51
 |Plan
 |===

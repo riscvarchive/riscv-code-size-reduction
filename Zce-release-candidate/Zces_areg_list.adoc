@@ -23,14 +23,14 @@ tblj, tbljal, tbljalm all require <<#csrs-tbljalvec>>.
 |&#10003;
 |&#10003;
 |&#10003;
-|c.push {reg_list}, -sp_adj
-|<<#insns-c_push>> 
+|c.push {reg_list}, {areg_list}, -sp_adj
+|<<#insns-c_push_areg_list>> 
 
 |&#10003;
 |&#10003;
 |&#10003;
-|push {reg_list}, -sp_adj
-|<<#insns-push>> 
+|push {reg_list}, {areg_list}, -sp_adj
+|<<#insns-push_areg_list>> 
 
 |&#10003;
 |&#10003;
@@ -80,16 +80,10 @@ tblj, tbljal, tbljalm all require <<#csrs-tbljalvec>>.
 |c.mva01s07 sreg1, sreg2
 |<<#insns-c_mva01s07>> 
 
-|&#10003;
-|&#10003;
-|&#10003;
-|c.mvs07a01 sreg1, sreg2
-|<<#insns-c_mvs07a01>> 
-
 |===
 
-include::c_push.adoc[]
-include::push.adoc[]
+include::c_push_areg_list.adoc[]
+include::push_areg_list.adoc[]
 include::c_popret.adoc[]
 include::popret.adoc[]
 include::c_pop.adoc[]
@@ -100,5 +94,5 @@ include::c_tbljalm.adoc[]
 include::tbljalvec_csr.adoc[]
 include::c_mva01s07.adoc[]
 include::c_mvs07a01.adoc[]
-include::pushpop.adoc[]
+include::pushpop_areg.adoc[]
 include::tablejump.adoc[]

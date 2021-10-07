@@ -78,7 +78,9 @@ The mapping from the _rlist3_ and _spimm0_5_ fields in the encoding are as shown
 |============================
 
 _stack_adj_base_ covers enough 16-byte blocks of memory to cover the registers in _reg_list_16u_. 
+
 _spimm_0_5_ is used to allocate extra stack space in 16-byte blocks. 
+
 The total stack adjustment is calculated as shown.
 
 [source,sail]
