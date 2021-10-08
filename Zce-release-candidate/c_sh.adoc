@@ -6,7 +6,7 @@ Synopsis::
 Store byte, 16-bit encoding
 
 Mnemonic::
-c.sh _r2'_, _uimm_(_rs1'_)
+c.sh _r2'_, _uimm_(_rs1''_)
 
 Encoding (RV32, RV64, RV128)::
 [wavedrom, svg]
@@ -49,6 +49,6 @@ Included in::
 |Lifecycle state
 
 |Zceb (<<#zceb>>)
-|0.41.8
+|0.51
 |Plan
 |===
