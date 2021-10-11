@@ -13,14 +13,14 @@ Encoding (RV32, RV64, RV128)::
 ....
 {reg:[
     { bits:  2, name: 0x0,      attr: ['OP=C0'] },
-    { bits:  8, name: 'index8', attr: ['index8>=8, index8<64'] },
+    { bits:  8, name: 'index8', attr: ['index8<64'] },
     { bits:  6, name: 0x22,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
 ....
 
 [NOTE]
 
-  For this encoding to decode as _TBLJ_, _index8>=8 && index8<64_ otherwise it's a _different_ encoding
+  For this encoding to decode as _TBLJ_, index8<64_ otherwise it's a _different_ encoding
 
 Syntax::
 
@@ -113,6 +113,6 @@ Included in::
 |Lifecycle state
 
 |Zces (<<Zces>>)
-|0.51
+|0.52
 |Plan
 |===

@@ -1,5 +1,5 @@
 [#Zces]
-==== Zces 0.51
+==== Zces 0.52
 
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
@@ -10,7 +10,7 @@ All 16-bit encodings are currently reserved for all architectures, and have no c
 
 *All 32-bit encodings have yet to be allocated.*
 
-tblj, tbljal, tbljalm all require <<#csrs-tbljalvec>>.
+tblj and tbljal require <<#csrs-tbljalvec>>.
 
 [%header,cols="^1,^1,^1,4,8"]
 |===
@@ -71,12 +71,6 @@ tblj, tbljal, tbljalm all require <<#csrs-tbljalvec>>.
 |&#10003;
 |&#10003;
 |&#10003;
-|tbljalm #index
-|<<#insns-c_tbljalm>> 
-
-|&#10003;
-|&#10003;
-|&#10003;
 |c.mva01s07 sreg1, sreg2
 |<<#insns-c_mva01s07>> 
 
@@ -90,7 +84,6 @@ include::c_pop.adoc[]
 include::pop.adoc[]
 include::c_tblj.adoc[]
 include::c_tbljal.adoc[]
-include::c_tbljalm.adoc[]
 include::tbljalvec_csr.adoc[]
 include::c_mva01s07.adoc[]
 include::c_mvs07a01.adoc[]
