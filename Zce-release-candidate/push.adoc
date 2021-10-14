@@ -1,12 +1,12 @@
 <<<
-[#insns-push,reftext="push: push registers to stack memory, 32-bit encoding"]
+[#insns-push_areg_list,reftext="push: push registers to stack memory, 32-bit encoding"]
 === push
 
 Synopsis::
 Push registers to stack memory, 32-bit encoding
 
 Mnemonic::
-push _{reg_list}, -stack_adj_
+push _{reg_list}, {<areg_list>}, -stack_adj_
 
 Encoding (RV32, RV64, RV128)::
 [wavedrom, , svg]
@@ -17,7 +17,8 @@ Encoding (RV32, RV64, RV128)::
     { bits:  3, name: 'TBD',          attr: ['funct3']},
     { bits:  1, name: 'TBD',          attr: []},
     { bits:  4, name: 'rlist_0_12',   attr: ['reg_list'] },
-    { bits: 12, name: 'TBD',          attr: ['FUNCT6'] },
+    { bits:  1, name: 'areg',         attr: [] },
+    { bits: 11, name: 'TBD',          attr: ['FUNCT6'] },
 ],config:{bits:32}}
 ....
 
@@ -29,7 +30,7 @@ Syntax::
 
 [source,sail]
 --
-push {<reg_list_32u> | <xreg_list_32u>}, -<stack_adj>
+push {<reg_list_32u> | <xreg_list_32u>}, {<areg_list>}, -<stack_adj>
 --
 
 The variables used in the syntax are defined below.
@@ -44,6 +45,10 @@ if (<reg_list_32u>=="ra, s0-s1")  <xreg_list_32u>="x1, x8-x9"
 if (<reg_list_32u>=="ra, s0-s2")  <xreg_list_32u>="x1, x8-x9, x18"
 if (<reg_list_32u>=="ra, s0-sN")  <xreg_list_32u>="x1, x8-x9, x18-xM" (where M=N+16 and N is 3-11)
 
+if (<reg_list_32u>=="ra")          <areg_list>=""
+if (<reg_list_32u>=="ra, s0")      <areg_list>="" | "a0"
+if (<reg_list_32u>=="ra, s0-sN")   <areg_list>="" | "a0-aP" (where N is 1-11; if (N<4) P=N; else P=3;)
+
 if (<reg_list_32u>=="ra")          <stack_adj>=[16|32|..|512]
 if (<reg_list_32u>=="ra, s0")      <stack_adj>=[16|32|..|512]
 if (<reg_list_32u>=="ra, s0-sN")   <stack_adj>=[16|32|..|512] (where N is 1,2)
@@ -57,34 +62,31 @@ This instruction pushes (stores) the registers in _reg_list_ to stack memory, an
 For further information see <<insns-pushpop>>.
 
 Prerequisites::
-The C-extension must also be configured.
-
-<<<
-
+None
 
 Field decoding::
 
 The mapping from the _rlist_ and _spimm_ fields in the encoding are as shown below.
 
-[#push_rlist_decode]
+[#push_areg_list_rlist_decode]
 ._rlist_ decoding 
 [options="header",width=60%]
-|============================
-|rlist3  |reg_list_32u |stack_adj_base
-|0       |ra           |16
-|1       |ra, s0       |16
-|2       |ra, s0-s1    |16
-|3       |ra, s0-s2    |16
-|4       |ra, s0-s3    |32
-|5       |ra, s0-s4    |32
-|6       |ra, s0-s5    |32
-|7       |ra, s0-s6    |32
-|8       |ra, s0-s7    |48
-|9       |ra, s0-s8    |48
-|10      |ra, s0-s9    |48
-|11      |ra, s0-s10   |48
-|12      |ra, s0-s11   |64
-|============================
+|======================================
+|rlist_0_12 |reg_list_32u |stack_adj_base 
+|0          |ra           |16             
+|1          |ra, s0       |16             
+|2          |ra, s0-s1    |16             
+|3          |ra, s0-s2    |16             
+|4          |ra, s0-s3    |32             
+|5          |ra, s0-s4    |32             
+|6          |ra, s0-s5    |32             
+|7          |ra, s0-s6    |32             
+|8          |ra, s0-s7    |48             
+|9          |ra, s0-s8    |48             
+|10         |ra, s0-s9    |48             
+|11         |ra, s0-s10   |48             
+|12         |ra, s0-s11   |64             
+|======================================
 
 _stack_adj_base_ covers enough 16-byte blocks of memory to cover the registers in _reg_list_32u_. 
 _spimm_ is used to allocate extra stack space in 16-byte blocks. 
@@ -94,6 +96,20 @@ The total stack adjustment is calculated as shown.
 --
 stack_adj = stack_adj_base+spimm[8:4]*16
 --
+
+[#push_areg_list_decode]
+._areg_list_ decoding 
+[options="header",width=60%]
+|================================================
+|rlist_0_12  2+|areg_list
+|        |areg=0        |areg=1
+|0       |""            |""
+|1       |""            |a0
+|2       |""            |a0-a1
+|3       |""            |a0-a2
+|4-12    |""            |a0-a3
+|================================================
+
 
 Prerequisites::
 The C-extension must also be configured.
@@ -131,6 +147,11 @@ for(i=31;i>=0;i--)  {
   }
 }
 //The sequence must be uninterruptible from this point
+if (areg_list[a0]) asm("mv s0, a0");
+if (areg_list[a1]) asm("mv s1, a1");
+if (areg_list[a2]) asm("mv s2, a2");
+if (areg_list[a3]) asm("mv s3, a3");
+  
 sp+=stack_adjustment; //decrement
 --
 
@@ -140,10 +161,10 @@ Assembly examples::
 
 [source,sail]
 ----
-push  {ra, s0-s4}, -528
+push  {ra, s0-s4}, {a0-a3}, -528
 ----
 
-Encoding: _rlist_=5, _spimm0_5[8:4]_=0x1f
+Encoding: _rlist_=5, _spimm0_5[8:4]_=0x1f, _areg_=1
 
 Equivalent sequence:
 
@@ -155,15 +176,19 @@ sw  s2, -12(sp);
 sw  s1, -16(sp); 
 sw  s0, -20(sp);
 sw  ra, -24(sp); 
+mv  s0, a0
+mv  s1, a1
+mv  s2, a2
+mv  s3, a3
 addi sp, sp, -528;
 ----
 
 [source,sail]
 ----
-push {ra, s0-s3}, -32
+push {ra, s0-s3}, {}, -32
 ----
 
-Encoding: _rlist3_=2, _spimm[8:4]_=1
+Encoding: _rlist3_=2, _spimm[8:4]_=1, _areg_=0
 
 Equivalent sequence:
 

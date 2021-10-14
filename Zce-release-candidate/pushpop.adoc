@@ -5,8 +5,8 @@
 
 These instructions are collectively referred to as PUSH/POP: 
 
-* <<#insns-c_push>> 
-* <<#insns-push>> 
+* <<#insns-c_push_areg_list>> 
+* <<#insns-push_areg_list>> 
 * <<#insns-c_popret>> 
 * <<#insns-popret>> 
 * <<#insns-c_pop>> 
@@ -20,12 +20,18 @@ The term POPRET refers to both 16 and 32-bit encodings of POPRET (C.POPRET, POPR
 
 Common details for these instructions are in this section.
 
+[NOTE]
+
+  This version does not fully include _areg_list_ and will need to be updated if it's included in _push/c.push_.
+
 === PUSH/POP overview
 
 PUSH, POP, POPRET along with the 16-bit forms are used to reduce the size of function prologues and epilogues.
 
 . The PUSH instruction 
 ** pushes(stores)  the registers specified in _reg_list_ to the stack
+** if _areg_list_ is included, moves the registers in the _areg_list_ into _s_ registers
+*** _areg_list_ is determined automatically from _rlist_, it cannot be arbitrarily specified. The definition is in <<#insns-c_push_areg_list>>  and <<#insns-push_areg_list>> ;
 ** adjusts the stack pointer by the _stack_adjustment_ 
 
 . The POP instruction 
@@ -50,36 +56,36 @@ int function(void *buf, size_t len)
 
 compiles with GCC10 to:
 
-[source,sourceCode,text]
+[source,SAIL]
 ----
 20405458 <function>:
-20405458: 1141                addi sp,sp,-16    ;#PUSH(1)
-2040545a: c04a                sw   s2,0(sp)     ;#PUSH(2)
+20405458: 1141                addi sp,sp,-16	;#PUSH(1)
+2040545a: c04a                sw   s2,0(sp)	    ;#PUSH(2)
 ...
-20405464: c422                sw   s0,8(sp)     ;#PUSH(3)
-20405466: c226                sw   s1,4(sp)     ;#PUSH(4)
-20405468: c606                sw   ra,12(sp)    ;#PUSH(5)
-2040546a: 842a                mv   s0,a0        
-2040546c: 84ae                mv   s1,a1        
+20405464: c422                sw   s0,8(sp)	    ;#PUSH(3)
+20405466: c226                sw   s1,4(sp)	    ;#PUSH(4)
+20405468: c606                sw   ra,12(sp)	;#PUSH(5)
+2040546a: 842a                mv   s0,a0		;#PUSH(6)
+2040546c: 84ae                mv   s1,a1		;#PUSH(7)
 <function body>
-20405494: 4501                li   a0,0         ;#POPRET(1)
-20405496: 40b2                lw   ra,12(sp)    ;#POPRET(2)
-20405498: 4422                lw   s0,8(sp)     ;#POPRET(3)
-2040549a: 4492                lw   s1,4(sp)     ;#POPRET(4)
-2040549c: 4902                lw   s2,0(sp)     ;#POPRET(5)
-2040549e: 0141                addi sp,sp,16     ;#POPRET(6)
+20405494: 4501                li   a0,0		    ;#POPRET(1)
+20405496: 40b2                lw   ra,12(sp)	;#POPRET(2)
+20405498: 4422                lw   s0,8(sp)	    ;#POPRET(3)
+2040549a: 4492                lw   s1,4(sp)	    ;#POPRET(4)
+2040549c: 4902                lw   s2,0(sp)	    ;#POPRET(5)
+2040549e: 0141                addi sp,sp,16	    ;#POPRET(6)
 204054a0: 8082                ret               ;#POPRET(7)
 ----
 
 with the GCC option _-msave-restore_ the output is the following:
 
-[source,sourceCode,text]
+[source,SAIL]
 ----
 204089ac <function>:
 204089ac: f97f72ef            jal  t0,20400942 <__riscv_save_0> ;#PUSH(1)
 ...
-204089b8: 842a                mv   s0,a0                        
-204089ba: 84ae                mv   s1,a1                        
+204089b8: 842a                mv   s0,a0                        ;#PUSH(2)
+204089ba: 84ae                mv   s1,a1                        ;#PUSH(3)
 <function_body>
 204089e2: 4501                li   a0,0                         ;#POPRET(1)
 204089e4: f83f706f            j    20400966 <__riscv_restore_0> ;#POPRET(2)
@@ -87,18 +93,16 @@ with the GCC option _-msave-restore_ the output is the following:
 
 with PUSH/POPRET this reduces to
 
-[source,sourceCode,text]
+[source,SAIL]
 ----
 20405458 <function>:
-20405458: <16-bit>            push   {ra,s0-s2},-16
-204089b8: 842a                mv   s0,a0                        
-204089ba: 84ae                mv   s1,a1                        
+20405458: <16-bit>            push   {ra,s0-s2},{a0-a2},-16
 <function body>           
 20405496: <16-bit>            popret {ra,s0-s2},{0}, 16
 
 ----
 
-The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes with _-msave-restore_, and to 8-bytes with PUSH and POPRET. As well as reducing the code-size PUSH and POPRET eliminate the branches from calling the millicode _save/restore_ routines so also perform better. 
+The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes with _-msave-restore_, and to 4-bytes with PUSH and POPRET. As well as reducing the code-size PUSH and POPRET eliminate the branches from calling the millicode _save/restore_ routines so also perform better. 
   
 [NOTE]
 
@@ -106,7 +110,198 @@ The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes w
 
 [NOTE]
 
+  The C.PUSH has an additional register move included _mv s2, a2_ which wasn't in the original prologue. This is included to simplify the encoding and definition of C.PUSH/PUSH and will cost some performance.
+
+[NOTE]
+
   POP is used for tail-calling which is not included in this example.
+
+[#pushpop-areg-list]
+
+=== Compiler implementation
+
+The technique used in the initial implementation in LLVM is to let the compiler generate the function prologue and epilogue, 
+and then replace the instruction sequences with the relevant _push/pop_ instructions.
+
+==== _reg_list_ handling
+
+The actual saved/restored register list generated by the compiler may mismatch lists available in the 16-bit encodings. The number of occurances of this have been
+minimised during benchmarking, but cases will still occur.
+
+When compiling with -Os/-Oz the compiler should add one or more registers and use the next shortest register list, even though this will cost performance and memory. 
+Rounding up the register list is similar to the technique used for _-msave-restore_ which saves/restores registers in groups of 4 only.
+
+=== _areg_list_ handling
+
+_c.push_ includes _areg_list_, and _push_ optionally includes it. 
+
+=== Example: _c.push_ fits perfectly
+
+In this real world example generated by GCC10, _c.push_ fits perfectly.
+
+[source,SAIL]
+----
+00e010b8 <function>:
+  e010b8:       1141                    addi    sp,sp,-16 ; C.PUSH
+  e010ba:       c422                    sw      s0,8(sp)  ; C.PUSH
+  e010bc:       c226                    sw      s1,4(sp)  ; C.PUSH
+  e010be:       c04a                    sw      s2,0(sp)  ; C.PUSH
+  e010c0:       c606                    sw      ra,12(sp) ; C.PUSH
+  e010c2:       842a                    mv      s0,a0     ; C.PUSH
+  e010c4:       84ae                    mv      s1,a1     ; C.PUSH
+  e010c6:       4908                    lw      a0,16(a0)
+  e010c8:       4d8c                    lw      a1,24(a1)
+  e010ca:       8932                    mv      s2,a2     ; C.PUSH
+  e010cc:       726040ef                jal     ra,e057f2 <function2>
+----
+
+this is replaced by
+
+[source,SAIL]
+----
+00e010b8 <function1>:
+  e010b8:       xxxx                    c.push {ra,s0-s2}, {a0-a2}, -16
+  e010c6:       4908                    lw      a0,16(a0)
+  e010c8:       4d8c                    lw      a1,24(a1)
+  e010cc:       726040ef                jal     ra,e057f2 <function2>
+----
+
+=== Example: _reg_list_ doesn't fit, _areg_list_ doesn't fit
+
+In this other real world example _areg_list_ doesn't fit:
+
+[source,SAIL]
+----
+00e01126 <function3>:
+  e01126:       1101                    addi    sp,sp,-32
+  e01128:       ce06                    sw      ra,28(sp)
+  e0112a:       cc22                    sw      s0,24(sp)
+  e0112c:       ca26                    sw      s1,20(sp)
+  e0112e:       c84a                    sw      s2,16(sp)
+  e01130:       c64e                    sw      s3,12(sp)
+  e01132:       c452                    sw      s4,8(sp)
+  e01134:       c256                    sw      s5,4(sp)
+  e01136:       c05a                    sw      s6,0(sp)
+  e01138:       0e050363                beqz    a0,e0121e <function3+0xf8>
+  e0113c:       8a2a                    mv      s4,a0
+  e0113e:       852e                    mv      a0,a1
+  e01140:       89ae                    mv      s3,a1
+----
+
+In this case, the required _reg_list_ is not supported _and_ the move instructions are not part of the same basic block, 
+therefore compiling at -Os/-Oz would give:
+
+[source,SAIL]
+----
+00e01126 <function4>:
+  e01126:       xxxx                    c.push {ra,s0-s7}, {a0-a3}, -32 ; include saving s7 and moving {a0-a3} into {s0-s3}
+  e01138:       0e050363                beqz    a0,e0121e <function4+0xf8>
+  e0113c:       8a2a                    mv      s4,a0
+  e0113e:       852e                    mv      a0,a1
+  e01140:       89ae                    mv      s3,a1
+----
+
+Compiling for performance would use _push_ which perfectly fits the requirement but produces larger code:
+
+[source,SAIL]
+----
+00e01126 <function4>:
+  e01126:       xxxxxxxx                push {ra,s0-s6}, {}, -32 
+  e01138:       0e050363                beqz    a0,e0121e <function4+0xf8>
+  e0113c:       8a2a                    mv      s4,a0
+  e0113e:       852e                    mv      a0,a1
+  e01140:       89ae                    mv      s3,a1
+----
+
+=== Example: _areg_list_ needs register allocation changes
+
+The next case is where none of the register moves match the _areg_list_ moves because the register allocator in the compiler did not allocate suitable registers:
+
+[source,SAIL]
+----
+00e01842 <function5>:
+
+  e01e7e:       1101                    addi    sp,sp,-32
+  e01e80:       cc22                    sw      s0,24(sp)
+  e01e82:       c84a                    sw      s2,16(sp)
+  e01e84:       c64e                    sw      s3,12(sp)
+  e01e86:       c452                    sw      s4,8(sp)
+  e01e88:       c256                    sw      s5,4(sp)
+  e01e8a:       ce06                    sw      ra,28(sp)
+  e01e8c:       ca26                    sw      s1,20(sp)
+  e01e8e:       892a                    mv      s2,a0
+  e01e90:       89ae                    mv      s3,a1
+  e01e92:       8a32                    mv      s4,a2
+  e01e94:       8ab6                    mv      s5,a3
+  e01e96:       3f41                    jal     e01e26 <function6>
+----
+
+With _c.push_ this becomes:
+
+[source,SAIL]
+----
+e01e7e <function5>:
+  e01e7e:       1101                    c.push {ra,s0-s5}, {a0-a3}, -32; includes moving {a0-a3} into {s0-s3}
+  e01e8e:       892a                    mv      s2,a0; <-- switch dest to s0
+  e01e90:       89ae                    mv      s3,a1; <-- switch dest to s1
+  e01e92:       8a32                    mv      s4,a2; <-- switch dest to s2
+  e01e94:       8ab6                    mv      s5,a3; <-- switch dest to s3
+  e01e96:       3f41                    jal     e01e26 <function6>
+----
+
+In this case all four moves can be deleted if the register allocation can be altered.
+
+=== Example: _areg_list_ partially fits
+
+In this final case, one register move can be deleted and one must be retained unless the register allocation can be changed.
+
+[source,SAIL]
+----
+00e02368 <function7>:
+  e02368:       1141                    addi    sp,sp,-16
+  e0236a:       c226                    sw      s1,4(sp)
+  e0236c:       03450493                addi    s1,a0,52
+  e02370:       c422                    sw      s0,8(sp)
+  e02372:       842a                    mv      s0,a0; <-- matches areg_list - delete
+  e02374:       8526                    mv      a0,s1; <-- doesn't fit areg_list
+  e02376:       c04a                    sw      s2,0(sp)
+  e02378:       c606                    sw      ra,12(sp)
+  e0237a:       892e                    mv      s2,a1; <-- switch dest to s1
+  e0237c:       df3fd0ef                jal     ra,e0016e <function8>
+----
+
+[source,SAIL]
+----
+00e02368 <function7>:
+  e02368:       xxxx                    c.push {ra,s0-s2}, {a0-a2}, -16
+  e0236c:       03450493                addi    s1,a0,52
+  e02374:       8526                    mv      a0,s1; <-- doesn't fit areg_list
+  e0237a:       892e                    mv      s2,a1; <-- switch dest to s1
+  e0237c:       df3fd0ef                jal     ra,e0016e <function8>
+----
+
+In this case one move is deleted, but one remains because unless the target register can be reallocated.
+
+For the smallest code-size the compiler should reallocate the target registers so that the moves in _areg_list_ are not wasted.
+
+=== Compiling PUSH/POP for size or performance
+
+As mentioned above, there are cases where there are choices about whether to select the 16-bit or 32-bit encoding. 
+The 32-bit encodings offer a smaller stack adjustment range than using a 16-bit encoding and an additional C.ADDI16SP instruction. 
+Therefore using the 32-bit encoding will not reduce the code size if the stack adjustment is out of range of the 16-bit encoding.
+
+The main performance/code-size trade-offs are
+
+* whether _reg_list_ is available in the 16-bit encodings matches the required list, and so whether extra registers are included by the 16-bit encoding
+* whether _areg_list_ includes redundant moves
+
+The recommendation is that the 32-bit encoding should be selected only if compiling for performance and either
+
+* _reg_list_ is not available in the 16-bit encoding
+* _areg_list_ includes redundant moves
+
+In addition, for POPRET, the 32-bit encoding allows more return values than the 16-bit encoding. 
+Therefore the recommendation is that the 32-bit encoding should be selected if the 32-bit encoding allows the required return value.
 
 [#pushpop-fault-handling]
 === PUSH/POP Fault handling
@@ -163,7 +358,7 @@ For example:
 
 [source,sail]
 --
-c.push  {ra, s0-s5}, -64
+c.push  {ra, s0-s5}, {a0-a3}, -64
 --
 
 Appears to software as:
@@ -179,7 +374,11 @@ sw  s1,-20(sp);
 sw  s0,-24(sp);   
 sw  ra,-28(sp);   
 
-# this must only execute once, and will only execute after all stores complete sucessfully
+# these must only execute once, and will only execute after all stores complete sucessfully
+mv   s0, a0
+mv   s1, a1
+mv   s2, a2
+mv   s3, a3
 addi sp, sp, -64; 
 --
 
@@ -257,16 +456,6 @@ By following these rules memory accesses will only ever be issued once, and in t
 
 It is possible for implementations to follow these restricted rules and to safely access both types of memory. 
 It is also possible for an implementation to use PMAs to detect the memory type and apply different rules, such as only allowing interrupts if accessing cacheable memory, for example.
-
-=== Compiling PUSH/POP for size or performance
-
-There are cases where there are choices about whether to select the 16-bit or 32-bit encoding. The 32-bit encodings offer a smaller stack adjustment range than using a 16-bit encoding and an additional C.ADDI16SP instruction. Therefore using the 32-bit encoding will not reduce the code size if the stack adjustment is out of range of the 16-bit encoding.
-
-The main performance/code-size trade-off comes from whether the register list available in the 16-bit encodings matches the required list, and so whether extra registers are included by the 16-bit encoding.
-
-The recommendation is that the 32-bit encoding should be selected only if compiling for performance and the register list is not available in the 16-bit encoding.
-
-In addition, for POPRET, the 32-bit encoding allows more return values than the 16-bit encoding. Therefore the recommendation is that the 32-bit encoding should be selected if the 32-bit encoding allows the required return value.
 
 
 Included in::

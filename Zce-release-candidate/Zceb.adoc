@@ -11,37 +11,37 @@
 |&#10003;
 |&#10003;
 |&#10003;
-|c.lbu _rd'_, uimm(_rs1''_)
+|c.lbu _rd'_, uimm(_rs1'_)
 |<<#insns-c_lbu>>
 
 |&#10003;
 |&#10003;
 |&#10003;
-|c.lb _rd'_, uimm(_rs1''_)
+|c.lb _rd'_, uimm(_rs1'_)
 |<<#insns-c_lb>>
 
 |&#10003;
 |&#10003;
 |&#10003;
-|c.lhu _rd'_, uimm(_rs1''_)
+|c.lhu _rd'_, uimm(_rs1'_)
 |<<#insns-c_lhu>>
 
 |&#10003;
 |&#10003;
 |&#10003;
-|c.lh _rd'_, uimm(_rs1''_)
+|c.lh _rd'_, uimm(_rs1'_)
 |<<#insns-c_lh>>
 
 |&#10003;
 |&#10003;
 |&#10003;
-|c.sb _rs2'_, uimm(_rs1''_)
+|c.sb _rs2'_, uimm(_rs1'_)
 |<<#insns-c_sb>>
 
 |&#10003;
 |&#10003;
 |&#10003;
-|c.sh _rs2'_, uimm(_rs1''_)
+|c.sh _rs2'_, uimm(_rs1'_)
 |<<#insns-c_sh>>
 
 |===
