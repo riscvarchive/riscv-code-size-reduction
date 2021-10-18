@@ -26,8 +26,7 @@ _TBLJALVEC.base_ is a virtual address, whenever virtual memory is enabled.
 
 Using _TBLJALVEC.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
 
-The memory pointed to by _TBLJALVEC.base_ only requires eXecute permission. Read/Write access is not required once the jump table/vector 
-table has been configured. If code is to be emulated then Read access is also required, but the table jump instructions themselves don't require this.
+The memory pointed to by _TBLJALVEC.base_ is treated as instruction memory for the purpose of executing table jump instructions. 
 
 [#TBLJALVEC-config-table]
 ._TBLJALVEC.config_ definition
@@ -58,5 +57,5 @@ Included in::
 
 |Zces (<<Zces>>)
 |0.52
-|Plan
+|Stable
 |===

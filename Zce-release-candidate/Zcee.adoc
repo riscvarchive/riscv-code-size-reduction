@@ -1,13 +1,15 @@
-==== Zcee 1.0.0-rc
+[#Zcee]
+==== Zcee 0.52
 
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
 
-Zcee is the first subset of the code-size reduction extension Zce to be proposed for public review. The instructions are all very simple and are 16-bit encodings of existing instructions, either from the I/E ISA or from Zbb.
+The instructions in Zcee are all very simple and are 16-bit encodings of existing instructions, either from the I/E ISA or from Zbb.
 
 All proposed encodings are currently reserved for all architectures, and have no conflicts with any existing extensions.
 
-All of the sign and zero extension instructions use the same format. These typically benefit code-size because if the compiler is working with fewer than XLEN bits it must size/zero extend the value to XLEN bits before calling a function, or passing a return value.
+All of the sign and zero extension instructions use the same format.
+These typically benefit code-size because if the compiler is working with fewer than XLEN bits it must sign/zero extend the value to XLEN bits before calling a function, or passing a return value.
 
 c.sext.\*, c.zext.* encoding group::
 [wavedrom, , svg]
@@ -21,7 +23,9 @@ c.sext.\*, c.zext.* encoding group::
 ],config:{bits:16}}
 ....
 
-The c.mul encoding has the register sources/destination in the same fields as other 16-bit encodings such as c.sub, c.xor etc. c.mul has a high benefit for audio processing algorithms and for a variety of other benchmarks.
+The _c.mul_ encoding has the register sources/destination in the same fields as other 16-bit encodings such as _c.sub_, _c.xor_ etc. 
+
+_c.mul_ has a high benefit for audio processing algorithms and for a variety of other benchmarks.
 
 c.mul encoding::
 [wavedrom, , svg]

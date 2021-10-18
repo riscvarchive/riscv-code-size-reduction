@@ -22,7 +22,7 @@ Encoding (RV32, RV64, RV128)::
 
 [NOTE]
 
-  _spimm0_5_ is only valid for _c.push_ for values 0-5. Values 6 and 7 map onto _different_ encodings.
+  _spimm0_5_ is only valid for _c.push_ for values 0-5. Values 6 and 7 do _not_ decode as _c.push_.
 
 Syntax::
 
@@ -91,8 +91,14 @@ The total stack adjustment is calculated as shown.
 stack_adj = stack_adj_base+spimm0_5[6:4]*16
 --
 
+[NOTE]
+  _spimm0_5_ is only valid for values 0-5.
+
 Prerequisites::
 The C-extension must also be configured.
+
+32-bit equivalent::
+<<insns-push_areg_list>>
 
 <<<
 
@@ -192,5 +198,5 @@ Included in::
 
 |Zces (<<Zces>>)
 |0.52
-|Plan
+|Stable
 |===

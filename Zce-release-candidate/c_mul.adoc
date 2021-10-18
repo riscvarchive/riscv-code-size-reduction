@@ -26,6 +26,9 @@ This instruction multiplies XLEN bits of the source operands from _rsd'_ and _rs
 Prerequisites::
 The C-extension and either M or Zmmul must also be configured.
 
+32-bit equivalent::
+<<insns-mul>>
+
 Operation::
 [source,sail]
 --
@@ -42,5 +45,5 @@ Included in::
 
 |Zcee (<<#zcee>>)
 |0.52
-|Plan
+|Stable
 |===

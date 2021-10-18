@@ -27,6 +27,12 @@ the bits more significant than 7.
 Prerequisites::
 The C-extension must also be configured.
 
+32-bit equivalent::
+[source,sail]
+--
+andi rd, rs1, 0xff
+--
+
 Operation::
 [source,sail]
 --
@@ -42,5 +48,5 @@ Included in::
 
 |Zcee (<<#zcee>>)
 |0.52
-|Plan
+|Stable
 |===

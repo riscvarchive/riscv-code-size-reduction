@@ -31,14 +31,15 @@ This instruction stores the least significant byte of _rs2'_ to the memory addre
 Prerequisites::
 The C-extension. This encoding conflicts with the D-extension, but there is no conflict with Zdinx if double-precision arithmetic is required.
 
+32-bit equivalent::
+<<insns-sh>>
+
 Operation::
 [source,sail]
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-rs2   = 8+encoding[9:7];
-rs1   = 8+encoding[4:2];
-mem[X(rs1)+zext(uimm)][15:0] = X(rs2)
+mem[X(rs1c)+zext(uimm)][15:0] = X(rs2c)
 --
 
 Included in::
@@ -50,5 +51,5 @@ Included in::
 
 |Zceb (<<#zceb>>)
 |0.52
-|Plan
+|Stable
 |===

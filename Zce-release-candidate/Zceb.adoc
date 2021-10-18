@@ -1,4 +1,12 @@
-==== Zceb
+[#Zceb]
+==== Zceb 0.52
+
+This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
+https://riscv.org/spec-state
+
+This extension reuses encodings from the _D_-extension.  Therefore it is _incompatible_ with _D_. It is fully compatible with _F_ and also with _Zdinx_.
+
+The instructions are all 16-bit versions of existing 32-bit load/store instructions.
 
 [%header,cols="^1,^1,^1,4,8"]
 |===
@@ -46,9 +54,9 @@
 
 |===
 
-include::c_lb.adoc[]
 include::c_lbu.adoc[]
-include::c_lh.adoc[]
+include::c_lb.adoc[]
 include::c_lhu.adoc[]
+include::c_lh.adoc[]
 include::c_sb.adoc[]
 include::c_sh.adoc[]

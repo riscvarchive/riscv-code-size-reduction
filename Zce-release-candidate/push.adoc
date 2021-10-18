@@ -110,10 +110,6 @@ stack_adj = stack_adj_base+spimm[8:4]*16
 |4-12    |""            |a0-a3
 |================================================
 
-
-Prerequisites::
-The C-extension must also be configured.
-
 <<<
 
 Operation::
@@ -164,7 +160,7 @@ Assembly examples::
 push  {ra, s0-s4}, {a0-a3}, -528
 ----
 
-Encoding: _rlist_=5, _spimm0_5[8:4]_=0x1f, _areg_=1
+Encoding: _rlist_=5, _spimm[8:4]_=0x1f, _areg_=1
 
 Equivalent sequence:
 
@@ -211,5 +207,5 @@ Included in::
 
 |Zces (<<Zces>>)
 |0.52
-|Plan
+|Stable
 |===

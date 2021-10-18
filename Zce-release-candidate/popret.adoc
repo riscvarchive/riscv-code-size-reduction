@@ -107,9 +107,6 @@ The total stack adjustment is calculated as shown.
 stack_adj = stack_adj_base+spimm[8:4]*16
 --
 
-Prerequisites::
-The C-extension must also be configured.
-
 <<<
 
 Operation::
@@ -216,5 +213,5 @@ Included in::
 
 |Zces (<<Zces>>)
 |0.52
-|Plan
+|Stable
 |===

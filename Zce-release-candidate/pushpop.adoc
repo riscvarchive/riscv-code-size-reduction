@@ -28,18 +28,21 @@ Common details for these instructions are in this section.
 
 PUSH, POP, POPRET along with the 16-bit forms are used to reduce the size of function prologues and epilogues.
 
-. The PUSH instruction 
+. The PUSH, C.PUSH instruction 
 ** pushes(stores)  the registers specified in _reg_list_ to the stack
 ** if _areg_list_ is included, moves the registers in the _areg_list_ into _s_ registers
 *** _areg_list_ is determined automatically from _rlist_, it cannot be arbitrarily specified. The definition is in <<#insns-c_push_areg_list>>  and <<#insns-push_areg_list>> ;
-** adjusts the stack pointer by the _stack_adjustment_ 
+** adjusts the stack pointer by the _stack_adjustment_ .
 
-. The POP instruction 
-** pops(loads) the registers in _reg_list_ from the stack
-** if _ret_val_ is included, moves the specified constant value into _a0_ as the return value
+. The POP, C.POP instruction .
+** pops(loads) the registers in _reg_list_ from the stack.
 ** adjusts the stack pointer by the _stack_adjustment_.
 
-. POPRET has the same behaviour as POP, followed by RET.
+. The POPRET, C.POPRET instruction 
+** pops(loads) the registers in _reg_list_ from the stack.
+** if _ret_val_ is included, moves the specified constant value into _a0_ as the return value.
+** adjusts the stack pointer by the _stack_adjustment_.
+** executes a _ret_ instruction.
 
 <<<
 === Example usage
@@ -327,6 +330,10 @@ The sequence required to execute the PUSH/POP instruction may be interrupted, or
 * interrupts
 ** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
 
+[NOTE]
+
+  MTVAL may be hardwired to zero in an implementation. The section above assumes it is implemented.
+
 In all case MEPC contain the PC of the PUSH/POP instruction, and MCAUSE is set as expected for the type of fault.
 
 For debug halts DPC is set to the PC of the PUSH/POP instruction.
@@ -388,6 +395,7 @@ From a software perspective the POP/POPRET sequence appears as:
 
 * A sequence of loads, any of which may be executed multiple times
 * A stack pointer adjustment
+* An optional LI into a0
 * An optional RET
 
 If an implementation allows interrupts during the sequence, then any loads which were executed before the interrupt may update architectural state. 
@@ -467,5 +475,5 @@ Included in::
 
 |Zces (<<#zces>>)
 |0.52
-|Plan
+|Stable
 |===

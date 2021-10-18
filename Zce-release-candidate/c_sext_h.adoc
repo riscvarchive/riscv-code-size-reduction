@@ -28,6 +28,9 @@ in the halfword (i.e., bit 15) to all of the more-significant bits.
 Prerequisites::
 The C-extension must also be configured.
 
+32-bit equivalent::
+<<insns-sext_h>> from Zbb
+
 Operation::
 [source,sail]
 --
@@ -43,5 +46,5 @@ Included in::
 
 |Zcee (<<#zcee>>)
 |0.52
-|Plan
+|Stable
 |===

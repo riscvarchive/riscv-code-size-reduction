@@ -36,7 +36,8 @@ The table entry number is from the _index8_ field in the encoding, which control
 Note that the LSB of every jump table entry is _ignored_ which matches standard JALR behaviour.
 
 If the same function is called with and without linking then it must have two entries in the table. 
-This case does happen in practice but only affects a small number of entries so it does not waste much space in the table. It is typically caused by the same function being called with and without tail calling.
+This case does happen in practice but only affects a small number of entries so it does not waste much space in the table. 
+It is typically caused by the same function being called with and without tail calling.
 
 [#tablejump-algorithm]
 === Recommended algorithm for allocating entries in the jump table
@@ -65,9 +66,11 @@ The functions are sorted so that the one with the highest saving is in table ent
 
 [NOTE]
 
-  This algorithm assumes that each function is only called with one link register. If the same function is called with more than one link register, then it must have two entries in the table.
+  This algorithm assumes that each function is only called with one link register. 
+  If the same function is called with more than one link register, then it must have two entries in the table.
 
-This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. Only caching a few entries will greatly improve the performance.
+This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. 
+Only caching a few entries will greatly improve the performance.
 
 [#tablejump-fault-handling]
 === Table Jump Fault handling
@@ -113,5 +116,5 @@ Included in::
 
 |Zces (<<#zces>>)
 |0.52
-|Plan
+|Stable
 |===

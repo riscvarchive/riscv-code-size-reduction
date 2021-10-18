@@ -28,7 +28,8 @@ c.mva01s07 sreg1, sreg2
 --
 
 Description::
-This instruction moves _sreg1_ into _a0_ and _sreg2_ into _a1_. The execution is atomic, so it is not possible to observe state where only one of a0 or a1 have been updated.
+This instruction moves _sreg1_ into _a0_ and _sreg2_ into _a1_. 
+The execution is atomic, so it is not possible to observe state where only one of a0 or a1 have been updated.
 
 <<<
 Field decoding::
@@ -54,8 +55,15 @@ The encoding has two _sreg_ number specifiers to save encoding space.
 
   This instruction does not directly expand to a single 32-bit encoding.
 
+[NOTE]
+
+  The _s_ register mapping is taken from the UABI, and may not match the currently unratified EABI.
+
 Prerequisites::
 The C-extension must also be configured.
+
+32-bit equivalent::
+No direct equivalent encoding exists.
 
 <<<
 
@@ -80,5 +88,5 @@ Included in::
 
 |Zces (<<Zces>>)
 |0.52
-|Plan
+|Stable
 |===

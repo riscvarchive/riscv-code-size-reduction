@@ -20,10 +20,6 @@ Encoding (RV32, RV64, RV128)::
 ],config:{bits:16}}
 ....
 
-[NOTE]
-
-  _spimm0_5_ is only valid for _c.pop_ for values 0-5. Values 6 and 7 map onto _different_ encodings.
-
 Syntax::
 
 [source,sail]
@@ -60,7 +56,7 @@ For further information see <<insns-pushpop>>.
 <<<
 Field decoding::
 
-The mapping from the _rlist3_ and _spimm0_5_ fields in the encoding are as shown below.
+The mapping from the _rlist3_ field in the encoding are as shown below.
 
 [#c_pop_rlist3_decode]
 ._rlist3_ decoding 
@@ -88,6 +84,9 @@ stack_adj = stack_adj_base+spimm[4]*16
 
 Prerequisites::
 The C-extension must also be configured.
+
+32-bit equivalent::
+<<insns-pop>>
 
 <<<
 
@@ -149,7 +148,6 @@ lw   s1, 20(sp);
 lw   s0, 16(sp);  
 lw   ra, 12(sp);  
 addi sp, sp, 48;
-ret
 --
 
 [source,sail]
@@ -173,7 +171,6 @@ lw   s1, 36(sp);
 lw   s0, 32(sp);  
 lw   ra, 28(sp);  
 addi sp, sp, 64;
-ret
 --
 
 Included in::
@@ -185,5 +182,5 @@ Included in::
 
 |Zces (<<Zces>>)
 |0.52
-|Plan
+|Stable
 |===

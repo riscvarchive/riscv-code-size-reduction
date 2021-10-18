@@ -20,7 +20,7 @@ Encoding (RV32, RV64, RV128)::
 
 [NOTE]
 
-  For this encoding to decode as _TBLJAL_, _index8>=64_ otherwise it's a _different_ encoding
+  For this encoding to decode as _TBLJAL_, _index8>=64_.
 
 Syntax::
 
@@ -37,6 +37,9 @@ For further information see <<insns-tablejump>>.
 
 Prerequisites::
 The C-extension must also be configured.
+
+32-bit equivalent::
+No direct equivalent encoding exists.
 
 <<<
 
@@ -114,5 +117,5 @@ Included in::
 
 |Zces (<<Zces>>)
 |0.52
-|Plan
+|Stable
 |===

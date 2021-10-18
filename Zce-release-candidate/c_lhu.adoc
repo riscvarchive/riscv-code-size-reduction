@@ -31,14 +31,15 @@ This instruction loads a half from the memory address formed by adding _rs1'_ to
 Prerequisites::
 The C-extension. This encoding conflicts with the D-extension, but there is no conflict with Zdinx if double-precision arithmetic is required.
 
+32-bit equivalent::
+<<insns-lhu>>
+
 Operation::
 [source,sail]
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-rd    = 8+encoding[9:7];
-rs1   = 8+encoding[4:2];
-X(rd) = zext(mem[X(rs1)+zext(imm)][15:0]);
+X(rdc) = zext(mem[X(rs1c)+zext(imm)][15:0]);
 --
 
 Included in::
@@ -50,5 +51,5 @@ Included in::
 
 |Zceb (<<#zceb>>)
 |0.52
-|Plan
+|Stable
 |===

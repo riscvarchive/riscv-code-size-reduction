@@ -59,13 +59,13 @@ tblj and tbljal require <<#csrs-tbljalvec>>.
 |&#10003;
 |&#10003;
 |&#10003;
-|tblj #index
+|c.tblj #index
 |<<#insns-c_tblj>> 
 
 |&#10003;
 |&#10003;
 |&#10003;
-|tbljal #index
+|c.tbljal #index
 |<<#insns-c_tbljal>> 
 
 |&#10003;
