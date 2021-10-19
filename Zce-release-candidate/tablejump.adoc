@@ -39,6 +39,7 @@ If the same function is called with and without linking then it must have two en
 This case does happen in practice but only affects a small number of entries so it does not waste much space in the table. 
 It is typically caused by the same function being called with and without tail calling.
 
+<<<
 [#tablejump-algorithm]
 === Recommended algorithm for allocating entries in the jump table
 
@@ -72,6 +73,7 @@ The functions are sorted so that the one with the highest saving is in table ent
 This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. 
 Only caching a few entries will greatly improve the performance.
 
+<<<
 [#tablejump-fault-handling]
 === Table Jump Fault handling
 

@@ -39,7 +39,7 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-X(rdc) = sext(mem[X(rs1c)+zext(imm)][7:0]);
+X(rdc) = EXTS(mem[X(rs1c)+EXTZ(imm)][7..0]);
 --
 
 Included in::

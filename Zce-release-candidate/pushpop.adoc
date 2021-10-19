@@ -12,36 +12,32 @@ These instructions are collectively referred to as PUSH/POP:
 * <<#insns-c_pop>> 
 * <<#insns-pop>>
 
-The term PUSH refers to both 16 and 32-bit encodings (C.PUSH, PUSH).
+The term PUSH refers to both 16 and 32-bit encodings (_c.push_, _push_).
 
-The term POP refers to both 16 and 32-bit encodings of POP (C.POP, POP).
+The term POP refers to both 16 and 32-bit encodings of POP (_c.pop_, _pop_).
 
-The term POPRET refers to both 16 and 32-bit encodings of POPRET (C.POPRET, POPRET).
+The term POPRET refers to both 16 and 32-bit encodings of POPRET (_c.popret_, _popret_).
 
 Common details for these instructions are in this section.
-
-[NOTE]
-
-  This version does not fully include _areg_list_ and will need to be updated if it's included in _push/c.push_.
 
 === PUSH/POP overview
 
 PUSH, POP, POPRET along with the 16-bit forms are used to reduce the size of function prologues and epilogues.
 
-. The PUSH, C.PUSH instruction 
+. The PUSH instructions
 ** pushes(stores)  the registers specified in _reg_list_ to the stack
 ** if _areg_list_ is included, moves the registers in the _areg_list_ into _s_ registers
 *** _areg_list_ is determined automatically from _rlist_, it cannot be arbitrarily specified. The definition is in <<#insns-c_push_areg_list>>  and <<#insns-push_areg_list>> ;
-** adjusts the stack pointer by the _stack_adjustment_ .
+** adjusts the stack pointer by _stack_adj_ .
 
-. The POP, C.POP instruction .
+. The POP instructions
 ** pops(loads) the registers in _reg_list_ from the stack.
-** adjusts the stack pointer by the _stack_adjustment_.
+** adjusts the stack pointer by _stack_adj_.
 
-. The POPRET, C.POPRET instruction 
+. The POPRET instructions
 ** pops(loads) the registers in _reg_list_ from the stack.
 ** if _ret_val_ is included, moves the specified constant value into _a0_ as the return value.
-** adjusts the stack pointer by the _stack_adjustment_.
+** adjusts the stack pointer by _stack_adj_.
 ** executes a _ret_ instruction.
 
 <<<
@@ -113,7 +109,7 @@ The prologue / epilogue reduce from 28-bytes in the original code, to 14-bytes w
 
 [NOTE]
 
-  The C.PUSH has an additional register move included _mv s2, a2_ which wasn't in the original prologue. This is included to simplify the encoding and definition of C.PUSH/PUSH and will cost some performance.
+  The C.PUSH has an additional register move included _mv s2, a2_ which wasn't in the original prologue. This is included to simplify the encoding and definition of PUSH and will cost some performance.
 
 [NOTE]
 
@@ -197,7 +193,8 @@ therefore compiling at -Os/-Oz would give:
 [source,SAIL]
 ----
 00e01126 <function4>:
-  e01126:       xxxx                    c.push {ra,s0-s7}, {a0-a3}, -32 ; include saving s7 and moving {a0-a3} into {s0-s3}
+  # c.push includes saving s7 and moving {a0-a3} into {s0-s3}
+  e01126:       xxxx                    c.push {ra,s0-s7}, {a0-a3}, -32 
   e01138:       0e050363                beqz    a0,e0121e <function4+0xf8>
   e0113c:       8a2a                    mv      s4,a0
   e0113e:       852e                    mv      a0,a1
@@ -244,11 +241,12 @@ With _c.push_ this becomes:
 [source,SAIL]
 ----
 e01e7e <function5>:
-  e01e7e:       1101                    c.push {ra,s0-s5}, {a0-a3}, -32; includes moving {a0-a3} into {s0-s3}
-  e01e8e:       892a                    mv      s2,a0; <-- switch dest to s0
-  e01e90:       89ae                    mv      s3,a1; <-- switch dest to s1
-  e01e92:       8a32                    mv      s4,a2; <-- switch dest to s2
-  e01e94:       8ab6                    mv      s5,a3; <-- switch dest to s3
+  # c.push includes moving {a0-a3} into {s0-s3}
+  e01e7e:       1101                    c.push {ra,s0-s5}, {a0-a3}, -32
+  e01e8e:       892a                    mv      s2,a0;# <-- switch dest to s0
+  e01e90:       89ae                    mv      s3,a1;# <-- switch dest to s1
+  e01e92:       8a32                    mv      s4,a2;# <-- switch dest to s2
+  e01e94:       8ab6                    mv      s5,a3;# <-- switch dest to s3
   e01e96:       3f41                    jal     e01e26 <function6>
 ----
 
@@ -265,11 +263,11 @@ In this final case, one register move can be deleted and one must be retained un
   e0236a:       c226                    sw      s1,4(sp)
   e0236c:       03450493                addi    s1,a0,52
   e02370:       c422                    sw      s0,8(sp)
-  e02372:       842a                    mv      s0,a0; <-- matches areg_list - delete
-  e02374:       8526                    mv      a0,s1; <-- doesn't fit areg_list
+  e02372:       842a                    mv      s0,a0;# <-- delete this one
+  e02374:       8526                    mv      a0,s1;# <-- doesn't fit areg_list
   e02376:       c04a                    sw      s2,0(sp)
   e02378:       c606                    sw      ra,12(sp)
-  e0237a:       892e                    mv      s2,a1; <-- switch dest to s1
+  e0237a:       892e                    mv      s2,a1;# <-- switch dest to s1
   e0237c:       df3fd0ef                jal     ra,e0016e <function8>
 ----
 
@@ -278,8 +276,8 @@ In this final case, one register move can be deleted and one must be retained un
 00e02368 <function7>:
   e02368:       xxxx                    c.push {ra,s0-s2}, {a0-a2}, -16
   e0236c:       03450493                addi    s1,a0,52
-  e02374:       8526                    mv      a0,s1; <-- doesn't fit areg_list
-  e0237a:       892e                    mv      s2,a1; <-- switch dest to s1
+  e02374:       8526                    mv      a0,s1;# <-- doesn't fit areg_list
+  e0237a:       892e                    mv      s2,a1;# <-- switch dest to s1
   e0237c:       df3fd0ef                jal     ra,e0016e <function8>
 ----
 
@@ -290,7 +288,7 @@ For the smallest code-size the compiler should reallocate the target registers s
 === Compiling PUSH/POP for size or performance
 
 As mentioned above, there are cases where there are choices about whether to select the 16-bit or 32-bit encoding. 
-The 32-bit encodings offer a smaller stack adjustment range than using a 16-bit encoding and an additional C.ADDI16SP instruction. 
+The 32-bit encodings offer a smaller stack adjustment range than using a 16-bit encoding and an additional _c.addi16sp_ instruction. 
 Therefore using the 32-bit encoding will not reduce the code size if the stack adjustment is out of range of the 16-bit encoding.
 
 The main performance/code-size trade-offs are
@@ -351,6 +349,7 @@ Therefore correct execution requires that _sp_ refers to idempotent memory (also
 From a software perspective the PUSH sequence appears as:
 
 * A sequence of stores writing a contiguous block of memory. Any of the bytes may be written multiple times.
+* An optional series of register moves
 * A stack pointer adjustment
 
 Because the memory is idempotent and the stores are non-overlapping, they may be reordered, grouped into larger accesses, split into smaller access or any combination of these.
@@ -360,6 +359,8 @@ This is safe because the memory is idempotent and the stores will be re-executed
 
 The stack pointer adjustment must only be committed once it is certain that all of the stores will complete within triggerring any precise faults 
 (stores may return imprecise bus errors which are received after the instruction has completed execution).
+
+<<<
 
 For example:
 
@@ -402,10 +403,11 @@ If an implementation allows interrupts during the sequence, then any loads which
 The loads will be re-executed once the handler completes, so the values will be overwritten. 
 Therefore it is permitted for an implementation to update some of the destination registers before taking the interrupt or other fault.
 
-The load immediate and stack pointer adjustment must only be committed once it is certain that all of the loads will complete successfully.
+The optional load immediate and stack pointer adjustment must only be committed once it is certain that all of the loads will complete successfully.
 
 For POPRET once the stack pointer adjustment has been committed the RET must execute.
 
+<<<
 For example:
 
 [source,sail]

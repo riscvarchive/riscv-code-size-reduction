@@ -15,7 +15,7 @@ Encoding (RV32, RV64, RV128)::
     { bits:  2, name: 0x0, attr: ['C0'] },
     { bits:  3, name: 'rd\'' },
     { bits:  2, name: 'uimm[2:1]' },
-    { bits:  3, name: 'rs1\'\'' },
+    { bits:  3, name: 'rs1\'' },
     { bits:  2, name: 'uimm[0|3]' },
     { bits:  1, name: 0x0 },
     { bits:  3, name: 0x1, attr: ['FUNCT3'] },
@@ -39,7 +39,7 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-X(rdc) = zext(mem[X(rs1c)+zext(imm)][7:0]);
+X(rdc) = EXTZ(mem[X(rs1c)+EXTZ(imm)][7..0]);
 --
 
 Included in::

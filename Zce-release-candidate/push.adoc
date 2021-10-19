@@ -57,13 +57,18 @@ if (<reg_list_32u>=="ra, s0-sN")   <stack_adj>=[48|64|..|544] (where N is 7,8,9,
 if (<reg_list_32u>=="ra, s0-s11")  <stack_adj>=[64|96|..|560]
 --
 
+<<<
 Description::
 This instruction pushes (stores) the registers in _reg_list_ to stack memory, and then adjusts the stack pointer by _-stack_adj_. 
+
+All ABI register mapping are for the UABI. _push.e_ is planned for the EABI mapping once the EABI is frozen.
+
 For further information see <<insns-pushpop>>.
 
 Prerequisites::
 None
 
+<<<
 Field decoding::
 
 The mapping from the _rlist_ and _spimm_ fields in the encoding are as shown below.
@@ -111,8 +116,8 @@ stack_adj = stack_adj_base+spimm[8:4]*16
 |4-12    |""            |a0-a3
 |================================================
 
-<<<
 
+<<<
 Operation::
 [source,sail]
 --

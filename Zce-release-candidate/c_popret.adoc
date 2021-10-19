@@ -29,13 +29,16 @@ Syntax::
 
 [source,sail]
 --
-c.popret {<reg_list_16u> | <xreg_list_16u>}, <stack_adj>
+c.popret {<reg_list_16u> | <xreg_list_16u>}, {<ret_val_16>}, <stack_adj>
 --
 
 The variables used in the syntax are defined below.
 
 [source,sail]
 --
+
+<ret_val_16> ::= "" | 0
+
 <reg_list_16u> ::= <ra> ["," <s0>  | <s0-sN> ] (where N is 1,2,3,5,7,11)
 
 if (<reg_list_16u>=="ra")         <xreg_list_16u>="x1"
@@ -56,6 +59,9 @@ if (<reg_list_16u>=="ra, s0-s11")  <stack_adj>=[64|96|112|128|144]
 
 Description::
 This instruction pop (loads) the registers in _reg_list_ from stack memory, and then adjusts the stack pointer by _stack_adj_. 
+
+All ABI register mapping are for the UABI. _c.popret.e_ is planned for the EABI mapping once the EABI is frozen.
+
 For further information see <<insns-pushpop>>.
 
 <<<

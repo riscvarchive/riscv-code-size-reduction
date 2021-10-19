@@ -23,7 +23,7 @@ Encoding (RV32, RV64, RV128)::
 ....
 
 Description::
-This instruction stores the least significant half of _rs2'_ to the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. 
+This instruction stores the least significant byte of _rs2'_ to the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. 
 
 [NOTE]
   _rd'_ and _rs1'_ are from the standard 8-register set x8-x15.
@@ -39,7 +39,7 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-mem[X(rs1c)+zext(uimm)][7:0] = X(rs2c)
+mem[X(rs1c)+EXTZ(uimm)][7..0] = X(rs2c)
 --
 
 Included in::

@@ -1,9 +1,9 @@
 <<<
-[#insns-c_lhu,reftext="Load unsigned half, 16-bit encoding"]
+[#insns-c_lhu,reftext="Load unsigned halfword, 16-bit encoding"]
 === c.lhu
 
 Synopsis::
-Load unsigned half, 16-bit encoding
+Load unsigned halfword, 16-bit encoding
 
 Mnemonic::
 c.lhu _rd'_, _uimm_(_rs1'_)
@@ -15,7 +15,7 @@ Encoding (RV32, RV64, RV128)::
     { bits:  2, name: 0x0, attr: ['C0'] },
     { bits:  3, name: 'rd\'' },
     { bits:  2, name: 'uimm[2:1]' },
-    { bits:  3, name: 'rs1\'\'' },
+    { bits:  3, name: 'rs1\'' },
     { bits:  2, name: 'uimm[4:3]' },
     { bits:  1, name: 0x1 },
     { bits:  3, name: 0x1, attr: ['FUNCT3'] },
@@ -23,7 +23,7 @@ Encoding (RV32, RV64, RV128)::
 ....
 
 Description::
-This instruction loads a half from the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. The resulting half is zero extended to XLEN bits and is written to _rd'_. 
+This instruction loads a halfword from the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. The resulting halfword is zero extended to XLEN bits and is written to _rd'_. 
 
 [NOTE]
   _rd'_ and _rs1'_ are from the standard 8-register set x8-x15.
@@ -39,7 +39,7 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-X(rdc) = zext(mem[X(rs1c)+zext(imm)][15:0]);
+X(rdc) = EXTZ(load_mem[X(rs1c)+EXTZ(imm)][15..0]);
 --
 
 Included in::
