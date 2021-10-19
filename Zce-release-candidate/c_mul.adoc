@@ -43,7 +43,7 @@ Included in::
 |Minimum version
 |Lifecycle state
 
-|Zcee (<<#zcee>>)
+|Zcee (<<Zcee>>)
 |0.52
 |Stable
 |===

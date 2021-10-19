@@ -14,9 +14,10 @@ Encoding (RV32, RV64, RV128)::
 {reg:[
     { bits:  2, name: 0x0,      attr: ['OP=C0'] },
     { bits:  3, name: 'rlist3', attr: ['reg_list'] },
-    { bits:  2, name: 0x2,      attr: []},
+    { bits:  2, name: 0x0,      attr: []},
     { bits:  1, name: 'spimm\[4\]',  attr: [] },
-    { bits:  8, name: 0x8f,     attr: ['FUNCT6'] },
+    { bits:  2, name: 0x3 },
+    { bits:  6, name: 0x23,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
 ....
 

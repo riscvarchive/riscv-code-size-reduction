@@ -15,8 +15,8 @@ Encoding (RV32, RV64, RV128)::
     { bits:  2, name: 0x0, attr: ['C0'] },
     { bits:  3, name: 'rs2\'' },
     { bits:  2, name: 'uimm[2:1]' },
-    { bits:  3, name: 'rs1\'\'' },
-    { bits:  2, name: 'uimm[4:3]' },
+    { bits:  3, name: 'rs1\'' },
+    { bits:  2, name: 'uimm[0|3]' },
     { bits:  1, name: 0x0},
     { bits:  3, name: 0x5, attr: ['FUNCT3'] },
 ],config:{bits:16}}
@@ -49,7 +49,7 @@ Included in::
 |Minimum version
 |Lifecycle state
 
-|Zceb (<<#zceb>>)
+|Zceb (<<Zceb>>)
 |0.52
 |Stable
 |===

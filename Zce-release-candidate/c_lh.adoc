@@ -49,7 +49,7 @@ Included in::
 |Minimum version
 |Lifecycle state
 
-|Zceb (<<#zceb>>)
+|Zceb (<<Zceb>>)
 |0.52
 |Stable
 |===

@@ -4,7 +4,7 @@
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
 
-This extension reuses encodings from the _D_-extension.  Therefore it is _incompatible_ with _D_. It is fully compatible with _F_ and also with _Zdinx_.
+This extension reuses encodings from the _D_-extension.  Therefore it is _incompatible_ with D. It is fully compatible with F and also with Zdinx.
 
 The instructions are all 16-bit versions of existing 32-bit load/store instructions.
 
