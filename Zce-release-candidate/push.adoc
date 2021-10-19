@@ -70,23 +70,24 @@ The mapping from the _rlist_ and _spimm_ fields in the encoding are as shown bel
 
 [#push_areg_list_rlist_decode]
 ._rlist_ decoding 
-[options="header",width=60%]
-|======================================
-|rlist_0_12 |reg_list_32u |stack_adj_base 
-|0          |ra           |16             
-|1          |ra, s0       |16             
-|2          |ra, s0-s1    |16             
-|3          |ra, s0-s2    |16             
-|4          |ra, s0-s3    |32             
-|5          |ra, s0-s4    |32             
-|6          |ra, s0-s5    |32             
-|7          |ra, s0-s6    |32             
-|8          |ra, s0-s7    |48             
-|9          |ra, s0-s8    |48             
-|10         |ra, s0-s9    |48             
-|11         |ra, s0-s10   |48             
-|12         |ra, s0-s11   |64             
-|======================================
+[options="header",width=100%]
+|==================================================
+|rlist_0_12 |reg_list_32u 3+|stack_adj_base 
+|           |             |RV32 | RV64 | RV128
+|0          |ra           |16   | 16   | 16          
+|1          |ra, s0       |16   | 16   | 32          
+|2          |ra, s0-s1    |16   | 32   | 48          
+|3          |ra, s0-s2    |16   | 32   | 64          
+|4          |ra, s0-s3    |32   | 48   | 80          
+|5          |ra, s0-s4    |32   | 48   | 96          
+|6          |ra, s0-s5    |32   | 64   | 112          
+|7          |ra, s0-s6    |32   | 64   | 128          
+|8          |ra, s0-s7    |48   | 80   | 144          
+|9          |ra, s0-s8    |48   | 80   | 160          
+|10         |ra, s0-s9    |48   | 96   | 176          
+|11         |ra, s0-s10   |48   | 96   | 192          
+|12         |ra, s0-s11   |64   | 112  | 208          
+|==================================================
 
 _stack_adj_base_ covers enough 16-byte blocks of memory to cover the registers in _reg_list_32u_. 
 _spimm_ is used to allocate extra stack space in 16-byte blocks. 

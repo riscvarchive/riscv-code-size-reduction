@@ -67,18 +67,19 @@ The mapping from the _rlist3_ and _spimm0_5_ fields in the encoding are as shown
 
 [#c_push_areg_list_rlist3_decode]
 ._rlist3_ decoding 
-[options="header",width=60%]
-|============================
-|rlist3  |reg_list_16u |stack_adj_base
-|0       |ra           |16
-|1       |ra, s0       |16
-|2       |ra, s0-s1    |16
-|3       |ra, s0-s2    |16
-|4       |ra, s0-s3    |32
-|5       |ra, s0-s5    |32
-|6       |ra, s0-s7    |48
-|7       |ra, s0-s11   |64
-|============================
+[options="header",width=100%]
+|==================================================
+|rlist3  |reg_list_16u 3+|stack_adj_base
+|        |             |RV32 | RV64 | RV128
+|0       |ra           |16   | 16   | 16
+|1       |ra, s0       |16   | 16   | 32
+|2       |ra, s0-s1    |16   | 32   | 48
+|3       |ra, s0-s2    |16   | 32   | 64
+|4       |ra, s0-s3    |32   | 48   | 80
+|5       |ra, s0-s5    |32   | 64   | 112
+|6       |ra, s0-s7    |48   | 96   | 144
+|7       |ra, s0-s11   |64   | 112  | 208
+|==================================================
 
 _stack_adj_base_ covers enough 16-byte blocks of memory to cover the registers in _reg_list_16u_. 
 
