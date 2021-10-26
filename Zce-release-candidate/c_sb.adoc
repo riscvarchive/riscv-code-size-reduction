@@ -8,7 +8,7 @@ Store byte, 16-bit encoding
 Mnemonic::
 c.sb _r2'_, _uimm_(_rs1'_)
 
-Encoding (RV32, RV64, RV128)::
+Encoding (RV32, RV64)::
 [wavedrom, svg]
 ....
 {reg:[
@@ -50,6 +50,6 @@ Included in::
 |Lifecycle state
 
 |Zceb (<<Zceb>>)
-|0.52
+|0.53
 |Stable
 |===

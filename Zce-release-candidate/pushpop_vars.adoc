@@ -1,0 +1,21 @@
+
+The variables used in the syntax are defined below.
+
+[source,sail]
+--
+<reg_list_1_4> ::= <ra> ["," <s0>  | <s0-sN> ] (where N is 1,2)
+
+if (<reg_list_1_4>=="ra")          <xreg_list_1_4>="x1"
+if (<reg_list_1_4>=="ra, s0")      <xreg_list_1_4>="x1, x8"
+if (<reg_list_1_4>=="ra, s0-s1")   <xreg_list_1_4>="x1, x8-x9"
+if (<reg_list_1_4>=="ra, s0-s2")   <xreg_list_1_4>="x1, x8-x9, x18"
+ 
+RV32:
+<stack_adj>=[16|32|48|64]
+
+RV64:
+if (<reg_list_1_4>=="ra")          <stack_adj>=[16|32|48|64|96]
+if (<reg_list_1_4>=="ra, s0")      <stack_adj>=[16|32|48|64|96]
+if (<reg_list_1_4>=="ra, s0-s1")   <stack_adj>=[32|48|64|96|112]
+if (<reg_list_1_4>=="ra, s0-s2")   <stack_adj>=[32|48|64|96|112]
+--

@@ -1,5 +1,5 @@
 [#Zceb]
-==== Zceb 0.52
+==== Zceb 0.53
 
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
@@ -8,15 +8,13 @@ This extension reuses encodings from the _D_-extension.  Therefore it is _incomp
 
 The instructions are all 16-bit versions of existing 32-bit load/store instructions.
 
-[%header,cols="^1,^1,^1,4,8"]
+[%header,cols="^1,^1,4,8"]
 |===
 |RV32
 |RV64
-|RV128
 |Mnemonic
 |Instruction
 
-|&#10003;
 |&#10003;
 |&#10003;
 |c.lbu _rd'_, uimm(_rs1'_)
@@ -24,11 +22,9 @@ The instructions are all 16-bit versions of existing 32-bit load/store instructi
 
 |&#10003;
 |&#10003;
-|&#10003;
 |c.lb _rd'_, uimm(_rs1'_)
 |<<#insns-c_lb>>
 
-|&#10003;
 |&#10003;
 |&#10003;
 |c.lhu _rd'_, uimm(_rs1'_)
@@ -36,17 +32,14 @@ The instructions are all 16-bit versions of existing 32-bit load/store instructi
 
 |&#10003;
 |&#10003;
-|&#10003;
 |c.lh _rd'_, uimm(_rs1'_)
 |<<#insns-c_lh>>
 
 |&#10003;
 |&#10003;
-|&#10003;
 |c.sb _rs2'_, uimm(_rs1'_)
 |<<#insns-c_sb>>
 
-|&#10003;
 |&#10003;
 |&#10003;
 |c.sh _rs2'_, uimm(_rs1'_)

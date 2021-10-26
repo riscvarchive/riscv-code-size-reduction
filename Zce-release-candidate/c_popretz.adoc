@@ -1,12 +1,12 @@
 <<<
-[#insns-c_popret,reftext="c.popret: pop 1 to 4 registers from stack memory and return, 16-bit encoding"]
-=== c.popret
+[#insns-c_popretz,reftext="c.popretz: pop 1 to 4 registers from stack memory and return zero, 16-bit encoding"]
+=== c.popretz
 
 Synopsis::
-Pop 1 to 4 registers from stack memory and return, 16-bit encoding
+Pop 1 to 4 registers from stack memory and return zero, 16-bit encoding
 
 Mnemonic::
-c.popret _{reg_list_1_4}, stack_adj_
+c.popret _{reg_list_1_4}, {0}, stack_adj_
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
@@ -16,7 +16,7 @@ Encoding (RV32, RV64)::
     { bits:  2, name: 'rlist2', attr: ['reg_list_1_4'] },
     { bits:  3, name: 0x3,      attr: []},
     { bits:  2, name: 'spimm\[5:4\]',  attr: [] },
-    { bits:  1, name: 0x0,      attr: []},
+    { bits:  1, name: 0x1,      attr: []},
     { bits:  6, name: 0x2b,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
 ....
@@ -25,17 +25,17 @@ Syntax::
 
 [source,sail]
 --
-c.popret {<reg_list_1_4> | <xreg_list_1_4>}, <stack_adj>
+c.popret {<reg_list_1_4> | <xreg_list_1_4>}, {0}, <stack_adj>
 --
 
 include::pushpop_vars.adoc[]
 
 Description::
 This instruction pop (loads) the registers in _reg_list_1_4_ from stack memory,
- adjusts the stack pointer by _stack_adj_ and then returns.
+ adjusts the stack pointer by _stack_adj_, moves zero into a0 and then returns.
 
 include::pushpop_rlist2_decode_table.adoc[]
-include::c_popret_pseudo_code.adoc[]
+include::c_popretz_pseudo_code.adoc[]
 
 <<<
 
@@ -43,11 +43,10 @@ RV32 Assembly examples::
 
 [source,sail]
 --
-c.popret {ra, s0-s2}, 48
+c.popret {ra, s0-s2}, {0}, 48
 --
 
 Encoding: _rlist2_=3, _spimm_=2
-
 Equivalent sequence:
 
 [source,sail]
@@ -57,12 +56,13 @@ lw   s1, 40(sp);
 lw   s0, 36(sp);  
 lw   ra, 32(sp);  
 addi sp, sp, 48;
+li a0, 0;
 ret;
 --
 
 [source,sail]
 --
-c.popret {ra}, 16
+c.popret {ra}, {0}, 16
 --
 
 Encoding: _rlist2_=0, _spimm_=0
@@ -73,6 +73,7 @@ Equivalent sequence:
 --
 lw   ra, 12(sp);
 addi sp, sp, 16;
+li a0, 0;
 ret;
 --
 

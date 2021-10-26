@@ -8,11 +8,11 @@ Load unsigned halfword, 16-bit encoding
 Mnemonic::
 c.lhu _rd'_, _uimm_(_rs1'_)
 
-Encoding (RV32, RV64, RV128)::
+Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x0, attr: ['C0'] },
+    { bits:  2, name: 0x2, attr: ['C0'] },
     { bits:  3, name: 'rd\'' },
     { bits:  2, name: 'uimm[2:1]' },
     { bits:  3, name: 'rs1\'' },
@@ -50,6 +50,6 @@ Included in::
 |Lifecycle state
 
 |Zceb (<<Zceb>>)
-|0.52
+|0.53
 |Stable
 |===

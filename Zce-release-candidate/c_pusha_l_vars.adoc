@@ -1,0 +1,6 @@
+[source,sail]
+--
+RV32/RV64:
+if (<reg_list_5_13>=="ra, s0-sN")  <areg_list>="a0-aP" 
+  (where if (N<4) P=N; else P=3;)
+--

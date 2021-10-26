@@ -8,7 +8,7 @@ Sign extend byte, 16-bit encoding
 Mnemonic::
 c.sext.b _rsd'_
 
-Encoding (RV32, RV64, RV128)::
+Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
@@ -45,6 +45,6 @@ Included in::
 |Lifecycle state
 
 |Zcee (<<Zcee>>)
-|0.52
+|0.53
 |Stable
 |===

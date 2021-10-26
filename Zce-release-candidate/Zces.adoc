@@ -1,90 +1,96 @@
 [#Zces]
-==== Zces 0.52
+==== Zces 0.53
 
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
 
 Zces is the set of sequenced or more complex instuctions for code-size reduction.
 
-All 16-bit encodings are currently reserved for all architectures, and have no conflicts with any existing extensions. 
+This extension reuses encodings from the D-extension.  Therefore it is _incompatible_ with D. It is fully compatible with F and also with Zdinx.
 
-*All 32-bit encodings have yet to be allocated.*
+jt and jalt require <<#csrs-tbljalvec>>.
 
-tblj and tbljal require <<#csrs-tbljalvec>>.
-
-[%header,cols="^1,^1,^1,4,8"]
+[%header,cols="^1,^1,4,8"]
 |===
 |RV 32
 |RV 64
-|RV 128
 |Mnemonic
 |Instruction
 
 |&#10003;
 |&#10003;
-|&#10003;
-|c.push {reg_list}, {areg_list}, -sp_adj
-|<<#insns-c_push_areg_list>> 
+|c.push {reg_list_1_4}, {areg_list}, -stack_adj
+|<<#insns-c_pusha>> 
 
 |&#10003;
 |&#10003;
-|&#10003;
-|push {reg_list}, {areg_list}, -sp_adj
-|<<#insns-push_areg_list>> 
+|c.push {reg_list_5_13}, {areg_list}, -stack_adj
+|<<#insns-c_pusha_l>> 
 
 |&#10003;
 |&#10003;
+|c.push {reg_list_1_4}, -stack_adj
+|<<#insns-c_push>> 
+
 |&#10003;
-|c.pop {reg_list}, sp_adjustment
+|&#10003;
+|c.push {reg_list_5_13}, -stack_adj
+|<<#insns-c_push_l>> 
+
+|&#10003;
+|&#10003;
+|c.pop {reg_list_1_4}, stack_adj
 |<<#insns-c_pop>> 
 
 |&#10003;
 |&#10003;
-|&#10003;
-|pop {reg_list}, sp_adjustment
-|<<#insns-pop>> 
-
-|&#10003;
-|&#10003;
-|&#10003;
-|c.popret {reg_list}, {ret_val}, sp_adj
+|c.popret {reg_list_1_4}, stack_adj
 |<<#insns-c_popret>> 
 
 |&#10003;
 |&#10003;
-|&#10003;
-|popret {reg_list}, {ret_val}, sp_adj
-|<<#insns-popret>> 
+|c.popret {reg_list_5_13}, stack_adj
+|<<#insns-c_popret_l>> 
 
 |&#10003;
 |&#10003;
-|&#10003;
-|c.tblj #index
-|<<#insns-c_tblj>> 
+|c.popret {reg_list_1_4}, {0}, stack_adj
+|<<#insns-c_popretz>> 
 
 |&#10003;
 |&#10003;
-|&#10003;
-|c.tbljal #index
-|<<#insns-c_tbljal>> 
+|c.popret {reg_list_5_13}, {0}, stack_adj
+|<<#insns-c_popretz_l>> 
 
 |&#10003;
 |&#10003;
+|c.jt #index
+|<<#insns-c_jt>> 
+
 |&#10003;
-|c.mva01s07 sreg1, sreg2
-|<<#insns-c_mva01s07>> 
+|&#10003;
+|c.jalt #index
+|<<#insns-c_jalt>> 
+
+|&#10003;
+|&#10003;
+|c.mva01s sreg1, sreg2
+|<<#insns-c_mva01s>> 
 
 |===
 
+include::c_pusha.adoc[]
+include::c_pusha_l.adoc[]
 include::c_push.adoc[]
-include::push.adoc[]
-include::c_popret.adoc[]
-include::popret.adoc[]
+include::c_push_l.adoc[]
 include::c_pop.adoc[]
-include::pop.adoc[]
-include::c_tblj.adoc[]
-include::c_tbljal.adoc[]
+include::c_popret.adoc[]
+include::c_popret_l.adoc[]
+include::c_popretz.adoc[]
+include::c_popretz_l.adoc[]
+include::c_jt.adoc[]
+include::c_jalt.adoc[]
 include::tbljalvec_csr.adoc[]
-include::c_mva01s07.adoc[]
+include::c_mva01s.adoc[]
 include::pushpop.adoc[]
 include::tablejump.adoc[]

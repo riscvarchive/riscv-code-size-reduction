@@ -1,0 +1,34 @@
+
+<<<
+
+Operation::
+[source,sail]
+--
+//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
+
+//RV64 must have a 16-byte aligned sp
+if (misa.MXL==2 && sp[3:0]) {take_illegal_instruction_exception();}
+//RV32 might only need 8-byte aligned SP (EABI)
+if (misa.MXL==1 && sp[2:0]) {take_illegal_instruction_exception();}
+
+if (misa.MXL==1) bytes=4; else bytes=8;
+
+addr=sp+stack_adjustment-bytes;
+switch(bytes) {
+  4:  asm("lw ra, 0(addr)");
+  8:  asm("ld ra, 0(addr)");
+}
+for(i=31;i>=0;i--)  {
+  //if register i is in xreg_list
+  if (xreg_list[i]) {
+    addr-=bytes;
+    switch(bytes) {
+      4:  asm("lw s[i], 0(addr)");
+      8:  asm("ld s[i], 0(addr)");
+    }
+  }
+}
+//The sequence must be uninterruptible from this point
+sp+=stack_adjustment; //increment
+asm("ret");
+--

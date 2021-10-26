@@ -1,0 +1,88 @@
+<<<
+[#insns-c_mva01s,reftext="c.mva01s: move two s0-s7 registers into a0-a1, 16-bit encoding"]
+=== c.mva01s
+
+Synopsis::
+Move two s0-s7 registers into a0-a1, 16-bit encoding
+
+Mnemonic::
+c.mva01s _sreg1, sreg2_
+
+Encoding (RV32, RV64)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  2, name: 0x2,      attr: ['OP=C1'] },
+    { bits:  3, name: 'sreg2',  attr: [] },
+    { bits:  2, name: 0x0,      attr: [] },
+    { bits:  3, name: 'sreg1',  attr: [] },
+    { bits:  8, name: 0x29,     attr: ['FUNCT6'] },
+],config:{bits:16}}
+....
+
+Syntax::
+
+[source,sail]
+--
+c.mva01s sreg1, sreg2
+--
+
+Description::
+This instruction moves _sreg1_ into _a0_ and _sreg2_ into _a1_. 
+The execution is atomic, so it is not possible to observe state where only one of _a0_ or _a1_ have been updated.
+
+<<<
+Field decoding::
+
+[#c_mva01s_sreg_decoding]
+._sreg_ decoding
+[options="header",width=60%]
+|==============
+|sreg*   |xreg 
+|0       |x8   
+|1       |x9   
+|2       |x18  
+|3       |x19  
+|4       |x20  
+|5       |x21  
+|6       |x22  
+|7       |x23  
+|==============
+
+The encoding has two _sreg_ number specifiers to save encoding space. 
+
+[NOTE]
+
+  The _s_ register mapping is taken from the UABI, and may not match the currently unratified EABI. _c.mva01s.e_ may be included in the future.
+
+Prerequisites::
+The C-extension must also be configured.
+
+32-bit equivalent::
+No direct equivalent encoding exists.
+
+<<<
+
+Operation::
+[source,sail]
+--
+//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
+
+xreg1 = {sreg1[2:1]>0,sreg1[2:1]==0,sreg1[2:0]}
+xreg2 = {sreg2[2:1]>0,sreg2[2:1]==0,sreg2[2:0]}
+
+X[10] = X[sreg1]
+X[11] = X[sreg2]
+--
+
+Included in::
+[%header,cols="4,2,2"]
+|===
+|Extension
+|Minimum version
+|Lifecycle state
+
+|Zces (<<Zces>>)
+|0.53
+|Stable
+|===

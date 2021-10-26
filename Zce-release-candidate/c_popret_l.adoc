@@ -1,0 +1,95 @@
+<<<
+[#insns-c_popret_l,reftext="c.popret.l: pop 5 to 13 registers from stack memory and return, 16-bit encoding"]
+=== c.popret.l
+
+Synopsis::
+Pop 5 to 13 registers from stack memory and return, 16-bit encoding
+
+Mnemonic::
+c.popret _{reg_list_5_13}, stack_adj_
+
+Encoding (RV32, RV64)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  2, name: 0x2,      attr: ['OP=C0'] },
+    { bits:  3, name: 'rlist3', attr: ['reg_list_5_13'] },
+    { bits:  2, name: 0x2,      attr: []},
+    { bits:  3, name: 'spimm\[6:4\]',  attr: [] },
+    { bits:  6, name: 0x2b,     attr: ['FUNCT6'] },
+],config:{bits:16}}
+....
+
+Syntax::
+
+[source,sail]
+--
+c.popret {<reg_list_5_13> | <xreg_list_5_13>}, -<stack_adj>
+--
+
+include::pushpop_l_vars.adoc[]
+
+<<<
+Description::
+This instruction pop (loads) the registers in _reg_list_5_13_ from stack memory,
+ adjusts the stack pointer by _stack_adj_ and then returns.
+
+include::pushpop_l_rlist3_decode_table.adoc[]
+include::c_popret_pseudo_code.adoc[]
+
+<<<
+
+RV32 Assembly examples::
+
+[source,sail]
+--
+c.popret {ra, s0-s3}, 48
+--
+
+Encoding: _rlist2_=0, _spimm_=1
+
+Equivalent sequence:
+
+[source,sail]
+--
+lw   s3, 44(sp);
+lw   s2, 40(sp);  
+lw   s1, 36(sp);  
+lw   s0, 32(sp);  
+lw   ra, 32(sp);  
+addi sp, sp, 48;
+ret;
+--
+
+[source,sail]
+--
+c.popret {ra, s0-s4}, 64
+--
+
+Encoding: _rlist2_=1, _spimm_=2
+
+Equivalent sequence:
+
+[source,sail]
+--
+lw   s4, 60(sp);
+lw   s3, 56(sp);
+lw   s2, 52(sp);  
+lw   s1, 48(sp);  
+lw   s0, 44(sp);  
+lw   ra, 40(sp);  
+addi sp, sp, 64;
+ret;
+--
+
+Included in::
+[%header,cols="4,2,2"]
+|===
+|Extension
+|Minimum version
+|Lifecycle state
+
+|Zces (<<Zces>>)
+|0.53
+|Stable
+|===

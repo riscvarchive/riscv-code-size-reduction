@@ -8,7 +8,7 @@ Zero extend word, 16-bit encoding
 Mnemonic::
 c.zext.w _rsd'_
 
-Encoding (RV64, RV128)::
+Encoding (RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
@@ -48,6 +48,6 @@ Included in::
 |Lifecycle state
 
 |Zcee (<<Zcee>>)
-|0.52
+|0.53
 |Stable
 |===
