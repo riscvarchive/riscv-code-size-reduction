@@ -9,8 +9,6 @@ https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candi
 
 Currently two versions of the proposal for Zces exist. the first is likely to be adopted (including `areg_list` in the `push` instructions).
 
-https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zces_areg_list.pdf
-
 https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zces.pdf
 
 
