@@ -6,7 +6,7 @@ Synopsis::
 Pop 5 to 13 registers from stack memory and return zero, 16-bit encoding
 
 Mnemonic::
-c.popret _{reg_list_5_13}, {0}, stack_adj_
+c.popretz _{reg_list_5_13}, stack_adj_
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
@@ -24,7 +24,7 @@ Syntax::
 
 [source,sail]
 --
-c.popret {<reg_list_5_13> | <xreg_list_5_13>}, {0}, -<stack_adj>
+c.popretz {<reg_list_5_13> | <xreg_list_5_13>}, -<stack_adj>
 --
 
 include::pushpop_l_vars.adoc[]
@@ -43,7 +43,7 @@ RV32 Assembly examples::
 
 [source,sail]
 --
-c.popret {ra, s0-s3}, {0}, 48
+c.popretz {ra, s0-s3}, 48
 --
 
 Encoding: _rlist2_=0, _spimm_=1
@@ -64,7 +64,7 @@ ret;
 
 [source,sail]
 --
-c.popret {ra, s0-s4}, {0}, 64
+c.popretz {ra, s0-s4}, 64
 --
 
 Encoding: _rlist2_=1, _spimm_=2

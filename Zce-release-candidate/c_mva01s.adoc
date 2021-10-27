@@ -14,7 +14,7 @@ Encoding (RV32, RV64)::
 {reg:[
     { bits:  2, name: 0x2,      attr: ['OP=C1'] },
     { bits:  3, name: 'sreg2',  attr: [] },
-    { bits:  2, name: 0x0,      attr: [] },
+    { bits:  2, name: 0x3,      attr: [] },
     { bits:  3, name: 'sreg1',  attr: [] },
     { bits:  8, name: 0x29,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
