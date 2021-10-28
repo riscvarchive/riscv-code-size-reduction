@@ -42,14 +42,5 @@ Operation::
 X(rdc) = EXTZ(load_mem[X(rs1c)+EXTZ(imm)][15..0]);
 --
 
-Included in::
-[%header,cols="4,2,2"]
-|===
-|Extension
-|Minimum version
-|Lifecycle state
+include::Zceb_footer.adoc[]
 
-|Zceb (<<Zceb>>)
-|0.53
-|Stable
-|===

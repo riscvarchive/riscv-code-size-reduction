@@ -12,7 +12,7 @@ Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x0, attr: ['C2'] },
+    { bits:  2, name: 0x0, attr: ['C0'] },
     { bits:  3, name: 'rd\'' },
     { bits:  2, name: 'uimm[2:1]' },
     { bits:  3, name: 'rs1\'' },
@@ -42,14 +42,5 @@ Operation::
 X(rdc) = EXTS(load_mem[X(rs1c)+EXTZ(imm)][15..0]);
 --
 
-Included in::
-[%header,cols="4,2,2"]
-|===
-|Extension
-|Minimum version
-|Lifecycle state
+include::Zceb_footer.adoc[]
 
-|Zceb (<<Zceb>>)
-|0.53
-|Stable
-|===

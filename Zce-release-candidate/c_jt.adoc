@@ -12,7 +12,7 @@ Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C0'] },
+    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
     { bits:  8, name: 'index8', attr: ['index8<64'] },
     { bits:  6, name: 0x28,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
@@ -45,77 +45,8 @@ No direct equivalent encoding exists.
 
 [#insn-c_jt-SAIL,reftext="c.jt SAIL code"]
 Operation::
-[source,sail]
---
-//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-# target_address is temporary internal state, it doesn't represent a real register
-# Mem is byte indexed
-# index8 is the field from the encoding, not the index passed to the C.jt* in the assembler
+include::tablejump_pseudocode.adoc[]
 
-switch(XLEN) {
-  32:  table_address[XLEN-1:0] = TBLJALVEC.base + index8<<2;
-  64:  table_address[XLEN-1:0] = TBLJALVEC.base + index8<<3;
-  128: table_address[XLEN-1:0] = TBLJALVEC.base + index8<<4;
-}
+include::Zces_footer.adoc[]
 
-//check for debug mode entry, trigger with timing=0 and action=1, haltreq or step
-if ((debug_trigger(table_address) && MCONTROL.timing==0 && MCONTROL.action==1) ||
-    external_debug_haltreq() || DCSR.step==1) {
-  DPC        = current_PC;
-  DCSR.cause = DCSR.step==1 ? 4 : external_debug_haltreq() ? 3 : 2;
-  enter_debug_mode();
-//check for breakpoint trigger which takes an exception with timing=0
-} else if ((debug_trigger(table_address) && MCONTROL.timing==0) ||
-            !can_access_instruction_memory(table_address)) {
-  MEPC   = current_PC;
-  MTVAL  = table_address;
-  MCAUSE = debug_trigger(table_address) ? BREAKPOINT : INSTRUCTION_ACCESS_FAULT;
-  take_exception();
-} else {
-  //access the jump table
-  switch(XLEN) {
-    32:  LW target_address, InstMemory[table_address][XLEN-1:0];
-    64:  LD target_address, InstMemory[table_address][XLEN-1:0];
-    128: LQ target_address, InstMemory[table_address][XLEN-1:0];
-  }
-
-  //don't use haltreq or step here, only check the addresses
-  //check for table_address after reading if timing=1
-  if (debug_trigger(table_address) && MCONTROL.timing==1 && MCONTROL.action==1) {
-    DPC        = current_PC;
-    DCSR.cause = 2;
-    enter_debug_mode();
-  } else if (debug_trigger(table_address) && MCONTROL.timing==1) {
-    MEPC       = current_PC;
-    MTVAL      = table_address;
-    MCAUSE     = BREAKPOINT;
-    take_exception();
-  } else if ((debug_trigger(target_address) && MCONTROL.timing==0 && MCONTROL.action==1) {
-    DPC        = target_address;
-    DCSR.cause = 2;
-    enter_debug_mode();
-  } else if (((debug_trigger(target_address) && MCONTROL.timing==0) ||
-               !can_access_instruction_memory(target_address)) {
-    MEPC       = target_address;
-    MTVAL      = target_address;
-    MCAUSE     = debug_trigger(target_address) ? BREAKPOINT : INSTRUCTION_ACCESS_FAULT;
-    take_exception();
-  } else {
-    //jump to the target address
-    JALR zero, target_address[XLEN-1:0]&~0x1;
-  }
-}
---
-
-Included in::
-[%header,cols="4,2,2"]
-|===
-|Extension
-|Minimum version
-|Lifecycle state
-
-|Zces (<<Zces>>)
-|0.53
-|Stable
-|===

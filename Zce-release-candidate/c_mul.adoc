@@ -36,14 +36,5 @@ let result_wide = to_bits(2 * sizeof(xlen), signed(X(rsdc)) * signed(X(rs2c)));
 X(rsdc) = result_wide[(sizeof(xlen) - 1) .. 0];
 --
 
-Included in::
-[%header,cols="4,2,2"]
-|===
-|Extension
-|Minimum version
-|Lifecycle state
+include::Zcee_footer.adoc[]
 
-|Zcee (<<Zcee>>)
-|0.53
-|Stable
-|===

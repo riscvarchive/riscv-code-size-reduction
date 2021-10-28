@@ -109,14 +109,4 @@ This section gives an overview of the behaviour, the exact operation is document
 * <<insn-c_jalt-SAIL>>
 * <<insn-c_jt-SAIL>>
 
-Included in::
-[%header,cols="4,2,2"]
-|===
-|Extension
-|Minimum version
-|Lifecycle state
-
-|Zces (<<Zces>>)
-|0.53
-|Stable
-|===
+include::Zces_footer.adoc[]

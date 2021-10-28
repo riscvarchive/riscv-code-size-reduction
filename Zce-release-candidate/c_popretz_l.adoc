@@ -12,7 +12,7 @@ Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C0'] },
+    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
     { bits:  3, name: 'rlist3', attr: ['reg_list_5_13'] },
     { bits:  2, name: 0x3,      attr: []},
     { bits:  3, name: 'spimm\[6:4\]',  attr: [] },
@@ -84,14 +84,5 @@ li a0, 0;
 ret;
 --
 
-Included in::
-[%header,cols="4,2,2"]
-|===
-|Extension
-|Minimum version
-|Lifecycle state
+include::Zces_footer.adoc[]
 
-|Zces (<<Zces>>)
-|0.53
-|Stable
-|===

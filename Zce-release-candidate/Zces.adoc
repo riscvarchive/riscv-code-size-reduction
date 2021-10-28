@@ -1,5 +1,5 @@
 [#Zces]
-==== Zces 0.53
+==== Zces 0.53.1
 
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
@@ -8,7 +8,7 @@ Zces is the set of sequenced or more complex instuctions for code-size reduction
 
 This extension reuses encodings from the D-extension.  Therefore it is _incompatible_ with D. It is fully compatible with F and also with Zdinx.
 
-jt and jalt require <<#csrs-tbljalvec>>.
+jt and jalt require <<#csrs-JVT>>.
 
 [%header,cols="^1,^1,4,8"]
 |===
@@ -90,7 +90,8 @@ include::c_popretz.adoc[]
 include::c_popretz_l.adoc[]
 include::c_jt.adoc[]
 include::c_jalt.adoc[]
-include::tbljalvec_csr.adoc[]
+include::JVT_csr.adoc[]
 include::c_mva01s.adoc[]
 include::pushpop.adoc[]
 include::tablejump.adoc[]
+

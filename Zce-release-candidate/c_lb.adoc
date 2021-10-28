@@ -42,14 +42,4 @@ Operation::
 X(rdc) = EXTS(mem[X(rs1c)+EXTZ(imm)][7..0]);
 --
 
-Included in::
-[%header,cols="4,2,2"]
-|===
-|Extension
-|Minimum version
-|Lifecycle state
-
-|Zceb (<<Zceb>>)
-|0.53
-|Stable
-|===
+include::Zceb_footer.adoc[]

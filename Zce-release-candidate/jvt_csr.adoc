@@ -1,6 +1,6 @@
 <<<
-[#csrs-tbljalvec,reftext="tbljalvec CSR, table jump base vector and control register"]
-=== TBLJALVEC CSR
+[#csrs-JVT,reftext="JVT CSR, table jump base vector and control register"]
+=== JVT CSR
 
 Synopsis::
 Table jump base vector and control register
@@ -22,40 +22,31 @@ Format (RV32, RV64)::
 
 Description::
 
-_TBLJALVEC.base_ is a virtual address, whenever virtual memory is enabled.
+_JVT.base_ is a virtual address, whenever virtual memory is enabled.
 
-Using _TBLJALVEC.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
+Using _JVT.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
 
-The memory pointed to by _TBLJALVEC.base_ is treated as instruction memory for the purpose of executing table jump instructions. 
+The memory pointed to by _JVT.base_ is treated as instruction memory for the purpose of executing table jump instructions. 
 
-[#TBLJALVEC-config-table]
-._TBLJALVEC.config_ definition
+[#JVT-config-table]
+._JVT.config_ definition
 [width="60%",options=header]
 |=============================================================================================
-| TBLJALVEC.config | Comment
+| JVT.config | Comment
 | 000000 | Jump table mode
 | others | *reserved for future standard use*
 |=============================================================================================
 
-_TBLJALVEC.config_ is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to 
+_JVT.config_ is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to 
 attempt to program different modes and read back the values to see which are available. Jump table mode _must_ be implemented.
 
 Architectural State::
 
-TBLJALVEC adds architectural state to the context, therefore must be saved/restore on context switch. 
+JVT adds architectural state to the context, therefore must be saved/restored on context switches. 
 
 Additional architectural state requires a state enable to be allocated. 
 Accesses when the state is disabled will throw an illegal instruction exception.
 The state enable is not specified in this document.
 
-Included in::
-[%header,cols="4,2,2"]
-|===
-|Extension
-|Minimum version
-|Lifecycle state
+include::Zces_footer.adoc[]
 
-|Zces (<<Zces>>)
-|0.53
-|Stable
-|===
