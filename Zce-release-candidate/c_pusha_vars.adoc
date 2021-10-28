@@ -8,9 +8,13 @@ if (<reg_list_2_4>=="ra, s0")      <xreg_list_2_4>="x1, x8"
 if (<reg_list_2_4>=="ra, s0-s1")   <xreg_list_2_4>="x1, x8-x9"
 if (<reg_list_2_4>=="ra, s0-s2")   <xreg_list_2_4>="x1, x8-x9, x18"
  
-if (<reg_list_2_4>=="ra, s0")      <areg_list>="a0"
-if (<reg_list_2_4>=="ra, s0-s1")   <areg_list>="a0-a1"
-if (<reg_list_2_4>=="ra, s0-s2")   <areg_list>="a0-a2"
+if (<reg_list_2_4>=="ra, s0")      <areg_list_1_3>="a0"
+if (<reg_list_2_4>=="ra, s0-s1")   <areg_list_1_3>="a0-a1"
+if (<reg_list_2_4>=="ra, s0-s2")   <areg_list_1_3>="a0-a2"
+
+if (<reg_list_2_4>=="ra, s0")      <xareg_list_1_3>="x10"
+if (<reg_list_2_4>=="ra, s0-s1")   <xareg_list_1_3>="x10-x11"
+if (<reg_list_2_4>=="ra, s0-s2")   <xareg_list_1_3>="x10-x12"
 
 RV32:
 <stack_adj>=[16|32|48|64]

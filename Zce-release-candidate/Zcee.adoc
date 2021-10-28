@@ -8,21 +8,6 @@ The instructions in Zcee are all very simple and are 16-bit encodings of existin
 
 All proposed encodings are currently reserved for all architectures, and have no conflicts with any existing extensions.
 
-All of the sign and zero extension instructions use the same format.
-These typically benefit code-size because if the compiler is working with fewer than XLEN bits it must sign/zero extend the value to XLEN bits before calling a function, or passing a return value.
-
-Encoding (RV32, RV64)::
-[wavedrom, , svg]
-....
-{reg:[
-    { bits:  2, name: 0x1, attr: ['OP=C1'] },
-    { bits:  3, name: 'opcode' },
-    { bits:  2, name: 0x0, attr: ['FUNCT2'] },
-    { bits:  3, name: 'rsd\'', attr: ['SRCDST'] },
-    { bits:  6, name: 0x23, attr: ['FUNCT6'] },
-],config:{bits:16}}
-....
-
 The _c.mul_ encoding uses the CR register format along with other instructions such as _c.sub_, _c.xor_ etc. 
 
 [NOTE]
@@ -38,23 +23,23 @@ The _c.mul_ encoding uses the CR register format along with other instructions s
 
 |&#10003;
 |&#10003;
-|c.sext.b _rsd'_
-|<<#insns-c_sext_b>> 
-
-|&#10003;
-|&#10003;
-|c.sext.h _rsd'_
-|<<#insns-c_sext_h>> 
-
-|&#10003;
-|&#10003;
 |c.zext.b _rsd'_
 |<<#insns-c_zext_b>> 
 
 |&#10003;
 |&#10003;
+|c.sext.b _rsd'_
+|<<#insns-c_sext_b>> 
+
+|&#10003;
+|&#10003;
 |c.zext.h _rsd'_
 |<<#insns-c_zext_h>> 
+
+|&#10003;
+|&#10003;
+|c.sext.h _rsd'_
+|<<#insns-c_sext_h>> 
 
 |
 |&#10003;
@@ -68,10 +53,10 @@ The _c.mul_ encoding uses the CR register format along with other instructions s
 
 |===
 
-include::c_sext_b.adoc[]
-include::c_sext_h.adoc[]
 include::c_zext_b.adoc[]
+include::c_sext_b.adoc[]
 include::c_zext_h.adoc[]
+include::c_sext_h.adoc[]
 include::c_zext_w.adoc[]
 include::c_mul.adoc[]
 

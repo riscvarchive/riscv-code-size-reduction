@@ -19,12 +19,12 @@ jt and jalt require <<#csrs-JVT>>.
 
 |&#10003;
 |&#10003;
-|c.push {reg_list_1_4}, {areg_list}, -stack_adj
+|c.push {reg_list_1_4}, {areg_list_1_3}, -stack_adj
 |<<#insns-c_pusha>> 
 
 |&#10003;
 |&#10003;
-|c.push {reg_list_5_13}, {areg_list}, -stack_adj
+|c.push {reg_list_5_13}, {areg_list_4}, -stack_adj
 |<<#insns-c_pusha_l>> 
 
 |&#10003;

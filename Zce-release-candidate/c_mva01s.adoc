@@ -16,7 +16,7 @@ Encoding (RV32, RV64)::
     { bits:  3, name: 'sreg2',  attr: [] },
     { bits:  2, name: 0x3,      attr: [] },
     { bits:  3, name: 'sreg1',  attr: [] },
-    { bits:  8, name: 0x29,     attr: ['FUNCT6'] },
+    { bits:  6, name: 0x29,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
 ....
 
@@ -71,8 +71,8 @@ Operation::
 xreg1 = {sreg1[2:1]>0,sreg1[2:1]==0,sreg1[2:0]}
 xreg2 = {sreg2[2:1]>0,sreg2[2:1]==0,sreg2[2:0]}
 
-X[10] = X[sreg1]
-X[11] = X[sreg2]
+X[10] = X[xreg1]
+X[11] = X[xreg2]
 --
 
 include::Zces_footer.adoc[]

@@ -22,13 +22,13 @@ The instructions are all 16-bit versions of existing 32-bit load/store instructi
 
 |&#10003;
 |&#10003;
-|c.lb _rd'_, uimm(_rs1'_)
-|<<#insns-c_lb>>
+|c.lhu _rd'_, uimm(_rs1'_)
+|<<#insns-c_lhu>>
 
 |&#10003;
 |&#10003;
-|c.lhu _rd'_, uimm(_rs1'_)
-|<<#insns-c_lhu>>
+|c.lb _rd'_, uimm(_rs1'_)
+|<<#insns-c_lb>>
 
 |&#10003;
 |&#10003;
@@ -48,8 +48,8 @@ The instructions are all 16-bit versions of existing 32-bit load/store instructi
 |===
 
 include::c_lbu.adoc[]
-include::c_lb.adoc[]
 include::c_lhu.adoc[]
+include::c_lb.adoc[]
 include::c_lh.adoc[]
 include::c_sb.adoc[]
 include::c_sh.adoc[]

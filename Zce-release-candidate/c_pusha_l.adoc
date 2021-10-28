@@ -6,7 +6,7 @@ Synopsis::
 Push 5 to 13 registers to stack memory and move argument registers into saved registers, 16-bit encoding
 
 Mnemonic::
-c.push _{reg_list_5_13}, {areg_list}, -stack_adj_
+c.push _{reg_list_5_13}, {areg_list_4}, -stack_adj_
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
@@ -24,7 +24,7 @@ Syntax::
 
 [source,sail]
 --
-c.push {<reg_list_5_13> | <xreg_list_5_13>}, -<stack_adj>
+c.push {<reg_list_5_13> | <xreg_list_5_13>}, {<areg_list_4> | <xarg_list_4>}, -<stack_adj>
 --
 
 include::pushpop_l_vars.adoc[]
@@ -33,7 +33,7 @@ include::c_pusha_l_vars.adoc[]
 <<<
 Description::
 This instruction pushes (stores) the registers in _reg_list_5_13_ to stack memory, 
-moves _areg_list_ into similarly numbered _s_ registers, 
+moves _areg_list_4_ into similarly numbered _s_ registers, 
 and then adjusts the stack pointer by _-stack_adj_. 
 
 include::pushpop_l_rlist3_decode_table.adoc[]

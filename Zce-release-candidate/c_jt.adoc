@@ -20,7 +20,7 @@ Encoding (RV32, RV64)::
 
 [NOTE]
 
-  For this encoding to decode as _c.jt_, _index8<64_.
+  For this encoding to decode as _c.jt_, _index8<64_, otherwise it decodes as <<insns-c_jalt>>.
 
 Syntax::
 
