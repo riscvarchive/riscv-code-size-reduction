@@ -56,7 +56,7 @@ lw   s3, 44(sp);
 lw   s2, 40(sp);  
 lw   s1, 36(sp);  
 lw   s0, 32(sp);  
-lw   ra, 32(sp);  
+lw   ra, 28(sp);  
 addi sp, sp, 48;
 ret;
 --

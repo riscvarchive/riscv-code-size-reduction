@@ -56,9 +56,9 @@ lw   s3, 44(sp);
 lw   s2, 40(sp);  
 lw   s1, 36(sp);  
 lw   s0, 32(sp);  
-lw   ra, 32(sp);  
+lw   ra, 28(sp);  
 addi sp, sp, 48;
-li a0, 0;
+li   a0, 0;
 ret;
 --
 
@@ -80,7 +80,7 @@ lw   s1, 48(sp);
 lw   s0, 44(sp);  
 lw   ra, 40(sp);  
 addi sp, sp, 64;
-li a0, 0;
+li   a0, 0;
 ret;
 --
 

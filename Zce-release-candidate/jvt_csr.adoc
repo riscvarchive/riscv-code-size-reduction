@@ -1,5 +1,5 @@
 <<<
-[#csrs-JVT,reftext="JVT CSR, table jump base vector and control register"]
+[#csrs-jvt,reftext="JVT CSR, table jump base vector and control register"]
 === JVT CSR
 
 Synopsis::

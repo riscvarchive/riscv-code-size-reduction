@@ -21,7 +21,7 @@ The mapping from the _rlist2_ field in the encoding are as shown below.
 |3       |ra, s0-s2    |16   | 32   
 |==================================================
 
-_stack_adj_base_ covers enough 16-byte blocks of memory to cover the registers in _reg_list_1_4_. 
+_stack_adj_base_ is defined to allocate the minimum number of 16-byte blocks of stack space to cover the registers in _reg_list_1_4_. 
 
 _spimm_ is used to allocate extra stack space in 16-byte blocks. 
 

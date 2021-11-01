@@ -32,7 +32,7 @@ include::c_pusha_vars.adoc[]
 <<<
 Description::
 This instruction pushes (stores) the registers in _reg_list_2_4_ to stack memory, 
-moves _areg_list_1_3_ into similarly numbered _s_ registers, 
+moves _areg_list_1_3_ into correspondingly numbered _s_ registers, 
 and then adjusts the stack pointer by _-stack_adj_. 
 
 include::c_pusha_rlist2_decode_table.adoc[]

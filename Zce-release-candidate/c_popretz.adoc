@@ -56,7 +56,7 @@ lw   s1, 40(sp);
 lw   s0, 36(sp);  
 lw   ra, 32(sp);  
 addi sp, sp, 48;
-li a0, 0;
+li   a0, 0;
 ret;
 --
 
@@ -73,7 +73,7 @@ Equivalent sequence:
 --
 lw   ra, 12(sp);
 addi sp, sp, 16;
-li a0, 0;
+li   a0, 0;
 ret;
 --
 
