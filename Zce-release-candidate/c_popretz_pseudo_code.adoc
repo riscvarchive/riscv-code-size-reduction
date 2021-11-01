@@ -9,20 +9,17 @@ Operation::
 if (misa.MXL==1) bytes=4; else bytes=8;
 
 addr=sp+stack_adj-bytes;
-for(i=11;i>=0;i--)  {
+for(i=31;i>0;i--)  {
   //if register i is in xreg_list
   if (xreg_list[i]) {
     switch(bytes) {
-      4:  asm("lw s[i], 0(addr)");
-      8:  asm("ld s[i], 0(addr)");
+      4:  asm("lw x[i], 0(addr)");
+      8:  asm("ld x[i], 0(addr)");
     }
     addr-=bytes;
   }
 }
-switch(bytes) {
-  4:  asm("lw ra, 0(addr)");
-  8:  asm("ld ra, 0(addr)");
-}
+
 //The sequence must be uninterruptible from this point
 asm("li a0, 0");
 sp+=stack_adj;
