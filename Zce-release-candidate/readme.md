@@ -10,7 +10,10 @@ This is the proposed specification for Zces:
 
 https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zces.pdf
 
+The benchmark results are here:
 
-The benchmark results for all of Zce are here, but needs updating relating to the proposals above.
+https://docs.google.com/spreadsheets/d/1bFMyGkuuulBXuIaMsjBINoCWoLwObr1l9h5TAWN8s7k/edit#gid=1679419155
 
-https://docs.google.com/spreadsheets/d/1UYll7HGR_QLGTsHcjGoNL4EodM5BNO41hXdxVAFaxFs/edit#gid=1281210325
+The changes since the tagged release 0.50.1 are in the same spreadsheet but on another sheet:
+
+https://docs.google.com/spreadsheets/d/1bFMyGkuuulBXuIaMsjBINoCWoLwObr1l9h5TAWN8s7k/edit#gid=639112215
