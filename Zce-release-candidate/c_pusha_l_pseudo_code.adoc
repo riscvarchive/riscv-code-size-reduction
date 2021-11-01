@@ -12,11 +12,11 @@ addr=sp-bytes;
 for(i=11;i>=0;i--)  {
   //if register i is in xreg_list
   if (xreg_list[i]) {
-    addr-=bytes;
     switch(bytes) {
       4:  asm("sw s[i], 0(addr)");
       8:  asm("sd s[i], 0(addr)");
     }
+    addr-=bytes;
   }
 }
 switch(bytes) {
