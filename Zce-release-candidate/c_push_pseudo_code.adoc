@@ -6,11 +6,6 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-//RV64 must have a 16-byte aligned sp
-if (misa.MXL==2 && sp[3:0]) {take_illegal_instruction_exception();}
-//RV32 might only need 8-byte aligned SP (EABI)
-if (misa.MXL==1 && sp[2:0]) {take_illegal_instruction_exception();}
-
 if (misa.MXL==1) bytes=4; else bytes=8;
 
 addr=sp-bytes;

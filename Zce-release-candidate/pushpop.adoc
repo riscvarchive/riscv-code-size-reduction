@@ -129,7 +129,7 @@ and then replace the instruction sequences with the relevant PUSH/POP instructio
 
 ==== _spimm_ handling
 
-The instrucitons have a restricted range of _spimm_ available. If this is insufficient then a seperate _c.addi16sp_ can be used to increase the range.
+The instructions have a restricted range of _spimm_ available. If this is insufficient then a separate _c.addi16sp_ can be used to increase the range.
 
 ==== register list handling
 

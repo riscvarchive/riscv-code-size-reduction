@@ -1,5 +1,5 @@
 [#Zceb]
-==== Zceb 0.53.1
+==== Zceb 0.53.2
 
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
