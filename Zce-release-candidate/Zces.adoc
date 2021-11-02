@@ -8,7 +8,7 @@ Zces is the set of sequenced or more complex instuctions for code-size reduction
 
 This extension reuses encodings from the D-extension.  Therefore it is _incompatible_ with D. It is fully compatible with F and also with Zdinx.
 
-jt and jalt require <<#csrs-JVT>>.
+jt and jalt require <<#csrs-jvt>>.
 
 [%header,cols="^1,^1,4,8"]
 |===

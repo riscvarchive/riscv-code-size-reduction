@@ -1,9 +1,9 @@
 <<<
-[#insns-c_push_l,reftext="c.push.l: push 5 to 13 registers to stack memory, 16-bit encoding"]
+[#insns-c_push_l,reftext="c.push.l: Create stack frame: push registers, allocate additional stack space."]
 === c.push.l
 
 Synopsis::
-Push 5 to 13 registers to stack memory, 16-bit encoding
+Create stack frame: store ra and 4 to 12 saved registers, optionally allocate additional stack space.
 
 Mnemonic::
 c.push _{reg_list_5_13}, -stack_adj_

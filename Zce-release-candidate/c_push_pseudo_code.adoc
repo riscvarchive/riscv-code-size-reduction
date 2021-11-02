@@ -1,25 +1,9 @@
 
-<<<
+include::c_push_stores_pseudo_code.adoc[]
 
-Operation::
 [source,sail]
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-if (misa.MXL==1) bytes=4; else bytes=8;
-
-addr=sp-bytes;
-for(i=31;i>0;i--)  {
-  //if register i is in xreg_list
-  if (xreg_list[i]) {
-    switch(bytes) {
-      4:  asm("sw x[i], 0(addr)");
-      8:  asm("sd x[i], 0(addr)");
-    }
-    addr-=bytes;
-  }
-}
-
-//The sequence must be uninterruptible from this point
-sp-=stack_adj;
+sp+=stack_adj;
 --

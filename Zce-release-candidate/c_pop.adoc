@@ -1,9 +1,9 @@
 <<<
-[#insns-c_pop,reftext="c.pop: pop 1 to 4 registers from stack memory, 16-bit encoding"]
+[#insns-c_pop,reftext="c.pop: Destroy stack frame: pop registers, deallocate stack frame."]
 === c.pop
 
 Synopsis::
-Pop 1 to 4 registers from stack memory, 16-bit encoding
+Destroy stack frame: load ra and 0 to 3 saved registers from the stack frame, deallocate the stack frame.
 
 Mnemonic::
 c.pop _{reg_list_1_4}, stack_adj_

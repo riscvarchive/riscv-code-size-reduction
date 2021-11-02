@@ -1,9 +1,9 @@
 <<<
-[#insns-c_popret_l,reftext="c.popret.l: pop 5 to 13 registers from stack memory and return, 16-bit encoding"]
+[#insns-c_popret_l,reftext="c.popret.l: Destroy stack frame: pop registers, deallocate stack frame, return."]
 === c.popret.l
 
 Synopsis::
-Pop 5 to 13 registers from stack memory and return, 16-bit encoding
+Destroy stack frame: load ra and 4 to 12 saved registers from the stack frame, deallocate the stack frame, return to ra.
 
 Mnemonic::
 c.popret _{reg_list_5_13}, stack_adj_

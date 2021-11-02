@@ -1,9 +1,9 @@
 <<<
-[#insns-c_popretz,reftext="c.popretz: pop 1 to 4 registers from stack memory and return zero, 16-bit encoding"]
+[#insns-c_popretz,reftext="c.popretz: Destroy stack frame: pop registers, deallocate stack frame, return zero."]
 === c.popretz
 
 Synopsis::
-Pop 1 to 4 registers from stack memory and return zero, 16-bit encoding
+Destroy stack frame: load ra and 0 to 3 saved registers from the stack frame, deallocate the stack frame, move zero into a0, return to ra.
 
 Mnemonic::
 c.popretz _{reg_list_1_4}, stack_adj_
