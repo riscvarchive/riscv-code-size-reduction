@@ -6,35 +6,36 @@ Synopsis::
 Destroy stack frame: load ra and 4 to 12 saved registers from the stack frame, deallocate the stack frame, return to ra.
 
 Mnemonic::
-c.popret _{reg_list_5_13}, stack_adj_
+c.popret.l
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
-    { bits:  3, name: 'rlist3', attr: ['reg_list_5_13'] },
+    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  3, name: 'rlist3', attr: [] },
     { bits:  2, name: 0x2,      attr: []},
     { bits:  3, name: 'spimm\[6:4\]',  attr: [] },
     { bits:  6, name: 0x2b,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
 ....
 
-Syntax::
+Assembly Syntax::
 
 [source,sail]
 --
-c.popret {<reg_list_5_13> | <xreg_list_5_13>}, -<stack_adj>
+c.popret {reg_list_5_13},  -stack_adj
+c.popret {xreg_list_5_13}, -stack_adj
 --
 
 include::pushpop_l_vars.adoc[]
 
-<<<
 Description::
 This instruction pop (loads) the registers in _reg_list_5_13_ from stack memory,
  adjusts the stack pointer by _stack_adj_ and then returns.
 
-include::pushpop_l_rlist3_decode_table.adoc[]
+include::pushpop_extra_info.adoc[]
+include::c_pop_popret_l_loads_pseudo_code.adoc[]
 include::c_popret_pseudo_code.adoc[]
 
 <<<

@@ -1,3 +1,4 @@
+
 <<<
 
 Operation::
@@ -11,9 +12,9 @@ The first section of pseudo-code may be executed multiple times before the instr
 if (misa.MXL==1) bytes=4; else bytes=8;
 
 addr=sp+stack_adj-bytes;
-for(i=31;i>0;i--)  {
-  //if register i is in xreg_list
-  if (xreg_list[i]) {
+foreach(i in 18,9,8,1)  {
+  //if register i is in xreg_list_1_4
+  if (xreg_list_1_4[i]) {
     switch(bytes) {
       4:  asm("lw x[i], 0(addr)");
       8:  asm("ld x[i], 0(addr)");

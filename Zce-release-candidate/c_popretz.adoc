@@ -6,14 +6,14 @@ Synopsis::
 Destroy stack frame: load ra and 0 to 3 saved registers from the stack frame, deallocate the stack frame, move zero into a0, return to ra.
 
 Mnemonic::
-c.popretz _{reg_list_1_4}, stack_adj_
+c.popretz
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
-    { bits:  2, name: 'rlist2', attr: ['reg_list_1_4'] },
+    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  2, name: 'rlist2', attr: [] },
     { bits:  3, name: 0x3,      attr: []},
     { bits:  2, name: 'spimm\[5:4\]',  attr: [] },
     { bits:  1, name: 0x1,      attr: []},
@@ -21,20 +21,24 @@ Encoding (RV32, RV64)::
 ],config:{bits:16}}
 ....
 
-Syntax::
+Assembly Syntax::
 
 [source,sail]
 --
-c.popretz {<reg_list_1_4> | <xreg_list_1_4>}, <stack_adj>
+c.popretz {reg_list_1_4},  stack_adj
+c.popretz {xreg_list_1_4}, stack_adj
 --
 
 include::pushpop_vars.adoc[]
+
+<<<
 
 Description::
 This instruction pop (loads) the registers in _reg_list_1_4_ from stack memory,
  adjusts the stack pointer by _stack_adj_, moves zero into a0 and then returns.
 
-include::pushpop_rlist2_decode_table.adoc[]
+include::pushpop_extra_info.adoc[]
+include::c_pop_popret_loads_pseudo_code.adoc[]
 include::c_popretz_pseudo_code.adoc[]
 
 <<<

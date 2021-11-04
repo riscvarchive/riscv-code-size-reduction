@@ -1,22 +1,48 @@
 
-The variables used in the syntax are defined below.
+include::variable_def.adoc[]
 
 [source,sail]
 --
-<reg_list_5_13> ::= <ra> "," <s0-sN> (where N is 3,4,5,6,7,8,9,11)
+if (rlist3==0) {reg_list_5_13="ra, s0-s3";  xreg_list_5_13="x1, x8-x9, x18-x19";}
+if (rlist3==1) {reg_list_5_13="ra, s0-s4";  xreg_list_5_13="x1, x8-x9, x18-x20";}
+if (rlist3==2) {reg_list_5_13="ra, s0-s5";  xreg_list_5_13="x1, x8-x9, x18-x21";}
+if (rlist3==3) {reg_list_5_13="ra, s0-s6";  xreg_list_5_13="x1, x8-x9, x18-x22";}
+if (rlist3==4) {reg_list_5_13="ra, s0-s7";  xreg_list_5_13="x1, x8-x9, x18-x23";}
+if (rlist3==5) {reg_list_5_13="ra, s0-s8";  xreg_list_5_13="x1, x8-x9, x18-x24";}
+if (rlist3==6) {reg_list_5_13="ra, s0-s9";  xreg_list_5_13="x1, x8-x9, x18-x25";}
+//note - to include s10, s11 must also be included
+if (rlist3==7) {reg_list_5_13="ra, s0-s11"; xreg_list_5_13="x1, x8-x9, x18-x27";}
 
-if (<reg_list_5_13>=="ra, s0-sN")  <xreg_list_5_13>="x1, x8-x9, x18-xM" 
-  (where M=N+16 and N is 3,4,5,6,7,8,9,11)
- 
+stack_adj      = stack_adj_base + spimm[6:4] * 16;
+--
+
 RV32:
-if (<reg_list_5_13>=="ra, s0-sN")   <stack_adj>=[32|48|..|528] (where N is 3-6)
-if (<reg_list_5_13>=="ra, s0-sN")   <stack_adj>=[48|64|..|544] (where N is 7-9)
-if (<reg_list_5_13>=="ra, s0-s11")  <stack_adj>=[64|80|..|560]
+[source,sail]
+--
+if (rlist3 <4)                  stack_adj_base=32;
+if (rlist3 >4 && rlist3 <7)     stack_adj_base=48;
+if (rlist3==7)                  stack_adj_base=64;
 
+Valid values:
+if (rlist3 <4)                  stack_adj=[32|48|..|144];
+if (rlist3>=4 && rlist3 <7)     stack_adj=[48|64|..|160];
+if (rlist3==7)                  stack_adj=[64|80|..|176];
+--
+
+<<<
 RV64:
-if (<reg_list_5_13>=="ra, s0-sN")   <stack_adj>=[ 48| 64|..|544] (where N is 3,4)
-if (<reg_list_5_13>=="ra, s0-sN")   <stack_adj>=[ 64| 80|..|560] (where N is 5,6)
-if (<reg_list_5_13>=="ra, s0-sN")   <stack_adj>=[ 80| 96|..|576] (where N is 7,8)
-if (<reg_list_5_13>=="ra, s0-s9")   <stack_adj>=[ 96|112|..|576] 
-if (<reg_list_5_13>=="ra, s0-s11")  <stack_adj>=[112|128|..|592]
+[source,sail]
+--
+if (rlist3 <2)                  stack_adj_base=48;
+if (rlist3>=2 && rlist3 <4)     stack_adj_base=64;
+if (rlist3>=4 && rlist3 <6)     stack_adj_base=80;
+if (rlist3==6)                  stack_adj_base=96;
+if (rlist3==7)                  stack_adj_base=112;
+
+Valid values:
+if (rlist3 <2)                  stack_adj=[ 48| 64|..|160];
+if (rlist3>=2 && rlist3 <4)     stack_adj=[ 64| 80|..|176];
+if (rlist3>=4 && rlist3 <6)     stack_adj=[ 80| 96|..|192];
+if (rlist3==6)                  stack_adj=[ 96|112|..|208];
+if (rlist3==7)                  stack_adj=[112|128|..|224];
 --

@@ -77,30 +77,19 @@ Only caching a few entries will greatly improve the performance.
 [#tablejump-fault-handling]
 === Table Jump Fault handling
 
-Table Jump involves two instruction fetches from a single instruction, and either fetch can cause a fault.
+Table Jump involves two instruction fetches from a single instruction, and either fetch can cause a fault. There are no data accesses involved in the execution of table jumps.
 
 The sequence required to execute the table jump instruction may be interrupted, or may not be able to start execution for several reasons.
 
 * virtual memory page fault or PMP fault
-** these can be detected before execution, or during execution if the memory addresses cross a page/PMP boundary
-** MTVAL is set to any address which causes the fault
-* watchpoint trigger
-** these can be detected before execution, or during execution depending on the trigger type (load data triggers require the sequence to have started executing, for example)
-** MTVAL is set to any address which causes the fault
+** these can be detected before execution, or during execution if the table jump instruction and the address in the table map to different virtual memory pages or PMP regions
+* watchpoint trigger or debug halt caused by a trigger
 * external debug halt
 ** the halt can treat the whole sequence atomically, or interrupt mid sequence (implementation defined)
-* debug halt caused by a trigger
-** same comment as watchpoint trigger above
-* load access fault
-** these are detected while the sequence is executing
-** MTVAL is set to the fault address.
-* store access fault (precise or imprecise)
-** these may be detected while the sequence is executing, or afterwards if imprecise
-** MTVAL is set to the fault address.
 * interrupts
 ** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
 
-In all case MEPC contain the PC of the table jump instruction, and MCAUSE is set as expected for the type of fault.
+For exceptions and interrupts MEPC contain the PC of the table jump instruction, MCAUSE is set as expected for the type of fault and MTVAL contains the address which caused the fault.
 
 For debug halts DPC is set to the PC of the table jump instruction.
 

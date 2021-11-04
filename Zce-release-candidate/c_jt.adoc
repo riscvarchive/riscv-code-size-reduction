@@ -1,19 +1,19 @@
 <<<
-[#insns-c_jt,reftext="c.jt: jump via table without link, 16-bit encoding"]
+[#insns-c_jt,reftext="c.jt: jump via table without link"]
 === c.jt
 
 Synopsis::
-jump via table without link, 16-bit encoding
+jump via table without link
 
 Mnemonic::
-c.jt _#index_
+c.jt
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
-    { bits:  8, name: 'index8', attr: ['index8<64'] },
+    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  8, name: 'index8', attr: [] },
     { bits:  6, name: 0x28,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
 ....
@@ -22,7 +22,7 @@ Encoding (RV32, RV64)::
 
   For this encoding to decode as _c.jt_, _index8<64_, otherwise it decodes as <<insns-c_jalt>>.
 
-Syntax::
+Assembly Syntax::
 
 [source,sail]
 --

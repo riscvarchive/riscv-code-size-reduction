@@ -8,7 +8,27 @@ Zces is the set of sequenced or more complex instuctions for code-size reduction
 
 This extension reuses encodings from the D-extension.  Therefore it is _incompatible_ with D. It is fully compatible with F and also with Zdinx.
 
-jt and jalt require <<#csrs-jvt>>.
+[NOTE]
+
+  jt and jalt require <<#csrs-jvt>>.
+
+[NOTE]
+
+  The PUSH/POP instructions share assembly mnemonics for different encodings. For further information see <<insns-pushpop>>.
+
+The PUSH/POP assembly syntax uses several variables, the meaning of which are:
+
+* _reg_list_1_4_ is a list containing 1 to 4 registers (ra and 0 to 3 s registers)
+** valid values: {ra}, {ra, s0}, {ra, s0-s1}, {ra, s0-s2}
+* _reg_list_2_4_ is a list containing 2 to 4 registers (ra and 1 to 3 s registers)
+** valid values: {ra, s0}, {ra, s0-s1}, {ra, s0-s2}
+* _reg_list_5_13_ is a list containing 5 to 13 registers (ra and 4 to 12 s registers)
+** valid values: {ra, s0-s3}, {ra, s0-s4}, ..., {ra, s0-s8}, {ra, s0-s9}, {ra, s0-s11}
+** note that {ra, s0-s10} is _not_ valid, giving 8 lists not 9 for better encoding
+* _areg_list_1_3_ is a list containing 1 to 3 a registers
+** valid values: {a0}, {a0-a1}, {a0-a2}
+* _stack_adj_ is the total size of the stack frame. 
+** valid values vary with register list length and the specific encoding, see the instruction pages for details.
 
 [%header,cols="^1,^1,4,8"]
 |===
@@ -19,16 +39,6 @@ jt and jalt require <<#csrs-jvt>>.
 
 |&#10003;
 |&#10003;
-|c.push {reg_list_1_4}, {areg_list_1_3}, -stack_adj
-|<<#insns-c_pusha>> 
-
-|&#10003;
-|&#10003;
-|c.push {reg_list_5_13}, {areg_list_4}, -stack_adj
-|<<#insns-c_pusha_l>> 
-
-|&#10003;
-|&#10003;
 |c.push {reg_list_1_4}, -stack_adj
 |<<#insns-c_push>> 
 
@@ -36,6 +46,16 @@ jt and jalt require <<#csrs-jvt>>.
 |&#10003;
 |c.push {reg_list_5_13}, -stack_adj
 |<<#insns-c_push_l>> 
+
+|&#10003;
+|&#10003;
+|c.push {reg_list_2_4}, {areg_list_1_3}, -stack_adj
+|<<#insns-c_pusha>> 
+
+|&#10003;
+|&#10003;
+|c.push {reg_list_5_13}, {a0-a3}, -stack_adj
+|<<#insns-c_pusha_l>> 
 
 |&#10003;
 |&#10003;
@@ -79,10 +99,10 @@ jt and jalt require <<#csrs-jvt>>.
 
 |===
 
-include::c_pusha.adoc[]
-include::c_pusha_l.adoc[]
 include::c_push.adoc[]
 include::c_push_l.adoc[]
+include::c_pusha.adoc[]
+include::c_pusha_l.adoc[]
 include::c_pop.adoc[]
 include::c_popret.adoc[]
 include::c_popret_l.adoc[]

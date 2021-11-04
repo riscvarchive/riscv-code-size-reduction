@@ -6,14 +6,14 @@ Synopsis::
 Create stack frame: store ra and 0 to 3 saved registers to the stack frame, optionally allocate additional stack space.
 
 Mnemonic::
-c.push _{reg_list_1_4}, -stack_adj_
+c.push
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
-    { bits:  2, name: 'rlist2', attr: ['reg_list_1_4'] },
+    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  2, name: 'rlist2', attr: [] },
     { bits:  3, name: 0x3,      attr: []},
     { bits:  2, name: 'spimm\[5:4\]',  attr: [] },
     { bits:  1, name: 0x1,      attr: []},
@@ -21,21 +21,24 @@ Encoding (RV32, RV64)::
 ],config:{bits:16}}
 ....
 
-Syntax::
+Assembly Syntax::
 
 [source,sail]
 --
-c.push {<reg_list_1_4> | <xreg_list_1_4>}, -<stack_adj>
+c.push {reg_list_1_4},  -stack_adj
+c.push {xreg_list_1_4}, -stack_adj
 --
 
+include::variable_def.adoc[]
 include::pushpop_vars.adoc[]
 
 <<<
 Description::
-This instruction pushes (stores) the registers in _reg_list_1_4_ to stack memory, 
-and then adjusts the stack pointer by _-stack_adj_. 
+This instruction pushes (stores) the registers in _reg_list_1_4_ to the memory below the stack pointer, 
+and then creates the stack frame by decrementing the stack pointer by _stack_adj_, including any additional stack space requested by the value of _spimm_.
 
-include::pushpop_rlist2_decode_table.adoc[]
+include::pushpop_extra_info.adoc[]
+include::c_push_stores_pseudo_code.adoc[]
 include::c_push_pseudo_code.adoc[]
 
 <<<

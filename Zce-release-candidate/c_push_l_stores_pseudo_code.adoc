@@ -12,9 +12,9 @@ The first section of pseudo-code may be executed multiple times before the instr
 if (misa.MXL==1) bytes=4; else bytes=8;
 
 addr=sp-bytes;
-for(i in 18,9,8,1)  {
-  //if register i is in xreg_list_1_4
-  if (xreg_list_1_4[i]) {
+for(i in 27,26,25,24,23,22,21,20,19,18,9,8,1)  {
+  //if register i is in xreg_list_5_13
+  if (xreg_list_5_13[i]) {
     switch(bytes) {
       4:  asm("sw x[i], 0(addr)");
       8:  asm("sd x[i], 0(addr)");

@@ -6,14 +6,14 @@ Synopsis::
 Create stack frame: store ra and 1 to 3 saved registers to the stack frame, move arguments into saved registers, optionally allocate additional stack space.
 
 Mnemonic::
-c.push _{reg_list_2_4}, {areg_list_1_3}, -stack_adj_
+c.pusha
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
-    { bits:  2, name: 'rlist2', attr: ['reg_list_2_4'] },
+    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  2, name: 'rlist2', attr: [] },
     { bits:  3, name: 0x3,      attr: []},
     { bits:  2, name: 'spimm\[5:4\]',  attr: [] },
     { bits:  1, name: 0x0,      attr: []},
@@ -25,17 +25,61 @@ Encoding (RV32, RV64)::
 
   _rlist2=0_ is reserved
 
-Syntax::
+Assembly Syntax::
 
-include::c_pusha_vars.adoc[]
+[source,sail]
+--
+c.push {reg_list_2_4},   {areg_list_1_3},  -stack_adj
+c.push {xreg_list_2_4>}, {xareg_list_1_3}, -stack_adj
+--
+
+include::variable_def.adoc[]
+
+[source,sail]
+--
+if (rlist2==1) {areg_list_1_3="a0";    xareg_list_1_3="x10";}
+if (rlist2==2) {areg_list_1_3="a0-s1"; xareg_list_1_3="x10-x11";}
+if (rlist2==3) {areg_list_1_3="a0-s2"; xareg_list_1_3="x10-x12";}
+--
+
+[source,sail]
+--
+if (rlist2==1) {reg_list_2_4="ra, s0";    xreg_list_2_4="x1, x8";}
+if (rlist2==2) {reg_list_2_4="ra, s0-s1"; xreg_list_2_4="x1, x8-x9";}
+if (rlist2==3) {reg_list_2_4="ra, s0-s2"; xreg_list_2_4="x1, x8-x9, x18";}
+
+stack_adj      = stack_adj_base + spimm[5:4] * 16;
+--
+
+RV32:
+[source,sail]
+--
+stack_adj_base = 16;
+
+Valid values:
+stack_adj      = [16|32|48|64];
+--
 
 <<<
+
+RV64:
+[source,sail]
+--
+if (rlist2==0)     stack_adj_base=16;
+if (rlist2 >0)     stack_adj_base=32;
+
+Valid values:
+if (rlist2==0)     stack_adj=[16|32|48|64|96];
+if (rlist2 >0)     stack_adj=[32|48|64|96|112];
+--
+
 Description::
 This instruction pushes (stores) the registers in _reg_list_2_4_ to stack memory, 
 moves _areg_list_1_3_ into correspondingly numbered _s_ registers, 
 and then adjusts the stack pointer by _-stack_adj_. 
 
-include::c_pusha_rlist2_decode_table.adoc[]
+include::pushpop_extra_info.adoc[]
+include::c_pusha_stores_pseudo_code.adoc[]
 include::c_pusha_pseudo_code.adoc[]
 
 <<<

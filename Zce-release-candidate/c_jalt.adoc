@@ -1,19 +1,19 @@
 <<<
-[#insns-c_jalt,reftext="c.jalt: jump via table and link to ra, 16-bit encoding"]
+[#insns-c_jalt,reftext="c.jalt: jump via table and link to ra"]
 === c.jalt
 
 Synopsis::
-jump via table and link to ra, 16-bit encoding
+jump via table and link to ra
 
 Mnemonic::
-c.jalt _#index_
+c.jalt 
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
-    { bits:  8, name: 'index8', attr: ['index8>=64'] },
+    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  8, name: 'index8', attr: [] },
     { bits:  6, name: 0x28,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
 ....
@@ -22,7 +22,7 @@ Encoding (RV32, RV64)::
 
   For this encoding to decode as _c.jalt_, _index8>=64_, otherwise it decodes as <<insns-c_jt>>.
 
-Syntax::
+Assembly Syntax::
 
 [source,sail]
 --

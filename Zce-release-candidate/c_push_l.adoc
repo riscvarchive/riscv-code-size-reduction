@@ -6,25 +6,26 @@ Synopsis::
 Create stack frame: store ra and 4 to 12 saved registers, optionally allocate additional stack space.
 
 Mnemonic::
-c.push _{reg_list_5_13}, -stack_adj_
+c.push.l
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: ['OP=C2'] },
-    { bits:  3, name: 'rlist3', attr: ['reg_list_5_13'] },
+    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  3, name: 'rlist3', attr: [] },
     { bits:  2, name: 0x3,      attr: []},
     { bits:  3, name: 'spimm\[6:4\]',  attr: [] },
     { bits:  6, name: 0x2a,     attr: ['FUNCT6'] },
 ],config:{bits:16}}
 ....
 
-Syntax::
+Assembly Syntax::
 
 [source,sail]
 --
-c.push {<reg_list_5_13> | <xreg_list_5_13>}, -<stack_adj>
+c.push {reg_list_5_13},  -stack_adj
+c.push {xreg_list_5_13}, -stack_adj
 --
 
 include::pushpop_l_vars.adoc[]
@@ -34,7 +35,8 @@ Description::
 This instruction pushes (stores) the registers in _reg_list_5_13_ to stack memory, 
 and then adjusts the stack pointer by _-stack_adj_. 
 
-include::pushpop_l_rlist3_decode_table.adoc[]
+include::pushpop_extra_info.adoc[]
+include::c_push_l_stores_pseudo_code.adoc[]
 include::c_push_pseudo_code.adoc[]
 
 <<<
