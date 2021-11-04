@@ -22,6 +22,8 @@ Encoding (RV32, RV64)::
 ],config:{bits:16}}
 ....
 
+include::c_lbsb_imm_offset.adoc[]
+
 Description::
 This instruction stores the least significant byte of _rs2'_ to the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. 
 

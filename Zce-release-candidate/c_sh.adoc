@@ -22,9 +22,7 @@ Encoding (RV32, RV64)::
 ],config:{bits:16}}
 ....
 
-[NOTE]
-
-  _uimm[0] = 0_ so the offset is halfword aligned.
+include::c_lhsh_imm_offset.adoc[]
 
 Description::
 This instruction stores the least significant halfword of _rs2'_ to the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. 

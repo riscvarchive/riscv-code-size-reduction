@@ -29,6 +29,10 @@ The C-extension and either M or Zmmul must also be configured.
 32-bit equivalent::
 <<insns-mul>>
 
+[NOTE]
+
+  The SAIL module variable for _rsd'_ is called _rsdc_, and for _rs2'_ is called _rs2c_.
+
 Operation::
 [source,sail]
 --
