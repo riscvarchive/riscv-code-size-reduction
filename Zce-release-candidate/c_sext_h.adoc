@@ -31,6 +31,10 @@ The C-extension must also be configured.
 32-bit equivalent::
 <<insns-sext_h>> from Zbb
 
+[NOTE]
+
+  The SAIL module variable for _rsd'_ is called _rsdc_.
+
 Operation::
 [source,sail]
 --

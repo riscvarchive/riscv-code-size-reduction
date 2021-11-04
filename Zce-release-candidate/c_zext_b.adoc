@@ -21,7 +21,8 @@ Encoding (RV32, RV64)::
 ....
 
 Description::
-This instruction takes a single source/destination operand, from the 8-register set x8-x15. It zero-extends the least-significant byte of the operand to XLEN by inserting 0’s into all of
+This instruction takes a single source/destination operand, from the 8-register set x8-x15. 
+It zero-extends the least-significant byte of the operand to XLEN by inserting zeros into all of
 the bits more significant than 7.
 
 Prerequisites::
@@ -30,8 +31,12 @@ The C-extension must also be configured.
 32-bit equivalent::
 [source,sail]
 --
-andi rd, rs1, 0xff
+andi rsd, rsd, 0xff
 --
+
+[NOTE]
+
+  The SAIL module variable for _rsd'_ is called _rsdc_.
 
 Operation::
 [source,sail]

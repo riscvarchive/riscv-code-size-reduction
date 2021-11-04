@@ -22,6 +22,10 @@ Encoding (RV32, RV64)::
 ],config:{bits:16}}
 ....
 
+[NOTE]
+
+  _uimm[0] = 0_ so the offset is halfword aligned.
+
 Description::
 This instruction loads a halfword from the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. The resulting halfword is zero extended to XLEN bits and is written to _rd'_. 
 
