@@ -7,5 +7,5 @@ if (areg_list[a0]) asm("mv s0, a0");
 if (areg_list[a1]) asm("mv s1, a1");
 if (areg_list[a2]) asm("mv s2, a2");
 
-sp+=stack_adj;
+sp-=stack_adj;
 --

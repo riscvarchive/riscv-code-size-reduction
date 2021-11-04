@@ -7,7 +7,7 @@ This is the proposed specification for Zceb:
 https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zceb.pdf
 
 
-Currently two versions of the proposal for Zces exist. the first is likely to be adopted (including `areg_list` in the `push` instructions).
+This is the proposed specification for Zces:
 
 https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zces.pdf
 

@@ -3,46 +3,57 @@ include::variable_def.adoc[]
 
 [source,sail]
 --
-if (rlist3==0) {reg_list_5_13="ra, s0-s3";  xreg_list_5_13="x1, x8-x9, x18-x19";}
-if (rlist3==1) {reg_list_5_13="ra, s0-s4";  xreg_list_5_13="x1, x8-x9, x18-x20";}
-if (rlist3==2) {reg_list_5_13="ra, s0-s5";  xreg_list_5_13="x1, x8-x9, x18-x21";}
-if (rlist3==3) {reg_list_5_13="ra, s0-s6";  xreg_list_5_13="x1, x8-x9, x18-x22";}
-if (rlist3==4) {reg_list_5_13="ra, s0-s7";  xreg_list_5_13="x1, x8-x9, x18-x23";}
-if (rlist3==5) {reg_list_5_13="ra, s0-s8";  xreg_list_5_13="x1, x8-x9, x18-x24";}
-if (rlist3==6) {reg_list_5_13="ra, s0-s9";  xreg_list_5_13="x1, x8-x9, x18-x25";}
-//note - to include s10, s11 must also be included
-if (rlist3==7) {reg_list_5_13="ra, s0-s11"; xreg_list_5_13="x1, x8-x9, x18-x27";}
-
+switch (rlist3) {
+  case 0: {reg_list_5_13="ra, s0-s3";  xreg_list_5_13="x1, x8-x9, x18-x19";}
+  case 1: {reg_list_5_13="ra, s0-s4";  xreg_list_5_13="x1, x8-x9, x18-x20";}
+  case 2: {reg_list_5_13="ra, s0-s5";  xreg_list_5_13="x1, x8-x9, x18-x21";}
+  case 3: {reg_list_5_13="ra, s0-s6";  xreg_list_5_13="x1, x8-x9, x18-x22";}
+  case 4: {reg_list_5_13="ra, s0-s7";  xreg_list_5_13="x1, x8-x9, x18-x23";}
+  case 5: {reg_list_5_13="ra, s0-s8";  xreg_list_5_13="x1, x8-x9, x18-x24";}
+  case 6: {reg_list_5_13="ra, s0-s9";  xreg_list_5_13="x1, x8-x9, x18-x25";}
+  //note - to include s10, s11 must also be included
+  case 7: {reg_list_5_13="ra, s0-s11"; xreg_list_5_13="x1, x8-x9, x18-x27";}
+}
 stack_adj      = stack_adj_base + spimm[6:4] * 16;
 --
+
+<<<
 
 RV32:
 [source,sail]
 --
-if (rlist3 <4)                  stack_adj_base=32;
-if (rlist3 >4 && rlist3 <7)     stack_adj_base=48;
-if (rlist3==7)                  stack_adj_base=64;
+switch (rlist3) {
+  case 0..3: stack_adj_base = 32;
+  case 4..6: stack_adj_base = 48;
+  case    7: stack_adj_base = 64;
+}
 
 Valid values:
-if (rlist3 <4)                  stack_adj=[32|48|..|144];
-if (rlist3>=4 && rlist3 <7)     stack_adj=[48|64|..|160];
-if (rlist3==7)                  stack_adj=[64|80|..|176];
+switch (rlist3) {
+  case 0..3: stack_adj_base = stack_adj=[32|48|..|144];
+  case 4..6: stack_adj_base = stack_adj=[48|64|..|160];
+  case    7: stack_adj_base = stack_adj=[64|80|..|176];
+}
+
 --
 
-<<<
 RV64:
 [source,sail]
 --
-if (rlist3 <2)                  stack_adj_base=48;
-if (rlist3>=2 && rlist3 <4)     stack_adj_base=64;
-if (rlist3>=4 && rlist3 <6)     stack_adj_base=80;
-if (rlist3==6)                  stack_adj_base=96;
-if (rlist3==7)                  stack_adj_base=112;
+switch (rlist3) {
+  case 0..1: stack_adj_base=48;
+  case 2..3: stack_adj_base=64;
+  case 4..5: stack_adj_base=80;
+  case    6: stack_adj_base=96;
+  case    7: stack_adj_base=112;
+}
 
 Valid values:
-if (rlist3 <2)                  stack_adj=[ 48| 64|..|160];
-if (rlist3>=2 && rlist3 <4)     stack_adj=[ 64| 80|..|176];
-if (rlist3>=4 && rlist3 <6)     stack_adj=[ 80| 96|..|192];
-if (rlist3==6)                  stack_adj=[ 96|112|..|208];
-if (rlist3==7)                  stack_adj=[112|128|..|224];
+switch (rlist3) {
+  case 0..1: stack_adj=[ 48| 64|..|160];
+  case 2..3: stack_adj=[ 64| 80|..|176];
+  case 4..5: stack_adj=[ 80| 96|..|192];
+  case    6: stack_adj=[ 96|112|..|208];
+  case    7: stack_adj=[112|128|..|224];
+}
 --

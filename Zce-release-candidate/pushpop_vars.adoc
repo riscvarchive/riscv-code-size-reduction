@@ -1,11 +1,12 @@
 
 [source,sail]
 --
-if (rlist2==0) {reg_list_1_4="ra";        xreg_list_1_4="x1";}
-if (rlist2==1) {reg_list_1_4="ra, s0";    xreg_list_1_4="x1, x8";}
-if (rlist2==2) {reg_list_1_4="ra, s0-s1"; xreg_list_1_4="x1, x8-x9";}
-if (rlist2==3) {reg_list_1_4="ra, s0-s2"; xreg_list_1_4="x1, x8-x9, x18";}
-
+switch (rlist2){
+  case 0: {reg_list_1_4="ra";        xreg_list_1_4="x1";}
+  case 1: {reg_list_1_4="ra, s0";    xreg_list_1_4="x1, x8";}
+  case 2: {reg_list_1_4="ra, s0-s1"; xreg_list_1_4="x1, x8-x9";}
+  case 3: {reg_list_1_4="ra, s0-s2"; xreg_list_1_4="x1, x8-x9, x18";}
+}
 stack_adj      = stack_adj_base + spimm[5:4] * 16;
 --
 
@@ -18,13 +19,19 @@ Valid values:
 stack_adj      = [16|32|48|64];
 --
 
+<<<
+
 RV64:
 [source,sail]
 --
-if (rlist2==0)     stack_adj_base=16;
-if (rlist2 >0)     stack_adj_base=32;
+switch (rlist2){
+  case 0..1:     stack_adj_base=16;
+  case 2..3:     stack_adj_base=32;
+}
 
 Valid values:
-if (rlist2==0)     stack_adj=[16|32|48|64|96];
-if (rlist2 >0)     stack_adj=[32|48|64|96|112];
+switch (rlist2){
+  case 0..1:     stack_adj=[16|32|48|64|96];
+  case 2..3:     stack_adj=[32|48|64|96|112];
+}
 --
