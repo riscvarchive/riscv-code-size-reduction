@@ -40,7 +40,7 @@ include::c_popretz_pseudo_code.adoc[]
 
 <<<
 
-RV32 Assembly examples::
+RV32 Assembly example::
 
 [source,sail]
 --
@@ -49,7 +49,7 @@ c.popretz {ra, s0-s3}, 48
 
 Encoding: _rlist2_=0, _spimm_=1
 
-Equivalent sequence:
+The equivalent sequence for pseudo-code evaluation and an interrupt safe assembly sequence is:
 
 [source,sail]
 --
@@ -63,6 +63,8 @@ li   a0, 0;
 ret;
 --
 
+RV32 Assembly example::
+
 [source,sail]
 --
 c.popretz {ra, s0-s4}, 64
@@ -70,7 +72,7 @@ c.popretz {ra, s0-s4}, 64
 
 Encoding: _rlist2_=1, _spimm_=2
 
-Equivalent sequence:
+The equivalent sequence for pseudo-code evaluation and an interrupt safe assembly sequence is:
 
 [source,sail]
 --

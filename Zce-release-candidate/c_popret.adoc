@@ -42,7 +42,7 @@ include::c_popret_pseudo_code.adoc[]
 
 <<<
 
-RV32 Assembly examples::
+RV32 Assembly example::
 
 [source,sail]
 --
@@ -51,7 +51,7 @@ c.popret {ra, s0-s2}, 48
 
 Encoding: _rlist2_=3, _spimm_=2
 
-Equivalent sequence:
+The equivalent sequence for pseudo-code evaluation and an interrupt safe assembly sequence is:
 
 [source,sail]
 --
@@ -63,6 +63,8 @@ addi sp, sp, 48;
 ret;
 --
 
+RV32 Assembly example::
+
 [source,sail]
 --
 c.popret {ra}, 16
@@ -70,7 +72,7 @@ c.popret {ra}, 16
 
 Encoding: _rlist2_=0, _spimm_=0
 
-Equivalent sequence:
+The equivalent sequence for pseudo-code evaluation and an interrupt safe assembly sequence is:
 
 [source,sail]
 --

@@ -43,7 +43,7 @@ include::c_push_pseudo_code.adoc[]
 
 <<<
 
-RV32 Assembly examples::
+RV32 Assembly example::
 
 [source,sail]
 ----
@@ -52,7 +52,21 @@ c.push  {ra, s0-s2}, -64
 
 Encoding: _rlist2_=3, _spimm_=3
 
-Equivalent sequence:
+The equivalent interrupt safe assembly sequence is:
+
+[source,sail]
+----
+addi sp, sp, -64;
+sw  s2, 60(sp);
+sw  s1, 56(sp); 
+sw  s0, 52(sp);
+sw  ra, 48(sp); 
+mv  s0, a0
+mv  s1, a1
+mv  s2, a2
+----
+
+The pseudo-code evaluates to:
 
 [source,sail]
 ----
@@ -63,6 +77,10 @@ sw  ra, -16(sp);
 addi sp, sp, -64;
 ----
 
+<<<
+
+RV32 Assembly example::
+
 [source,sail]
 ----
 c.push {ra, s0-s1}, -32
@@ -70,7 +88,19 @@ c.push {ra, s0-s1}, -32
 
 Encoding: _rlist2_=2, _spimm_=1
 
-Equivalent sequence:
+The equivalent interrupt safe assembly sequence is:
+
+[source,sail]
+----
+addi sp, sp, -32;
+sw  s1, 28(sp);
+sw  s0, 24(sp); 
+sw  ra, 20(sp);
+mv  s0, a0
+mv  s1, a1
+----
+
+The pseudo-code evaluates to:
 
 [source,sail]
 ----
