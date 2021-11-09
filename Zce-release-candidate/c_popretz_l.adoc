@@ -49,7 +49,7 @@ c.popretz {ra, s0-s3}, 48
 
 Encoding: _rlist2_=0, _spimm_=1
 
-The equivalent sequence for pseudo-code evaluation and an interrupt safe assembly sequence is:
+The equivalent interrupt safe assembly sequence is:
 
 [source,sail]
 --
@@ -72,7 +72,7 @@ c.popretz {ra, s0-s4}, 64
 
 Encoding: _rlist2_=1, _spimm_=2
 
-The equivalent sequence for pseudo-code evaluation and an interrupt safe assembly sequence is:
+The equivalent interrupt safe assembly sequence is:
 
 [source,sail]
 --

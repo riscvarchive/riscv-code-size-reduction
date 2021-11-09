@@ -66,24 +66,6 @@ mv  s2, a2
 mv  s3, a3
 ----
 
-The pseudo-code evaluates to:
-
-[source,sail]
-----
-sw  s3, -4(sp);
-sw  s2, -8(sp); 
-sw  s1, -12(sp);
-sw  s0, -16(sp); 
-sw  ra, -20(sp); 
-mv  s0, a0
-mv  s1, a1
-mv  s2, a2
-mv  s3, a3
-addi sp, sp, -64;
-----
-
-<<<
-
 RV32 Assembly example::
 
 [source,sail]
@@ -115,30 +97,6 @@ mv  s0, a0
 mv  s1, a1
 mv  s2, a2
 mv  s3, a3
-----
-
-The pseudo-code evaluates to:
-
-[source,sail]
-----
-sw  s11, -4(sp);
-sw  s10, -8(sp); 
-sw  s9, -12(sp);
-sw  s8, -16(sp);
-sw  s7, -20(sp);
-sw  s6, -24(sp);
-sw  s5, -28(sp);
-sw  s4, -32(sp);
-sw  s3, -36(sp);
-sw  s2, -40(sp);
-sw  s1, -44(sp);
-sw  s0, -48(sp);
-sw  ra, -52(sp);
-mv  s0, a0
-mv  s1, a1
-mv  s2, a2
-mv  s3, a3
-addi sp, sp, -128;
 ----
 
 include::Zces_footer.adoc[]
