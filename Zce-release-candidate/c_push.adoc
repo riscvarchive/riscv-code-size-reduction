@@ -61,9 +61,6 @@ sw  s2, 60(sp);
 sw  s1, 56(sp); 
 sw  s0, 52(sp);
 sw  ra, 48(sp); 
-mv  s0, a0
-mv  s1, a1
-mv  s2, a2
 ----
 
 The pseudo-code evaluates to:
@@ -96,8 +93,6 @@ addi sp, sp, -32;
 sw  s1, 28(sp);
 sw  s0, 24(sp); 
 sw  ra, 20(sp);
-mv  s0, a0
-mv  s1, a1
 ----
 
 The pseudo-code evaluates to:
