@@ -310,26 +310,26 @@ The sequence required to execute the PUSH/POP instruction may be interrupted, or
 
 * virtual memory page fault or PMP fault
 ** these can be detected before execution, or during execution if the memory addresses cross a page/PMP boundary
-** MTVAL is set to any address which causes the fault
+** xTVAL is set to any address which causes the fault
 * watchpoint trigger
 ** these can be detected before execution, or during execution depending on the trigger type (load data triggers require the sequence to have started executing, for example)
-** MTVAL is set to any address which causes the fault
+** xTVAL is set to any address which causes the fault
 * external debug halt
 ** the halt can treat the whole sequence atomically, or interrupt mid sequence (implementation defined)
 * debug halt caused by a trigger
 ** same comment as watchpoint trigger above
 * load access fault
 ** these are detected while the sequence is executing
-** MTVAL is set to the fault address.
+** xTVAL is set to the fault address.
 * store access fault (precise or imprecise)
 ** these may be detected while the sequence is executing, or afterwards if imprecise
-** MTVAL is set to the fault address.
+** xTVAL is set to the fault address.
 * interrupts
 ** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
 
 [NOTE]
 
-  MTVAL may be hardwired to zero in an implementation. The section above assumes it is implemented.
+  xTVAL may be hardwired to zero in an implementation. Recovering from faults such as page faults requires that it is implemented.
 
 In all cases MEPC contains the PC of the PUSH/POP instruction, and MCAUSE is set as expected for the type of fault.
 
@@ -358,7 +358,7 @@ This is safe because the memory is idempotent and the stores will be re-executed
 
 The stack pointer adjustment must only be committed once it is certain that all of the stores will complete without triggerring any precise faults (for example, page faults). 
 Stores may also return imprecise faults from the bus. It is platform defined whether the core implementation waits for the bus responses before continuing to the final stage of the sequence, 
-or handles errors responses after completing the PUSH isntruction.
+or handles errors responses after completing the PUSH instruction.
 
 <<<
 
@@ -374,6 +374,7 @@ Appears to software as:
 [source,sail]
 --
 # any bytes from sp-1 to sp-28 may be written multiple times before the instruction completes
+# therefore these updates may be visible in the interrupt/exception handler below the stack pointer
 sw  s5, -4(sp);   
 sw  s4, -8(sp);   
 sw  s3,-12(sp);   
@@ -383,6 +384,8 @@ sw  s0,-24(sp);
 sw  ra,-28(sp);   
 
 # these must only execute once, and will only execute after all stores completed without any precise faults
+# all instructions must execute atomically
+# therefore these updates are not visible in the interrupt/exception handler
 mv   s0, a0
 mv   s1, a1
 mv   s2, a2
@@ -420,6 +423,7 @@ Appears to software as:
 [source,sail]
 --
 # any or all of these load instructions may execute multiple times
+# therefore these updates may be visible in the interrupt/exception handler
 lw   s3, 28(sp);
 lw   s2, 24(sp);
 lw   s1, 20(sp);
@@ -428,6 +432,7 @@ lw   ra, 12(sp);
 
 # must only execute once, will only execute after all loads complete successfully
 # all instructions must execute atomically
+# therefore these updates are not visible in the interrupt/exception handler
 li a0, 0
 addi sp, sp, 32;
 ret;
