@@ -11,7 +11,8 @@ _stack_adj_base_ is the minimum number of bytes, in multiples of 16-byte blocks,
 
 _spimm_ is the number of additional 16-byte blocks allocated for the stack frame.
 
-The total stack adjustment represents the total size of the stack frame, which is _stack_adj_base_ added to _spimm_ scaled by 16, as defined above.
+The total stack adjustment represents the total size of the stack frame, which is _stack_adj_base_ added to _spimm_ scaled by 16, 
+as defined above.
 
 Prerequisites::
 The C-extension must also be configured.

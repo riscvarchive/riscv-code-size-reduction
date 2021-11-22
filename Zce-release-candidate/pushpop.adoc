@@ -438,6 +438,10 @@ addi sp, sp, 32;
 ret;
 --
 
+=== Forward progress guarantee
+
+The PUSH/POP sequence has the same forward progress guarantee as executing the instructions from the equivalent assembly sequences.
+
 [[pushpop_non-idem-mem]]
 === Non-idempotent memory handling
 
