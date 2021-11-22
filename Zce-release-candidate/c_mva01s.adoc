@@ -15,8 +15,8 @@ Encoding (RV32, RV64)::
     { bits:  2, name: 0x2,      attr: [] },
     { bits:  3, name: 'sreg2',  attr: [] },
     { bits:  2, name: 0x3,      attr: [] },
-    { bits:  3, name: 'sreg1',  attr: [] },
-    { bits:  6, name: 0x2b,     attr: ['FUNCT6'] },
+    { bits:  3, name: 0x3,      attr: [] },
+    { bits:  3, name: 0x5,      attr: [] },
 ],config:{bits:16}}
 ....
 
