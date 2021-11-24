@@ -122,9 +122,9 @@ with PUSH/POPRET this reduces to
 [source,SAIL]
 ----
 0001080e <processMarkers>:
-   1080e:       <16-bit>                c.push    {ra,s0-s11},{a0-a3},-96
+   1080e:       xxxx                    c.push    {ra,s0-s11},{a0-a3},-96
 
-   10866:       <16-bit>                c.popretz {ra,s0-s11}, 96
+   10866:       xxxx                    c.popretz {ra,s0-s11}, 96
 ----
 
 The prologue / epilogue reduce from 62-bytes in the original code, to 16-bytes with _-msave-restore_, 
@@ -138,7 +138,8 @@ calling the millicode _save/restore_ routines and so also perform better.
 
 [NOTE]
 
-  _c.pusha_ has three additional register moves included _mv s1, a1, mv s2, a2, mv s3, a3_ which weren't in the original prologue. Also, the _s4_ register needs to bhe reallocated to _s0_ to fit c.pusha.
+  _c.pusha_ has three additional register moves included _mv s1, a1, mv s2, a2, mv s3, a3_ which weren't in the original prologue. 
+  Also, the _s4_ register needs to be reallocated to _s0_ to fit _c.pusha_.
 
 [NOTE]
 
@@ -195,6 +196,8 @@ this is replaced by
   e010cc:       726040ef                jal     ra,e057f2 <function2>
 ----
 
+<<<
+
 === Example: _areg_list_ doesn't fit
 
 In this other real world example _areg_list_ doesn't fit:
@@ -228,6 +231,8 @@ In this case, the move instructions are not part of the same basic block so _c.p
   e0113e:       852e                    mv      a0,a1
   e01140:       89ae                    mv      s3,a1
 ----
+
+<<<
 
 === Example: _areg_list_ needs register allocation changes
 
@@ -269,6 +274,8 @@ e01e7e <function5>:
 In this case all four moves can be deleted if the register allocation can be altered.
 if the register allocation _cannot_ be altered, then _c.push_ should be used instead.
 
+<<<
+
 === Example: _areg_list_ partially fits
 
 In this final case, one register move can be deleted and one must be retained unless the register allocation can be changed.
@@ -301,6 +308,8 @@ In this final case, one register move can be deleted and one must be retained un
 In this case one move is deleted, but one remains because unless the target register can be reallocated.
 
 For the smallest code-size the compiler should reallocate the target registers so that the moves in _areg_list_ are not wasted.
+
+<<<
 
 [#pushpop-fault-handling]
 === PUSH/POP Fault handling
@@ -338,6 +347,8 @@ Because some faults can only be detected during the sequence the core implementa
 This may involve executing some or all of the loads and stores from the sequence multiple times before the sequence completes (as multiple faults or multiple interrupts are possible).
 
 Therefore correct execution requires that _sp_ refers to idempotent memory (also see <<pushpop_non-idem-mem>>).
+
+<<<
 
 [#pushpop-software-view]
 === Software view of execution
@@ -450,6 +461,8 @@ An implementation may have a requirement to issue a PUSH/POP instruction to non-
 
 If the core implementation does not support PUSH/POP to non-idempotent memories, the core may use an idempotency PMA to detect it and take a 
 load(POP/POPRET) or store (PUSH) access fault exception in order to avoid unpredictable results.
+
+<<<
 
 ==== Non-idempotent support
 
