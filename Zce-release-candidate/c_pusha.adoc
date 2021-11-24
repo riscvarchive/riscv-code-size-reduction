@@ -83,7 +83,7 @@ c.push  {ra, s0-s2}, {a0-a2}, -64
 
 Encoding: _rlist_=7, _spimm_=3
 
-The equivalent interrupt safe assembly sequence is:
+The equivalent interrupt-safe instruction sequence is:
 
 [source,sail]
 ----
@@ -106,7 +106,7 @@ c.push {ra, s0-s1}, {a0-a1}, -32
 
 Encoding: _rlist_=6, _spimm_=1
 
-The equivalent interrupt safe assembly sequence is:
+The equivalent interrupt-safe instruction sequence is:
 
 [source,sail]
 ----
@@ -127,11 +127,11 @@ c.push  {ra, s0-s3}, {a0-a2}, -64
 
 Encoding: _rlist_=8, _spimm_=2
 
-The equivalent interrupt safe assembly sequence is:
+The equivalent interrupt-safe instruction sequence is:
 
 [source,sail]
 ----
-addi sp, sp, 64;
+addi sp, sp, -64;
 sw  s3, 60(sp);
 sw  s2, 56(sp); 
 sw  s1, 52(sp);
@@ -153,11 +153,11 @@ c.push {ra, s0-s11}, {a0-a2}, -112
 
 Encoding: _rlist_=15, _spimm_=3
 
-The equivalent interrupt safe assembly sequence is:
+The equivalent interrupt-safe instruction sequence is:
 
 [source,sail]
 ----
-addi sp, sp, 112;
+addi sp, sp, -112;
 sw  s11, 108(sp);
 sw  s10, 104(sp); 
 sw  s9,  100(sp);

@@ -56,7 +56,7 @@ c.popretz {ra}, 16
 
 Encoding: _rlist_=4, _spimm_=0
 
-The equivalent interrupt safe assembly sequence is:
+The equivalent interrupt-safe instruction sequence is:
 
 [source,sail]
 --
@@ -75,7 +75,7 @@ c.popretz {ra, s0-s2}, 48
 
 Encoding: _rlist_=7, _spimm_=2
 
-The equivalent interrupt safe assembly sequence is:
+The equivalent interrupt-safe instruction sequence is:
 
 [source,sail]
 --
@@ -97,7 +97,7 @@ c.popretz {ra, s0-s3}, 48
 
 Encoding: _rlist_=8, _spimm_=1
 
-The equivalent interrupt safe assembly sequence is:
+The equivalent interrupt-safe instruction sequence is:
 
 [source,sail]
 --
@@ -122,7 +122,7 @@ c.popretz {ra, s0-s4}, 64
 
 Encoding: _rlist_=9, _spimm_=2
 
-The equivalent interrupt safe assembly sequence is:
+The equivalent interrupt-safe instruction sequence is:
 
 [source,sail]
 --
