@@ -47,7 +47,7 @@ include::c_push_pseudo_code.adoc[]
 
 <<<
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 ----
@@ -67,7 +67,7 @@ sw  s0, 52(sp);
 sw  ra, 48(sp); 
 ----
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 ----
@@ -86,7 +86,7 @@ sw  s0, 24(sp);
 sw  ra, 20(sp);
 ----
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 ----
@@ -109,7 +109,7 @@ sw  ra, 44(sp);
 
 <<<
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 ----

@@ -50,11 +50,15 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-xreg1 = {sreg1[2:1]>0,sreg1[2:1]==0,sreg1[2:0]}
-xreg2 = {sreg2[2:1]>0,sreg2[2:1]==0,sreg2[2:0]}
+if (RV32E && (sreg1>1 || sreg2>1)) {
+  take_illegal_instruction_exception();
+}
 
-X[10] = X[xreg1]
-X[11] = X[xreg2]
+xreg1 = {sreg1[2:1]>0,sreg1[2:1]==0,sreg1[2:0]};
+xreg2 = {sreg2[2:1]>0,sreg2[2:1]==0,sreg2[2:0]};
+
+X[10] = X[xreg1];
+X[11] = X[xreg2];
 --
 
 include::Zces_footer.adoc[]

@@ -1,6 +1,21 @@
 
 [source,sail]
 --
+RV32E:
+
+switch (rlist){
+  case  4: {reg_list="ra";         xreg_list="x1";}
+  case  5: {reg_list="ra, s0";     xreg_list="x1, x8";}
+  case  6: {reg_list="ra, s0-s1";  xreg_list="x1, x8-x9";}
+  default: take_illegal_instruction_exception();
+}
+stack_adj      = stack_adj_base + spimm[5:4] * 16;
+--
+
+[source,sail]
+--
+RV32I, RV64:
+
 switch (rlist){
   case  4: {reg_list="ra";         xreg_list="x1";}
   case  5: {reg_list="ra, s0";     xreg_list="x1, x8";}
@@ -15,15 +30,24 @@ switch (rlist){
   case 14: {reg_list="ra, s0-s9";  xreg_list="x1, x8-x9, x18-x25";}
   //note - to include s10, s11 must also be included
   case 15: {reg_list="ra, s0-s11"; xreg_list="x1, x8-x9, x18-x27";}
+  default: take_illegal_instruction_exception();
 }
 stack_adj      = stack_adj_base + spimm[5:4] * 16;
 --
 
-<<<
-
-RV32:
 [source,sail]
 --
+RV32E:
+
+stack_adj_base = 16;
+Valid values:
+stack_adj      = [16|32|48|64];
+--
+
+[source,sail]
+--
+RV32I:
+
 switch (rlist) {
   case  4.. 7: stack_adj_base = 16;
   case  8..11: stack_adj_base = 32;
@@ -33,16 +57,17 @@ switch (rlist) {
 
 Valid values:
 switch (rlist) {
-  case  4.. 7: stack_adj_base = [16|32|48| 64];
-  case  8..11: stack_adj_base = [32|48|64| 80];
-  case 12..14: stack_adj_base = [48|64|80| 96];
-  case     15: stack_adj_base = [64|80|96|112];
+  case  4.. 7: stack_adj = [16|32|48| 64];
+  case  8..11: stack_adj = [32|48|64| 80];
+  case 12..14: stack_adj = [48|64|80| 96];
+  case     15: stack_adj = [64|80|96|112];
 }
 --
 
-RV64:
 [source,sail]
 --
+RV64:
+
 switch (rlist) {
   case  4.. 5: stack_adj_base =  16;
   case  6.. 7: stack_adj_base =  32;
@@ -55,12 +80,12 @@ switch (rlist) {
 
 Valid values:
 switch (rlist) {
-  case  4.. 5: stack_adj_base = [ 16| 32| 48| 64];
-  case  6.. 7: stack_adj_base = [ 32| 48| 64| 80];
-  case  8.. 9: stack_adj_base = [ 48| 64| 80| 96];
-  case 10..11: stack_adj_base = [ 64| 80| 96|112];
-  case 12..13: stack_adj_base = [ 80| 96|112|128];
-  case     14: stack_adj_base = [ 96|112|128|144];
-  case     15: stack_adj_base = [112|128|144|160];
+  case  4.. 5: stack_adj = [ 16| 32| 48| 64];
+  case  6.. 7: stack_adj = [ 32| 48| 64| 80];
+  case  8.. 9: stack_adj = [ 48| 64| 80| 96];
+  case 10..11: stack_adj = [ 64| 80| 96|112];
+  case 12..13: stack_adj = [ 80| 96|112|128];
+  case     14: stack_adj = [ 96|112|128|144];
+  case     15: stack_adj = [112|128|144|160];
 }
 --

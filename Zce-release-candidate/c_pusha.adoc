@@ -26,7 +26,7 @@ Encoding (RV32, RV64)::
 
 [NOTE]
 
-  _rlist_ value 4 is reserved 
+  _rlist_ value 4 is reserved, unlike for _c.push_, _c.pop_, _c.popret_, _c.popretz_
 
 Assembly Syntax::
 
@@ -40,11 +40,24 @@ include::variable_def.adoc[]
 
 [source,sail]
 --
+RV32E:
+
 switch (rlist){
-  case  4: take_illegal_instruction();
   case  5: {reg_list="ra, s0";     areg_list="a0";    xareg_list="x10";}
   case  6: {reg_list="ra, s0-s1";  areg_list="a0-a1"; xareg_list="x10-x11";}
-  default: {reg_list="ra, s0-s2";  areg_list="a0-a2"; xareg_list="x10-x12";}
+  default: take_illegal_instruction_exception();
+}
+--
+
+[source,sail]
+--
+RV32I, RV64:
+
+switch (rlist){
+  case     5: {reg_list="ra, s0";     areg_list="a0";    xareg_list="x10";}
+  case     6: {reg_list="ra, s0-s1";  areg_list="a0-a1"; xareg_list="x10-x11";}
+  case 7..15: {reg_list="ra, s0-s2";  areg_list="a0-a2"; xareg_list="x10-x12";}
+  default:    take_illegal_instruction_exception();
 }
 --
 
@@ -61,7 +74,7 @@ include::c_pusha_pseudo_code.adoc[]
 
 <<<
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 ----
@@ -84,7 +97,7 @@ mv  s1, a1;
 mv  s2, a2;
 ----
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 ----
@@ -105,7 +118,7 @@ mv  s0, a0;
 mv  s1, a1;
 ----
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 ----
@@ -131,7 +144,7 @@ mv  s2, a2;
 
 <<<
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 ----

@@ -47,7 +47,7 @@ include::c_popret_pseudo_code.adoc[]
 
 <<<
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 --
@@ -65,7 +65,7 @@ addi sp, sp, 16;
 ret;
 --
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 --
@@ -86,7 +86,7 @@ addi sp, sp, 48;
 ret;
 --
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 --
@@ -110,7 +110,7 @@ ret;
 
 <<<
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 --

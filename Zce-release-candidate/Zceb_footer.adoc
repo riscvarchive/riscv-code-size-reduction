@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zceb (<<Zceb>>)
-|0.53.3
+|0.53.4
 |Stable
 |===

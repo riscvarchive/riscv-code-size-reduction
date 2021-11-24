@@ -47,7 +47,7 @@ include::c_pop_pseudo_code.adoc[]
 
 <<<
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 --
@@ -64,7 +64,7 @@ lw   ra, 12(sp);
 addi sp, sp, 16;
 --
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 --
@@ -84,7 +84,7 @@ lw   ra, 32(sp);
 addi sp, sp, 48;
 --
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 --
@@ -107,7 +107,7 @@ addi sp, sp, 48;
 
 <<<
 
-RV32 Assembly example::
+RV32I Assembly example::
 
 [source,sail]
 --
