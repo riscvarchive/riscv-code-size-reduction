@@ -43,9 +43,9 @@ include::variable_def.adoc[]
 RV32E:
 
 switch (rlist){
-  case  5: {reg_list="ra, s0";     areg_list="a0";    xareg_list="x10";}
-  case  6: {reg_list="ra, s0-s1";  areg_list="a0-a1"; xareg_list="x10-x11";}
-  default: take_illegal_instruction_exception();
+  case     5: {areg_list="a0";    xareg_list="x10";}
+  case     6: {areg_list="a0-a1"; xareg_list="x10-x11";}
+  default:    take_illegal_instruction_exception();
 }
 --
 
@@ -54,9 +54,10 @@ switch (rlist){
 RV32I, RV64:
 
 switch (rlist){
-  case     5: {reg_list="ra, s0";     areg_list="a0";    xareg_list="x10";}
-  case     6: {reg_list="ra, s0-s1";  areg_list="a0-a1"; xareg_list="x10-x11";}
-  case 7..15: {reg_list="ra, s0-s2";  areg_list="a0-a2"; xareg_list="x10-x12";}
+  case     5: {areg_list="a0";    xareg_list="x10";}
+  case     6: {areg_list="a0-a1"; xareg_list="x10-x11";}
+  case     7: {areg_list="a0-a2"; xareg_list="x10-x12";}
+  case 8..15: {areg_list="a0-a3"; xareg_list="x10-x13";}
   default:    take_illegal_instruction_exception();
 }
 --
@@ -122,7 +123,7 @@ RV32I Assembly example::
 
 [source,sail]
 ----
-c.push  {ra, s0-s3}, {a0-a2}, -64
+c.push  {ra, s0-s3}, {a0-a3}, -64
 ----
 
 Encoding: _rlist_=8, _spimm_=2
@@ -140,6 +141,7 @@ sw  ra, 44(sp);
 mv  s0, a0;
 mv  s1, a1;
 mv  s2, a2;
+mv  s3, a3;
 ----
 
 <<<
@@ -148,7 +150,7 @@ RV32I Assembly example::
 
 [source,sail]
 ----
-c.push {ra, s0-s11}, {a0-a2}, -112
+c.push {ra, s0-s11}, {a0-a3}, -112
 ----
 
 Encoding: _rlist_=15, _spimm_=3
@@ -174,6 +176,7 @@ sw  ra,   60(sp);
 mv  s0, a0;
 mv  s1, a1;
 mv  s2, a2;
+mv  s3, a3;
 ----
 
 include::Zces_footer.adoc[]
