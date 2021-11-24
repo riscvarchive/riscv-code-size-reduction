@@ -38,7 +38,7 @@ include::pushpop_vars.adoc[]
 <<<
 
 Description::
-This instruction pop (loads) the registers in _reg_list_ from stack memory, 
+This instruction pops (loads) the registers in _reg_list_ from stack memory, 
 and then adjusts the stack pointer by _stack_adj_. 
 
 include::pushpop_extra_info.adoc[]

@@ -26,7 +26,7 @@ Encoding (RV32, RV64)::
 
 [NOTE]
 
-  _rlist_ value 4 is reserved, unlike for _c.push_, _c.pop_, _c.popret_, _c.popretz_
+  _rlist_ value 4 is reserved, in contrast to _c.push_, _c.pop_, _c.popret_, _c.popretz_
 
 Assembly Syntax::
 
