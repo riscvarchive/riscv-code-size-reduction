@@ -139,7 +139,7 @@ calling the millicode _save/restore_ routines and so also perform better.
 [NOTE]
 
   _c.pusha_ has three additional register moves included _mv s1, a1, mv s2, a2, mv s3, a3_ which weren't in the original prologue. 
-  Also, the _s4_ register needs to be reallocated to _s0_ to fit _c.pusha_.
+  Also, the _s4_ register must be reallocated to _s0_ to fit _c.pusha_.
 
 [NOTE]
 
