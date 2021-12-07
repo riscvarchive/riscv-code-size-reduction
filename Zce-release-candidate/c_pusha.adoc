@@ -180,3 +180,4 @@ mv  s3, a3;
 ----
 
 include::Zcyp_footer.adoc[]
+include::Zcype_footer.adoc[]

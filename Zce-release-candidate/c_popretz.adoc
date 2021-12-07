@@ -138,4 +138,5 @@ ret;
 --
 
 include::Zcyp_footer.adoc[]
+include::Zcype_footer.adoc[]
 

@@ -139,3 +139,4 @@ sw  ra,   60(sp);
 ----
 
 include::Zcyp_footer.adoc[]
+include::Zcype_footer.adoc[]

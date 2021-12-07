@@ -130,4 +130,5 @@ addi sp, sp, 64;
 --
 
 include::Zcyp_footer.adoc[]
+include::Zcype_footer.adoc[]
 
