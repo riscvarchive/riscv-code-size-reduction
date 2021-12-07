@@ -129,5 +129,5 @@ lw   ra, 40(sp);
 addi sp, sp, 64;
 --
 
-include::Zces_footer.adoc[]
+include::Zcyp_footer.adoc[]
 

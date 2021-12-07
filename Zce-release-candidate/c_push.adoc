@@ -138,4 +138,4 @@ sw  s0,   64(sp);
 sw  ra,   60(sp);
 ----
 
-include::Zces_footer.adoc[]
+include::Zcyp_footer.adoc[]

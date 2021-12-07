@@ -24,7 +24,7 @@ Description::
 This instruction multiplies XLEN bits of the source operands from _rsd'_ and _rs2'_ and writes the lowest XLEN bits of the result to _rsd'_. Both operands are from the 8-register set x8-x15.
 
 Prerequisites::
-The C-extension and either M or Zmmul must also be configured.
+C or Zca and either M or Zmmul must also be configured.
 
 32-bit equivalent::
 <<insns-mul>>
@@ -40,5 +40,5 @@ let result_wide = to_bits(2 * sizeof(xlen), signed(X(rsdc)) * signed(X(rs2c)));
 X(rsdc) = result_wide[(sizeof(xlen) - 1) .. 0];
 --
 
-include::Zcee_footer.adoc[]
+include::Zcb_footer.adoc[]
 

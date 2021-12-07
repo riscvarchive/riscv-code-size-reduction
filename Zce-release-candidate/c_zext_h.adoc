@@ -27,7 +27,7 @@ the bits more significant than 15.
 
 
 Prerequisites::
-The C-extension must also be configured.
+include::c_zca_required.adoc[]
 
 32-bit equivalent::
 <<insns-zext_h>> from Zbb
@@ -42,5 +42,5 @@ Operation::
 X(rsdc) = EXTZ(X(rsdc)[15..0]);
 --
 
-include::Zcee_footer.adoc[]
+include::Zcb_footer.adoc[]
 

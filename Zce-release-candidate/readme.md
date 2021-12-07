@@ -1,17 +1,7 @@
-This is the proposed specification for Zcee:
+This is the proposed specification for all Zc extensions:
 
-https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zcee.pdf
+https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zc.pdf
 
-This is the proposed specification for Zceb:
-
-https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zceb.pdf
-
-
-This is the proposed specification for Zces:
-
-https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zces.pdf
-
-
-The benchmark results for all of Zce are here, but needs updating relating to the proposals above.
+The benchmarking results for all Zc extensions are here:
 
 https://docs.google.com/spreadsheets/d/1UYll7HGR_QLGTsHcjGoNL4EodM5BNO41hXdxVAFaxFs/edit#gid=1281210325

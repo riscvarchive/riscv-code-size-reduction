@@ -40,7 +40,7 @@ The mapping between them is specified in the pseudo-code below.
   The _s_ register mapping is taken from the UABI, and may not match the currently unratified EABI. _c.mva01s.e_ may be included in the future.
 
 Prerequisites::
-The C-extension must also be configured.
+include::c_zca_required.adoc[]
 
 32-bit equivalent::
 No direct equivalent encoding exists.
@@ -61,5 +61,5 @@ X[10] = X[xreg1];
 X[11] = X[xreg2];
 --
 
-include::Zces_footer.adoc[]
+include::Zcyp_footer.adoc[]
 

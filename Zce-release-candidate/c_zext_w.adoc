@@ -27,7 +27,7 @@ the bits more significant than 31.
 
 
 Prerequisites::
-The C-extension must also be configured.
+include::c_zca_required.adoc[]
  
 32-bit equivalent::
 [source,sail]
@@ -45,4 +45,4 @@ Operation::
 X(rsdc) = EXTZ(X(rsdc)[31..0]);
 --
 
-include::Zcee_footer.adoc[]
+include::Zcb_footer.adoc[]

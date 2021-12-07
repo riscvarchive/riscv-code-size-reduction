@@ -111,7 +111,7 @@ with the GCC option _-msave-restore_ the output is the following:
    1080e:       73a012ef                jal     t0,11f48 <__riscv_save_12>
    10812:       1101                    addi    sp,sp,-32
    10814:       8a2a                    mv      s4,a0
-
+...
    10862:       4501                    li      a0,0
    10864:       6105                    addi    sp,sp,32
    10866:       71e0106f                j       11f84 <__riscv_restore_12>
@@ -123,7 +123,7 @@ with PUSH/POPRET this reduces to
 ----
 0001080e <processMarkers>:
    1080e:       xxxx                    c.push    {ra,s0-s11},{a0-a3},-96
-
+...
    10866:       xxxx                    c.popretz {ra,s0-s11}, 96
 ----
 
@@ -488,4 +488,4 @@ By following these rules memory accesses will only ever be issued once, and decr
 It is possible for implementations to follow these restricted rules and to safely access both types of memory. 
 It is also possible for an implementation to use PMAs to detect the memory type and apply different rules, such as only allowing interrupts if accessing cacheable memory, for example.
 
-include::Zces_footer.adoc[]
+include::Zcyp_footer.adoc[]

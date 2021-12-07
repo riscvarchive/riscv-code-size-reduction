@@ -31,7 +31,7 @@ This instruction loads a halfword from the memory address formed by adding _rs1'
   _rd'_ and _rs1'_ are from the standard 8-register set x8-x15.
 
 Prerequisites::
-The C-extension. This encoding conflicts with the D-extension, but there is no conflict with Zdinx if double-precision arithmetic is required.
+include::c_zca_d_conflict.adoc[]
 
 32-bit equivalent::
 <<insns-lh>>
@@ -44,5 +44,5 @@ Operation::
 X(rdc) = EXTS(load_mem[X(rs1c)+EXTZ(uimm)][15..0]);
 --
 
-include::Zceb_footer.adoc[]
+include::Zcyh_footer.adoc[]
 

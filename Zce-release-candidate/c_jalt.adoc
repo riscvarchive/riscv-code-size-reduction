@@ -41,7 +41,7 @@ This instruction is used to dereference a table of PCs, and then jumps to the de
 For further information see <<insns-tablejump>>.
 
 Prerequisites::
-The C-extension must also be configured.
+include::c_zca_required.adoc[]
 
 32-bit equivalent::
 No direct equivalent encoding exists.
@@ -53,5 +53,5 @@ Operation::
 
 include::tablejump_pseudocode.adoc[]
 
-include::Zces_footer.adoc[]
+include::Zcyt_footer.adoc[]
 

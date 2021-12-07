@@ -93,9 +93,6 @@ For exceptions and interrupts MEPC contain the PC of the table jump instruction,
 
 For debug halts DPC is set to the PC of the table jump instruction.
 
-This section gives an overview of the behaviour, the exact operation is documented in the SAIL code for each instruction
+This section gives an overview of the behaviour, the exact operation is documented in the SAIL code for each instruction: <<insn-c_jalt-SAIL>>, <<insn-c_jt-SAIL>>.
 
-* <<insn-c_jalt-SAIL>>
-* <<insn-c_jt-SAIL>>
-
-include::Zces_footer.adoc[]
+include::Zcyp_footer.adoc[]

@@ -1,0 +1,298 @@
+[#Zc]
+==== Zc* v0.60
+
+This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
+https://riscv.org/spec-state
+
+Zc* is a group of extensions which define subsets of the existing C extension (Zca, Zcf) and new extensions which only contain 16-bit encodings.
+
+Zcy* all reuse encodings for c.fld*, c.fsd*.
+
+.Zc* extension overview
+[width="100%",options=header]
+|====================================================================================
+|Instruction  7+| subset                         
+|               |Zca|Zcf|Zcb|Zcyh|Zcyp|Zcype|Zcyt
+8+|The new extensions are based on C with the FP load/stores removed
+|C excl. c.f*   |&#10003;|   |   |    |    |     |     
+8+|These floating point load/stores become a separate extension
+|c.flw          |   |&#10003;|   |    |    |     |     
+|c.flwsp        |   |&#10003;|   |    |    |     |     
+|c.fsw          |   |&#10003;|   |    |    |     |     
+|c.fswsp        |   |&#10003;|   |    |    |     |     
+8+|Simple operations
+|c.zext.b       |   |   |&#10003;|    |    |     |     
+|c.sext.b       |   |   |&#10003;|    |    |     |     
+|c.zext.h       |   |   |&#10003;|    |    |     |     
+|c.sext.h       |   |   |&#10003;|    |    |     |     
+|c.zext.w       |   |   |&#10003;|    |    |     |     
+|c.mul          |   |   |&#10003;|    |    |     |     
+|c.not          |   |   |&#10003;|    |    |     |     
+8+|Load/store byte/half
+|c.lb           |   |   |   |&#10003; |    |     |     
+|c.lbu          |   |   |   |&#10003; |    |     |     
+|c.lh           |   |   |   |&#10003; |    |     |     
+|c.lhu          |   |   |   |&#10003; |    |     |     
+|c.sb           |   |   |   |&#10003; |    |     |     
+|c.sh           |   |   |   |&#10003; |    |     |     
+8+|Push/pop and double move
+|c.push         |   |   |   |    |&#10003; | &#10003; |     
+|c.pusha        |   |   |   |    |&#10003; | &#10003; |     
+|c.pop          |   |   |   |    |&#10003; | &#10003; |     
+|c.popret       |   |   |   |    |&#10003; | &#10003; |     
+|c.popretz      |   |   |   |    |&#10003; | &#10003; |     
+|c.mva01s       |   |   |   |    |&#10003; |     |     
+8+|Reserved for EABI versions of push/pop and double move
+|c.push.e       |   |   |   |    |    | &#10003; |     
+|c.pusha.e      |   |   |   |    |    | &#10003; |     
+|c.pop.e        |   |   |   |    |    | &#10003; |     
+|c.popret.e     |   |   |   |    |    | &#10003; |     
+|c.popretz.e    |   |   |   |    |    | &#10003; |     
+|c.mva01s.e     |   |   |   |    |    | &#10003; |     
+8+|Table jump
+|c.jt           |   |   |   |    |    |     |&#10003;  
+|c.jalt         |   |   |   |    |    |     |&#10003;  
+|====================================================================================
+
+[#Zca]
+=== Zca
+
+Zca is all of the existing C extension, excluding all 16-bit floating point loads and stores: c.flw, c.flwsp, c.fsw, c.fswsp, c.fld, c.fldsp, c.fsd, c.fsdsp.
+
+[#Zcf]
+=== Zcf
+
+Zcf is the existing set of single precision floating point loads and stores: c.flw, c.flwsp, c.fsw, c.fswsp.
+
+<<<
+
+[#Zcb]
+=== Zcb
+
+All proposed encodings are currently reserved for all architectures, and have no conflicts with any existing extensions.
+
+The _c.mul_ encoding uses the CR register format along with other instructions such as _c.sub_, _c.xor_ etc. 
+
+[NOTE]
+
+  _c.sext.w_ is a pseudo-instruction for _c.addiw rd, 0_ (RV64)
+
+[%header,cols="^1,^1,4,8"]
+|===
+|RV32
+|RV64
+|Mnemonic
+|Instruction
+
+|&#10003;
+|&#10003;
+|c.zext.b _rsd'_
+|<<#insns-c_zext_b>> 
+
+|&#10003;
+|&#10003;
+|c.sext.b _rsd'_
+|<<#insns-c_sext_b>> 
+
+|&#10003;
+|&#10003;
+|c.zext.h _rsd'_
+|<<#insns-c_zext_h>> 
+
+|&#10003;
+|&#10003;
+|c.sext.h _rsd'_
+|<<#insns-c_sext_h>> 
+
+|
+|&#10003;
+|c.zext.w _rsd'_
+|<<#insns-c_zext_w>> 
+
+|&#10003;
+|&#10003;
+|c.not _rsd'_
+|<<#insns-c_not>> 
+
+|&#10003;
+|&#10003;
+|c.mul _rsd'_, _rs2'_
+|<<#insns-c_mul>> 
+
+|===
+
+<<< 
+
+[#Zcyh]
+=== Zcyh
+
+This extension reuses encodings for c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
+It is fully compatible with F and, with Zdinx and also with <<Zca>>.
+
+The instructions are all 16-bit versions of existing 32-bit load/store instructions.
+
+[%header,cols="^1,^1,4,8"]
+|===
+|RV32
+|RV64
+|Mnemonic
+|Instruction
+
+|&#10003;
+|&#10003;
+|c.lbu _rd'_, uimm(_rs1'_)
+|<<#insns-c_lbu>>
+
+|&#10003;
+|&#10003;
+|c.lhu _rd'_, uimm(_rs1'_)
+|<<#insns-c_lhu>>
+
+|&#10003;
+|&#10003;
+|c.lb _rd'_, uimm(_rs1'_)
+|<<#insns-c_lb>>
+
+|&#10003;
+|&#10003;
+|c.lh _rd'_, uimm(_rs1'_)
+|<<#insns-c_lh>>
+
+|&#10003;
+|&#10003;
+|c.sb _rs2'_, uimm(_rs1'_)
+|<<#insns-c_sb>>
+
+|&#10003;
+|&#10003;
+|c.sh _rs2'_, uimm(_rs1'_)
+|<<#insns-c_sh>>
+
+|===
+
+<<<
+
+[#Zcyp]
+=== Zcyp
+
+Zces is the set of sequenced instuctions for code-size reduction.
+
+This extension reuses encodings for c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
+It is fully compatible with F and, with Zdinx and also with <<Zca>>.
+
+[NOTE]
+
+  The PUSH/POP instructions share assembly mnemonics for different encodings. For further information see <<insns-pushpop>>.
+
+The PUSH/POP assembly syntax uses several variables, the meaning of which are:
+
+* _reg_list_ is a list containing 1 to 13 registers (ra and 0 to 12 s registers)
+** valid values: {ra}, {ra, s0}, {ra, s0-s1}, {ra, s0-s2}, ..., {ra, s0-s8}, {ra, s0-s9}, {ra, s0-s11}
+** note that {ra, s0-s10} is _not_ valid, giving 12 lists not 13 for better encoding
+* _areg_list_ is a list containing 1 to 3 a registers
+** valid values: {a0}, {a0-a1}, {a0-a2}
+* _stack_adj_ is the total size of the stack frame. 
+** valid values vary with register list length and the specific encoding, see the instruction pages for details.
+
+[%header,cols="^1,^1,4,8"]
+|===
+|RV32
+|RV64
+|Mnemonic
+|Instruction
+
+|&#10003;
+|&#10003;
+|c.push {reg_list}, -stack_adj
+|<<#insns-c_push>> 
+
+|&#10003;
+|&#10003;
+|c.push {reg_list}, {areg_list}, -stack_adj
+|<<#insns-c_pusha>> 
+
+|&#10003;
+|&#10003;
+|c.pop {reg_list}, stack_adj
+|<<#insns-c_pop>> 
+
+|&#10003;
+|&#10003;
+|c.popret {reg_list}, stack_adj
+|<<#insns-c_popret>> 
+
+|&#10003;
+|&#10003;
+|c.popretz {reg_list}, stack_adj
+|<<#insns-c_popretz>> 
+
+|&#10003;
+|&#10003;
+|c.mva01s sreg1, sreg2
+|<<#insns-c_mva01s>> 
+
+|===
+
+<<<
+
+[#Zcype]
+=== Zcype
+
+Zcpye offers EABI support for register mappings where the _x_ register mapping is different to the UABI. 
+The EABI specification is not frozen so these instructions cannot yet be accurately specified.
+
+[#Zcyt]
+=== Zcyt
+
+Zcet is the set of table jump instuctions for code-size reduction.
+
+This extension reuses encodings for c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
+It is fully compatible with F and, with Zdinx and also with <<Zca>>.
+
+[%header,cols="^1,^1,4,8"]
+|===
+|RV32
+|RV64
+|Mnemonic
+|Instruction
+
+|&#10003;
+|&#10003;
+|c.jt #index
+|<<#insns-c_jt>> 
+
+|&#10003;
+|&#10003;
+|c.jalt #index
+|<<#insns-c_jalt>> 
+
+|===
+
+include::c_zext_b.adoc[]
+include::c_sext_b.adoc[]
+include::c_zext_h.adoc[]
+include::c_sext_h.adoc[]
+include::c_zext_w.adoc[]
+include::c_not.adoc[]
+include::c_mul.adoc[]
+
+include::c_lbu.adoc[]
+include::c_lhu.adoc[]
+include::c_lb.adoc[]
+include::c_lh.adoc[]
+include::c_sb.adoc[]
+include::c_sh.adoc[]
+
+include::c_push.adoc[]
+include::c_pusha.adoc[]
+include::c_pop.adoc[]
+include::c_popret.adoc[]
+include::c_popretz.adoc[]
+include::c_mva01s.adoc[]
+include::pushpop.adoc[]
+
+include::c_jt.adoc[]
+include::c_jalt.adoc[]
+include::JVT_csr.adoc[]
+include::tablejump.adoc[]
+

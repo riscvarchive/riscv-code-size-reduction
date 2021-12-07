@@ -26,7 +26,7 @@ in the byte (i.e., bit 7) to all of the more-significant bits.
 
 
 Prerequisites::
-The C-extension must also be configured.
+include::c_zca_required.adoc[]
 
 32-bit equivalent::
 <<insns-sext_b>> from Zbb
@@ -41,4 +41,4 @@ Operation::
 X(rsdc) = EXTS(X(rsdc)[7..0]);
 --
 
-include::Zcee_footer.adoc[]
+include::Zcb_footer.adoc[]

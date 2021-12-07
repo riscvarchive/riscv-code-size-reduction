@@ -6,7 +6,7 @@ Included in::
 |Minimum version
 |Lifecycle state
 
-|Zceb (<<Zceb>>)
-|0.53.4
+|Zcype (<<Zcype>>)
+|0.60.0
 |Stable
 |===
