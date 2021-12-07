@@ -11,16 +11,15 @@ Zcy* all reuse encodings for c.fld*, c.fsd*.
 .Zc* extension overview
 [width="100%",options=header]
 |====================================================================================
-|Instruction  7+| subset                         
-|               |Zca|Zcf|Zcb|Zcyh|Zcyp|Zcype|Zcyt
-8+|The new extensions are based on C with the FP load/stores removed
+|Instruction    |Zca|Zcf|Zcb|Zcyh|Zcyp|Zcype|Zcyt
+8+|*Define a subset of C with the FP load/stores removed*
 |C excl. c.f*   |&#10003;|   |   |    |    |     |     
-8+|These floating point load/stores become a separate extension
+8+|*The single precision floating point load/stores become a separate extension*
 |c.flw          |   |&#10003;|   |    |    |     |     
 |c.flwsp        |   |&#10003;|   |    |    |     |     
 |c.fsw          |   |&#10003;|   |    |    |     |     
 |c.fswsp        |   |&#10003;|   |    |    |     |     
-8+|Simple operations
+8+|*Simple operations*
 |c.zext.b       |   |   |&#10003;|    |    |     |     
 |c.sext.b       |   |   |&#10003;|    |    |     |     
 |c.zext.h       |   |   |&#10003;|    |    |     |     
@@ -28,28 +27,28 @@ Zcy* all reuse encodings for c.fld*, c.fsd*.
 |c.zext.w       |   |   |&#10003;|    |    |     |     
 |c.mul          |   |   |&#10003;|    |    |     |     
 |c.not          |   |   |&#10003;|    |    |     |     
-8+|Load/store byte/half
+8+|*Load/store byte/half*
 |c.lb           |   |   |   |&#10003; |    |     |     
 |c.lbu          |   |   |   |&#10003; |    |     |     
 |c.lh           |   |   |   |&#10003; |    |     |     
 |c.lhu          |   |   |   |&#10003; |    |     |     
 |c.sb           |   |   |   |&#10003; |    |     |     
 |c.sh           |   |   |   |&#10003; |    |     |     
-8+|Push/pop and double move
+8+|*Push/pop and double move*
 |c.push         |   |   |   |    |&#10003; | &#10003; |     
 |c.pusha        |   |   |   |    |&#10003; | &#10003; |     
 |c.pop          |   |   |   |    |&#10003; | &#10003; |     
 |c.popret       |   |   |   |    |&#10003; | &#10003; |     
 |c.popretz      |   |   |   |    |&#10003; | &#10003; |     
 |c.mva01s       |   |   |   |    |&#10003; |     |     
-8+|Reserved for EABI versions of push/pop and double move
+8+|*Reserved for EABI versions of push/pop and double move*
 |c.push.e       |   |   |   |    |    | &#10003; |     
 |c.pusha.e      |   |   |   |    |    | &#10003; |     
 |c.pop.e        |   |   |   |    |    | &#10003; |     
 |c.popret.e     |   |   |   |    |    | &#10003; |     
 |c.popretz.e    |   |   |   |    |    | &#10003; |     
 |c.mva01s.e     |   |   |   |    |    | &#10003; |     
-8+|Table jump
+8+|*Table jump*
 |c.jt           |   |   |   |    |    |     |&#10003;  
 |c.jalt         |   |   |   |    |    |     |&#10003;  
 |====================================================================================
@@ -57,12 +56,12 @@ Zcy* all reuse encodings for c.fld*, c.fsd*.
 [#Zca]
 === Zca
 
-Zca is all of the existing C extension, excluding all 16-bit floating point loads and stores: c.flw, c.flwsp, c.fsw, c.fswsp, c.fld, c.fldsp, c.fsd, c.fsdsp.
+Zca is all of the existing C extension, _excluding_ all 16-bit floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_, _c.fld_, _c.fldsp_, _c.fsd_, _c.fsdsp_.
 
 [#Zcf]
 === Zcf
 
-Zcf is the existing set of single precision floating point loads and stores: c.flw, c.flwsp, c.fsw, c.fswsp.
+Zcf is the existing set of single precision floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_.
 
 <<<
 
@@ -126,7 +125,7 @@ The _c.mul_ encoding uses the CR register format along with other instructions s
 [#Zcyh]
 === Zcyh
 
-This extension reuses encodings for c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
+This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
 It is fully compatible with F and, with Zdinx and also with <<Zca>>.
 
 The instructions are all 16-bit versions of existing 32-bit load/store instructions.
@@ -177,7 +176,7 @@ The instructions are all 16-bit versions of existing 32-bit load/store instructi
 
 Zces is the set of sequenced instuctions for code-size reduction.
 
-This extension reuses encodings for c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
+This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
 It is fully compatible with F and, with Zdinx and also with <<Zca>>.
 
 [NOTE]
@@ -238,7 +237,9 @@ The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 [#Zcype]
 === Zcype
 
-Zcpye offers EABI support for register mappings where the _x_ register mapping is different to the UABI. 
+This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
+
+Zcpye offers EABI support for register mappings from <<Zcyp>> where the _x_ register mapping is different to the UABI. 
 The EABI specification is not frozen so these instructions cannot yet be accurately specified.
 
 [#Zcyt]
@@ -246,7 +247,7 @@ The EABI specification is not frozen so these instructions cannot yet be accurat
 
 Zcet is the set of table jump instuctions for code-size reduction.
 
-This extension reuses encodings for c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
+This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
 It is fully compatible with F and, with Zdinx and also with <<Zca>>.
 
 [%header,cols="^1,^1,4,8"]

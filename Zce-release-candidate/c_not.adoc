@@ -27,7 +27,10 @@ Prerequisites::
 include::c_zca_required.adoc[]
 
 32-bit equivalent::
-_xori rd, rs, -1_
+[source,sail]
+--
+xori rd, rs, -1
+--
 
 [NOTE]
 
