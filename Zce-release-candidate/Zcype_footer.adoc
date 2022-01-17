@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcype (<<Zcype>>)
-|0.60.0
+|0.61.0
 |Stable
 |===

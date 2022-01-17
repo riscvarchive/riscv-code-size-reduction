@@ -6,12 +6,11 @@
 These instructions are collectively referred to as PUSH/POP: 
 
 * <<#insns-c_push>> 
-* <<#insns-c_pusha>> 
 * <<#insns-c_pop>> 
 * <<#insns-c_popret>> 
 * <<#insns-c_popretz>> 
 
-The term PUSH refers to _c.push and c.pusha_. The assembly syntax for all of these uses the mnemonic _c.push_.
+The term PUSH refers to _c.push_.
 
 The term POP refers to _c.pop_.
 
@@ -19,38 +18,21 @@ The term POPRET refers to _c.popret and c.popretz_.
 
 Common details for these instructions are in this section.
 
-The difference between _c.push_ and _c.pusha_ is whether argument registers are moved into saved registers. 
-The same mnemonic is used and the difference is in the argument list.
-For example:
-
-[source,sail]
---
-c.push {ra,s0-s3},          -32;# maps to c.push
-c.push {ra,s0-s3}, {a0-a3}, -32;# maps to c.pusha
---
-
-It is specified this way so the list of argument registers is explicit in the syntax, 
-otherwise it would be unclear which registers were moved.
-
-<<<
 === PUSH/POP functional overview
 
 PUSH, POP, POPRET are used to reduce the size of function prologues and epilogues.
 
-. The PUSH instructions
-** push(store)  the registers specified in the register list to the stack frame
-** _c.pusha_ also moves the registers in _areg_list_ into _s_ registers
-*** In order to save encoding space _areg_list_ is determined automatically from the register list and cannot be arbitrarily specified.
-*** moving argument registers into saved registers is to save them before setting up the arguments before calling the next function
-** adjust the stack pointer to create the stack frame
+. The PUSH instruction
+** pushes (stores) the registers specified in the register list to the stack frame
+** adjusts the stack pointer to create the stack frame
 
 . The POP instruction
-** pops(loads) the registers in the register list from the stack frame
+** pops (loads) the registers in the register list from the stack frame
 ** adjusts the stack pointer to destroy the stack frame
 
 . The POPRET instructions
-** pop(load) the registers in the register list from the stack from
-** _c.popretz_ also moves zero into into _a0_ as the return value
+** pop (load) the registers in the register list from the stack from
+** _c.popretz_ also moves zero into _a0_ as the return value
 ** adjust the stack pointer  to destroy the stack frame
 ** execute a _ret_ instruction to return from the function
 
@@ -67,21 +49,20 @@ The prologue and epilogue compile with GCC10 to:
 ----
 
    0001098a <processMarkers>:
-   1098a:       711d                    addi    sp,sp,-96 ;#c.pusha(1)
-   1098c:       c8ca                    sw      s2,80(sp) ;#c.pusha(2)
-   1098e:       c6ce                    sw      s3,76(sp) ;#c.pusha(3)
-   10990:       c4d2                    sw      s4,72(sp) ;#c.pusha(4)
-   10992:       ce86                    sw      ra,92(sp) ;#c.pusha(5)
-   10994:       cca2                    sw      s0,88(sp) ;#c.pusha(6)
-   10996:       caa6                    sw      s1,84(sp) ;#c.pusha(7)
-   10998:       c2d6                    sw      s5,68(sp) ;#c.pusha(8)
-   1099a:       c0da                    sw      s6,64(sp) ;#c.pusha(9)
-   1099c:       de5e                    sw      s7,60(sp) ;#c.pusha(10)
-   1099e:       dc62                    sw      s8,56(sp) ;#c.pusha(11)
-   109a0:       da66                    sw      s9,52(sp) ;#c.pusha(12)
-   109a2:       d86a                    sw      s10,48(sp);#c.pusha(13)
-   109a4:       d66e                    sw      s11,44(sp);#c.pusha(14)
-   109a6:       8a2a                    mv      s4,a0     ;#c.pusha(15)
+   1098a:       711d                    addi    sp,sp,-96 ;#c.push(1)
+   1098c:       c8ca                    sw      s2,80(sp) ;#c.push(2)
+   1098e:       c6ce                    sw      s3,76(sp) ;#c.push(3)
+   10990:       c4d2                    sw      s4,72(sp) ;#c.push(4)
+   10992:       ce86                    sw      ra,92(sp) ;#c.push(5)
+   10994:       cca2                    sw      s0,88(sp) ;#c.push(6)
+   10996:       caa6                    sw      s1,84(sp) ;#c.push(7)
+   10998:       c2d6                    sw      s5,68(sp) ;#c.push(8)
+   1099a:       c0da                    sw      s6,64(sp) ;#c.push(9)
+   1099c:       de5e                    sw      s7,60(sp) ;#c.push(10)
+   1099e:       dc62                    sw      s8,56(sp) ;#c.push(11)
+   109a0:       da66                    sw      s9,52(sp) ;#c.push(12)
+   109a2:       d86a                    sw      s10,48(sp);#c.push(13)
+   109a4:       d66e                    sw      s11,44(sp);#c.push(14)
 ...
    109f4:       4501                    li      a0,0      ;#c.popretz(1)
    109f6:       40f6                    lw      ra,92(sp) ;#c.popretz(2)
@@ -110,7 +91,6 @@ with the GCC option _-msave-restore_ the output is the following:
 0001080e <processMarkers>:
    1080e:       73a012ef                jal     t0,11f48 <__riscv_save_12>
    10812:       1101                    addi    sp,sp,-32
-   10814:       8a2a                    mv      s4,a0
 ...
    10862:       4501                    li      a0,0
    10864:       6105                    addi    sp,sp,32
@@ -122,13 +102,13 @@ with PUSH/POPRET this reduces to
 [source,SAIL]
 ----
 0001080e <processMarkers>:
-   1080e:       xxxx                    c.push    {ra,s0-s11},{a0-a3},-96
+   1080e:       xxxx                    c.push    {ra,s0-s11},-96
 ...
    10866:       xxxx                    c.popretz {ra,s0-s11}, 96
 ----
 
-The prologue / epilogue reduce from 62-bytes in the original code, to 16-bytes with _-msave-restore_, 
-and to 4-bytes with PUSH and POPRET. 
+The prologue / epilogue reduce from 58-bytes in the original code, to 16-bytes with _-msave-restore_, 
+and to 6-bytes with PUSH and POPRET. 
 As well as reducing the code-size PUSH and POPRET eliminate the branches from 
 calling the millicode _save/restore_ routines and so also perform better. 
   
@@ -138,12 +118,7 @@ calling the millicode _save/restore_ routines and so also perform better.
 
 [NOTE]
 
-  _c.pusha_ has three additional register moves included _mv s1, a1, mv s2, a2, mv s3, a3_ which weren't in the original prologue. 
-  Also, the _s4_ register must be reallocated to _s0_ to fit _c.pusha_.
-
-[NOTE]
-
-  POP is typically used in tail-calling sequences where _ret_ is not used to return to _ra_ after destroying the stack frame..
+  POP is typically used in tail-calling sequences where _ret_ is not used to return to _ra_ after destroying the stack frame.
 
 [#pushpop-areg-list]
 
@@ -160,154 +135,6 @@ The instructions have a restricted range of _spimm_ available. If this is insuff
 
 The instructions do not directly support _{ra, s0-s10}_ to reduce the amount of encoding space required. If this register list is required then _s11_ 
 should also be included. This costs a small amount of memory and performance, but saves code-size.
-
-==== _areg_list_ handling
-
-_c.pusha_ includes _areg_list_. This may not match what was generated by the compiler.
-
-=== Example: _c.pusha_ fits perfectly
-
-In this real world example generated by GCC10, _c.pusha_ fits perfectly.
-
-[source,SAIL]
-----
-00e010b8 <function>:
-  e010b8:       1141                    addi    sp,sp,-16 ; #c.pusha
-  e010ba:       c422                    sw      s0,8(sp)  ; #c.pusha
-  e010bc:       c226                    sw      s1,4(sp)  ; #c.pusha
-  e010be:       c04a                    sw      s2,0(sp)  ; #c.pusha
-  e010c0:       c606                    sw      ra,12(sp) ; #c.pusha
-  e010c2:       842a                    mv      s0,a0     ; #c.pusha
-  e010c4:       84ae                    mv      s1,a1     ; #c.pusha
-  e010c6:       4908                    lw      a0,16(a0)
-  e010c8:       4d8c                    lw      a1,24(a1)
-  e010ca:       8932                    mv      s2,a2     ; #c.pusha
-  e010cc:       726040ef                jal     ra,e057f2 <function2>
-----
-
-this is replaced by
-
-[source,SAIL]
-----
-00e010b8 <function1>:
-  e010b8:       xxxx                    c.push {ra,s0-s2}, {a0-a2}, -16
-  e010c6:       4908                    lw      a0,16(a0)
-  e010c8:       4d8c                    lw      a1,24(a1)
-  e010cc:       726040ef                jal     ra,e057f2 <function2>
-----
-
-<<<
-
-=== Example: _areg_list_ doesn't fit
-
-In this other real world example _areg_list_ doesn't fit:
-
-[source,SAIL]
-----
-00e01126 <function3>:
-  e01126:       1101                    addi    sp,sp,-32 ; #c.push
-  e01128:       ce06                    sw      ra,28(sp) ; #c.push
-  e0112a:       cc22                    sw      s0,24(sp) ; #c.push
-  e0112c:       ca26                    sw      s1,20(sp) ; #c.push
-  e0112e:       c84a                    sw      s2,16(sp) ; #c.push
-  e01130:       c64e                    sw      s3,12(sp) ; #c.push
-  e01132:       c452                    sw      s4,8(sp)  ; #c.push
-  e01134:       c256                    sw      s5,4(sp)  ; #c.push
-  e01136:       c05a                    sw      s6,0(sp)  ; #c.push
-  e01138:       0e050363                beqz    a0,e0121e <function3+0xf8>
-  e0113c:       8a2a                    mv      s4,a0
-  e0113e:       852e                    mv      a0,a1
-  e01140:       89ae                    mv      s3,a1
-----
-
-In this case, the move instructions are not part of the same basic block so _c.push_ is selected:
-
-[source,SAIL]
-----
-00e01126 <function4>:
-  e01126:       xxxx                    c.push {ra,s0-s6}, -32 
-  e01138:       0e050363                beqz    a0,e0121e <function4+0xf8>
-  e0113c:       8a2a                    mv      s4,a0
-  e0113e:       852e                    mv      a0,a1
-  e01140:       89ae                    mv      s3,a1
-----
-
-<<<
-
-=== Example: _areg_list_ needs register allocation changes
-
-The next case is where none of the register moves match the _areg_list_ moves because the register allocator in the compiler did not allocate suitable registers:
-
-[source,SAIL]
-----
-00e01842 <function5>:
-
-  e01e7e:       1101                    addi    sp,sp,-32
-  e01e80:       cc22                    sw      s0,24(sp)
-  e01e82:       c84a                    sw      s2,16(sp)
-  e01e84:       c64e                    sw      s3,12(sp)
-  e01e86:       c452                    sw      s4,8(sp)
-  e01e88:       c256                    sw      s5,4(sp)
-  e01e8a:       ce06                    sw      ra,28(sp)
-  e01e8c:       ca26                    sw      s1,20(sp)
-  e01e8e:       892a                    mv      s2,a0
-  e01e90:       89ae                    mv      s3,a1
-  e01e92:       8a32                    mv      s4,a2
-  e01e94:       8ab6                    mv      s5,a3
-  e01e96:       3f41                    jal     e01e26 <function6>
-----
-
-With _c.pusha_ this becomes:
-
-[source,SAIL]
-----
-e01e7e <function5>:
-  # c.push includes moving {a0-a3} into {s0-s3}
-  e01e7e:       1101                    c.push {ra,s0-s5}, {a0-a3}, -32
-  e01e8e:       892a                    mv      s2,a0;# <-- switch dest to s0
-  e01e90:       89ae                    mv      s3,a1;# <-- switch dest to s1
-  e01e92:       8a32                    mv      s4,a2;# <-- switch dest to s2
-  e01e94:       8ab6                    mv      s5,a3;# <-- switch dest to s3
-  e01e96:       3f41                    jal     e01e26 <function6>
-----
-
-In this case all four moves can be deleted if the register allocation can be altered.
-if the register allocation _cannot_ be altered, then _c.push_ should be used instead.
-
-<<<
-
-=== Example: _areg_list_ partially fits
-
-In this final case, one register move can be deleted and one must be retained unless the register allocation can be changed.
-
-[source,SAIL]
-----
-00e02368 <function7>:
-  e02368:       1141                    addi    sp,sp,-16
-  e0236a:       c226                    sw      s1,4(sp)
-  e0236c:       03450493                addi    s1,a0,52
-  e02370:       c422                    sw      s0,8(sp)
-  e02372:       842a                    mv      s0,a0;# <-- delete this one
-  e02374:       8526                    mv      a0,s1;# <-- doesn't fit areg_list
-  e02376:       c04a                    sw      s2,0(sp)
-  e02378:       c606                    sw      ra,12(sp)
-  e0237a:       892e                    mv      s2,a1;# <-- switch dest to s1
-  e0237c:       df3fd0ef                jal     ra,e0016e <function8>
-----
-
-[source,SAIL]
-----
-00e02368 <function7>:
-  e02368:       xxxx                    c.push {ra,s0-s2}, {a0-a2}, -16
-  e0236c:       03450493                addi    s1,a0,52
-  e02374:       8526                    mv      a0,s1;# <-- doesn't fit areg_list
-  e0237a:       892e                    mv      s2,a1;# <-- switch dest to s1
-  e0237c:       df3fd0ef                jal     ra,e0016e <function8>
-----
-
-In this case one move is deleted, but one remains because unless the target register can be reallocated.
-
-For the smallest code-size the compiler should reallocate the target registers so that the moves in _areg_list_ are not wasted.
 
 <<<
 
@@ -358,7 +185,6 @@ Therefore correct execution requires that _sp_ refers to idempotent memory (also
 From a software perspective the PUSH sequence appears as:
 
 * A sequence of stores writing a contiguous block of memory. Any of the bytes may be written multiple times.
-* An optional series of register moves
 * A stack pointer adjustment
 
 Because the memory is idempotent and the stores are non-overlapping, they may be reordered, grouped into larger accesses, split into smaller access or any combination of these.
@@ -376,7 +202,7 @@ For example:
 
 [source,sail]
 --
-c.push  {ra, s0-s5}, {a0-a3}, -64
+c.push  {ra, s0-s5}, -64
 --
 
 Appears to software as:
@@ -385,22 +211,17 @@ Appears to software as:
 --
 # any bytes from sp-1 to sp-28 may be written multiple times before the instruction completes
 # therefore these updates may be visible in the interrupt/exception handler below the stack pointer
-sw  s5, -4(sp);   
-sw  s4, -8(sp);   
-sw  s3,-12(sp);   
-sw  s2,-16(sp);  
-sw  s1,-20(sp);   
-sw  s0,-24(sp);   
-sw  ra,-28(sp);   
+sw  s5, -4(sp)   
+sw  s4, -8(sp)   
+sw  s3,-12(sp)   
+sw  s2,-16(sp)  
+sw  s1,-20(sp)   
+sw  s0,-24(sp)   
+sw  ra,-28(sp)   
 
-# these must only execute once, and will only execute after all stores completed without any precise faults
-# all instructions must execute atomically
-# therefore these updates are not visible in the interrupt/exception handler
-mv   s0, a0
-mv   s1, a1
-mv   s2, a2
-mv   s3, a3
-addi sp, sp, -64; 
+# this must only execute once, and will only execute after all stores completed without any precise faults
+# therefore this update is only visible in the interrupt/exception handler if c.push has completed
+addi sp, sp, -64
 --
 
 ==== Software view of the POP/POPRET sequence
@@ -425,7 +246,7 @@ For example:
 
 [source,sail]
 --
-c.popretz {ra, s0-s3}, 32 ; 
+c.popretz {ra, s0-s3}, 32; 
 --
 
 Appears to software as:
@@ -434,18 +255,18 @@ Appears to software as:
 --
 # any or all of these load instructions may execute multiple times
 # therefore these updates may be visible in the interrupt/exception handler
-lw   s3, 28(sp);
-lw   s2, 24(sp);
-lw   s1, 20(sp);
-lw   s0, 16(sp);
-lw   ra, 12(sp);
+lw   s3, 28(sp)
+lw   s2, 24(sp)
+lw   s1, 20(sp)
+lw   s0, 16(sp)
+lw   ra, 12(sp)
 
-# must only execute once, will only execute after all loads complete successfully
+# these must only execute once, will only execute after all loads complete successfully
 # all instructions must execute atomically
 # therefore these updates are not visible in the interrupt/exception handler
 li a0, 0
-addi sp, sp, 32;
-ret;
+addi sp, sp, 32
+ret
 --
 
 === Forward progress guarantee
