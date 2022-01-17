@@ -48,16 +48,6 @@ if ((debug_trigger(table_address) && MCONTROL.timing==0 && MCONTROL.action==1) |
     MTVAL      = table_address;
     MCAUSE     = BREAKPOINT;
     take_exception();
-  } else if ((debug_trigger(target_address) && MCONTROL.timing==0 && MCONTROL.action==1) {
-    DPC        = target_address;
-    DCSR.cause = 2;
-    enter_debug_mode();
-  } else if (((debug_trigger(target_address) && MCONTROL.timing==0) ||
-               !can_access_instruction_memory(target_address)) {
-    MEPC       = target_address;
-    MTVAL      = target_address;
-    MCAUSE     = debug_trigger(target_address) ? BREAKPOINT : INSTRUCTION_ACCESS_FAULT;
-    take_exception();
   } else {
     //jump to the target address
     if (OPCODE=="C.JALT") {
