@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcyt (<<Zcyt>>)
-|0.61.0
+|0.61.1
 |Stable
 |===
