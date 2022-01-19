@@ -89,7 +89,7 @@ The sequence required to execute the table jump instruction may be interrupted, 
 * interrupts
 ** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
 
-For exceptions and interrupts MEPC contain the PC of the table jump instruction, MCAUSE is set as expected for the type of fault and MTVAL contains the address which caused the fault.
+For exceptions and interrupts MEPC contain the PC of the table jump instruction, MCAUSE is set as expected for the type of fault and MTVAL (if implemented) contains the address which caused the fault.
 
 For debug halts DPC is set to the PC of the table jump instruction.
 

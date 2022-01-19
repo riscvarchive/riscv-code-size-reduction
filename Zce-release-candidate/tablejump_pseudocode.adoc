@@ -27,8 +27,8 @@ if ((debug_trigger(table_address) && MCONTROL.timing==0 && MCONTROL.action==1) |
 } else if ((debug_trigger(table_address) && MCONTROL.timing==0) ||
             !can_access_instruction_memory(table_address)) {
   MEPC   = current_PC;
-  MTVAL  = table_address;
   MCAUSE = debug_trigger(table_address) ? BREAKPOINT : INSTRUCTION_ACCESS_FAULT;
+  MTVAL  = MTVAL_IMPLEMENTED ? table_address : 0;
   take_exception();
 } else {
   //access the jump table
@@ -44,9 +44,9 @@ if ((debug_trigger(table_address) && MCONTROL.timing==0 && MCONTROL.action==1) |
     DCSR.cause = 2;
     enter_debug_mode();
   } else if (debug_trigger(table_address) && MCONTROL.timing==1) {
-    MEPC       = current_PC;
-    MTVAL      = table_address;
-    MCAUSE     = BREAKPOINT;
+    MEPC   = current_PC;
+    MCAUSE = BREAKPOINT;
+    MTVAL  = MTVAL_IMPLEMENTED ? table_address : 0;
     take_exception();
   } else {
     //jump to the target address
