@@ -5,8 +5,8 @@
 
 These instructions are collectively referred to as table jump: 
 
-* <<#insns-c_jt>> 
-* <<#insns-c_jalt>> 
+* <<#insns-cm_jt>> 
+* <<#insns-cm_jalt>> 
 
 Common details for these instructions are in this section.
 
@@ -18,10 +18,10 @@ Function calls and jumps to fixed labels typically take 32-bit or 64-bit instruc
 
 Table jump allows the linker to:
 
-* replace 32-bit _j_ calls with _c.jt_
-* replace 32-bit _jal_ ra calls with _c.jalt_
-* replace 64-bit _auipc/jalr_ calls to fixed locations with _c.jt_
-* replace 64-bit _auipc/jalr ra_ calls to fixed locations with _c.jalt_
+* replace 32-bit _j_ calls with _cm.jt_
+* replace 32-bit _jal_ ra calls with _cm.jalt_
+* replace 64-bit _auipc/jalr_ calls to fixed locations with _cm.jt_
+* replace 64-bit _auipc/jalr ra_ calls to fixed locations with _cm.jalt_
 ** The AUIPC+JR/JALR sequence is used because the offset from the PC is out of the ±1MB range.
 
 === JVT
@@ -30,8 +30,8 @@ The base of the table is in the JVT CSR (see <<csrs-jvt>>), each table entry is 
 
 The table entry number is from the _index8_ field in the encoding, which controls the link register.
 
-* c.jt   : entries 0-63,   link to _zero_
-* c.jalt : entries 64-255, link to _ra_
+* cm.jt   : entries 0-63,   link to _zero_
+* cm.jalt : entries 64-255, link to _ra_
 
 Note that the LSB of every jump table entry is _ignored_ which matches standard JALR behaviour.
 
@@ -59,8 +59,8 @@ Calls to each function are categorised as shown in <<tablejump-savings>>.
 Each function is called by using one of the two link registers. The total saving per function is calculated by counting the number of calls and adding up the total saving from each replacement of the existing sequence with a Table Jump instruction, as follows:
 [source,sourceCode,text]
 ----
-saving_per_function_c_jt    = A * 2 + B * 6 - 2*(XLEN-8)
-saving_per_function_c_jalt  = C * 2 + D * 6 - 2*(XLEN-8)
+saving_per_function_cm_jt    = A * 2 + B * 6 - 2*(XLEN-8)
+saving_per_function_cm_jalt  = C * 2 + D * 6 - 2*(XLEN-8)
 ----
 
 The functions are sorted so that the one with the highest saving is in table entry 0, the second highest in entry 1 etc. for that encoding.
@@ -93,6 +93,6 @@ For exceptions and interrupts MEPC contain the PC of the table jump instruction,
 
 For debug halts DPC is set to the PC of the table jump instruction.
 
-This section gives an overview of the behaviour, the exact operation is documented in the SAIL code for each instruction: <<insn-c_jalt-SAIL>>, <<insn-c_jt-SAIL>>.
+This section gives an overview of the behaviour, the exact operation is documented in the SAIL code for each instruction: <<insns-cm_jalt-SAIL>>, <<insns-cm_jt-SAIL>>.
 
-include::Zcyp_footer.adoc[]
+include::Zcmp_footer.adoc[]

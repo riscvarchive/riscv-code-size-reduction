@@ -1,28 +1,31 @@
 <<<
-[#insns-c_lhu,reftext="c.lhu: Load unsigned halfword, 16-bit encoding"]
-=== c.lhu
+[#insns-cm_lhu,reftext="cm.lhu: Load unsigned halfword, 16-bit encoding"]
+=== cm.lhu
 
 Synopsis::
 Load unsigned halfword, 16-bit encoding
 
 Mnemonic::
-c.lhu _rd'_, _uimm_(_rs1'_)
+cm.lhu _rd'_, _uimm_(_rs1'_)
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x0, attr: ['C0'] },
+    { bits:  2, name: 0x2, attr: ['C0'] },
     { bits:  3, name: 'rd\'' },
-    { bits:  1, name: 'uimm[1]' },
-    { bits:  1, name: 0x0 },
+    { bits:  2, name: 'uimm[2:1]' },
     { bits:  3, name: 'rs1\'' },
-    { bits:  3, name: 0x1 },
-    { bits:  3, name: 0x4, attr: ['FUNCT3'] },
+    { bits:  2, name: 'uimm[4:3]' },
+    { bits:  1, name: 0x1 },
+    { bits:  3, name: 0x1, attr: ['FUNCT3'] },
 ],config:{bits:16}}
 ....
 
-include::c_lhsh_imm_offset.adoc[]
+[NOTE]
+  If _uimm < 4_ the encoding is reserved for custom use, as the functionality overlaps with <<insns-c_lhu>>.
+
+include::cm_lhsh_imm_offset.adoc[]
 
 Description::
 This instruction loads a halfword from the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. The resulting halfword is zero extended to XLEN bits and is written to _rd'_. 
@@ -30,11 +33,8 @@ This instruction loads a halfword from the memory address formed by adding _rs1'
 [NOTE]
   _rd'_ and _rs1'_ are from the standard 8-register set x8-x15.
 
-[NOTE]
-  For an longer immediate with a 16-bit encoding see <<insns-cm_lhu>>.
-
 Prerequisites::
-None
+include::cm_zca_d_conflict.adoc[]
 
 32-bit equivalent::
 <<insns-lhu>>
@@ -47,5 +47,5 @@ Operation::
 X(rdc) = EXTZ(load_mem[X(rs1c)+EXTZ(uimm)][15..0]);
 --
 
-include::Zcb_footer.adoc[]
+include::Zcmb_footer.adoc[]
 

@@ -4,10 +4,10 @@
 
 # target_address is temporary internal state, it doesn't represent a real register
 # Mem is byte indexed
-# "index8" is the field from the encoding, not "index" passed to the C.JT/C.JALT in the assembler
+# "index8" is the field from the encoding, not "index" passed to the cm.jt/cm.jalt in the assembler
 # which is formed below
 
-if (OPCODE=="C.JALT") {
+if (OPCODE=="cm.jalt") {
   index = index8 - 64;
 } else {
   index = index8;
@@ -50,7 +50,7 @@ if ((debug_trigger(table_address) && MCONTROL.timing==0 && MCONTROL.action==1) |
     take_exception();
   } else {
     //jump to the target address
-    if (OPCODE=="C.JALT") {
+    if (OPCODE=="cm.jalt") {
       JALR ra, target_address[XLEN-1:0]&~0x1;
     } else {
       JR target_address[XLEN-1:0]&~0x1;

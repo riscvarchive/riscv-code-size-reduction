@@ -6,7 +6,7 @@ Included in::
 |Minimum version
 |Lifecycle state
 
-|Zcb (<<Zcb>>)
+|Zcmp (<<Zcmp>>)
 |0.70.0
 |Stable
 |===

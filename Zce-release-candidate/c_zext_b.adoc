@@ -1,5 +1,5 @@
 <<<
-[#insns-c_zext_b,reftext="Zero extend byte, 16-bit encoding"]
+[#insns-c_zext_b,reftext="c.zext.b: Zero extend byte, 16-bit encoding"]
 === c.zext.b
 
 Synopsis::

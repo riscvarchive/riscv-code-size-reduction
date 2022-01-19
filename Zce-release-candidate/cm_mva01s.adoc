@@ -1,0 +1,65 @@
+<<<
+[#insns-cm_mva01s,reftext="cm.mva01s: move two s0-s7 registers into a0-a1"]
+=== cm.mva01s
+
+Synopsis::
+Move two s0-s7 registers into a0-a1
+
+Mnemonic::
+cm.mva01s
+
+Encoding (RV32, RV64)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  3, name: 'sreg2',  attr: [] },
+    { bits:  2, name: 0x3,      attr: [] },
+    { bits:  3, name: 'sreg1',  attr: [] },
+    { bits:  3, name: 0x3,      attr: [] },
+    { bits:  3, name: 0x5,      attr: [] },
+],config:{bits:16}}
+....
+
+Assembly Syntax::
+
+[source,sail]
+--
+cm.mva01s sreg1, sreg2
+--
+
+Description::
+This instruction moves _sreg1_ into _a0_ and _sreg2_ into _a1_. 
+The execution is atomic, so it is not possible to observe state where only one of _a0_ or _a1_ have been updated.
+
+The encoding has uses _sreg_ number specifiers instead of _xreg_ number specifiers to save encoding space. 
+The mapping between them is specified in the pseudo-code below.
+
+[NOTE]
+
+  The _s_ register mapping is taken from the UABI, and may not match the currently unratified EABI. _cm.mva01s.e_ may be included in the future.
+
+Prerequisites::
+include::cm_zca_required.adoc[]
+
+32-bit equivalent::
+No direct equivalent encoding exists.
+
+Operation::
+[source,sail]
+--
+//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
+
+if (RV32E && (sreg1>1 || sreg2>1)) {
+  take_illegal_instruction_exception();
+}
+
+xreg1 = {sreg1[2:1]>0,sreg1[2:1]==0,sreg1[2:0]};
+xreg2 = {sreg2[2:1]>0,sreg2[2:1]==0,sreg2[2:0]};
+
+X[10] = X[xreg1];
+X[11] = X[xreg2];
+--
+
+include::Zcmp_footer.adoc[]
+

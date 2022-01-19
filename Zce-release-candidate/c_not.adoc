@@ -1,5 +1,5 @@
 <<<
-[#insns-c_not,reftext="Bitwise not, 16-bit encoding"]
+[#insns-c_not,reftext="c.not: Bitwise not, 16-bit encoding"]
 === c.not
 
 Synopsis::

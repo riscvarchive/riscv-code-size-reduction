@@ -1,5 +1,5 @@
 <<<
-[#insns-c_sext_h,reftext="Sign extend halfword, 16-bit encoding"]
+[#insns-c_sext_h,reftext="c.sext.h: Sign extend halfword, 16-bit encoding"]
 === c.sext.h
 
 Synopsis::

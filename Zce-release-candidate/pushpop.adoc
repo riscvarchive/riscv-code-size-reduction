@@ -5,16 +5,16 @@
 
 These instructions are collectively referred to as PUSH/POP: 
 
-* <<#insns-c_push>> 
-* <<#insns-c_pop>> 
-* <<#insns-c_popret>> 
-* <<#insns-c_popretz>> 
+* <<#insns-cm_push>> 
+* <<#insns-cm_pop>> 
+* <<#insns-cm_popret>> 
+* <<#insns-cm_popretz>> 
 
-The term PUSH refers to _c.push_.
+The term PUSH refers to _cm.push_.
 
-The term POP refers to _c.pop_.
+The term POP refers to _cm.pop_.
 
-The term POPRET refers to _c.popret and c.popretz_.
+The term POPRET refers to _cm.popret and cm.popretz_.
 
 Common details for these instructions are in this section.
 
@@ -32,7 +32,7 @@ PUSH, POP, POPRET are used to reduce the size of function prologues and epilogue
 
 . The POPRET instructions
 ** pop (load) the registers in the register list from the stack from
-** _c.popretz_ also moves zero into _a0_ as the return value
+** _cm.popretz_ also moves zero into _a0_ as the return value
 ** adjust the stack pointer  to destroy the stack frame
 ** execute a _ret_ instruction to return from the function
 
@@ -49,37 +49,37 @@ The prologue and epilogue compile with GCC10 to:
 ----
 
    0001098a <processMarkers>:
-   1098a:       711d                    addi    sp,sp,-96 ;#c.push(1)
-   1098c:       c8ca                    sw      s2,80(sp) ;#c.push(2)
-   1098e:       c6ce                    sw      s3,76(sp) ;#c.push(3)
-   10990:       c4d2                    sw      s4,72(sp) ;#c.push(4)
-   10992:       ce86                    sw      ra,92(sp) ;#c.push(5)
-   10994:       cca2                    sw      s0,88(sp) ;#c.push(6)
-   10996:       caa6                    sw      s1,84(sp) ;#c.push(7)
-   10998:       c2d6                    sw      s5,68(sp) ;#c.push(8)
-   1099a:       c0da                    sw      s6,64(sp) ;#c.push(9)
-   1099c:       de5e                    sw      s7,60(sp) ;#c.push(10)
-   1099e:       dc62                    sw      s8,56(sp) ;#c.push(11)
-   109a0:       da66                    sw      s9,52(sp) ;#c.push(12)
-   109a2:       d86a                    sw      s10,48(sp);#c.push(13)
-   109a4:       d66e                    sw      s11,44(sp);#c.push(14)
+   1098a:       711d                    addi    sp,sp,-96 ;#cm.push(1)
+   1098c:       c8ca                    sw      s2,80(sp) ;#cm.push(2)
+   1098e:       c6ce                    sw      s3,76(sp) ;#cm.push(3)
+   10990:       c4d2                    sw      s4,72(sp) ;#cm.push(4)
+   10992:       ce86                    sw      ra,92(sp) ;#cm.push(5)
+   10994:       cca2                    sw      s0,88(sp) ;#cm.push(6)
+   10996:       caa6                    sw      s1,84(sp) ;#cm.push(7)
+   10998:       c2d6                    sw      s5,68(sp) ;#cm.push(8)
+   1099a:       c0da                    sw      s6,64(sp) ;#cm.push(9)
+   1099c:       de5e                    sw      s7,60(sp) ;#cm.push(10)
+   1099e:       dc62                    sw      s8,56(sp) ;#cm.push(11)
+   109a0:       da66                    sw      s9,52(sp) ;#cm.push(12)
+   109a2:       d86a                    sw      s10,48(sp);#cm.push(13)
+   109a4:       d66e                    sw      s11,44(sp);#cm.push(14)
 ...
-   109f4:       4501                    li      a0,0      ;#c.popretz(1)
-   109f6:       40f6                    lw      ra,92(sp) ;#c.popretz(2)
-   109f8:       4466                    lw      s0,88(sp) ;#c.popretz(3)
-   109fa:       44d6                    lw      s1,84(sp) ;#c.popretz(4)
-   109fc:       4946                    lw      s2,80(sp) ;#c.popretz(5)
-   109fe:       49b6                    lw      s3,76(sp) ;#c.popretz(6)
-   10a00:       4a26                    lw      s4,72(sp) ;#c.popretz(7)
-   10a02:       4a96                    lw      s5,68(sp) ;#c.popretz(8)
-   10a04:       4b06                    lw      s6,64(sp) ;#c.popretz(9)
-   10a06:       5bf2                    lw      s7,60(sp) ;#c.popretz(10)
-   10a08:       5c62                    lw      s8,56(sp) ;#c.popretz(11)
-   10a0a:       5cd2                    lw      s9,52(sp) ;#c.popretz(12)
-   10a0c:       5d42                    lw      s10,48(sp);#c.popretz(13)
-   10a0e:       5db2                    lw      s11,44(sp);#c.popretz(14)
-   10a10:       6125                    addi    sp,sp,96  ;#c.popretz(15)
-   10a12:       8082                    ret               ;#c.popretz(16)
+   109f4:       4501                    li      a0,0      ;#cm.popretz(1)
+   109f6:       40f6                    lw      ra,92(sp) ;#cm.popretz(2)
+   109f8:       4466                    lw      s0,88(sp) ;#cm.popretz(3)
+   109fa:       44d6                    lw      s1,84(sp) ;#cm.popretz(4)
+   109fc:       4946                    lw      s2,80(sp) ;#cm.popretz(5)
+   109fe:       49b6                    lw      s3,76(sp) ;#cm.popretz(6)
+   10a00:       4a26                    lw      s4,72(sp) ;#cm.popretz(7)
+   10a02:       4a96                    lw      s5,68(sp) ;#cm.popretz(8)
+   10a04:       4b06                    lw      s6,64(sp) ;#cm.popretz(9)
+   10a06:       5bf2                    lw      s7,60(sp) ;#cm.popretz(10)
+   10a08:       5c62                    lw      s8,56(sp) ;#cm.popretz(11)
+   10a0a:       5cd2                    lw      s9,52(sp) ;#cm.popretz(12)
+   10a0c:       5d42                    lw      s10,48(sp);#cm.popretz(13)
+   10a0e:       5db2                    lw      s11,44(sp);#cm.popretz(14)
+   10a10:       6125                    addi    sp,sp,96  ;#cm.popretz(15)
+   10a12:       8082                    ret               ;#cm.popretz(16)
 ----
 
 <<<
@@ -102,9 +102,9 @@ with PUSH/POPRET this reduces to
 [source,SAIL]
 ----
 0001080e <processMarkers>:
-   1080e:       xxxx                    c.push    {ra,s0-s11},-96
+   1080e:       xxxx                    cm.push    {ra,s0-s11},-96
 ...
-   10866:       xxxx                    c.popretz {ra,s0-s11}, 96
+   10866:       xxxx                    cm.popretz {ra,s0-s11}, 96
 ----
 
 The prologue / epilogue reduce from 58-bytes in the original code, to 16-bytes with _-msave-restore_, 
@@ -129,7 +129,7 @@ and then replace the instruction sequences with the relevant PUSH/POP instructio
 
 ==== _spimm_ handling
 
-The instructions have a restricted range of _spimm_ available. If this is insufficient then a separate _c.addi16sp_ can be used to increase the range.
+The instructions have a restricted range of _spimm_ available. If this is insufficient then a separate _cm.addi16sp_ can be used to increase the range.
 
 ==== register list handling
 
@@ -202,7 +202,7 @@ For example:
 
 [source,sail]
 --
-c.push  {ra, s0-s5}, -64
+cm.push  {ra, s0-s5}, -64
 --
 
 Appears to software as:
@@ -220,7 +220,7 @@ sw  s0,-24(sp)
 sw  ra,-28(sp)   
 
 # this must only execute once, and will only execute after all stores completed without any precise faults
-# therefore this update is only visible in the interrupt/exception handler if c.push has completed
+# therefore this update is only visible in the interrupt/exception handler if cm.push has completed
 addi sp, sp, -64
 --
 
@@ -246,7 +246,7 @@ For example:
 
 [source,sail]
 --
-c.popretz {ra, s0-s3}, 32; 
+cm.popretz {ra, s0-s3}, 32; 
 --
 
 Appears to software as:
@@ -309,4 +309,4 @@ By following these rules memory accesses will only ever be issued once, and decr
 It is possible for implementations to follow these restricted rules and to safely access both types of memory. 
 It is also possible for an implementation to use PMAs to detect the memory type and apply different rules, such as only allowing interrupts if accessing cacheable memory, for example.
 
-include::Zcyp_footer.adoc[]
+include::Zcmp_footer.adoc[]
