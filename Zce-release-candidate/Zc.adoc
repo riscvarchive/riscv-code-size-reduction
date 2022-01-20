@@ -207,7 +207,7 @@ The instructions are all 16-bit versions of existing 32-bit load/store instructi
 Zcmp is the set of sequenced instuctions for code-size reduction.
 
 This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
-It is fully compatible with F and, with Zdinx and also with <<Zca>>.
+It is fully compatible with F and, with Zdinx and also with <<Zca>> and <<Zcb>>.
 
 [NOTE]
 
@@ -276,7 +276,7 @@ The EABI specification is not frozen so these instructions cannot yet be accurat
 Zcmt is the set of table jump instuctions for code-size reduction.
 
 This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
-It is fully compatible with F and, with Zdinx and also with <<Zca>>.
+It is fully compatible with F and, with Zdinx and also with <<Zca>> and <<Zcb>>.
 
 [%header,cols="^1,^1,4,8"]
 |===
