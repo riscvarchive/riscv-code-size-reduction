@@ -29,7 +29,7 @@ The status of all of the instructions are in the tables. Note that _all_ subsets
 |====================================================================================
 | v0.50 name | v0.70 Name | Encoding changed? | Semantics changed? | Notes
 | C.TBLJAL   | CM.JALT    | Y                 | Y - exception model| Meaning of table index changed in the encoding
-| C.TBLJ     | CM.J       | Y                 | Y - exception model| Meaning of table index changed in the encoding
+| C.TBLJ     | CM.JT      | Y                 | Y - exception model| Meaning of table index changed in the encoding
 | C.TBLJALM  | N/A        | N/A               | N/A                | Deleted
 |====================================================================================
 
