@@ -33,7 +33,7 @@ The status of all of the instructions are in the tables. Note that _all_ subsets
 | C.TBLJALM  | N/A        | N/A               | N/A                | Deleted
 |====================================================================================
 
-See this [commit](https://github.com/riscv/riscv-code-size-reduction/commit/8ba5b0fdf05d6fd5af118ba5301910d049abd1a8#diff-8d03bd23cf9ec0eb75984f7c6d4181aa9548acb5898dc9159514e24398076836) for the change in the table jump exception model.
+See this https://github.com/riscv/riscv-code-size-reduction/commit/8ba5b0fdf05d6fd5af118ba5301910d049abd1a8#diff-8d03bd23cf9ec0eb75984f7c6d4181aa9548acb5898dc9159514e24398076836[commit] for the change in the table jump exception model.
 
 = Double move
 
@@ -68,10 +68,14 @@ All 32-bit forms are removed and all the 16-bit forms support 12 register lists 
 
 . {ra}
 . {ra, s0}
-. {ra, s0-s1}
-
-....
-
+. {ra, s0-s1} 
+. {ra, s0-s2} 
+. {ra, s0-s3} 
+. {ra, s0-s4} 
+. {ra, s0-s5} 
+. {ra, s0-s6} 
+. {ra, s0-s7} 
+. {ra, s0-s8} 
 . {ra, s0-s9}
 . {ra, s0-s11}
 
@@ -117,10 +121,10 @@ C.NEG - this is not very useful and can be deleted.
 
 MULI - This is in custom-0, so can be kept unchanged. Early benchmarking results suggest it's not much use, and the encoding is expensive so it's unlikely to ever be included in an extension.
 
-BEQI, BNEI - these fill in the 2 gaps in the BRANCH encoding group - these encodings have not been allocated to other instructions, so these can stay unchanged
+BEQI, BNEI - these fill in the 2 gaps in the BRANCH encoding group - these encodings have not been allocated to other instructions, so these can stay unchanged. These instructions are very useful for code-size.
 
-DECBNEZ - this overlaps with C.FLD
+DECBNEZ - this overlaps with C.FLD, not yet benchmarked
 
-LWGP, SWGP, LDGP, SDGP - these overlap with C.FLD, C.FSD
+LWGP, SWGP, LDGP, SDGP - these overlap with C.FLD, C.FSD. Not yet benchmarked, but _may_ be very useful
 
 PUSH/POP/POPRET - delete all of these
