@@ -9,17 +9,17 @@ The status of all of the instructions are in the tables. Note that _all_ subsets
 [options="header",width=100%]
 |====================================================================================
 | v0.50 name | v0.70 Name | Encoding changed? | Semantics changed? | Notes
-| C.LB       | CM.LB      | Y                 | N                  | uimm < 4 is "custom defined"
-| C.LBU      | CM.LBU     | Y                 | N                  | uimm < 4 is "custom defined"
-| C.LH       | CM.LH      | Y                 | N                  | uimm < 4 is "custom defined"
-| C.LHU      | CM.LHU     | Y                 | N                  | uimm < 4 is "custom defined"
-| C.SB       | CM.SB      | Y                 | N                  | uimm < 4 is "custom defined"
-| C.SH       | CM.SH      | Y                 | N                  | uimm < 4 is "custom defined"
-| N/A        | C.LBU      | N/A               | N/A                | CM.LBU with shorter uimm
-| N/A        | C.LH       | N/A               | N/A                | CM.LH  with shorter uimm
-| N/A        | C.LHU      | N/A               | N/A                | CM.LHU with shorter uimm
-| N/A        | C.SB       | N/A               | N/A                | CM.SB  with shorter uimm
-| N/A        | C.SH       | N/A               | N/A                | CM.SH  with shorter uimm
+| C.LB       | CM.LB      | Y                 | N                  | 
+| C.LBU      | CM.LBU     | Y                 | N                  | if (uimm < 4) generate C.LBU instead
+| C.LH       | CM.LH      | Y                 | N                  | if (uimm < 4) generate C.LH instead
+| C.LHU      | CM.LHU     | Y                 | N                  | if (uimm < 4) generate C.LHU instead
+| C.SB       | CM.SB      | Y                 | N                  | if (uimm < 4) generate C.SB instead
+| C.SH       | CM.SH      | Y                 | N                  | if (uimm < 4) generate C.SH instead
+| N/A        | C.LBU      | N/A               | N/A                | CM.LBU with uimm < 4
+| N/A        | C.LH       | N/A               | N/A                | CM.LH  with uimm < 4
+| N/A        | C.LHU      | N/A               | N/A                | CM.LHU with uimm < 4
+| N/A        | C.SB       | N/A               | N/A                | CM.SB  with uimm < 4
+| N/A        | C.SH       | N/A               | N/A                | CM.SH  with uimm < 4
 |====================================================================================
 
 = Table jump
