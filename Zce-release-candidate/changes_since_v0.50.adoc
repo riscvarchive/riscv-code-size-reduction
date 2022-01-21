@@ -9,17 +9,17 @@ The status of all of the instructions are in the tables. Note that _all_ subsets
 [options="header",width=100%]
 |====================================================================================
 | v0.50 name | v0.70 Name | Encoding changed? | Semantics changed? | Notes
-| C.LB       | CM.LB      | Y                 | N                  | 
-| C.LBU      | CM.LBU     | Y                 | N                  | if (uimm < 4) generate C.LBU instead
-| C.LH       | CM.LH      | Y                 | N                  | if (uimm < 4) generate C.LH instead
-| C.LHU      | CM.LHU     | Y                 | N                  | if (uimm < 4) generate C.LHU instead
-| C.SB       | CM.SB      | Y                 | N                  | if (uimm < 4) generate C.SB instead
-| C.SH       | CM.SH      | Y                 | N                  | if (uimm < 4) generate C.SH instead
-| N/A        | C.LBU      | N/A               | N/A                | CM.LBU with uimm < 4
-| N/A        | C.LH       | N/A               | N/A                | CM.LH  with uimm < 4
-| N/A        | C.LHU      | N/A               | N/A                | CM.LHU with uimm < 4
-| N/A        | C.SB       | N/A               | N/A                | CM.SB  with uimm < 4
-| N/A        | C.SH       | N/A               | N/A                | CM.SH  with uimm < 4
+| C.LB       | CM.LB      | Y                 | N                  | uimm < 4 is "custom defined"
+| C.LBU      | CM.LBU     | Y                 | N                  | uimm < 4 is "custom defined"
+| C.LH       | CM.LH      | Y                 | N                  | uimm < 4 is "custom defined"
+| C.LHU      | CM.LHU     | Y                 | N                  | uimm < 4 is "custom defined"
+| C.SB       | CM.SB      | Y                 | N                  | uimm < 4 is "custom defined"
+| C.SH       | CM.SH      | Y                 | N                  | uimm < 4 is "custom defined"
+| N/A        | C.LBU      | N/A               | N/A                | CM.LBU with shorter uimm
+| N/A        | C.LH       | N/A               | N/A                | CM.LH  with shorter uimm
+| N/A        | C.LHU      | N/A               | N/A                | CM.LHU with shorter uimm
+| N/A        | C.SB       | N/A               | N/A                | CM.SB  with shorter uimm
+| N/A        | C.SH       | N/A               | N/A                | CM.SH  with shorter uimm
 |====================================================================================
 
 = Table jump
@@ -29,11 +29,11 @@ The status of all of the instructions are in the tables. Note that _all_ subsets
 |====================================================================================
 | v0.50 name | v0.70 Name | Encoding changed? | Semantics changed? | Notes
 | C.TBLJAL   | CM.JALT    | Y                 | Y - exception model| Meaning of table index changed in the encoding
-| C.TBLJ     | CM.JT      | Y                 | Y - exception model| Meaning of table index changed in the encoding
+| C.TBLJ     | CM.J       | Y                 | Y - exception model| Meaning of table index changed in the encoding
 | C.TBLJALM  | N/A        | N/A               | N/A                | Deleted
 |====================================================================================
 
-See this https://github.com/riscv/riscv-code-size-reduction/commit/8ba5b0fdf05d6fd5af118ba5301910d049abd1a8#diff-8d03bd23cf9ec0eb75984f7c6d4181aa9548acb5898dc9159514e24398076836[commit] for the change in the table jump exception model.
+See this [commit](https://github.com/riscv/riscv-code-size-reduction/commit/8ba5b0fdf05d6fd5af118ba5301910d049abd1a8#diff-8d03bd23cf9ec0eb75984f7c6d4181aa9548acb5898dc9159514e24398076836) for the change in the table jump exception model.
 
 = Double move
 
@@ -68,14 +68,10 @@ All 32-bit forms are removed and all the 16-bit forms support 12 register lists 
 
 . {ra}
 . {ra, s0}
-. {ra, s0-s1} 
-. {ra, s0-s2} 
-. {ra, s0-s3} 
-. {ra, s0-s4} 
-. {ra, s0-s5} 
-. {ra, s0-s6} 
-. {ra, s0-s7} 
-. {ra, s0-s8} 
+. {ra, s0-s1}
+
+....
+
 . {ra, s0-s9}
 . {ra, s0-s11}
 
@@ -121,10 +117,10 @@ C.NEG - this is not very useful and can be deleted.
 
 MULI - This is in custom-0, so can be kept unchanged. Early benchmarking results suggest it's not much use, and the encoding is expensive so it's unlikely to ever be included in an extension.
 
-BEQI, BNEI - these fill in the 2 gaps in the BRANCH encoding group - these encodings have not been allocated to other instructions, so these can stay unchanged. These instructions are very useful for code-size.
+BEQI, BNEI - these fill in the 2 gaps in the BRANCH encoding group - these encodings have not been allocated to other instructions, so these can stay unchanged
 
-DECBNEZ - this overlaps with C.FLD, not yet benchmarked
+DECBNEZ - this should be updated to match https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zcmd.pdf
 
-LWGP, SWGP, LDGP, SDGP - these overlap with C.FLD, C.FSD. Not yet benchmarked, but _may_ be very useful
+LWGP, SWGP, LDGP, SDGP - these overlap with C.FLD, C.FSD
 
 PUSH/POP/POPRET - delete all of these
