@@ -28,7 +28,7 @@ Table jump allows the linker to:
 
 The base of the table is in the JVT CSR (see <<csrs-jvt>>), each table entry is XLEN bits.
 
-The table entry number is from the _index8_ field in the encoding, which controls the link register.
+The table entry number is from the _index_ field in the encoding, which controls the link register.
 
 * cm.jt   : entries 0-63,   link to _zero_
 * cm.jalt : entries 64-255, link to _ra_

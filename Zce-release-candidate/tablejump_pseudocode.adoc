@@ -4,14 +4,7 @@
 
 # target_address is temporary internal state, it doesn't represent a real register
 # Mem is byte indexed
-# "index8" is the field from the encoding, not "index" passed to the cm.jt/cm.jalt in the assembler
-# which is formed below
 
-if (OPCODE=="cm.jalt") {
-  index = index8 - 64;
-} else {
-  index = index8;
-}
 switch(XLEN) {
   32:  table_address[XLEN-1:0] = JVT.base + (index<<2);
   64:  table_address[XLEN-1:0] = JVT.base + (index<<3);

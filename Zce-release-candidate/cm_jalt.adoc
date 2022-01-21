@@ -13,7 +13,7 @@ Encoding (RV32, RV64)::
 ....
 {reg:[
     { bits:  2, name: 0x2,      attr: [] },
-    { bits:  8, name: 'index8', attr: [] },
+    { bits:  8, name: 'index' , attr: [] },
     { bits:  3, name: 0x1,      attr: [] },
     { bits:  3, name: 0x5,      attr: [] },
 ],config:{bits:16}}
@@ -21,7 +21,7 @@ Encoding (RV32, RV64)::
 
 [NOTE]
 
-  For this encoding to decode as _cm.jalt_, _index8>=64_, otherwise it decodes as <<insns-cm_jt>>.
+  For this encoding to decode as _cm.jalt_, _index>=64_, otherwise it decodes as <<insns-cm_jt>>.
 
 Assembly Syntax::
 
@@ -29,10 +29,6 @@ Assembly Syntax::
 --
 cm.jalt #index
 --
-
-[NOTE]
-
-  _index_ in the assembly syntax is valid from 0-192. _index8_ in the encoding is valid from 64-255, so _index = index8-64_.
 
 Description::
 
