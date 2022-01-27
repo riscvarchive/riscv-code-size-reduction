@@ -6,18 +6,18 @@ Synopsis::
 Move two s0-s7 registers into a0-a1
 
 Mnemonic::
-cm.mva01s
+cm.mva01s _sreg1_, _sreg2_
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,      attr: [] },
+    { bits:  2, name: 0x2,      attr: ['C2'] },
     { bits:  3, name: 'sreg2',  attr: [] },
     { bits:  2, name: 0x3,      attr: [] },
     { bits:  3, name: 'sreg1',  attr: [] },
     { bits:  3, name: 0x3,      attr: [] },
-    { bits:  3, name: 0x5,      attr: [] },
+    { bits:  3, name: 0x5,      attr: ['FUNCT3'] },
 ],config:{bits:16}}
 ....
 
@@ -32,7 +32,7 @@ Description::
 This instruction moves _sreg1_ into _a0_ and _sreg2_ into _a1_. 
 The execution is atomic, so it is not possible to observe state where only one of _a0_ or _a1_ have been updated.
 
-The encoding has uses _sreg_ number specifiers instead of _xreg_ number specifiers to save encoding space. 
+The encoding uses _sreg_ number specifiers instead of _xreg_ number specifiers to save encoding space. 
 The mapping between them is specified in the pseudo-code below.
 
 [NOTE]
@@ -40,7 +40,7 @@ The mapping between them is specified in the pseudo-code below.
   The _s_ register mapping is taken from the UABI, and may not match the currently unratified EABI. _cm.mva01s.e_ may be included in the future.
 
 Prerequisites::
-include::cm_zca_required.adoc[]
+None
 
 32-bit equivalent::
 No direct equivalent encoding exists.

@@ -16,15 +16,19 @@ Encoding (RV32, RV64)::
     { bits:  3, name: 'rs2\'', attr: ['SRC2']  },
     { bits:  2, name: 0x2, attr: ['FUNCT2'] },
     { bits:  3, name: 'rsd\'', attr: ['SRCDST'] },
-    { bits:  6, name: 0x27, attr: ['FUNCT6'] },
+    { bits:  3, name: 0x7 },
+    { bits:  3, name: 0x4, attr: ['FUNCT3'] },
 ],config:{bits:16}}
 ....
 
 Description::
-This instruction multiplies XLEN bits of the source operands from _rsd'_ and _rs2'_ and writes the lowest XLEN bits of the result to _rsd'_. Both operands are from the 8-register set x8-x15.
+This instruction multiplies XLEN bits of the source operands from _rsd'_ and _rs2'_ and writes the lowest XLEN bits of the result to _rsd'_.
+
+[NOTE]
+  _rsd'_ and _rs2'_ are from the standard 8-register set x8-x15.
 
 Prerequisites::
-C or Zca and either M or Zmmul must also be configured.
+M or Zmmul must be configured.
 
 32-bit equivalent::
 <<insns-mul>>

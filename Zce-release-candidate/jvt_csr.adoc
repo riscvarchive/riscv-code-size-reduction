@@ -6,7 +6,7 @@ Synopsis::
 Table jump base vector and control register
 
 Address::
-TBD
+0x0017
 
 Permissions::
 URW
@@ -29,15 +29,15 @@ Using _JVT.base[5:0]_ is implicitly zero, and is naturally aligned for all legal
 The memory pointed to by _JVT.base_ is treated as instruction memory for the purpose of executing table jump instructions. 
 
 [#JVT-config-table]
-._JVT.config_ definition
+._JVT.mode_ definition
 [width="60%",options=header]
 |=============================================================================================
-| JVT.config | Comment
+| JVT.mode | Comment
 | 000000 | Jump table mode
 | others | *reserved for future standard use*
 |=============================================================================================
 
-_JVT.config_ is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to 
+_JVT.mode_ is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to 
 attempt to program different modes and read back the values to see which are available. Jump table mode _must_ be implemented.
 
 Architectural State::

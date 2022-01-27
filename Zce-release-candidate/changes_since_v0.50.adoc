@@ -28,8 +28,8 @@ The status of all of the instructions are in the tables. Note that _all_ subsets
 [options="header",width=100%]
 |====================================================================================
 | v0.50 name | v0.70 Name | Encoding changed? | Semantics changed? | Notes
-| C.TBLJAL   | CM.JALT    | Y                 | Y - exception model| Meaning of table index changed in the encoding
-| C.TBLJ     | CM.J       | Y                 | Y - exception model| Meaning of table index changed in the encoding
+| C.TBLJAL   | CM.JALT    | Y                 | Y - exception model| Meaning of table index changed in the encoding, # removed from assembly syntax
+| C.TBLJ     | CM.J       | Y                 | Y - exception model| Meaning of table index changed in the encoding, # removed from assembly syntax
 | C.TBLJALM  | N/A        | N/A               | N/A                | Deleted
 |====================================================================================
 

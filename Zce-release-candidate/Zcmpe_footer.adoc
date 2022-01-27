@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcmpe (<<Zcmpe>>)
-|0.70.0
+|0.70.1
 |Stable
 |===

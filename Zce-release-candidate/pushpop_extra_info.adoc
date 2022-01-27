@@ -15,7 +15,7 @@ The total stack adjustment represents the total size of the stack frame, which i
 as defined above.
 
 Prerequisites::
-include::cm_zca_required.adoc[]
+None
 
 32-bit equivalent::
 No direct equivalent encoding exists

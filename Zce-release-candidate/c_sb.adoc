@@ -6,7 +6,7 @@ Synopsis::
 Store byte, 16-bit encoding
 
 Mnemonic::
-c.sb _r2'_, _uimm_(_rs1'_)
+c.sb _rs2'_, _uimm_(_rs1'_)
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
@@ -27,7 +27,7 @@ Description::
 This instruction stores the least significant byte of _rs2'_ to the memory address formed by adding _rs1'_ to the zero extended immediate _uimm_. 
 
 [NOTE]
-  _rd'_ and _rs1'_ are from the standard 8-register set x8-x15.
+  _rs1'_ and _rs2'_ are from the standard 8-register set x8-x15.
 
 [NOTE]
   For an longer immediate with a 16-bit encoding see <<insns-cm_sb>>.

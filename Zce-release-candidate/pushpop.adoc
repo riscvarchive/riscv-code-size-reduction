@@ -102,15 +102,15 @@ with PUSH/POPRET this reduces to
 [source,SAIL]
 ----
 0001080e <processMarkers>:
-   1080e:       xxxx                    cm.push    {ra,s0-s11},-96
+   1080e:       b8fa                    cm.push    {ra,s0-s11},-96
 ...
-   10866:       xxxx                    cm.popretz {ra,s0-s11}, 96
+   10866:       bcfa                    cm.popretz {ra,s0-s11}, 96
 ----
 
-The prologue / epilogue reduce from 58-bytes in the original code, to 16-bytes with _-msave-restore_, 
-and to 6-bytes with PUSH and POPRET. 
+The prologue / epilogue reduce from 60-bytes in the original code, to 14-bytes with _-msave-restore_, 
+and to 4-bytes with PUSH and POPRET. 
 As well as reducing the code-size PUSH and POPRET eliminate the branches from 
-calling the millicode _save/restore_ routines and so also perform better. 
+calling the millicode _save/restore_ routines and so may also perform better. 
   
 [NOTE]
 
@@ -127,11 +127,13 @@ calling the millicode _save/restore_ routines and so also perform better.
 The technique used in the initial implementation in LLVM is to let the compiler generate the function prologue and epilogue, 
 and then replace the instruction sequences with the relevant PUSH/POP instructions.
 
-==== _spimm_ handling
+==== Stack pointer adjustment handling
 
-The instructions have a restricted range of _spimm_ available. If this is insufficient then a separate _cm.addi16sp_ can be used to increase the range.
+The instructions all automatically adjust the stack pointer by enough to cover the memory required for the registers being saved or restored. 
+Additionally the _spimm_ field in the encoding allows the stack pointer to be adjusted by extra 16-byte blocks. There is only a small restricted
+range available in the encoding; if the range is insufficient then a separate _c.addi16sp_ can be used to increase the range.
 
-==== register list handling
+==== Register list handling
 
 The instructions do not directly support _{ra, s0-s10}_ to reduce the amount of encoding space required. If this register list is required then _s11_ 
 should also be included. This costs a small amount of memory and performance, but saves code-size.
@@ -166,7 +168,7 @@ The sequence required to execute the PUSH/POP instruction may be interrupted, or
 
   xTVAL may be hardwired to zero in an implementation. Recovering from faults such as page faults requires that it is implemented.
 
-In all cases MEPC contains the PC of the PUSH/POP instruction, and MCAUSE is set as expected for the type of fault.
+In all cases xEPC contains the PC of the PUSH/POP instruction, and xCAUSE is set as expected for the type of fault.
 
 For debug halts DPC is set to the PC of the PUSH/POP instruction.
 
@@ -184,7 +186,9 @@ Therefore correct execution requires that _sp_ refers to idempotent memory (also
 
 From a software perspective the PUSH sequence appears as:
 
-* A sequence of stores writing a contiguous block of memory. Any of the bytes may be written multiple times.
+* A sequence of stores writing the bytes required by the pseudo-code
+** The bytes may be written in any order.
+** Any of the bytes may be written multiple times.
 * A stack pointer adjustment
 
 Because the memory is idempotent and the stores are non-overlapping, they may be reordered, grouped into larger accesses, split into smaller access or any combination of these.
@@ -192,8 +196,11 @@ Because the memory is idempotent and the stores are non-overlapping, they may be
 If an implementation allows interrupts during the sequence, and the interrupt handler uses _sp_ to allocate stack memory, then any stores which were executed before the interrupt may be overwritten by the handler. 
 This is safe because the memory is idempotent and the stores will be re-executed when execution resumes.
 
-The stack pointer adjustment must only be committed once it is certain that all of the stores will complete without triggerring any precise faults (for example, page faults). 
-Stores may also return imprecise faults from the bus. It is platform defined whether the core implementation waits for the bus responses before continuing to the final stage of the sequence, 
+The stack pointer adjustment must only be committed only when it is certain that the entire PUSH instruction will complete 
+without triggering any precise faults (for example, page faults), and without the core taking an interrupt.
+
+Stores may also return imprecise faults from the bus. 
+It is platform defined whether the core implementation waits for the bus responses before continuing to the final stage of the sequence, 
 or handles errors responses after completing the PUSH instruction.
 
 <<<
@@ -228,7 +235,9 @@ addi sp, sp, -64
 
 From a software perspective the POP/POPRET sequence appears as:
 
-* A sequence of loads, any of which may be executed multiple times
+* A sequence of loads reading the bytes required by the pseudo-code.
+** The bytes may be loaded in any order.
+** Any of the bytes may be loaded multiple times.
 * A stack pointer adjustment
 * An optional LI zero into a0
 * An optional RET
@@ -237,7 +246,8 @@ If an implementation allows interrupts during the sequence, then any loads which
 The loads will be re-executed once the handler completes, so the values will be overwritten. 
 Therefore it is permitted for an implementation to update some of the destination registers before taking the interrupt or other fault.
 
-The optional load immediate and stack pointer adjustment must only be committed once it is certain that all of the loads will complete successfully.
+The optional load immediate, stack pointer adjustment and optional ret must only be committed only when it is certain that the entire POP/POPRET instruction will complete 
+without triggering any precise faults (for example, page faults), and without the core taking an interrupt.
 
 For POPRET once the stack pointer adjustment has been committed the RET must execute.
 
@@ -281,7 +291,7 @@ An implementation may have a requirement to issue a PUSH/POP instruction to non-
 ==== Error detection
 
 If the core implementation does not support PUSH/POP to non-idempotent memories, the core may use an idempotency PMA to detect it and take a 
-load(POP/POPRET) or store (PUSH) access fault exception in order to avoid unpredictable results.
+load (POP/POPRET) or store (PUSH) access fault exception in order to avoid unpredictable results.
 
 <<<
 

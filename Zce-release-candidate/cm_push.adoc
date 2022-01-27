@@ -6,16 +6,16 @@ Synopsis::
 Create stack frame: store ra and 0 to 12 saved registers to the stack frame, optionally allocate additional stack space.
 
 Mnemonic::
-cm.push
+cm.push _{reg_list}, -stack_adj_
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  2, name: 0x2,             attr: [] },
+    { bits:  2, name: 0x2,             attr: ['C2'] },
     { bits:  2, name: 'spimm\[5:4\]',  attr: [] },
     { bits:  4, name: 'rlist',         attr: [] },
-    { bits:  5, name: 0x16,            attr: [] },
+    { bits:  5, name: 0x18,            attr: [] },
     { bits:  3, name: 0x5,             attr: ['FUNCT3'] },
 ],config:{bits:16}}
 ....

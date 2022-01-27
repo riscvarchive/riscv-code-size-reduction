@@ -1,12 +1,12 @@
 [#Zc]
-==== Zc* v0.70.0
+==== Zc* v0.70.1
 
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
 
 Zc* is a group of extensions which define subsets of the existing C extension (Zca, Zcf) and new extensions which only contain 16-bit encodings.
 
-Zcm* all reuse encodings for c.fld*, c.fsd*.
+Zcm* all reuse encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 
 .Zc* extension overview
 [width="100%",options=header]
@@ -32,21 +32,21 @@ Zcm* all reuse encodings for c.fld*, c.fsd*.
 |c.zext.w       |   |   |&#10003;|    |    |     |     
 |c.mul          |   |   |&#10003;|    |    |     |     
 |c.not          |   |   |&#10003;|    |    |     |     
-8+|*Load/store byte/half which overlap with D-extension encodings*
+8+|*Load/store byte/half which overlap with _c.fld_, _c.fldsp_, _c.fsd_*
 |cm.lb          |   |   |   |&#10003; |    |     |     
 |cm.lbu         |   |   |   |&#10003; |    |     |     
 |cm.lh          |   |   |   |&#10003; |    |     |     
 |cm.lhu         |   |   |   |&#10003; |    |     |     
 |cm.sb          |   |   |   |&#10003; |    |     |     
 |cm.sh          |   |   |   |&#10003; |    |     |     
-8+|*Push/pop and double move which overlap with D-extension encodings*
+8+|*Push/pop and double move which overlap with _c.fsdsp_*
 |cm.push        |   |   |   |    |&#10003; | &#10003; |     
 |cm.pop         |   |   |   |    |&#10003; | &#10003; |     
 |cm.popret      |   |   |   |    |&#10003; | &#10003; |     
 |cm.popretz     |   |   |   |    |&#10003; | &#10003; |     
 |cm.mva01s      |   |   |   |    |&#10003; |     |     
 |cm.mvsa01      |   |   |   |    |&#10003; |     |     
-8+|*Reserved for EABI versions of push/pop and double move which overlap with D-extension encodings*
+8+|*Reserved for EABI versions of push/pop and double move which overlap with _c.fsdsp_*
 |cm.push.e      |   |   |   |    |    | &#10003; |     
 |cm.pop.e       |   |   |   |    |    | &#10003; |     
 |cm.popret.e    |   |   |   |    |    | &#10003; |     
@@ -74,6 +74,8 @@ Zcf is the existing set of single precision floating point loads and stores: _c.
 === Zcb
 
 All proposed encodings are currently reserved for all architectures, and have no conflicts with any existing extensions.
+
+Zcb requires the <<Zca>> extension.
 
 The _c.mul_ encoding uses the CR register format along with other instructions such as _c.sub_, _c.xor_ etc. 
 
@@ -155,8 +157,10 @@ The _c.mul_ encoding uses the CR register format along with other instructions s
 [#Zcmb]
 === Zcmb
 
-This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
-It is fully compatible with F and, with Zdinx and also with <<Zca>> and <<Zcb>>.
+This extension reuses some encodings from _c.fld_, _c.fldsp_, and _c.fsd_.  Therefore it is _incompatible_ with the full C-extension. 
+It is compatible with F, D with Zdinx.
+
+Zcmb requires the <<Zcb>> extension, which in turn requires the <<Zca>> extension.
 
 The instructions are all 16-bit versions of existing 32-bit load/store instructions.
 
@@ -206,12 +210,10 @@ The instructions are all 16-bit versions of existing 32-bit load/store instructi
 
 Zcmp is the set of sequenced instuctions for code-size reduction.
 
-This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
-It is fully compatible with F and, with Zdinx and also with <<Zca>> and <<Zcb>>.
+This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
+It is compatible with F, D with Zdinx.
 
-[NOTE]
-
-  The PUSH/POP instructions share assembly mnemonics for different encodings. For further information see <<insns-pushpop>>.
+Zcmp requires the <<Zca>> extension.
 
 The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 
@@ -230,32 +232,32 @@ The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 
 |&#10003;
 |&#10003;
-|cm.push {reg_list}, -stack_adj
+|cm.push _{reg_list}, -stack_adj_
 |<<#insns-cm_push>> 
 
 |&#10003;
 |&#10003;
-|cm.pop {reg_list}, stack_adj
+|cm.pop _{reg_list}, stack_adj_
 |<<#insns-cm_pop>> 
 
 |&#10003;
 |&#10003;
-|cm.popret {reg_list}, stack_adj
+|cm.popret _{reg_list}, stack_adj_
 |<<#insns-cm_popret>> 
 
 |&#10003;
 |&#10003;
-|cm.popretz {reg_list}, stack_adj
+|cm.popretz _{reg_list}, stack_adj_
 |<<#insns-cm_popretz>> 
 
 |&#10003;
 |&#10003;
-|cm.mva01s sreg1, sreg2
+|cm.mva01s _sreg1, sreg2_
 |<<#insns-cm_mva01s>> 
 
 |&#10003;
 |&#10003;
-|cm.mvsa01 sreg1, sreg2
+|cm.mvsa01 _sreg1, sreg2_
 |<<#insns-cm_mvsa01>> 
 
 |===
@@ -265,7 +267,10 @@ The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 [#Zcmpe]
 === Zcmpe
 
-This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
+This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
+It is compatible with F, D with Zdinx.
+
+Zcmpe requires the <<Zca>> extension.
 
 Zcmpe offers EABI support for register mappings from <<Zcmp>> where the _x_ register mapping is different to the UABI. 
 The EABI specification is not frozen so these instructions cannot yet be accurately specified.
@@ -275,8 +280,8 @@ The EABI specification is not frozen so these instructions cannot yet be accurat
 
 Zcmt is the set of table jump instuctions for code-size reduction.
 
-This extension reuses some encodings from c.fld, c.fldsp, c.fsd, c.fsdsp.  Therefore it is _incompatible_ with D. 
-It is fully compatible with F and, with Zdinx and also with <<Zca>> and <<Zcb>>.
+This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
+It is compatible with F, D with Zdinx.
 
 [%header,cols="^1,^1,4,8"]
 |===
@@ -287,15 +292,21 @@ It is fully compatible with F and, with Zdinx and also with <<Zca>> and <<Zcb>>.
 
 |&#10003;
 |&#10003;
-|cm.jt #index
+|cm.jt _index_
 |<<#insns-cm_jt>> 
 
 |&#10003;
 |&#10003;
-|cm.jalt #index
+|cm.jalt _index_
 |<<#insns-cm_jalt>> 
 
 |===
+
+include::c_lbu.adoc[]
+include::c_lhu.adoc[]
+include::c_lh.adoc[]
+include::c_sb.adoc[]
+include::c_sh.adoc[]
 
 include::c_zext_b.adoc[]
 include::c_sext_b.adoc[]
@@ -305,12 +316,6 @@ include::c_zext_w.adoc[]
 include::c_not.adoc[]
 include::c_mul.adoc[]
 
-include::c_lbu.adoc[]
-include::c_lhu.adoc[]
-include::c_lh.adoc[]
-include::c_sb.adoc[]
-include::c_sh.adoc[]
-
 include::cm_lbu.adoc[]
 include::cm_lhu.adoc[]
 include::cm_lb.adoc[]
@@ -318,16 +323,16 @@ include::cm_lh.adoc[]
 include::cm_sb.adoc[]
 include::cm_sh.adoc[]
 
+include::pushpop.adoc[]
 include::cm_push.adoc[]
 include::cm_pop.adoc[]
-include::cm_popret.adoc[]
 include::cm_popretz.adoc[]
-include::cm_mva01s.adoc[]
+include::cm_popret.adoc[]
 include::cm_mvsa01.adoc[]
-include::pushpop.adoc[]
+include::cm_mva01s.adoc[]
 
+include::tablejump.adoc[]
+include::JVT_csr.adoc[]
 include::cm_jt.adoc[]
 include::cm_jalt.adoc[]
-include::JVT_csr.adoc[]
-include::tablejump.adoc[]
 

@@ -12,7 +12,7 @@ Common details for these instructions are in this section.
 
 === Table Jump Overview
 
-Table jump is a form of dictionary compression used to reduce the code size of JAL / AUIPC+JALR / JR / AUIPC+JR instructions.
+Table jump is a form of dictionary compression used to reduce the code size of _jal_ / _auipc+jalr_ / _jr_ / _auipc+jr_ instructions.
 
 Function calls and jumps to fixed labels typically take 32-bit or 64-bit instruction sequences.
 
@@ -22,7 +22,7 @@ Table jump allows the linker to:
 * replace 32-bit _jal_ ra calls with _cm.jalt_
 * replace 64-bit _auipc/jalr_ calls to fixed locations with _cm.jt_
 * replace 64-bit _auipc/jalr ra_ calls to fixed locations with _cm.jalt_
-** The AUIPC+JR/JALR sequence is used because the offset from the PC is out of the ±1MB range.
+** The _auipc+jr/jalr_ sequence is used because the offset from the PC is out of the ±1MB range.
 
 === JVT
 
@@ -33,7 +33,7 @@ The table entry number is from the _index_ field in the encoding, which controls
 * cm.jt   : entries 0-63,   link to _zero_
 * cm.jalt : entries 64-255, link to _ra_
 
-Note that the LSB of every jump table entry is _ignored_ which matches standard JALR behaviour.
+Note that the LSB of every jump vector table entry is _ignored_ which matches standard _jalr_ behaviour.
 
 If the same function is called with and without linking then it must have two entries in the table. 
 This case does happen in practice but only affects a small number of entries so it does not waste much space in the table. 
@@ -41,7 +41,7 @@ It is typically caused by the same function being called with and without tail c
 
 <<<
 [#tablejump-algorithm]
-=== Recommended algorithm for allocating entries in the jump table
+=== Recommended algorithm for allocating entries in the jump vector table
 
 Calls to each function are categorised as shown in <<tablejump-savings>>.
 
@@ -49,11 +49,11 @@ Calls to each function are categorised as shown in <<tablejump-savings>>.
 .Table jump code size saving for each function call replacement
 [width="100%",options=header]
 |=======================================================================================================================
-| original sequence | Table Jump saving  
-| J                 | A*2-(XLEN/8) bytes 
-| AUIPC+JR          | B*6-(XLEN/8) bytes 
-| JAL ra            | C*2-(XLEN/8) bytes 
-| AUIPC+JALR ra     | D*6-(XLEN/8) bytes 
+| original sequence   | Table Jump saving  
+| _j_                 | A*2-(XLEN/8) bytes 
+| _auipc+jr_          | B*6-(XLEN/8) bytes 
+| _jal ra_            | C*2-(XLEN/8) bytes 
+| _auipc+jalr ra_     | D*6-(XLEN/8) bytes 
 |=======================================================================================================================
 
 Each function is called by using one of the two link registers. The total saving per function is calculated by counting the number of calls and adding up the total saving from each replacement of the existing sequence with a Table Jump instruction, as follows:
@@ -70,28 +70,25 @@ The functions are sorted so that the one with the highest saving is in table ent
   This algorithm assumes that each function is only called with one link register. 
   If the same function is called with more than one link register, then it must have two entries in the table.
 
-This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump table. 
+This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump vector table. 
 Only caching a few entries will greatly improve the performance.
 
 <<<
 [#tablejump-fault-handling]
 === Table Jump Fault handling
 
-Table Jump involves two instruction fetches from a single instruction, and either fetch can cause a fault. There are no data accesses involved in the execution of table jumps.
+For a table jump instruction, the table entry that the instruction selects is considered an extension of the instruction itself.
+Hence, the execution of a table jump instruction involves two instruction fetches, the first to read the main instruction (_cm.jt_
+or _cm.jalt_) and the second to read from the jump vector table (JVT). Both instruction fetches are _implicit_ reads, and both require
+execute permission; read permission is irrelevant.
 
-The sequence required to execute the table jump instruction may be interrupted, or may not be able to start execution for several reasons.
+Memory writes to the jump vector table require an instruction barrier (_fence.i_) to guarantee that they are visible to the instruction fetch.
 
-* virtual memory page fault or PMP fault
-** these can be detected before execution, or during execution if the table jump instruction and the address in the table map to different virtual memory pages or PMP regions
-* watchpoint trigger or debug halt caused by a trigger
-* external debug halt
-** the halt can treat the whole sequence atomically, or interrupt mid sequence (implementation defined)
-* interrupts
-** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
+Multiple contexts may have different jump vector tables. JVT may be switched between them without an instruction barrier 
+if the tables have not been updated in memory since the last _fence.i_.
 
-For exceptions and interrupts MEPC contain the PC of the table jump instruction, MCAUSE is set as expected for the type of fault and MTVAL (if implemented) contains the address which caused the fault.
-
-For debug halts DPC is set to the PC of the table jump instruction.
+If an exception occurs on either instruction fetch, xEPC is set to the PC of the table jump instruction,  xCAUSE is set as expected for the type of fault and 
+xTVAL (if not set to zero) contains the address which caused the fault.
 
 This section gives an overview of the behaviour, the exact operation is documented in the SAIL code for each instruction: <<insns-cm_jalt-SAIL>>, <<insns-cm_jt-SAIL>>.
 

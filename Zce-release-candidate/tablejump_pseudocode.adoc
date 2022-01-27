@@ -10,46 +10,16 @@ switch(XLEN) {
   64:  table_address[XLEN-1:0] = JVT.base + (index<<3);
 }
 
-//check for debug mode entry, trigger with timing=0 and action=1, haltreq or step
-if ((debug_trigger(table_address) && MCONTROL.timing==0 && MCONTROL.action==1) ||
-    external_debug_haltreq() || DCSR.step==1) {
-  DPC        = current_PC;
-  DCSR.cause = DCSR.step==1 ? 4 : external_debug_haltreq() ? 3 : 2;
-  enter_debug_mode();
-//check for breakpoint trigger which takes an exception with timing=0
-} else if ((debug_trigger(table_address) && MCONTROL.timing==0) ||
-            !can_access_instruction_memory(table_address)) {
-  MEPC   = current_PC;
-  MCAUSE = debug_trigger(table_address) ? BREAKPOINT : INSTRUCTION_ACCESS_FAULT;
-  MTVAL  = MTVAL_IMPLEMENTED ? table_address : 0;
-  take_exception();
-} else {
-  //access the jump table
-  switch(XLEN) {
-    32:  LW target_address, InstMemory[table_address][XLEN-1:0];
-    64:  LD target_address, InstMemory[table_address][XLEN-1:0];
-  }
+//fetch from the jump table
+target_address[XLEN-1:0] = InstMemory[table_address][XLEN-1:0];
 
-  //don't use haltreq or step here, only check the addresses
-  //check for table_address after reading if timing=1
-  if (debug_trigger(table_address) && MCONTROL.timing==1 && MCONTROL.action==1) {
-    DPC        = current_PC;
-    DCSR.cause = 2;
-    enter_debug_mode();
-  } else if (debug_trigger(table_address) && MCONTROL.timing==1) {
-    MEPC   = current_PC;
-    MCAUSE = BREAKPOINT;
-    MTVAL  = MTVAL_IMPLEMENTED ? table_address : 0;
-    take_exception();
-  } else {
-    //jump to the target address
-    if (OPCODE=="cm.jalt") {
-      JALR ra, target_address[XLEN-1:0]&~0x1;
-    } else {
-      JR target_address[XLEN-1:0]&~0x1;
-    }
-  }
+//jump to the target address
+if (OPCODE=="cm.jalt") {
+  jalr ra, target_address[XLEN-1:0]&~0x1;
+} else {
+  jr target_address[XLEN-1:0]&~0x1;
 }
+
 --
 
 
