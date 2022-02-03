@@ -13,7 +13,7 @@ For details of analysing the `Zc` code-size reduction extensions against your EL
 
 This is the current set of benchmark results from the analysis script:
 
-- [Benchmark results](https://docs.google.com/spreadsheets/d/1UYll7HGR_QLGTsHcjGoNL4EodM5BNO41hXdxVAFaxFs/edit#gid=1281210325)
+- [Benchmark results](https://docs.google.com/spreadsheets/d/1bFMyGkuuulBXuIaMsjBINoCWoLwObr1l9h5TAWN8s7k/edit#gid=1837831327)
 
 Documentation of existing RISC-V code-size reduction ISA extensions
 - [Existing ISA extensions to reduce code size](https://github.com/riscv/riscv-code-size-reduction/blob/master/existing_extensions/README.md)
