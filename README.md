@@ -3,9 +3,13 @@ Welcome to the RISC-V Code Size Reduction Group
 
 _If you can't measure it you can't improve it_
 
-This is the current stable proposal for reducing code size:
+This is the current tagged proposal for reducing code size:
 
 - [Zc ISA proposal](https://github.com/riscv/riscv-code-size-reduction/releases/tag/V0.70.1-TOOLCHAIN-DEV)
+
+This is the the lastest spec (currently matches the tagged version), and the benchmarking results:
+
+- [Zc-specification](https://github.com/riscv/riscv-code-size-reduction/tree/master/Zc-specification)
 
 For details of analysing the `Zc` code-size reduction extensions against your ELF file look here
 
