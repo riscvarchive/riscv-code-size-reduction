@@ -1,6 +1,6 @@
 This is the proposed specification for all Zc extensions:
 
-https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/Zc.pdf
+https://github.com/riscv/riscv-code-size-reduction/blob/master/Zc-specification/Zc.pdf
 
 The benchmarking results for all Zc extensions are here:
 
