@@ -15,8 +15,8 @@ Format (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  6, name: 'config',    attr: ['CONFIGURATION'] },
-    { bits: 26, name: 'XLEN-1:6',  attr: ['base[XLEN-1:6]'] },
+    { bits:  6, name: 'mode',  attr: ['Jump Table Mode'] },
+    { bits: 26, name: 'base',  attr: ['Base Address [XLEN-1:6]'] },
 ],config:{bits:32}}
 ....
 
