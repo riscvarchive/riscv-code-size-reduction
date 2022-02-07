@@ -10,4 +10,4 @@ There are many changes since v0.50.1, which has been used for toolchain, spike, 
 
 This shows how the specification has changed from v0.50.1 to the current version:
 
-https://github.com/riscv/riscv-code-size-reduction/blob/master/Zce-release-candidate/changes_since_v0.50.adoc
+https://github.com/riscv/riscv-code-size-reduction/blob/master/Zc-specification/changes_since_v0.50.adoc
