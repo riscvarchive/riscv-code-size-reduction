@@ -7,7 +7,7 @@ This is the current tagged proposal for reducing code size:
 
 - [Zc ISA proposal](https://github.com/riscv/riscv-code-size-reduction/releases/tag/V0.70.1-TOOLCHAIN-DEV)
 
-This is the the lastest spec (currently matches the tagged version), and the benchmarking results:
+This is the the lastest spec (currently only has stylistic changes from the tagged version), and the benchmarking results:
 
 - [Zc-specification](https://github.com/riscv/riscv-code-size-reduction/tree/master/Zc-specification)
 
