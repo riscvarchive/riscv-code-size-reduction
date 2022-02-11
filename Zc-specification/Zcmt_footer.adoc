@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcmt (<<Zcmt>>)
-|0.70.1
+|v0.70.2
 |Stable
 |===

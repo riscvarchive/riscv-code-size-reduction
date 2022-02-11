@@ -52,14 +52,11 @@ Operation::
 [source,sail]
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
-
 if (RV32E && (sreg1>1 || sreg2>1)) {
   take_illegal_instruction_exception();
 }
-
 xreg1 = {sreg1[2:1]>0,sreg1[2:1]==0,sreg1[2:0]};
 xreg2 = {sreg2[2:1]>0,sreg2[2:1]==0,sreg2[2:0]};
-
 X[xreg1] = X[10];
 X[xreg2] = X[11];
 --

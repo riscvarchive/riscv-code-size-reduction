@@ -15,8 +15,8 @@ Format (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
-    { bits:  6, name: 'config',    attr: ['CONFIGURATION'] },
-    { bits: 26, name: 'XLEN-1:6',  attr: ['base[XLEN-1:6]'] },
+    { bits:  6, name: 'mode',  attr: ['6'] },
+    { bits: 26, name: 'base',  attr: ['XLEN-6'] },
 ],config:{bits:32}}
 ....
 
@@ -24,7 +24,7 @@ Description::
 
 _JVT.base_ is a virtual address, whenever virtual memory is enabled.
 
-Using _JVT.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
+_JVT.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
 
 The memory pointed to by _JVT.base_ is treated as instruction memory for the purpose of executing table jump instructions. 
 

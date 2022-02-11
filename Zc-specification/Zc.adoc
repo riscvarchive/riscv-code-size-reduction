@@ -1,5 +1,16 @@
 [#Zc]
-==== Zc* v0.70.1
+== Zc* v0.70.2
+
+=== Change history since v0.70.2 (tagged release)
+
+.Change history
+[width="100%",options=header]
+|====================================================================================
+|Version | change
+|v0.70.2 | stylistic changes only, removing redundant text. Also corrected field names on JVT CSR diagram.
+|====================================================================================
+
+=== Zc* Overview
 
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
@@ -39,14 +50,14 @@ Zcm* all reuse encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 |cm.lhu         |   |   |   |&#10003; |    |     |     
 |cm.sb          |   |   |   |&#10003; |    |     |     
 |cm.sh          |   |   |   |&#10003; |    |     |     
-8+|*Push/pop and double move which overlap with _c.fsdsp_*
+8+|*PUSH/POP and double move which overlap with _c.fsdsp_*
 |cm.push        |   |   |   |    |&#10003; | &#10003; |     
 |cm.pop         |   |   |   |    |&#10003; | &#10003; |     
 |cm.popret      |   |   |   |    |&#10003; | &#10003; |     
 |cm.popretz     |   |   |   |    |&#10003; | &#10003; |     
 |cm.mva01s      |   |   |   |    |&#10003; |     |     
 |cm.mvsa01      |   |   |   |    |&#10003; |     |     
-8+|*Reserved for EABI versions of push/pop and double move which overlap with _c.fsdsp_*
+8+|*Reserved for EABI versions of PUSH/POP and double move which overlap with _c.fsdsp_*
 |cm.push.e      |   |   |   |    |    | &#10003; |     
 |cm.pop.e       |   |   |   |    |    | &#10003; |     
 |cm.popret.e    |   |   |   |    |    | &#10003; |     

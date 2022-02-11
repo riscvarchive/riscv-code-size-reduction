@@ -90,6 +90,4 @@ if the tables have not been updated in memory since the last _fence.i_.
 If an exception occurs on either instruction fetch, xEPC is set to the PC of the table jump instruction,  xCAUSE is set as expected for the type of fault and 
 xTVAL (if not set to zero) contains the address which caused the fault.
 
-This section gives an overview of the behaviour, the exact operation is documented in the SAIL code for each instruction: <<insns-cm_jalt-SAIL>>, <<insns-cm_jt-SAIL>>.
-
 include::Zcmp_footer.adoc[]

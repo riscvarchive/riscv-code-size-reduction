@@ -122,11 +122,6 @@ calling the millicode _save/restore_ routines and so may also perform better.
 
 [#pushpop-areg-list]
 
-=== Compiler implementation
-
-The technique used in the initial implementation in LLVM is to let the compiler generate the function prologue and epilogue, 
-and then replace the instruction sequences with the relevant PUSH/POP instructions.
-
 ==== Stack pointer adjustment handling
 
 The instructions all automatically adjust the stack pointer by enough to cover the memory required for the registers being saved or restored. 
@@ -138,46 +133,14 @@ range available in the encoding; if the range is insufficient then a separate _c
 The instructions do not directly support _{ra, s0-s10}_ to reduce the amount of encoding space required. If this register list is required then _s11_ 
 should also be included. This costs a small amount of memory and performance, but saves code-size.
 
-<<<
-
-[#pushpop-fault-handling]
+[#pushpop-idempotent-memory]
 === PUSH/POP Fault handling
 
-The sequence required to execute the PUSH/POP instruction may be interrupted, or may not be able to start execution for several reasons.
+Correct execution requires that _sp_ refers to idempotent memory (also see <<pushpop_non-idem-mem>>), because the core must be able to 
+handle faults detected during the sequence. 
+The entire PUSH/POP sequence is re-executed after returning from the fault handler, and multiple faults are possible during the sequence.
 
-* virtual memory page fault or PMP fault
-** these can be detected before execution, or during execution if the memory addresses cross a page/PMP boundary
-** xTVAL is set to any address which causes the fault
-* watchpoint trigger
-** these can be detected before execution, or during execution depending on the trigger type (load data triggers require the sequence to have started executing, for example)
-** xTVAL is set to any address which causes the fault
-* external debug halt
-** the halt can treat the whole sequence atomically, or interrupt mid sequence (implementation defined)
-* debug halt caused by a trigger
-** same comment as watchpoint trigger above
-* load access fault
-** these are detected while the sequence is executing
-** xTVAL is set to the fault address.
-* store access fault (precise or imprecise)
-** these may be detected while the sequence is executing, or afterwards if imprecise
-** xTVAL is set to the fault address.
-* interrupts
-** these may arrive at any time. An implementation can choose whether to interrupt the sequence or not.
-
-[NOTE]
-
-  xTVAL may be hardwired to zero in an implementation. Recovering from faults such as page faults requires that it is implemented.
-
-In all cases xEPC contains the PC of the PUSH/POP instruction, and xCAUSE is set as expected for the type of fault.
-
-For debug halts DPC is set to the PC of the PUSH/POP instruction.
-
-Because some faults can only be detected during the sequence the core implementation must be able to recover from the fault and re-execute the sequence. 
-This may involve executing some or all of the loads and stores from the sequence multiple times before the sequence completes (as multiple faults or multiple interrupts are possible).
-
-Therefore correct execution requires that _sp_ refers to idempotent memory (also see <<pushpop_non-idem-mem>>).
-
-<<<
+It is implementation defined whether interrupts can also be taken during the sequence execution.
 
 [#pushpop-software-view]
 === Software view of execution
@@ -188,10 +151,9 @@ From a software perspective the PUSH sequence appears as:
 
 * A sequence of stores writing the bytes required by the pseudo-code
 ** The bytes may be written in any order.
+** The bytes may be grouped into larger accesses.
 ** Any of the bytes may be written multiple times.
 * A stack pointer adjustment
-
-Because the memory is idempotent and the stores are non-overlapping, they may be reordered, grouped into larger accesses, split into smaller access or any combination of these.
 
 If an implementation allows interrupts during the sequence, and the interrupt handler uses _sp_ to allocate stack memory, then any stores which were executed before the interrupt may be overwritten by the handler. 
 This is safe because the memory is idempotent and the stores will be re-executed when execution resumes.
@@ -216,8 +178,9 @@ Appears to software as:
 
 [source,sail]
 --
-# any bytes from sp-1 to sp-28 may be written multiple times before the instruction completes
-# therefore these updates may be visible in the interrupt/exception handler below the stack pointer
+# any bytes from sp-1 to sp-28 may be written multiple times before 
+# the instruction completes therefore these updates may be visible in 
+# the interrupt/exception handler below the stack pointer
 sw  s5, -4(sp)   
 sw  s4, -8(sp)   
 sw  s3,-12(sp)   
@@ -226,8 +189,9 @@ sw  s1,-20(sp)
 sw  s0,-24(sp)   
 sw  ra,-28(sp)   
 
-# this must only execute once, and will only execute after all stores completed without any precise faults
-# therefore this update is only visible in the interrupt/exception handler if cm.push has completed
+# this must only execute once, and will only execute after all stores
+# completed without any precise faults, therefore this update is only 
+# visible in the interrupt/exception handler if cm.push has completed
 addi sp, sp, -64
 --
 
@@ -237,19 +201,20 @@ From a software perspective the POP/POPRET sequence appears as:
 
 * A sequence of loads reading the bytes required by the pseudo-code.
 ** The bytes may be loaded in any order.
+** The bytes may be grouped into larger accesses.
 ** Any of the bytes may be loaded multiple times.
 * A stack pointer adjustment
-* An optional LI zero into a0
-* An optional RET
+* An optional `li a0, 0`
+* An optional `ret`
 
 If an implementation allows interrupts during the sequence, then any loads which were executed before the interrupt may update architectural state. 
 The loads will be re-executed once the handler completes, so the values will be overwritten. 
-Therefore it is permitted for an implementation to update some of the destination registers before taking the interrupt or other fault.
+Therefore it is permitted for an implementation to update some of the destination registers before taking an interrupt or other fault.
 
-The optional load immediate, stack pointer adjustment and optional ret must only be committed only when it is certain that the entire POP/POPRET instruction will complete 
+The optional `li a0, 0`, stack pointer adjustment and optional `ret` must only be committed only when it is certain that the entire POP/POPRET instruction will complete 
 without triggering any precise faults (for example, page faults), and without the core taking an interrupt.
 
-For POPRET once the stack pointer adjustment has been committed the RET must execute.
+For POPRET once the stack pointer adjustment has been committed the `ret` must execute.
 
 <<<
 For example:
@@ -271,8 +236,8 @@ lw   s1, 20(sp)
 lw   s0, 16(sp)
 lw   ra, 12(sp)
 
-# these must only execute once, will only execute after all loads complete successfully
-# all instructions must execute atomically
+# these must only execute once, will only execute after all loads 
+# complete successfully all instructions must execute atomically
 # therefore these updates are not visible in the interrupt/exception handler
 li a0, 0
 addi sp, sp, 32
@@ -288,35 +253,15 @@ The PUSH/POP sequence has the same forward progress guarantee as executing the i
 
 An implementation may have a requirement to issue a PUSH/POP instruction to non-idempotent memory. 
 
-==== Error detection
-
 If the core implementation does not support PUSH/POP to non-idempotent memories, the core may use an idempotency PMA to detect it and take a 
 load (POP/POPRET) or store (PUSH) access fault exception in order to avoid unpredictable results.
+
+If the core implementation does support PUSH/POP to non-idempotent memory, then it may not be possible to re-execute the sequence after a fault. 
+In this case the fault handler should complete the sequence in software.
 
 <<<
 
 ==== Non-idempotent support
 
-It is possible to support non-idempotent memory. One reason is to re-use PUSH/POP as a restricted form of a load/store multiple instruction to a peripheral,
-as there is no generic load/store multiple instruction in the RISC-V ISA. 
-
-If accessing non-idempotent memory then it is _recommended_ to:
-
-. Not allow interrupts during execution
-. Not allow external debug halt during execution
-. Detect any virtual memory page faults or PMP faults for the whole instruction before starting execution (instead of during the sequence)
-. Not split / merge / reorder the generated memory accesses
-
-It is possible that one of the following will still occur during execution:
-
-. Watchpoint trigger
-. Load/store access fault
-
-In these cases the core will jump to the debug or exception handler. If execution is required to continue afterwards (so the event is not fatal to the code execution), then the handler is required to do so in software. 
-
-By following these rules memory accesses will only ever be issued once, and decreasing address order.
-
-It is possible for implementations to follow these restricted rules and to safely access both types of memory. 
-It is also possible for an implementation to use PMAs to detect the memory type and apply different rules, such as only allowing interrupts if accessing cacheable memory, for example.
 
 include::Zcmp_footer.adoc[]

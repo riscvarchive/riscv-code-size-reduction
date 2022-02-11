@@ -56,7 +56,7 @@ Operation::
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
 # target_address is temporary internal state, it doesn't represent a real register
-# Mem is byte indexed
+# InstMemory is byte indexed
 
 switch(XLEN) {
   32:  table_address[XLEN-1:0] = JVT.base + (index<<2);
