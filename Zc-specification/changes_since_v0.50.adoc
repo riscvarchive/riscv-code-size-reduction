@@ -69,6 +69,13 @@ All 32-bit forms are removed and all the 16-bit forms support 12 register lists 
 . {ra}
 . {ra, s0}
 . {ra, s0-s1}
+. {ra, s0-s2}
+. {ra, s0-s3}
+. {ra, s0-s4}
+. {ra, s0-s5}
+. {ra, s0-s6}
+. {ra, s0-s7}
+. {ra, s0-s8}
 . {ra, s0-s9}
 . {ra, s0-s11}
 
