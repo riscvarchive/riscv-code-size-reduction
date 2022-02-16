@@ -7,7 +7,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version | change
-|v0.70.2 | stylistic changes only, removing redundant text. Also corrected field names on JVT CSR diagram.
+|v0.70.2 | stylistic changes only, removing redundant text. Also corrected field names on JVT CSR diagram, and fixed synopsis for cm.mvsa01
 |====================================================================================
 
 === Zc* Overview
