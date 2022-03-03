@@ -1,12 +1,13 @@
 [#Zc]
-== Zc* v0.70.2
+== Zc* v0.70.3
 
-=== Change history since v0.70.2 (tagged release)
+=== Change history since v0.70.1 (tagged release)
 
 .Change history
 [width="100%",options=header]
 |====================================================================================
 |Version | change
+|v0.70.3 | added rule that Zcf implies Zca (this text was missing, this is not a spec change), and added push/pop examples in the push/pop section
 |v0.70.2 | stylistic changes only, removing redundant text. Also corrected field names on JVT CSR diagram, and fixed synopsis for cm.mvsa01
 |====================================================================================
 
@@ -78,6 +79,8 @@ Zca is all of the existing C extension, _excluding_ all 16-bit floating point lo
 === Zcf
 
 Zcf is the existing set of single precision floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_.
+
+Zcb requires the <<Zca>> extension.
 
 <<<
 
@@ -343,7 +346,7 @@ include::cm_mvsa01.adoc[]
 include::cm_mva01s.adoc[]
 
 include::tablejump.adoc[]
-include::JVT_csr.adoc[]
+include::jvt_csr.adoc[]
 include::cm_jt.adoc[]
 include::cm_jalt.adoc[]
 
