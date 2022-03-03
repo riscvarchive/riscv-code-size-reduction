@@ -56,6 +56,6 @@ jobs:
     - name: Archive PDF result
       uses: actions/upload-artifact@v2
       with:
-        name: example-spec.pdf
-        path: example-spec.pdf
+        name: Zc.pdf
+        path: Zc.pdf
         retention-days: 7
