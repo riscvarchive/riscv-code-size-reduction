@@ -1,4 +1,4 @@
-HEADER_SOURCE := Zc.adoc
+HEADER_SOURCE := Zc-specification/Zc.adoc
 PDF_RESULT := Zc.pdf
 
 all: build
