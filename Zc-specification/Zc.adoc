@@ -80,7 +80,7 @@ Zca is all of the existing C extension, _excluding_ all 16-bit floating point lo
 
 Zcf is the existing set of single precision floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_.
 
-Zcb requires the <<Zca>> extension.
+Zcf requires the <<Zca>> extension.
 
 <<<
 
