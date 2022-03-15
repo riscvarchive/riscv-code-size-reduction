@@ -7,8 +7,11 @@
 [width="100%",options=header]
 |====================================================================================
 |Version | change
-|v0.70.3 | added rule that Zcf implies Zca (this text was missing, this is not a spec change), and added push/pop examples in the push/pop section
-|v0.70.2 | stylistic changes only, removing redundant text. Also corrected field names on JVT CSR diagram, and fixed synopsis for cm.mvsa01
+|v0.70.3 | Added rule that Zcf and Zct imply Zca (this text was missing, this is not a spec change: https://github.com/riscv/riscv-code-size-reduction/pull/151)
+|        | Added that Zcf is illegal for RV64, as it contains no instructions (clarification: https://github.com/riscv/riscv-code-size-reduction/issues/149)
+|        | Added push/pop examples in the push/pop section
+|v0.70.2 | Stylistic changes only, removing redundant text. 
+|        | Corrected field names on JVT CSR diagram, and fixed synopsis for cm.mvsa01
 |====================================================================================
 
 === Zc* Overview
@@ -18,13 +21,13 @@ https://riscv.org/spec-state
 
 Zc* is a group of extensions which define subsets of the existing C extension (Zca, Zcf) and new extensions which only contain 16-bit encodings.
 
-Zcm* all reuse encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
+Zcm* all reuse the encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 
 .Zc* extension overview
 [width="100%",options=header]
 |====================================================================================
 |Instruction    |Zca|Zcf|Zcb|Zcmb|Zcmp|Zcmpe|Zcmt
-8+|*Define a subset of C with the FP load/stores removed*
+8+|*Define a subset of C with the floating point load/stores removed*
 |C excl. c.f*   |&#10003;|   |   |    |    |     |     
 8+|*The single precision floating point load/stores become a separate extension*
 |c.flw          |   |&#10003;|   |    |    |     |     
@@ -76,9 +79,11 @@ Zcm* all reuse encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 Zca is all of the existing C extension, _excluding_ all 16-bit floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_, _c.fld_, _c.fldsp_, _c.fsd_, _c.fsdsp_.
 
 [#Zcf]
-=== Zcf
+=== Zcf (RV32 only)
 
 Zcf is the existing set of single precision floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_.
+
+Zcf is only relevant to RV32, it cannot be specified for RV64.
 
 Zcf requires the <<Zca>> extension.
 
@@ -287,15 +292,20 @@ It is compatible with F, D with Zdinx.
 Zcmpe requires the <<Zca>> extension.
 
 Zcmpe offers EABI support for register mappings from <<Zcmp>> where the _x_ register mapping is different to the UABI. 
-The EABI specification is not frozen so these instructions cannot yet be accurately specified.
+
+[NOTE]
+
+  The EABI specification is not frozen so these instructions cannot yet be accurately specified.
 
 [#Zcmt]
 === Zcmt
 
-Zcmt is the set of table jump instuctions for code-size reduction.
-
 This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
 It is compatible with F, D with Zdinx.
+
+Zcmt is the set of table jump instuctions for code-size reduction.
+
+Zcmt requires the <<Zca>> extension.
 
 [%header,cols="^1,^1,4,8"]
 |===
