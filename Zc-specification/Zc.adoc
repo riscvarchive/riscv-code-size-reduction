@@ -7,7 +7,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version | change
-|v0.70.3 | Added rule that Zcf and Zct imply Zca (this text was missing, this is not a spec change: https://github.com/riscv/riscv-code-size-reduction/pull/151)
+|v0.70.3 | Added rule that Zcf and Zcmt imply Zca (this text was missing, this is not a spec change: https://github.com/riscv/riscv-code-size-reduction/pull/151)
 |        | Added that Zcf is illegal for RV64, as it contains no instructions (clarification: https://github.com/riscv/riscv-code-size-reduction/issues/149)
 |        | Added push/pop examples in the push/pop section
 |v0.70.2 | Stylistic changes only, removing redundant text. 
