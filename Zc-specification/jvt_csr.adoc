@@ -1,0 +1,52 @@
+<<<
+[#csrs-jvt,reftext="JVT CSR, table jump base vector and control register"]
+=== JVT CSR
+
+Synopsis::
+Table jump base vector and control register
+
+Address::
+0x0017
+
+Permissions::
+URW
+
+Format (RV32, RV64)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  6, name: 'mode',  attr: ['6'] },
+    { bits: 26, name: 'base',  attr: ['XLEN-6'] },
+],config:{bits:32}}
+....
+
+Description::
+
+_JVT.base_ is a virtual address, whenever virtual memory is enabled.
+
+_JVT.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
+
+The memory pointed to by _JVT.base_ is treated as instruction memory for the purpose of executing table jump instructions. 
+
+[#JVT-config-table]
+._JVT.mode_ definition
+[width="60%",options=header]
+|=============================================================================================
+| JVT.mode | Comment
+| 000000 | Jump table mode
+| others | *reserved for future standard use*
+|=============================================================================================
+
+_JVT.mode_ is a WARL field, so can only be programmed to modes which are implemented. Therefore the discovery mechanism is to 
+attempt to program different modes and read back the values to see which are available. Jump table mode _must_ be implemented.
+
+Architectural State::
+
+JVT adds architectural state to the context, therefore must be saved/restored on context switches. 
+
+Additional architectural state requires a state enable to be allocated. 
+Accesses when the state is disabled will throw an illegal instruction exception.
+The state enable is not specified in this document.
+
+include::Zcmt_footer.adoc[]
+

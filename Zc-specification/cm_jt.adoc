@@ -1,0 +1,67 @@
+<<<
+[#insns-cm_jt,reftext="cm.jt: jump via table without link"]
+=== cm.jt
+
+Synopsis::
+jump via table without link
+
+Mnemonic::
+cm.jt _index_
+
+Encoding (RV32, RV64)::
+[wavedrom, , svg]
+....
+{reg:[
+    { bits:  2, name: 0x2,      attr: ['C2'] },
+    { bits:  6, name: 'index',  attr: [] },
+    { bits:  5, name: 0x0,      attr: [] },
+    { bits:  3, name: 0x5,      attr: ['FUNCT3'] },
+],config:{bits:16}}
+....
+
+Assembly Syntax::
+
+[source,sail]
+--
+cm.jt index
+--
+
+Description::
+
+_cm.jt_ reads an entry from the jump vector table in memory and jumps to the address that was read, without linking.
+
+For further information see <<insns-tablejump>>.
+
+Prerequisites::
+None
+
+32-bit equivalent::
+No direct equivalent encoding exists.
+
+<<<
+
+[#insns-cm_jt-SAIL,reftext="cm.jt SAIL code"]
+Operation::
+
+[source,sail]
+--
+//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
+
+# target_address is temporary internal state, it doesn't represent a real register
+# InstMemory is byte indexed
+
+switch(XLEN) {
+  32:  table_address[XLEN-1:0] = JVT.base + (index<<2);
+  64:  table_address[XLEN-1:0] = JVT.base + (index<<3);
+}
+
+//fetch from the jump table
+target_address[XLEN-1:0] = InstMemory[table_address][XLEN-1:0];
+
+//jump to the target address
+jr target_address[XLEN-1:0]&~0x1;
+
+--
+
+include::Zcmt_footer.adoc[]
+
