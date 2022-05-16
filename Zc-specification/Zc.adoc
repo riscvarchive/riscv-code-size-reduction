@@ -1,5 +1,5 @@
 [#Zc]
-== Zc* v0.70.3
+== Zc* v0.70.4
 
 === Change history since v0.70.1 (tagged release)
 
@@ -8,6 +8,7 @@
 |====================================================================================
 |Version | change
 |v0.70.4 | Clarified https://github.com/riscv/riscv-code-size-reduction/issues/159 - Need Zbb and Zba for RV64 and M/ZMmul to get _all_ of Zcb
+|        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/161
 |v0.70.3 | Added rule that Zcf and Zcmt imply Zca (this text was missing, this is not a spec change: https://github.com/riscv/riscv-code-size-reduction/pull/151)
 |        | Added that Zcf is illegal for RV64, as it contains no instructions (clarification: https://github.com/riscv/riscv-code-size-reduction/issues/149)
 |        | Added push/pop examples in the push/pop section
