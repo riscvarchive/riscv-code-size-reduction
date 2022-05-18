@@ -9,6 +9,7 @@
 |Version | change
 |v0.70.4 | Clarified https://github.com/riscv/riscv-code-size-reduction/issues/159 - Need Zbb and Zba for RV64 and M/ZMmul to get _all_ of Zcb
 |        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/161
+|        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/160 - Allocated Smstateen bit 2 and added the relevant text
 |v0.70.3 | Added rule that Zcf and Zcmt imply Zca (this text was missing, this is not a spec change: https://github.com/riscv/riscv-code-size-reduction/pull/151)
 |        | Added that Zcf is illegal for RV64, as it contains no instructions (clarification: https://github.com/riscv/riscv-code-size-reduction/issues/149)
 |        | Added push/pop examples in the push/pop section
@@ -307,7 +308,8 @@ Zcmpe offers EABI support for register mappings from <<Zcmp>> where the _x_ regi
 This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
 It is compatible with F, D with Zdinx.
 
-Zcmt is the set of table jump instuctions for code-size reduction.
+Zcmt is the set of table jump instuctions for code-size reduction, and also adds the JVT CSR. The JVT CSR requires a 
+state enable if Smstateen is implemented. See <<csrs-jvt>> for details.
 
 Zcmt requires the <<Zca>> extension.
 

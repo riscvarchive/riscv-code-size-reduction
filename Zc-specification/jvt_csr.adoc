@@ -44,9 +44,13 @@ Architectural State::
 
 JVT adds architectural state to the context, therefore must be saved/restored on context switches. 
 
-Additional architectural state requires a state enable to be allocated. 
-Accesses when the state is disabled will throw an illegal instruction exception.
-The state enable is not specified in this document.
+State Enable::
+
+Bit 2 of the Smtateen CSRs are allocated to control access to JVT. If the Smstateen extension is implemented, the following text is valid:
+
+Bit 2 applies only for the case that Zcmt is implemented, which includes the JVT CSR and the _cm.jt_ and _cm.jalt_ encodings.
+For convenience if bit 2 of a controlling stateen0 CSR is zero, then the _cm.jt_ and _cm.jalt_ instructions both cause an illegal instruction trap 
+(or virtual instruction trap, if relevant). 
 
 include::Zcmt_footer.adoc[]
 
