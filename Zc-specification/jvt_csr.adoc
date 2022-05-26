@@ -26,6 +26,8 @@ _JVT.base_ is a virtual address, whenever virtual memory is enabled.
 
 _JVT.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
 
+_JVT.base_ is a WARL field as the set of values the register may hold can vary by implementation. 
+
 The memory pointed to by _JVT.base_ is treated as instruction memory for the purpose of executing table jump instructions. 
 
 [#JVT-config-table]

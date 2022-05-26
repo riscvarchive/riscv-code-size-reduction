@@ -1,5 +1,5 @@
 [#Zc]
-== Zc* v0.70.4
+== Zc* v0.70.5
 
 === Change history since v0.70.1 (tagged release)
 
@@ -7,6 +7,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version | change
+|v0.70.5 | Resolve https://github.com/riscv/riscv-code-size-reduction/issues/163 - jvt.base is WARL and fewer bits than the max can be implemented
 |v0.70.4 | Clarified https://github.com/riscv/riscv-code-size-reduction/issues/159 - Need Zbb and Zba for RV64 and M/ZMmul to get _all_ of Zcb
 |        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/161
 |        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/160 - Allocated Smstateen bit 2 and added the relevant text
