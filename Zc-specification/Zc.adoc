@@ -1,5 +1,5 @@
 [#Zc]
-== Zc* v0.70.3
+== Zc* v0.70.5
 
 === Change history since v0.70.1 (tagged release)
 
@@ -7,6 +7,10 @@
 [width="100%",options=header]
 |====================================================================================
 |Version | change
+|v0.70.5 | Resolve https://github.com/riscv/riscv-code-size-reduction/issues/163 - jvt.base is WARL and fewer bits than the max can be implemented
+|v0.70.4 | Clarified https://github.com/riscv/riscv-code-size-reduction/issues/159 - Need Zbb and Zba for RV64 and M/ZMmul to get _all_ of Zcb
+|        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/161
+|        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/160 - Allocated Smstateen bit 2 and added the relevant text
 |v0.70.3 | Added rule that Zcf and Zcmt imply Zca (this text was missing, this is not a spec change: https://github.com/riscv/riscv-code-size-reduction/pull/151)
 |        | Added that Zcf is illegal for RV64, as it contains no instructions (clarification: https://github.com/riscv/riscv-code-size-reduction/issues/149)
 |        | Added push/pop examples in the push/pop section
@@ -95,6 +99,8 @@ Zcf requires the <<Zca>> extension.
 All proposed encodings are currently reserved for all architectures, and have no conflicts with any existing extensions.
 
 Zcb requires the <<Zca>> extension.
+
+As shown on the individual instruction pages, many of the instructions in Zcb depend upon another extension being implemented. For example, _c.mul_ is only implemented if M or Zmmul is implemented, and _c.sext.b_ is only implemented if Zbb is implemented.
 
 The _c.mul_ encoding uses the CR register format along with other instructions such as _c.sub_, _c.xor_ etc. 
 
@@ -303,7 +309,8 @@ Zcmpe offers EABI support for register mappings from <<Zcmp>> where the _x_ regi
 This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
 It is compatible with F, D with Zdinx.
 
-Zcmt is the set of table jump instuctions for code-size reduction.
+Zcmt is the set of table jump instuctions for code-size reduction, and also adds the JVT CSR. The JVT CSR requires a 
+state enable if Smstateen is implemented. See <<csrs-jvt>> for details.
 
 Zcmt requires the <<Zca>> extension.
 

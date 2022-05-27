@@ -75,6 +75,7 @@ jobs:
         release_name: Release ${{ github.ref_name }}
         draft: false
         prerelease: true
+        allowUpdates: "true"
     - name: Upload Release Asset
       id: upload-release-asset
       if: ${{ github.event.inputs.prerelease }}

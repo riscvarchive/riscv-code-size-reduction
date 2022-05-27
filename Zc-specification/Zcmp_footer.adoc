@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcmp (<<Zcmp>>)
-|v0.70.3
+|v0.70.5
 |Stable
 |===

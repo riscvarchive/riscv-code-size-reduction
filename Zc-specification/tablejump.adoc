@@ -80,7 +80,7 @@ Only caching a few entries will greatly improve the performance.
 For a table jump instruction, the table entry that the instruction selects is considered an extension of the instruction itself.
 Hence, the execution of a table jump instruction involves two instruction fetches, the first to read the main instruction (_cm.jt_
 or _cm.jalt_) and the second to read from the jump vector table (JVT). Both instruction fetches are _implicit_ reads, and both require
-execute permission; read permission is irrelevant.
+execute permission; read permission is irrelevant. The address of the second fetch is not considered to be a PC, and so cannot be used for PC based debugging, tracing etc.
 
 Memory writes to the jump vector table require an instruction barrier (_fence.i_) to guarantee that they are visible to the instruction fetch.
 

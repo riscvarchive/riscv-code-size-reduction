@@ -3,11 +3,11 @@ Welcome to the RISC-V Code Size Reduction Group
 
 _If you can't measure it you can't improve it_
 
-This is the current tagged proposal for reducing code size:
+This is the release area for the code size reduction extension:
 
-- [Zc ISA proposal](https://github.com/riscv/riscv-code-size-reduction/releases/tag/V0.70.1-TOOLCHAIN-DEV)
+- [Zc ISA proposal](https://github.com/riscv/riscv-code-size-reduction/releases)
 
-This is the the lastest spec (currently only has stylistic changes from the tagged version,and fixed this issue https://github.com/riscv/riscv-code-size-reduction/issues/148):
+This is the the lastest spec:
 
 - [Zc-specification](https://github.com/riscv/riscv-code-size-reduction/tree/master/Zc-specification)
 

@@ -26,6 +26,8 @@ _JVT.base_ is a virtual address, whenever virtual memory is enabled.
 
 _JVT.base[5:0]_ is implicitly zero, and is naturally aligned for all legal values of _XLEN_.
 
+_JVT.base_ is a WARL field as the set of values the register may hold can vary by implementation. 
+
 The memory pointed to by _JVT.base_ is treated as instruction memory for the purpose of executing table jump instructions. 
 
 [#JVT-config-table]
@@ -44,9 +46,13 @@ Architectural State::
 
 JVT adds architectural state to the context, therefore must be saved/restored on context switches. 
 
-Additional architectural state requires a state enable to be allocated. 
-Accesses when the state is disabled will throw an illegal instruction exception.
-The state enable is not specified in this document.
+State Enable::
+
+Bit 2 of the Smtateen CSRs are allocated to control access to JVT. If the Smstateen extension is implemented, the following text is valid:
+
+Bit 2 applies only for the case that Zcmt is implemented, which includes the JVT CSR and the _cm.jt_ and _cm.jalt_ instructions.
+If bit 2 of a controlling stateen0 CSR is zero, then the _cm.jt_ and _cm.jalt_ instructions both cause an illegal instruction trap 
+(or virtual instruction trap, if relevant). 
 
 include::Zcmt_footer.adoc[]
 
