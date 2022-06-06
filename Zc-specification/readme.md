@@ -1,6 +1,8 @@
-This is the proposed specification for all Zc extensions:
+This directory has the latest draft scpecification for the Zc extensions, without the PDF build.
 
-https://github.com/riscv/riscv-code-size-reduction/blob/master/Zc-specification/Zc.pdf
+To see the lastest built version go to:
+
+https://github.com/riscv/riscv-code-size-reduction/tags
 
 The benchmarking results for all Zc extensions are here:
 
