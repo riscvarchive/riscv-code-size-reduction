@@ -11,6 +11,11 @@ This is the the lastest spec:
 
 - [Zc-specification](https://github.com/riscv/riscv-code-size-reduction/tree/master/Zc-specification)
 
+GCC toolchains:
+
+- [Build from sources](https://github.com/riscv/riscv-code-size-reduction/tree/main/toolchain)
+- [Prebuilt](https://github.com/Liaoshihua/code-size-reduction-gnu-toolchain)
+
 For details of analysing the `Zc` code-size reduction extensions against your ELF file look here
 
 - [Analysis script](https://github.com/riscv/riscv-code-size-reduction/tree/master/benchmarks)
