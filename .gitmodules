@@ -1,3 +1,12 @@
 [submodule "Zc-specification/docs-resources"]
 	path = docs-resources
 	url = https://github.com/riscv/docs-resources.git
+[submodule "toolchain/gcc"]
+	path = toolchain/gcc
+	url = https://github.com/plctlab/corev-gcc.git
+[submodule "toolchain/binutils-gdb"]
+	path = toolchain/binutils-gdb
+	url = https://github.com/plctlab/corev-binutils-gdb.git
+[submodule "toolchain/newlib"]
+	path = toolchain/newlib
+	url = git://sourceware.org/git/newlib-cygwin.git
