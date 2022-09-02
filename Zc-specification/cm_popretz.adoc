@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_popretz,reftext="cm.popretz: Destroy stack frame: pop registers, deallocate stack frame, return zero."]
+[#insns-cm_popretz,reftext="Pop registers, deallocate stack frame, return zero."]
 === cm.popretz
 
 Synopsis::

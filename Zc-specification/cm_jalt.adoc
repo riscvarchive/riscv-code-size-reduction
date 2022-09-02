@@ -1,31 +1,23 @@
 <<<
-[#insns-cm_jalt,reftext="cm.jalt: jump via table and link to ra"]
+[#insns-cm_jalt,reftext="Jump via table with optional link"]
 === cm.jalt
 
 Synopsis::
-jump via table and link to ra
+jump via table with optional link
 
 Mnemonic::
-cm.jalt  _index_
+cm.jalt _index_
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
     { bits:  2, name: 0x2,      attr: ['C2'] },
-    { bits:  8, name: 'index' , attr: [] },
+    { bits:  8, name: 'index',  attr: [] },
     { bits:  3, name: 0x0,      attr: [] },
     { bits:  3, name: 0x5,      attr: ['FUNCT3'] },
 ],config:{bits:16}}
 ....
-
-[NOTE]
-
-  For this encoding to decode as _cm.jalt_, _index>=64_, otherwise it decodes as <<insns-cm_jt>>.
-
-[NOTE]
-
-  The equivalent encoding with bit[10]=1 is reserved to allow future expansion of the table index.
 
 Assembly Syntax::
 
@@ -36,7 +28,9 @@ cm.jalt index
 
 Description::
 
-_cm.jalt_ reads an entry from the jump vector table in memory and jumps to the address that was read, linking to _ra_.
+_cm.jalt_ reads an entry from the jump vector table in memory and jumps to the address that was read. If the LSB of the table entry is 0 then link to ra, otherwise don't link.
+
+_cm.jalt_ is reserved if executing from a mode with higher privilege than user mode where the current XLEN does not match UXLEN.
 
 For further information see <<insns-tablejump>>.
 
@@ -55,6 +49,11 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
+if (mode==M  && MXLEN !=UXLEN) reserved();
+if (mode==S  && SXLEN !=UXLEN) reserved();
+if (mode==HS && HSXLEN!=UXLEN) reserved();
+if (mode==VS && VSXLEN!=UXLEN) reserved();
+
 # target_address is temporary internal state, it doesn't represent a real register
 # InstMemory is byte indexed
 
@@ -66,12 +65,13 @@ switch(XLEN) {
 //fetch from the jump table
 target_address[XLEN-1:0] = InstMemory[table_address][XLEN-1:0];
 
-//jump to the target address
-jalr ra, target_address[XLEN-1:0]&~0x1;
+//jump to the target address, check the LSB to see whether to link
+if (target_address[0]==1'b0)
+  jalr target_address[XLEN-1:0]&~0x1;
+else
+  jr   target_address[XLEN-1:0]&~0x1;
 
 --
-
-
 
 include::Zcmt_footer.adoc[]
 

@@ -23,8 +23,8 @@ Common details for these instructions are in this section.
 PUSH, POP, POPRET are used to reduce the size of function prologues and epilogues.
 
 . The PUSH instruction
-** pushes (stores) the registers specified in the register list to the stack frame
 ** adjusts the stack pointer to create the stack frame
+** pushes (stores) the registers specified in the register list to the stack frame
 
 . The POP instruction
 ** pops (loads) the registers in the register list from the stack frame
@@ -125,22 +125,23 @@ calling the millicode _save/restore_ routines and so may also perform better.
 ==== Stack pointer adjustment handling
 
 The instructions all automatically adjust the stack pointer by enough to cover the memory required for the registers being saved or restored. 
-Additionally the _spimm_ field in the encoding allows the stack pointer to be adjusted by extra 16-byte blocks. There is only a small restricted
+Additionally the _spimm_ field in the encoding allows the stack pointer to be adjusted in additional increments of 16-bytes. There is only a small restricted
 range available in the encoding; if the range is insufficient then a separate _c.addi16sp_ can be used to increase the range.
 
 ==== Register list handling
 
-The instructions do not directly support _{ra, s0-s10}_ to reduce the amount of encoding space required. If this register list is required then _s11_ 
-should also be included. This costs a small amount of memory and performance, but saves code-size.
+There is no support for the _{ra, s0-s10}_ register list without also adding _s11_. Therefore the _{ra, s0-s11}_ register list must be used in this case.
 
 [#pushpop-idempotent-memory]
 === PUSH/POP Fault handling
 
 Correct execution requires that _sp_ refers to idempotent memory (also see <<pushpop_non-idem-mem>>), because the core must be able to 
-handle faults detected during the sequence. 
-The entire PUSH/POP sequence is re-executed after returning from the fault handler, and multiple faults are possible during the sequence.
+handle traps detected during the sequence. 
+The entire PUSH/POP sequence is re-executed after returning from the trap handler, and multiple traps are possible during the sequence.
 
-It is implementation defined whether interrupts can also be taken during the sequence execution.
+If a trap occurs during the sequence then _xEPC_ is updated with the PC of the instruction, _xTVAL_ (if not read-only-zero) updated with the bad address if it was an access fault and _xCAUSE_ updated with the type of trap.
+
+NOTE: It is implementation defined whether interrupts can also be taken during the sequence execution.
 
 [#pushpop-software-view]
 === Software view of execution
@@ -155,11 +156,9 @@ From a software perspective the PUSH sequence appears as:
 ** Any of the bytes may be written multiple times.
 * A stack pointer adjustment
 
-If an implementation allows interrupts during the sequence, and the interrupt handler uses _sp_ to allocate stack memory, then any stores which were executed before the interrupt may be overwritten by the handler. 
-This is safe because the memory is idempotent and the stores will be re-executed when execution resumes.
+NOTE: If an implementation allows interrupts during the sequence, and the interrupt handler uses _sp_ to allocate stack memory, then any stores which were executed before the interrupt may be overwritten by the handler. This is safe because the memory is idempotent and the stores will be re-executed when execution resumes.
 
-The stack pointer adjustment must only be committed only when it is certain that the entire PUSH instruction will complete 
-without triggering any precise faults (for example, page faults), and without the core taking an interrupt.
+The stack pointer adjustment must only be committed only when it is certain that the entire PUSH instruction will commit.
 
 Stores may also return imprecise faults from the bus. 
 It is platform defined whether the core implementation waits for the bus responses before continuing to the final stage of the sequence, 
@@ -207,12 +206,11 @@ From a software perspective the POP/POPRET sequence appears as:
 * An optional `li a0, 0`
 * An optional `ret`
 
-If an implementation allows interrupts during the sequence, then any loads which were executed before the interrupt may update architectural state. 
-The loads will be re-executed once the handler completes, so the values will be overwritten. 
-Therefore it is permitted for an implementation to update some of the destination registers before taking an interrupt or other fault.
+If a trap occurs during the sequence, then any loads which were executed before the trap may update architectural state. 
+The loads will be re-executed once the trap handler completes, so the values will be overwritten. 
+Therefore it is permitted for an implementation to update some of the destination registers before taking a fault.
 
-The optional `li a0, 0`, stack pointer adjustment and optional `ret` must only be committed only when it is certain that the entire POP/POPRET instruction will complete 
-without triggering any precise faults (for example, page faults), and without the core taking an interrupt.
+The optional `li a0, 0`, stack pointer adjustment and optional `ret` must only be committed only when it is certain that the entire POP/POPRET instruction will commit.
 
 For POPRET once the stack pointer adjustment has been committed the `ret` must execute.
 
@@ -244,10 +242,6 @@ addi sp, sp, 32
 ret
 --
 
-=== Forward progress guarantee
-
-The PUSH/POP sequence has the same forward progress guarantee as executing the instructions from the equivalent assembly sequences.
-
 [[pushpop_non-idem-mem]]
 === Non-idempotent memory handling
 
@@ -257,7 +251,7 @@ If the core implementation does not support PUSH/POP to non-idempotent memories,
 load (POP/POPRET) or store (PUSH) access fault exception in order to avoid unpredictable results.
 
 If the core implementation does support PUSH/POP to non-idempotent memory, then it may not be possible to re-execute the sequence after a fault. 
-In this case the fault handler should complete the sequence in software.
+In this case the fault handler should complete the sequence in software. In this case xTVAL must be written with the bad address to allow the handler to complete the sequence.
 
 <<<
 

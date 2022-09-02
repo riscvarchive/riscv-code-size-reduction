@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_push,reftext="cm.push: Create stack frame: push registers, allocate additional stack space."]
+[#insns-cm_push,reftext="Create stack frame: push registers, allocate additional stack space."]
 === cm.push
 
 Synopsis::

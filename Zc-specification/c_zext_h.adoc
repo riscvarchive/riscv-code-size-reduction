@@ -1,5 +1,5 @@
 <<<
-[#insns-c_zext_h,reftext="c.zext.h: Zero extend halfword, 16-bit encoding"]
+[#insns-c_zext_h,reftext="Zero extend halfword, 16-bit encoding"]
 === c.zext.h
 
 Synopsis::
@@ -30,7 +30,7 @@ the bits more significant than 15.
   _rsd'_ is from the standard 8-register set x8-x15.
 
 Prerequisites::
-Zbb must also be configured.
+Zbb is also required.
 
 32-bit equivalent::
 <<insns-zext_h>> from Zbb

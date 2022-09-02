@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_mva01s,reftext="cm.mva01s: move two s0-s7 registers into a0-a1"]
+[#insns-cm_mva01s,reftext="Move two s0-s7 registers into a0-a1"]
 === cm.mva01s
 
 Synopsis::
@@ -50,7 +50,7 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 if (RV32E && (sreg1>1 || sreg2>1)) {
-  take_illegal_instruction_exception();
+  reserved();
 }
 xreg1 = {sreg1[2:1]>0,sreg1[2:1]==0,sreg1[2:0]};
 xreg2 = {sreg2[2:1]>0,sreg2[2:1]==0,sreg2[2:0]};

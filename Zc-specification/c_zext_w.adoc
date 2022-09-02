@@ -1,5 +1,5 @@
 <<<
-[#insns-c_zext_w,reftext="c.zext.w: Zero extend word, 16-bit encoding"]
+[#insns-c_zext_w,reftext="Zero extend word, 16-bit encoding"]
 === c.zext.w
 
 Synopsis::
@@ -30,7 +30,7 @@ the bits more significant than 31.
   _rsd'_ is from the standard 8-register set x8-x15.
 
 Prerequisites::
-Zba must also be configured.
+Zba is also required.
  
 32-bit equivalent::
 [source,sail]

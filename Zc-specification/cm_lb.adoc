@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_lb,reftext="cm.lb: Load signed byte, 16-bit encoding"]
+[#insns-cm_lb,reftext="Load signed byte, 16-bit encoding"]
 === cm.lb
 
 Synopsis::

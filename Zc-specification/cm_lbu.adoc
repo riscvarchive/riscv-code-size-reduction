@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_lbu,reftext="cm.lbu: Load unsigned byte, 16-bit encoding"]
+[#insns-cm_lbu,reftext="Load unsigned byte, 16-bit encoding"]
 === cm.lbu
 
 Synopsis::

@@ -1,93 +1,48 @@
 <<<
 
-[#insns-tablejump,reftext="Table Jump Instructions"]
-== Table Jump Instructions
+[#insns-tablejump,reftext="Table Jump Overview"]
+== Table Jump Overview
 
-These instructions are collectively referred to as table jump: 
+<<#insns-cm_jalt>> is referred to as table jump.
 
-* <<#insns-cm_jt>> 
-* <<#insns-cm_jalt>> 
+Table jump uses a 256-entry UXLEN wide table in instruction memory to contain function addresses, 
+and a flag in bit zero of each entry indicating whether jumping to the function address should link or not.
+The table must be a minimum of 64-byte aligned.
 
-Common details for these instructions are in this section.
+_cm./jalt_ encodings index the table, giving access to functions within the full UXLEN wide address space.
 
-=== Table Jump Overview
+This is used as a form of dictionary compression used to reduce the code size of _jal_ / _auipc+jalr_ / _jr_ / _auipc+jr_ instructions.
 
-Table jump is a form of dictionary compression used to reduce the code size of _jal_ / _auipc+jalr_ / _jr_ / _auipc+jr_ instructions.
+Table jump allows the linker to replace the following instruction sequences with a _cm.jalt_ encoding, and an entry in the table:
 
-Function calls and jumps to fixed labels typically take 32-bit or 64-bit instruction sequences.
-
-Table jump allows the linker to:
-
-* replace 32-bit _j_ calls with _cm.jt_
-* replace 32-bit _jal_ ra calls with _cm.jalt_
-* replace 64-bit _auipc/jalr_ calls to fixed locations with _cm.jt_
-* replace 64-bit _auipc/jalr ra_ calls to fixed locations with _cm.jalt_
+* 32-bit _j_ calls 
+* 32-bit _jal_ ra calls 
+* 64-bit _auipc/jalr_ calls to fixed locations 
+* 64-bit _auipc/jalr ra_ calls to fixed locations 
 ** The _auipc+jr/jalr_ sequence is used because the offset from the PC is out of the ±1MB range.
 
 === JVT
 
-The base of the table is in the JVT CSR (see <<csrs-jvt>>), each table entry is XLEN bits.
+The base of the table is in the JVT CSR (see <<csrs-jvt>>), each table entry is UXLEN bits.
 
-The table entry number is from the _index_ field in the encoding, which controls the link register.
-
-* cm.jt   : entries 0-63,   link to _zero_
-* cm.jalt : entries 64-255, link to _ra_
-
-Note that the LSB of every jump vector table entry is _ignored_ which matches standard _jalr_ behaviour.
+Bit zero of every table entry indicates whether to update the link register.
 
 If the same function is called with and without linking then it must have two entries in the table. 
-This case does happen in practice but only affects a small number of entries so it does not waste much space in the table. 
-It is typically caused by the same function being called with and without tail calling.
+This is typically caused by the same function being called with and without tail calling.
 
-<<<
-[#tablejump-algorithm]
-=== Recommended algorithm for allocating entries in the jump vector table
-
-Calls to each function are categorised as shown in <<tablejump-savings>>.
-
-[#tablejump-savings]
-.Table jump code size saving for each function call replacement
-[width="100%",options=header]
-|=======================================================================================================================
-| original sequence   | Table Jump saving  
-| _j_                 | A*2-(XLEN/8) bytes 
-| _auipc+jr_          | B*6-(XLEN/8) bytes 
-| _jal ra_            | C*2-(XLEN/8) bytes 
-| _auipc+jalr ra_     | D*6-(XLEN/8) bytes 
-|=======================================================================================================================
-
-Each function is called by using one of the two link registers. The total saving per function is calculated by counting the number of calls and adding up the total saving from each replacement of the existing sequence with a Table Jump instruction, as follows:
-[source,sourceCode,text]
-----
-saving_per_function_cm_jt    = A * 2 + B * 6 - 2*(XLEN-8)
-saving_per_function_cm_jalt  = C * 2 + D * 6 - 2*(XLEN-8)
-----
-
-The functions are sorted so that the one with the highest saving is in table entry 0, the second highest in entry 1 etc. for that encoding.
-
-[NOTE]
-
-  This algorithm assumes that each function is only called with one link register. 
-  If the same function is called with more than one link register, then it must have two entries in the table.
-
-This allows the core to cache the most frequent targets by caching the lowest numbered entries of each section of the jump vector table. 
-Only caching a few entries will greatly improve the performance.
-
-<<<
 [#tablejump-fault-handling]
 === Table Jump Fault handling
 
 For a table jump instruction, the table entry that the instruction selects is considered an extension of the instruction itself.
-Hence, the execution of a table jump instruction involves two instruction fetches, the first to read the main instruction (_cm.jt_
-or _cm.jalt_) and the second to read from the jump vector table (JVT). Both instruction fetches are _implicit_ reads, and both require
-execute permission; read permission is irrelevant. The address of the second fetch is not considered to be a PC, and so cannot be used for PC based debugging, tracing etc.
+Hence, the execution of a table jump instruction involves two instruction fetches, the first to read the instruction (_cm.jalt_) 
+and the second to read from the jump vector table (JVT). Both instruction fetches are _implicit_ reads, and both require
+execute permission; read permission is irrelevant. It is recommended that the second fetch be ignored for hardware triggers and breakpoints.
 
 Memory writes to the jump vector table require an instruction barrier (_fence.i_) to guarantee that they are visible to the instruction fetch.
 
 Multiple contexts may have different jump vector tables. JVT may be switched between them without an instruction barrier 
 if the tables have not been updated in memory since the last _fence.i_.
 
-If an exception occurs on either instruction fetch, xEPC is set to the PC of the table jump instruction,  xCAUSE is set as expected for the type of fault and 
-xTVAL (if not set to zero) contains the address which caused the fault.
+If an exception occurs on either instruction fetch, xEPC is set to the PC of the table jump instruction,  xCAUSE is set as expected for the type of fault and xTVAL (if not set to zero) contains the fetch address which caused the fault.
 
 include::Zcmt_footer.adoc[]

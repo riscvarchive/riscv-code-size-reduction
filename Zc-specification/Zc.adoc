@@ -1,21 +1,24 @@
+:sectnums:
 [#Zc]
-== Zc* v0.70.5
+== Zc* v1.0.0-RC4
 
 === Change history since v0.70.1 (tagged release)
 
 .Change history
 [width="100%",options=header]
 |====================================================================================
-|Version | change
-|v0.70.5 | Resolve https://github.com/riscv/riscv-code-size-reduction/issues/163 - jvt.base is WARL and fewer bits than the max can be implemented
-|v0.70.4 | Clarified https://github.com/riscv/riscv-code-size-reduction/issues/159 - Need Zbb and Zba for RV64 and M/ZMmul to get _all_ of Zcb
-|        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/161
-|        | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/160 - Allocated Smstateen bit 2 and added the relevant text
-|v0.70.3 | Added rule that Zcf and Zcmt imply Zca (this text was missing, this is not a spec change: https://github.com/riscv/riscv-code-size-reduction/pull/151)
-|        | Added that Zcf is illegal for RV64, as it contains no instructions (clarification: https://github.com/riscv/riscv-code-size-reduction/issues/149)
-|        | Added push/pop examples in the push/pop section
-|v0.70.2 | Stylistic changes only, removing redundant text. 
-|        | Corrected field names on JVT CSR diagram, and fixed synopsis for cm.mvsa01
+|Version  | change
+|v1.0.0-RC4| Release candidate
+|         | Remove Zcmb as benefit is low. Remove cm.jalt, read LSB of jump table entry to determine whether to link
+|v0.70.5  | Resolve https://github.com/riscv/riscv-code-size-reduction/issues/163 - jvt.base is WARL and fewer bits than the max can be implemented
+|v0.70.4  | Clarified https://github.com/riscv/riscv-code-size-reduction/issues/159 - Need Zbb and Zba for RV64 and M/ZMmul to get _all_ of Zcb
+|         | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/161
+|         | Resolved https://github.com/riscv/riscv-code-size-reduction/issues/160 - Allocated Smstateen bit 2 and added the relevant text
+|v0.70.3  | Added rule that Zcf and Zcmt imply Zca (this text was missing, this is not a spec change: https://github.com/riscv/riscv-code-size-reduction/pull/151)
+|         | Added that Zcf is illegal for RV64, as it contains no instructions (clarification: https://github.com/riscv/riscv-code-size-reduction/issues/149)
+|         | Added push/pop examples in the push/pop section
+|v0.70.2  | Stylistic changes only, removing redundant text. 
+|         | Corrected field names on JVT CSR diagram, and fixed synopsis for cm.mvsa01
 |====================================================================================
 
 === Zc* Overview
@@ -23,73 +26,82 @@
 This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
 https://riscv.org/spec-state
 
-Zc* is a group of extensions which define subsets of the existing C extension (Zca, Zcf) and new extensions which only contain 16-bit encodings.
+Zc* is a group of extensions which define subsets of the existing C extension (Zca, Zcd, Zcf) and new extensions which only contain 16-bit encodings.
 
 Zcm* all reuse the encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 
 .Zc* extension overview
 [width="100%",options=header]
 |====================================================================================
-|Instruction    |Zca|Zcf|Zcb|Zcmb|Zcmp|Zcmpe|Zcmt
-8+|*Define a subset of C with the floating point load/stores removed*
-|C excl. c.f*   |&#10003;|   |   |    |    |     |     
-8+|*The single precision floating point load/stores become a separate extension*
-|c.flw          |   |&#10003;|   |    |    |     |     
-|c.flwsp        |   |&#10003;|   |    |    |     |     
-|c.fsw          |   |&#10003;|   |    |    |     |     
-|c.fswsp        |   |&#10003;|   |    |    |     |     
+|Instruction    |Zca     |Zcf     |Zcd     |Zcb     |Zcmp    |Zcmpe   |Zcmt
+8+|*The Zca extension is added as way to refer to instructions in the C extension that do not include the floating-point loads and stores*
+|C excl. c.f*   |&#10003;|        |        |        |        |        |         
+8+|*The Zcf extension is added as a way to refer to compressed single-precision floating-point load/stores*
+|c.flw          |        |&#10003;|        |        |        |        |       
+|c.flwsp        |        |&#10003;|        |        |        |        |       
+|c.fsw          |        |&#10003;|        |        |        |        |       
+|c.fswsp        |        |&#10003;|        |        |        |        |       
+8+|*The Zcd extension is added as a way to refer to compressed double-precision floating-point load/stores*
+|c.fld          |        |        |&#10003;|        |        |        |       
+|c.fldsp        |        |        |&#10003;|        |        |        |       
+|c.fsd          |        |        |&#10003;|        |        |        |       
+|c.fsdsp        |        |        |&#10003;|        |        |        |       
 8+|*Simple operations for use on all architectures*
-|c.lbu          |   |   |&#10003;|    |    |     |     
-|c.lh           |   |   |&#10003;|    |    |     |     
-|c.lhu          |   |   |&#10003;|    |    |     |     
-|c.sb           |   |   |&#10003;|    |    |     |     
-|c.sh           |   |   |&#10003;|    |    |     |     
-|c.zext.b       |   |   |&#10003;|    |    |     |     
-|c.sext.b       |   |   |&#10003;|    |    |     |     
-|c.zext.h       |   |   |&#10003;|    |    |     |     
-|c.sext.h       |   |   |&#10003;|    |    |     |     
-|c.zext.w       |   |   |&#10003;|    |    |     |     
-|c.mul          |   |   |&#10003;|    |    |     |     
-|c.not          |   |   |&#10003;|    |    |     |     
-8+|*Load/store byte/half which overlap with _c.fld_, _c.fldsp_, _c.fsd_*
-|cm.lb          |   |   |   |&#10003; |    |     |     
-|cm.lbu         |   |   |   |&#10003; |    |     |     
-|cm.lh          |   |   |   |&#10003; |    |     |     
-|cm.lhu         |   |   |   |&#10003; |    |     |     
-|cm.sb          |   |   |   |&#10003; |    |     |     
-|cm.sh          |   |   |   |&#10003; |    |     |     
+|c.lbu          |        |        |        |&#10003;|        |        |    
+|c.lh           |        |        |        |&#10003;|        |        |    
+|c.lhu          |        |        |        |&#10003;|        |        |    
+|c.sb           |        |        |        |&#10003;|        |        |    
+|c.sh           |        |        |        |&#10003;|        |        |    
+|c.zext.b       |        |        |        |&#10003;|        |        |    
+|c.sext.b       |        |        |        |&#10003;|        |        |    
+|c.zext.h       |        |        |        |&#10003;|        |        |    
+|c.sext.h       |        |        |        |&#10003;|        |        |    
+|c.zext.w       |        |        |        |&#10003;|        |        |    
+|c.mul          |        |        |        |&#10003;|        |        |    
+|c.not          |        |        |        |&#10003;|        |        |    
 8+|*PUSH/POP and double move which overlap with _c.fsdsp_*
-|cm.push        |   |   |   |    |&#10003; | &#10003; |     
-|cm.pop         |   |   |   |    |&#10003; | &#10003; |     
-|cm.popret      |   |   |   |    |&#10003; | &#10003; |     
-|cm.popretz     |   |   |   |    |&#10003; | &#10003; |     
-|cm.mva01s      |   |   |   |    |&#10003; |     |     
-|cm.mvsa01      |   |   |   |    |&#10003; |     |     
+|cm.push        |        |        |        |        |&#10003;|&#10003;|
+|cm.pop         |        |        |        |        |&#10003;|&#10003;|
+|cm.popret      |        |        |        |        |&#10003;|&#10003;|
+|cm.popretz     |        |        |        |        |&#10003;|&#10003;|
+|cm.mva01s      |        |        |        |        |&#10003;|        |
+|cm.mvsa01      |        |        |        |        |&#10003;|        |
 8+|*Reserved for EABI versions of PUSH/POP and double move which overlap with _c.fsdsp_*
-|cm.push.e      |   |   |   |    |    | &#10003; |     
-|cm.pop.e       |   |   |   |    |    | &#10003; |     
-|cm.popret.e    |   |   |   |    |    | &#10003; |     
-|cm.popretz.e   |   |   |   |    |    | &#10003; |     
-|cm.mva01s.e    |   |   |   |    |    | &#10003; |     
-|cm.mvsa01.e    |   |   |   |    |    | &#10003; |     
-8+|*Table jump*
-|cm.jt          |   |   |   |    |    |     |&#10003;  
-|cm.jalt        |   |   |   |    |    |     |&#10003;  
+|cm.push.e      |        |        |        |        |        |&#10003;| 
+|cm.pop.e       |        |        |        |        |        |&#10003;| 
+|cm.popret.e    |        |        |        |        |        |&#10003;| 
+|cm.popretz.e   |        |        |        |        |        |&#10003;| 
+|cm.mva01s.e    |        |        |        |        |        |&#10003;| 
+|cm.mvsa01.e    |        |        |        |        |        |&#10003;| 
+8+|*Table jump*              
+|cm.jalt        |        |        |        |        |                 |&#10003;
 |====================================================================================
 
 [#Zca]
 === Zca
 
-Zca is all of the existing C extension, _excluding_ all 16-bit floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_, _c.fld_, _c.fldsp_, _c.fsd_, _c.fsdsp_.
+The Zca extension is added as way to refer to instructions in the C extension that do not include the floating-point loads and stores.
+
+Therefore it _excluded_ all 16-bit floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_, _c.fld_, _c.fldsp_, _c.fsd_, _c.fsdsp_.
+
+NOTE: the the C extension only includes F/D instructions when D and F are also specified
 
 [#Zcf]
 === Zcf (RV32 only)
 
-Zcf is the existing set of single precision floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_.
+Zcf is the existing set of compressed single precision floating point loads and stores: _c.flw_, _c.flwsp_, _c.fsw_, _c.fswsp_.
 
 Zcf is only relevant to RV32, it cannot be specified for RV64.
 
 Zcf requires the <<Zca>> extension.
+
+[#Zcd]
+=== Zcd 
+
+Zcd is the existing set of compressed double precision floating point loads and stores: _c.fld_, _c.fldsp_, _c.fsd_, _c.fsdsp_.
+
+Zcd requires the <<Zca>> extension.
+
 
 <<<
 
@@ -179,64 +191,13 @@ The _c.mul_ encoding uses the CR register format along with other instructions s
 
 <<< 
 
-[#Zcmb]
-=== Zcmb
-
-This extension reuses some encodings from _c.fld_, _c.fldsp_, and _c.fsd_.  Therefore it is _incompatible_ with the full C-extension. 
-It is compatible with F, D with Zdinx.
-
-Zcmb requires the <<Zcb>> extension, which in turn requires the <<Zca>> extension.
-
-The instructions are all 16-bit versions of existing 32-bit load/store instructions.
-
-[%header,cols="^1,^1,4,8"]
-|===
-|RV32
-|RV64
-|Mnemonic
-|Instruction
-
-|&#10003;
-|&#10003;
-|cm.lbu _rd'_, uimm(_rs1'_)
-|<<#insns-cm_lbu>>
-
-|&#10003;
-|&#10003;
-|cm.lhu _rd'_, uimm(_rs1'_)
-|<<#insns-cm_lhu>>
-
-|&#10003;
-|&#10003;
-|cm.lb _rd'_, uimm(_rs1'_)
-|<<#insns-cm_lb>>
-
-|&#10003;
-|&#10003;
-|cm.lh _rd'_, uimm(_rs1'_)
-|<<#insns-cm_lh>>
-
-|&#10003;
-|&#10003;
-|cm.sb _rs2'_, uimm(_rs1'_)
-|<<#insns-cm_sb>>
-
-|&#10003;
-|&#10003;
-|cm.sh _rs2'_, uimm(_rs1'_)
-|<<#insns-cm_sh>>
-
-|===
-
-<<<
-
 [#Zcmp]
 === Zcmp
 
-Zcmp is the set of sequenced instuctions for code-size reduction.
+The Zcmp extension is a set of instuctions which may be executed as a series of existing 32-bit RISC-V instructions.
 
-This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
-It is compatible with F, D with Zdinx.
+This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
+ which is included when C and D extensions are both present. 
 
 Zcmp requires the <<Zca>> extension.
 
@@ -292,12 +253,12 @@ The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 [#Zcmpe]
 === Zcmpe
 
-This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
-It is compatible with F, D with Zdinx.
+The Zcmpe extension offers EABI support for register mappings from <<Zcmp>> where the _x_ register mapping is different to the UABI. 
+
+This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
+ which is included when C and D extensions are both present. 
 
 Zcmpe requires the <<Zca>> extension.
-
-Zcmpe offers EABI support for register mappings from <<Zcmp>> where the _x_ register mapping is different to the UABI. 
 
 [NOTE]
 
@@ -306,11 +267,11 @@ Zcmpe offers EABI support for register mappings from <<Zcmp>> where the _x_ regi
 [#Zcmt]
 === Zcmt
 
-This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with the full C-extension. 
-It is compatible with F, D with Zdinx.
-
-Zcmt is the set of table jump instuctions for code-size reduction, and also adds the JVT CSR. The JVT CSR requires a 
+Zcmt adds a table jump instuction and also adds the JVT CSR. The JVT CSR requires a 
 state enable if Smstateen is implemented. See <<csrs-jvt>> for details.
+
+This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
+ which is included when C and D extensions are both present. 
 
 Zcmt requires the <<Zca>> extension.
 
@@ -320,11 +281,6 @@ Zcmt requires the <<Zca>> extension.
 |RV64
 |Mnemonic
 |Instruction
-
-|&#10003;
-|&#10003;
-|cm.jt _index_
-|<<#insns-cm_jt>> 
 
 |&#10003;
 |&#10003;
@@ -347,13 +303,6 @@ include::c_zext_w.adoc[]
 include::c_not.adoc[]
 include::c_mul.adoc[]
 
-include::cm_lbu.adoc[]
-include::cm_lhu.adoc[]
-include::cm_lb.adoc[]
-include::cm_lh.adoc[]
-include::cm_sb.adoc[]
-include::cm_sh.adoc[]
-
 include::pushpop.adoc[]
 include::cm_push.adoc[]
 include::cm_pop.adoc[]
@@ -364,6 +313,5 @@ include::cm_mva01s.adoc[]
 
 include::tablejump.adoc[]
 include::jvt_csr.adoc[]
-include::cm_jt.adoc[]
 include::cm_jalt.adoc[]
 

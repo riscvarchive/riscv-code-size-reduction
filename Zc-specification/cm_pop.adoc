@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_pop,reftext="cm.pop: Destroy stack frame: pop registers, deallocate stack frame."]
+[#insns-cm_pop,reftext="Pop registers, deallocate stack frame."]
 === cm.pop
 
 Synopsis::

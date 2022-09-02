@@ -7,7 +7,7 @@ switch (rlist){
   case  4: {reg_list="ra";         xreg_list="x1";}
   case  5: {reg_list="ra, s0";     xreg_list="x1, x8";}
   case  6: {reg_list="ra, s0-s1";  xreg_list="x1, x8-x9";}
-  default: take_illegal_instruction_exception();
+  default: reserved();
 }
 stack_adj      = stack_adj_base + spimm[5:4] * 16;
 --
@@ -30,7 +30,7 @@ switch (rlist){
   case 14: {reg_list="ra, s0-s9";  xreg_list="x1, x8-x9, x18-x25";}
   //note - to include s10, s11 must also be included
   case 15: {reg_list="ra, s0-s11"; xreg_list="x1, x8-x9, x18-x27";}
-  default: take_illegal_instruction_exception();
+  default: reserved();
 }
 stack_adj      = stack_adj_base + spimm[5:4] * 16;
 --
