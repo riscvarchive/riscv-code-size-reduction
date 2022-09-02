@@ -9,7 +9,7 @@ Table jump uses a 256-entry UXLEN wide table in instruction memory to contain fu
 and a flag in bit zero of each entry indicating whether jumping to the function address should link or not.
 The table must be a minimum of 64-byte aligned.
 
-_cm./jalt_ encodings index the table, giving access to functions within the full UXLEN wide address space.
+_cm.jalt_ encodings index the table, giving access to functions within the full UXLEN wide address space.
 
 This is used as a form of dictionary compression used to reduce the code size of _jal_ / _auipc+jalr_ / _jr_ / _auipc+jr_ instructions.
 
@@ -17,8 +17,8 @@ Table jump allows the linker to replace the following instruction sequences with
 
 * 32-bit _j_ calls 
 * 32-bit _jal_ ra calls 
-* 64-bit _auipc/jalr_ calls to fixed locations 
-* 64-bit _auipc/jalr ra_ calls to fixed locations 
+* 64-bit _auipc+jr_ calls to fixed locations 
+* 64-bit _auipc+jalr ra_ calls to fixed locations 
 ** The _auipc+jr/jalr_ sequence is used because the offset from the PC is out of the ±1MB range.
 
 === JVT
