@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcf (<<Zcf>>)
-|v1.0.0-RC5
+|v1.0.0-RC5.1
 |Frozen
 |===

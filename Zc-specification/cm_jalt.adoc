@@ -23,6 +23,10 @@ Encoding (RV32, RV64)::
 
   For this encoding to decode as _cm.jalt_, _index>=64_, otherwise it decodes as _cm.jt_, see <<insns-cm_jt>>.
 
+[NOTE]
+
+  If JVT.mode = 0 (Jump Table Mode) then _cm.jalt_ behaves as specified here. If JVT.mode is a reserved value, then _cm.jalt_ is also reserved. In the future other defined values of JVT.mode may change the behaviour of _cm.jalt_.
+
 Assembly Syntax::
 
 [source,sail]

@@ -1,6 +1,6 @@
 :sectnums:
 [#Zc]
-== Zc* v1.0.0-RC5
+== Zc* v1.0.0-RC5-1
 
 === Change history since v0.70.1 (tagged release)
 
@@ -8,6 +8,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.0-RC5.1| Make cm.jt/cm.jalt only valid if JVT.mode=0, and allow different behaviour in the future if JVT.mode>0
 |v1.0.0-RC5| Revert to cm.jt and cm.jalt encodings, to avoid toolchain and trace problems
 |v1.0.0-RC4.1| Resolve typographical issues with the document only, no actual changes
 |v1.0.0-RC4| Release candidate
@@ -25,8 +26,7 @@
 
 === Zc* Overview
 
-This document is in the Stable state. Assume anything could still change, but limited change should be expected. For more information see:
-https://riscv.org/spec-state
+This document is in the Frozen state. Change is extremely unlikely. A high threshold will be used, and a change will only occur because of some truly critical issue being identified during the public review cycle. Any other desired or needed changes can be the subject of a follow-on new extension. See https://riscv.org/spec-state
 
 Zc* is a group of extensions which define subsets of the existing C extension (Zca, Zcd, Zcf) and new extensions which only contain 16-bit encodings.
 
