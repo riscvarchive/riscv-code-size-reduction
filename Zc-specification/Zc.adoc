@@ -1,6 +1,6 @@
 :sectnums:
 [#Zc]
-== Zc* v1.0.0-RC4.1
+== Zc* v1.0.0-RC5
 
 === Change history since v0.70.1 (tagged release)
 
@@ -8,6 +8,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.0-RC5| Revert to cm.jt and cm.jalt encodings, to avoid toolchain and trace problems
 |v1.0.0-RC4.1| Resolve typographical issues with the document only, no actual changes
 |v1.0.0-RC4| Release candidate
 |         | Remove Zcmb as benefit is low. Remove cm.jalt, read LSB of jump table entry to determine whether to link
@@ -75,6 +76,7 @@ Zcm* all reuse the encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 |cm.mva01s.e    |        |        |        |        |        |yes     | 
 |cm.mvsa01.e    |        |        |        |        |        |yes     | 
 8+|*Table jump*              
+|cm.jt          |        |        |        |        |        |        |yes     
 |cm.jalt        |        |        |        |        |        |        |yes     
 |====================================================================================
 
@@ -282,6 +284,11 @@ Zcmt requires the <<Zca>> extension.
 
 |yes     
 |yes     
+|cm.jt _index_
+|<<#insns-cm_jt>> 
+
+|yes     
+|yes     
 |cm.jalt _index_
 |<<#insns-cm_jalt>> 
 
@@ -311,5 +318,6 @@ include::cm_mva01s.adoc[]
 
 include::tablejump.adoc[]
 include::jvt_csr.adoc[]
+include::cm_jt.adoc[]
 include::cm_jalt.adoc[]
 

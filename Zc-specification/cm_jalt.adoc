@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_jalt,reftext="Jump via table with optional link"]
+[#insns-cm_jalt,reftext="Jump and link via table"]
 === cm.jalt
 
 Synopsis::
@@ -19,6 +19,10 @@ Encoding (RV32, RV64)::
 ],config:{bits:16}}
 ....
 
+[NOTE]
+
+  For this encoding to decode as _cm.jalt_, _index>=64_, otherwise it decodes as _cm.jt_, see <<insns-cm_jt>>.
+
 Assembly Syntax::
 
 [source,sail]
@@ -28,9 +32,7 @@ cm.jalt index
 
 Description::
 
-_cm.jalt_ reads an entry from the jump vector table in memory and jumps to the address that was read. If the LSB of the table entry is 0 then link to ra, otherwise don't link.
-
-_cm.jalt_ is reserved if executing from a mode with higher privilege than user mode where the current XLEN does not match UXLEN.
+_cm.jalt_ reads an entry from the jump vector table in memory and jumps to the address that was read, linking to _ra_.
 
 For further information see <<insns-tablejump>>.
 
@@ -49,11 +51,6 @@ Operation::
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
 
-if (mode==M  && MXLEN !=UXLEN) reserved();
-if (mode==S  && SXLEN !=UXLEN) reserved();
-if (mode==HS && HSXLEN!=UXLEN) reserved();
-if (mode==VS && VSXLEN!=UXLEN) reserved();
-
 # target_address is temporary internal state, it doesn't represent a real register
 # InstMemory is byte indexed
 
@@ -65,11 +62,7 @@ switch(XLEN) {
 //fetch from the jump table
 target_address[XLEN-1:0] = InstMemory[table_address][XLEN-1:0];
 
-//jump to the target address, check the LSB to see whether to link
-if (target_address[0]==1'b0)
-  jalr target_address[XLEN-1:0]&~0x1;
-else
-  jr   target_address[XLEN-1:0]&~0x1;
+jal ra, target_address[XLEN-1:0]&~0x1;
 
 --
 

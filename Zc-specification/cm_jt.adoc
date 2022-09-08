@@ -1,9 +1,9 @@
 <<<
-[#insns-cm_jt,reftext="Jump via table with optional link"]
+[#insns-cm_jt,reftext="Jump via table"]
 === cm.jt
 
 Synopsis::
-jump via table with optional link
+jump via table
 
 Mnemonic::
 cm.jt _index_
@@ -19,6 +19,10 @@ Encoding (RV32, RV64)::
 ],config:{bits:16}}
 ....
 
+[NOTE]
+
+  For this encoding to decode as _cm.jt_, _index<64_, otherwise it decodes as _cm.jalt_, see <<insns-cm_jalt>>.
+
 Assembly Syntax::
 
 [source,sail]
@@ -28,7 +32,7 @@ cm.jt index
 
 Description::
 
-_cm.jt_ reads an entry from the jump vector table in memory and jumps to the address that was read. If the LSB of the table entry is 1 then link to ra, otherwise don't link.
+_cm.jt_ reads an entry from the jump vector table in memory and jumps to the address that was read.
 
 For further information see <<insns-tablejump>>.
 
@@ -58,11 +62,7 @@ switch(XLEN) {
 //fetch from the jump table
 target_address[XLEN-1:0] = InstMemory[table_address][XLEN-1:0];
 
-//jump to the target address, check the LSB to see whether to link
-if (target_address[0]==1'b1)
-  jalr target_address[XLEN-1:0]&~0x1;
-else
-  jr   target_address[XLEN-1:0]&~0x1;
+j target_address[XLEN-1:0]&~0x1;
 
 --
 

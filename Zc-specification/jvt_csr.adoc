@@ -31,7 +31,7 @@ Format (RV64)::
 
 Description::
 
-The _JVT_ register is an UXLEN-bit *WARL* read/write register that holds the jump table configuration, consisting of the jump table base address (BASE) and the jump table mode (MODE).
+The _JVT_ register is an XLEN-bit *WARL* read/write register that holds the jump table configuration, consisting of the jump table base address (BASE) and the jump table mode (MODE).
 
 If <<Zcmt>> is implemented then _JVT_ must also be implemented, but can contain a read-only value. If _JVT_ is writable, the set of values the register may hold can vary by implementation. The value in the BASE field must always be aligned on a 64-byte boundary.
 
