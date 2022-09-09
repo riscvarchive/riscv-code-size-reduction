@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcmt (<<Zcmt>>)
-|v1.0.0-RC5.1
+|v1.0.0-RC5.2
 |Frozen
 |===

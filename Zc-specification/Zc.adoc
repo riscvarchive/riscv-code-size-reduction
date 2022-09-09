@@ -1,6 +1,6 @@
 :sectnums:
 [#Zc]
-== Zc* v1.0.0-RC5-1
+== Zc* v1.0.0-RC5-2
 
 === Change history since v0.70.1 (tagged release)
 
@@ -8,6 +8,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.0-RC5.2| Adjust the split so we have 240 cm.jalt and 16 cm.jt
 |v1.0.0-RC5.1| Make cm.jt/cm.jalt only valid if JVT.mode=0, and allow different behaviour in the future if JVT.mode>0
 |v1.0.0-RC5| Revert to cm.jt and cm.jalt encodings, to avoid toolchain and trace problems
 |v1.0.0-RC4.1| Resolve typographical issues with the document only, no actual changes
