@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcmp (<<Zcmp>>)
-|v1.0.0-RC5.2
-|Stable
+|{version-label}
+|{lifecycle-state}
 |===
