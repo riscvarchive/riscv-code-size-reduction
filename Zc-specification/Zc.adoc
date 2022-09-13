@@ -1,5 +1,5 @@
 :sectnums:
-:version-label: v1.0.0-RC5.3
+:version-label: v1.0.0-RC5.4
 :lifecycle-state: frozen
 
 [#Zc]
@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.0-RC5.4| Change wording for dependencies to match arch manual "Zxxx requires Zyyy" changed to "Zxxx depends on Zyyy"
 |v1.0.0-RC5.3| Add dependency on Zicsr for Zcmt
 |v1.0.0-RC5.2| Adjust the split so we have 240 cm.jalt and 16 cm.jt
 |v1.0.0-RC5.1| Make cm.jt/cm.jalt only valid if JVT.mode=0, and allow different behaviour in the future if JVT.mode>0
@@ -101,21 +102,21 @@ Zcf is the existing set of compressed single precision floating point loads and 
 
 Zcf is only relevant to RV32, it cannot be specified for RV64.
 
-Zcf requires the <<Zca>> extension.
+The Zcf extension depends on the <<Zca>> extension.
 
 [#Zcd]
 === Zcd 
 
 Zcd is the existing set of compressed double precision floating point loads and stores: _c.fld_, _c.fldsp_, _c.fsd_, _c.fsdsp_.
 
-Zcd requires the <<Zca>> extension.
+The Zcd extension depends on the <<Zca>> extension.
 
 [#Zcb]
 === Zcb
 
 All proposed encodings are currently reserved for all architectures, and have no conflicts with any existing extensions.
 
-Zcb requires the <<Zca>> extension.
+The Zcb extension depends on the <<Zca>> extension.
 
 As shown on the individual instruction pages, many of the instructions in Zcb depend upon another extension being implemented. For example, _c.mul_ is only implemented if M or Zmmul is implemented, and _c.sext.b_ is only implemented if Zbb is implemented.
 
@@ -204,7 +205,7 @@ The Zcmp extension is a set of instuctions which may be executed as a series of 
 This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
  which is included when C and D extensions are both present. 
 
-Zcmp requires the <<Zca>> extension.
+The Zcmp extension depends on the <<Zca>> extension.
 
 The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 
@@ -263,7 +264,7 @@ The Zcmpe extension offers EABI support for register mappings from <<Zcmp>> wher
 This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
  which is included when C and D extensions are both present. 
 
-Zcmpe requires the <<Zca>> extension.
+The Zcmpe extension depends on the <<Zca>> extension.
 
 [NOTE]
 
@@ -278,7 +279,7 @@ state enable if Smstateen is implemented. See <<csrs-jvt>> for details.
 This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
  which is included when C and D extensions are both present. 
 
-Zcmt requires the <<Zca>> and Zicsr extensions.
+The Zcmt extension depends on the <<Zca>> and Zicsr extensions.
 
 [%header,cols="^1,^1,4,8"]
 |===
