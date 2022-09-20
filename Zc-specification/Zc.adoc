@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.0-RC5.5| Following ARC review Adjust the split so we have 224 cm.jalt and 32 cm.jt
 |v1.0.0-RC5.4| Change wording for dependencies to match arch manual "Zxxx requires Zyyy" changed to "Zxxx depends on Zyyy"
 |v1.0.0-RC5.3| Add dependency on Zicsr for Zcmt
 |v1.0.0-RC5.2| Adjust the split so we have 240 cm.jalt and 16 cm.jt

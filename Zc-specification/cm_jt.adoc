@@ -21,7 +21,7 @@ Encoding (RV32, RV64)::
 
 [NOTE]
 
-  For this encoding to decode as _cm.jt_, _index<16_, otherwise it decodes as _cm.jalt_, see <<insns-cm_jalt>>.
+  For this encoding to decode as _cm.jt_, _index<32_, otherwise it decodes as _cm.jalt_, see <<insns-cm_jalt>>.
 
 [NOTE]
 
