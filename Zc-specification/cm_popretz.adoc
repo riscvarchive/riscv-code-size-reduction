@@ -46,5 +46,4 @@ include::cm_pop_popret_loads_pseudo_code.adoc[]
 include::cm_popretz_pseudo_code.adoc[]
 
 include::Zcmp_footer.adoc[]
-include::Zcmpe_footer.adoc[]
 

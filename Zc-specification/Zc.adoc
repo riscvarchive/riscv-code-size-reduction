@@ -1,5 +1,5 @@
 :sectnums:
-:version-label: v1.0.0-RC5.5
+:version-label: v1.0.0-RC5.6
 :lifecycle-state: frozen
 
 [#Zc]
@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.0-RC5.6| Remove Zcmpe which is _not_ frozen and is causing confusion
 |v1.0.0-RC5.5| Following ARC review Adjust the split so we have 224 cm.jalt and 32 cm.jt
 |v1.0.0-RC5.4| Change wording for dependencies to match arch manual "Zxxx requires Zyyy" changed to "Zxxx depends on Zyyy"
 |v1.0.0-RC5.3| Add dependency on Zicsr for Zcmt
@@ -40,51 +41,44 @@ Zc* is a group of extensions which define subsets of the existing C extension (Z
 Zcm* all reuse the encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 
 .Zc* extension overview
-[width="100%",options=header,cols="3,1,1,1,1,1,1,1"]
+[width="100%",options=header,cols="3,1,1,1,1,1,1"]
 |====================================================================================
-|Instruction    |Zca     |Zcf     |Zcd     |Zcb     |Zcmp    |Zcmpe   |Zcmt
-8+|*The Zca extension is added as way to refer to instructions in the C extension that do not include the floating-point loads and stores*
-|C excl. c.f*   |yes     |        |        |        |        |        |         
-8+|*The Zcf extension is added as a way to refer to compressed single-precision floating-point load/stores*
-|c.flw          |        |yes     |        |        |        |        |       
-|c.flwsp        |        |yes     |        |        |        |        |       
-|c.fsw          |        |yes     |        |        |        |        |       
-|c.fswsp        |        |yes     |        |        |        |        |       
-8+|*The Zcd extension is added as a way to refer to compressed double-precision floating-point load/stores*
-|c.fld          |        |        |yes     |        |        |        |       
-|c.fldsp        |        |        |yes     |        |        |        |       
-|c.fsd          |        |        |yes     |        |        |        |       
-|c.fsdsp        |        |        |yes     |        |        |        |       
-8+|*Simple operations for use on all architectures*
-|c.lbu          |        |        |        |yes     |        |        |    
-|c.lh           |        |        |        |yes     |        |        |    
-|c.lhu          |        |        |        |yes     |        |        |    
-|c.sb           |        |        |        |yes     |        |        |    
-|c.sh           |        |        |        |yes     |        |        |    
-|c.zext.b       |        |        |        |yes     |        |        |    
-|c.sext.b       |        |        |        |yes     |        |        |    
-|c.zext.h       |        |        |        |yes     |        |        |    
-|c.sext.h       |        |        |        |yes     |        |        |    
-|c.zext.w       |        |        |        |yes     |        |        |    
-|c.mul          |        |        |        |yes     |        |        |    
-|c.not          |        |        |        |yes     |        |        |    
-8+|*PUSH/POP and double move which overlap with _c.fsdsp_*
-|cm.push        |        |        |        |        |yes     |yes     |
-|cm.pop         |        |        |        |        |yes     |yes     |
-|cm.popret      |        |        |        |        |yes     |yes     |
-|cm.popretz     |        |        |        |        |yes     |yes     |
-|cm.mva01s      |        |        |        |        |yes     |        |
-|cm.mvsa01      |        |        |        |        |yes     |        |
-8+|*Reserved for EABI versions of PUSH/POP and double move which overlap with _c.fsdsp_*
-|cm.push.e      |        |        |        |        |        |yes     | 
-|cm.pop.e       |        |        |        |        |        |yes     | 
-|cm.popret.e    |        |        |        |        |        |yes     | 
-|cm.popretz.e   |        |        |        |        |        |yes     | 
-|cm.mva01s.e    |        |        |        |        |        |yes     | 
-|cm.mvsa01.e    |        |        |        |        |        |yes     | 
-8+|*Table jump*              
-|cm.jt          |        |        |        |        |        |        |yes     
-|cm.jalt        |        |        |        |        |        |        |yes     
+|Instruction    |Zca     |Zcf     |Zcd     |Zcb     |Zcmp    |Zcmt
+7+|*The Zca extension is added as way to refer to instructions in the C extension that do not include the floating-point loads and stores*
+|C excl. c.f*   |yes     |        |        |        |        |         
+7+|*The Zcf extension is added as a way to refer to compressed single-precision floating-point load/stores*
+|c.flw          |        |yes     |        |        |        |       
+|c.flwsp        |        |yes     |        |        |        |       
+|c.fsw          |        |yes     |        |        |        |       
+|c.fswsp        |        |yes     |        |        |        |       
+7+|*The Zcd extension is added as a way to refer to compressed double-precision floating-point load/stores*
+|c.fld          |        |        |yes     |        |        |       
+|c.fldsp        |        |        |yes     |        |        |       
+|c.fsd          |        |        |yes     |        |        |       
+|c.fsdsp        |        |        |yes     |        |        |       
+7+|*Simple operations for use on all architectures*
+|c.lbu          |        |        |        |yes     |        |    
+|c.lh           |        |        |        |yes     |        |    
+|c.lhu          |        |        |        |yes     |        |    
+|c.sb           |        |        |        |yes     |        |    
+|c.sh           |        |        |        |yes     |        |    
+|c.zext.b       |        |        |        |yes     |        |    
+|c.sext.b       |        |        |        |yes     |        |    
+|c.zext.h       |        |        |        |yes     |        |    
+|c.sext.h       |        |        |        |yes     |        |    
+|c.zext.w       |        |        |        |yes     |        |    
+|c.mul          |        |        |        |yes     |        |    
+|c.not          |        |        |        |yes     |        |    
+7+|*PUSH/POP and double move which overlap with _c.fsdsp_*
+|cm.push        |        |        |        |        |yes     |
+|cm.pop         |        |        |        |        |yes     |
+|cm.popret      |        |        |        |        |yes     |
+|cm.popretz     |        |        |        |        |yes     |
+|cm.mva01s      |        |        |        |        |yes     |
+|cm.mvsa01      |        |        |        |        |yes     |
+7+|*Table jump*              
+|cm.jt          |        |        |        |        |        |yes     
+|cm.jalt        |        |        |        |        |        |yes     
 |====================================================================================
 
 [#Zca]
@@ -256,20 +250,6 @@ The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 |===
 
 <<<
-
-[#Zcmpe]
-=== Zcmpe
-
-The Zcmpe extension offers EABI support for register mappings from <<Zcmp>> where the _x_ register mapping is different to the UABI. 
-
-This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
- which is included when C and D extensions are both present. 
-
-The Zcmpe extension depends on the <<Zca>> extension.
-
-[NOTE]
-
-  The EABI specification is not frozen so these instructions cannot yet be accurately specified.
 
 [#Zcmt]
 === Zcmt

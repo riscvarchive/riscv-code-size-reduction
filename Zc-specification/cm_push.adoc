@@ -46,4 +46,3 @@ include::cm_push_stores_pseudo_code.adoc[]
 include::cm_push_pseudo_code.adoc[]
 
 include::Zcmp_footer.adoc[]
-include::Zcmpe_footer.adoc[]
