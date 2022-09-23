@@ -270,8 +270,8 @@ expands to:
 --
 sw  s2,  -4(sp);
 sw  s1,  -8(sp);
-sw  s0, -16(sp);
-sw  ra, -20(sp);
+sw  s0, -12(sp);
+sw  ra, -16(sp);
 addi sp, sp, -64;
 --
 
