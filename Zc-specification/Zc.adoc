@@ -197,7 +197,7 @@ The _c.mul_ encoding uses the CR register format along with other instructions s
 [#Zcmp]
 === Zcmp
 
-The Zcmp extension is a set of instuctions which may be executed as a series of existing 32-bit RISC-V instructions.
+The Zcmp extension is a set of instructions which may be executed as a series of existing 32-bit RISC-V instructions.
 
 This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
  which is included when C and D extensions are both present. 
@@ -256,7 +256,7 @@ The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 [#Zcmt]
 === Zcmt
 
-Zcmt adds the table jump instuctions and also adds the JVT CSR. The JVT CSR requires a 
+Zcmt adds the table jump instructions and also adds the JVT CSR. The JVT CSR requires a 
 state enable if Smstateen is implemented. See <<csrs-jvt>> for details.
 
 This extension reuses some encodings from _c.fsdsp_.  Therefore it is _incompatible_ with <<Zcd>>,
