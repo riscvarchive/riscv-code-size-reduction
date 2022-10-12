@@ -1,5 +1,5 @@
 :sectnums:
-:version-label: v1.0.0-RC5.6.1
+:version-label: v1.0.0-RC5.7
 :lifecycle-state: frozen
 
 [#Zc]
@@ -11,7 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
-|v1.0.0-RC5.6.1| Add Zcb description and fix some typos. PUBLIC REVIEW REVISION.
+|v1.0.0-RC5.7| Add Zcb description and fix some typos. PUBLIC REVIEW REVISION.
 |v1.0.0-RC5.6| Remove Zcmpe which is _not_ frozen and is causing confusion
 |v1.0.0-RC5.5| Following ARC review Adjust the split so we have 224 cm.jalt and 32 cm.jt
 |v1.0.0-RC5.4| Change wording for dependencies to match arch manual "Zxxx requires Zyyy" changed to "Zxxx depends on Zyyy"
