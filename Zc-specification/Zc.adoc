@@ -109,6 +109,8 @@ The Zcd extension depends on the <<Zca>> extension.
 [#Zcb]
 === Zcb
 
+Zcb has simple code-size saving instructions which are easy to implement on all CPUs.
+
 All proposed encodings are currently reserved for all architectures, and have no conflicts with any existing extensions.
 
 The Zcb extension depends on the <<Zca>> extension.
