@@ -1,6 +1,6 @@
-This directory has the latest draft scpecification for the Zc extensions, without the PDF build.
+This directory has the latest draft specification for the Zc extensions, without the PDF build.
 
-To see the lastest built version go to:
+To see the latest built version go to:
 
 https://github.com/riscv/riscv-code-size-reduction/tags
 
