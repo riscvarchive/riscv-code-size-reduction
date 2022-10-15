@@ -1,4 +1,4 @@
-This directory has the latest draft scpecification for the Zc extensions, without the PDF build.
+This directory has the latest draft specification for the Zc extensions, without the PDF build.
 
 To see the lastest built version go to:
 
