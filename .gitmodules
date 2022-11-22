@@ -3,10 +3,10 @@
 	url = https://github.com/riscv/docs-resources.git
 [submodule "toolchain/gcc"]
 	path = toolchain/gcc
-	url = https://github.com/plctlab/corev-gcc.git
+	url = https://github.com/openhwgroup/corev-gcc.git
 [submodule "toolchain/binutils-gdb"]
 	path = toolchain/binutils-gdb
-	url = https://github.com/plctlab/corev-binutils-gdb.git
+	url = https://github.com/openhwgroup/corev-binutils-gdb.git
 [submodule "toolchain/newlib"]
 	path = toolchain/newlib
 	url = git://sourceware.org/git/newlib-cygwin.git
