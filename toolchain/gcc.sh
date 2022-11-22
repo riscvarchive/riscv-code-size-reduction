@@ -104,7 +104,7 @@ cd ${BUILDPREFIX}/gcc-stage1
     --disable-nls                                       \
     --disable-bootstrap                                 \
     --enable-multilib                                   \
-    --with-multilib-generator="rv32ima-ilp32--zca*zcb*zcmt*zcmb*zcmp " \
+    --with-multilib-generator="rv32ima_zca_zcb_zcmt_zcmb_zcmp-ilp32--;rv32ima_zca_zcb-ilp32--;rv32ima_zca_zcmt-ilp32--;rv32ima_zca_zcmb-ilp32--;rv32ima_zca_zcmp-ilp32--" \
     --with-arch=${DEFAULTARCH}                          \
     --with-abi=${DEFAULTABI}                            \
     ${EXTRA_OPTS}                                       \
@@ -196,7 +196,7 @@ cd ${BUILDPREFIX}/gcc-stage2
     --disable-libgomp                                   \
     --disable-nls                                       \
     --enable-multilib                                   \
-    --with-multilib-generator="rv32ima-ilp32--zca*zcb*zcmt*zcmb*zcmp" \
+    --with-multilib-generator="rv32ima_zca_zcb_zcmt_zcmb_zcmp-ilp32--;rv32ima_zca_zcb-ilp32--;rv32ima_zca_zcmt-ilp32--;rv32ima_zca_zcmb-ilp32--;rv32ima_zca_zcmp-ilp32--" \
     --with-arch=${DEFAULTARCH}                          \
     --with-abi=${DEFAULTABI}                            \
     ${EXTRA_OPTS}                                       \
