@@ -284,6 +284,27 @@ The Zcmt extension depends on the <<Zca>> and Zicsr extensions.
 
 |===
 
+[#Zc_formats]
+=== Zc instruction formats
+
+[%header,cols="2,3,2,1,1,1,1,1,1,1,1,1,1"]
+|=====================================================================
+| Format | instructions       | 15 10  | 9  | 8 | 7   | 6 | 5 | 4   | 3 | 2  | 1 | 0
+| CLBU   | c.lbu              | funct6 3+| rs1'    3+| uimm    2+| rd'    2+| op
+| CSB    | c.sb               | funct6 3+| rs1'    3+| uimm    2+| rs2'   2+| op
+| CLH    | c.lhu, c.lh        | funct6 3+| rd'/rs1'| f1 2+| uimm 2+| rd'  2+| op
+| CSH    | c.sh               | funct6 3+| rd'/rs1'| f1 2+| uimm 2+| rs2' 2+| op
+| CSZN   | c.[sz]ext.*, c.not | funct6 3+| rd'/rs1' 5+| funct5            2+| op
+| CMVSA  | cm.mvsa01 cm.mva01s| funct6 3+| r1s     2+| funct2 3+| r2s     2+| op
+| CMJT   | cm.jt cm.jalt      | funct6 8+| index                          2+| op
+| CMPP   | cm.push*, cm.pop*  | funct6 2+| funct2 4+| urlist   2+| spimm  2+| op
+|=====================================================================
+
+NOTE: c.mul uses the existing CA format
+
+[#Zcb_instructions]
+== Zcb instructions
+
 include::c_lbu.adoc[]
 include::c_lhu.adoc[]
 include::c_lh.adoc[]
