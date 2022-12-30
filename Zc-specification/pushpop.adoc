@@ -31,7 +31,7 @@ PUSH, POP, POPRET are used to reduce the size of function prologues and epilogue
 ** adjusts the stack pointer to destroy the stack frame
 
 . The POPRET instructions
-** pop (load) the registers in the register list from the stack from
+** pop (load) the registers in the register list from the stack frame
 ** _cm.popretz_ also moves zero into _a0_ as the return value
 ** adjust the stack pointer  to destroy the stack frame
 ** execute a _ret_ instruction to return from the function
