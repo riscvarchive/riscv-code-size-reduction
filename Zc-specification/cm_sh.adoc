@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_sh,reftext="cm.sh: Store halfword, 16-bit encoding"]
+[#insns-cm_sh,reftext="Store halfword, 16-bit encoding"]
 === cm.sh
 
 Synopsis::

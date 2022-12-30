@@ -1,5 +1,5 @@
 <<<
-[#insns-c_sext_h,reftext="c.sext.h: Sign extend halfword, 16-bit encoding"]
+[#insns-c_sext_h,reftext="Sign extend halfword, 16-bit encoding"]
 === c.sext.h
 
 Synopsis::
@@ -30,7 +30,7 @@ in the halfword (i.e., bit 15) to all of the more-significant bits.
   _rsd'_ is from the standard 8-register set x8-x15.
 
 Prerequisites::
-Zbb must also be configured.
+Zbb is also required.
 
 32-bit equivalent::
 <<insns-sext_h>> from Zbb

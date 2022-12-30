@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_lhu,reftext="cm.lhu: Load unsigned halfword, 16-bit encoding"]
+[#insns-cm_lhu,reftext="Load unsigned halfword, 16-bit encoding"]
 === cm.lhu
 
 Synopsis::

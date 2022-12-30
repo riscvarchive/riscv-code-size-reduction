@@ -1,5 +1,5 @@
 <<<
-[#insns-c_mul,reftext="c.mul: Multiply, 16-bit encoding"]
+[#insns-c_mul,reftext="Multiply, 16-bit encoding"]
 === c.mul
 
 Synopsis::

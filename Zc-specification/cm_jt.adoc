@@ -1,9 +1,9 @@
 <<<
-[#insns-cm_jt,reftext="cm.jt: jump via table without link"]
+[#insns-cm_jt,reftext="Jump via table"]
 === cm.jt
 
 Synopsis::
-jump via table without link
+jump via table
 
 Mnemonic::
 cm.jt _index_
@@ -13,11 +13,19 @@ Encoding (RV32, RV64)::
 ....
 {reg:[
     { bits:  2, name: 0x2,      attr: ['C2'] },
-    { bits:  6, name: 'index',  attr: [] },
-    { bits:  5, name: 0x0,      attr: [] },
+    { bits:  8, name: 'index',  attr: [] },
+    { bits:  3, name: 0x0,      attr: [] },
     { bits:  3, name: 0x5,      attr: ['FUNCT3'] },
 ],config:{bits:16}}
 ....
+
+[NOTE]
+
+  For this encoding to decode as _cm.jt_, _index<32_, otherwise it decodes as _cm.jalt_, see <<insns-cm_jalt>>.
+
+[NOTE]
+
+  If JVT.mode = 0 (Jump Table Mode) then _cm.jt_ behaves as specified here. If JVT.mode is a reserved value, then _cm.jt_ is also reserved. In the future other defined values of JVT.mode may change the behaviour of _cm.jt_.
 
 Assembly Syntax::
 
@@ -28,7 +36,7 @@ cm.jt index
 
 Description::
 
-_cm.jt_ reads an entry from the jump vector table in memory and jumps to the address that was read, without linking.
+_cm.jt_ reads an entry from the jump vector table in memory and jumps to the address that was read.
 
 For further information see <<insns-tablejump>>.
 
@@ -58,8 +66,7 @@ switch(XLEN) {
 //fetch from the jump table
 target_address[XLEN-1:0] = InstMemory[table_address][XLEN-1:0];
 
-//jump to the target address
-jr target_address[XLEN-1:0]&~0x1;
+j target_address[XLEN-1:0]&~0x1;
 
 --
 

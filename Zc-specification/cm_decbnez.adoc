@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_decbnez,reftext="cm.decbnez: Decrement and branch, 16-bit encoding"]
+[#insns-cm_decbnez,reftext="Decrement and branch, 16-bit encoding"]
 === cm.decbnez: This is in the _development_ phase, for benchmarking and prototyping only
 
 Synopsis::

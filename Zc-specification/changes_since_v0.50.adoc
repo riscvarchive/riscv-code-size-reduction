@@ -90,7 +90,7 @@ Note that the .E extension versions for the EABI will be specified in the future
 | C.PUSH     | CM.PUSH    | Y                 | Y                  | areg_list no longer supported
 | C.POP      | CM.POP     | Y                 | Y                  | 
 | C.POPRET   | CM.POPRET  | Y                 | Y                  | CM.POPRET doesn't return a value
-| C.POPRET   | CM.POPRETZ | Y                 | Y                  | seperate encoding for return zero
+| C.POPRET   | CM.POPRETZ | Y                 | Y                  | separate encoding for return zero
 |====================================================================================
 
 = Instructions in v0.50 but *not* in v0.70

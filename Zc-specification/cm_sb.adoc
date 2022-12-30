@@ -1,5 +1,5 @@
 <<<
-[#insns-cm_sb,reftext="cm.sb: Store byte, 16-bit encoding"]
+[#insns-cm_sb,reftext="Store byte, 16-bit encoding"]
 === cm.sb
 
 Synopsis::

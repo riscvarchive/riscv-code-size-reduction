@@ -7,6 +7,6 @@ Included in::
 |Lifecycle state
 
 |Zcb (<<Zcb>>)
-|v0.70.5
-|Stable
+|{version-label}
+|{lifecycle-state}
 |===

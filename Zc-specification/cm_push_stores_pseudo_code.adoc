@@ -1,6 +1,4 @@
 
-<<<
-
 Operation::
 
 The first section of pseudo-code may be executed multiple times before the instruction successfully completes.

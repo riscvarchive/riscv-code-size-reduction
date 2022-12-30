@@ -8,5 +8,5 @@ Included in::
 
 |Zcmb (<<Zcmb>>)
 |v0.70.5
-|Stable
+|{lifecycle-state}
 |===
