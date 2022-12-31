@@ -118,7 +118,7 @@ The Zcb extension depends on the <<Zca>> extension.
 
 As shown on the individual instruction pages, many of the instructions in Zcb depend upon another extension being implemented. For example, _c.mul_ is only implemented if M or Zmmul is implemented, and _c.sext.b_ is only implemented if Zbb is implemented.
 
-The _c.mul_ encoding uses the CR register format along with other instructions such as _c.sub_, _c.xor_ etc. 
+The _c.mul_ encoding uses the CA register format along with other instructions such as _c.sub_, _c.xor_ etc. 
 
 [NOTE]
 
