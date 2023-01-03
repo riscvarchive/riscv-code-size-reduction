@@ -14,7 +14,7 @@ This is the the lastest spec:
 GCC toolchains:
 
 - [Build from sources](https://github.com/riscv/riscv-code-size-reduction/tree/main/toolchain)
-- [Prebuilt](https://github.com/Liaoshihua/code-size-reduction-gnu-toolchain)
+- [Prebuilt](https://www.embecosm.com/resources/tool-chain-downloads/#corev)
 
 For details of analysing the `Zc` code-size reduction extensions against your ELF file look here
 
