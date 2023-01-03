@@ -19,7 +19,8 @@ on:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-20.04
+    # runs-on: ubuntu-latest
 
     env:
       APT_PACKAGES_FILE: ${{ github.workspace }}/dependencies/apt_packages.txt
