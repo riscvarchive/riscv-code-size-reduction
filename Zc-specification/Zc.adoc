@@ -295,7 +295,7 @@ The Zcmt extension depends on the <<Zca>> and Zicsr extensions.
 | CLH    | c.lhu, c.lh        | funct6 3+| rs1'    | funct1 | uimm 3+| rd'  2+| op
 | CSH    | c.sh               | funct6 3+| rs1'    | funct1 | uimm 3+| rs2' 2+| op
 | CSZN   | c.[sz]ext.*, c.not | funct6 3+| rd'/rs1' 5+| funct5            2+| op
-| CMVSA  | cm.mvsa01 cm.mva01s| funct6 3+| r1s'     2+| funct2 3+| r2s'   2+| op
+| CMMV   | cm.mvsa01 cm.mva01s| funct6 3+| r1s'     2+| funct2 3+| r2s'   2+| op
 | CMJT   | cm.jt cm.jalt      | funct6 8+| index                          2+| op
 | CMPP   | cm.push*, cm.pop*  | funct6 2+| funct2 4+| urlist   2+| spimm  2+| op
 |=====================================================================
