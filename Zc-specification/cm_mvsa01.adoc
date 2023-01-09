@@ -6,34 +6,34 @@ Synopsis::
 Move a0-a1 into two registers of s0-s7
 
 Mnemonic::
-cm.mvsa01 _sreg1_, _sreg2_
+cm.mvsa01 _r1s'_, _r2s'_
 
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
 {reg:[
     { bits:  2, name: 0x2,      attr: ['C2'] },
-    { bits:  3, name: 'sreg2',  attr: [] },
+    { bits:  3, name: 'r2s\'',  attr: [] },
     { bits:  2, name: 0x1,      attr: [] },
-    { bits:  3, name: 'sreg1',  attr: [] },
+    { bits:  3, name: 'r1s\'',  attr: [] },
     { bits:  3, name: 0x3,      attr: [] },
     { bits:  3, name: 0x5,      attr: ['FUNCT3'] },
 ],config:{bits:16}}
 ....
 
 [NOTE]
-  For the encoding to be legal _sreg1_ != _sreg2_.
+  For the encoding to be legal _r1s'_ != _r2s'_.
 
 Assembly Syntax::
 
 [source,sail]
 --
-cm.mvsa01 sreg1, sreg2
+cm.mvsa01 r1s', r2s'
 --
 
 Description::
-This instruction moves _a0_ into _sreg1_ and _a1_ into _sreg2_.  _sreg1_ and _sreg2_ must be different.
-The execution is atomic, so it is not possible to observe state where only one of _sreg1_ or _sreg2_ has been updated.
+This instruction moves _a0_ into _r1s'_ and _a1_ into _r2s'_.  _r1s'_ and _r2s'_ must be different.
+The execution is atomic, so it is not possible to observe state where only one of _r1s'_ or _r2s'_ has been updated.
 
 The encoding uses _sreg_ number specifiers instead of _xreg_ number specifiers to save encoding space. 
 The mapping between them is specified in the pseudo-code below.
@@ -52,11 +52,11 @@ Operation::
 [source,sail]
 --
 //This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
-if (RV32E && (sreg1>1 || sreg2>1)) {
+if (RV32E && (r1sc>1 || r2sc>1)) {
   reserved();
 }
-xreg1 = {sreg1[2:1]>0,sreg1[2:1]==0,sreg1[2:0]};
-xreg2 = {sreg2[2:1]>0,sreg2[2:1]==0,sreg2[2:0]};
+xreg1 = {r1sc[2:1]>0,r1sc[2:1]==0,r1sc[2:0]};
+xreg2 = {r2sc[2:1]>0,r2sc[2:1]==0,r2sc[2:0]};
 X[xreg1] = X[10];
 X[xreg2] = X[11];
 --
