@@ -1,5 +1,5 @@
 :sectnums:
-:version-label: v1.0.0-RC5.7
+:version-label: v1.0.1
 :lifecycle-state: frozen
 
 [#Zc]
@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.1      | Post public review fixes: Add instruction formats (issue 192). Clarify that Zcmt/Zcmp are for embedded CPUs (issue 190). Fix some typos.
 |v1.0.0-RC5.7| Add Zcb description and fix some typos. PUBLIC REVIEW REVISION.
 |v1.0.0-RC5.6| Remove Zcmpe which is _not_ frozen and is causing confusion
 |v1.0.0-RC5.5| Following ARC review Adjust the split so we have 224 cm.jalt and 32 cm.jt
@@ -246,12 +247,12 @@ The PUSH/POP assembly syntax uses several variables, the meaning of which are:
 
 |yes     
 |yes     
-|cm.mva01s _sreg1, sreg2_
+|cm.mva01s _rs1', rs2'_
 |<<#insns-cm_mva01s>> 
 
 |yes     
 |yes     
-|cm.mvsa01 _sreg1, sreg2_
+|cm.mvsa01 _r1s', r2s'_
 |<<#insns-cm_mvsa01>> 
 
 |===
