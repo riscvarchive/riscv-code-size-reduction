@@ -8,9 +8,9 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 
 # Variables used in this script
-INSTALLPREFIX=${PWD}/install
-BUILDPREFIX=${PWD}/build
-SRCPREFIX=${PWD}
+INSTALLPREFIX=${INSTALLPREFIX:-${PWD}/install}
+BUILDPREFIX=${BUILDPREFIX:-${PWD}/build}
+SRCPREFIX=${SRCPREFIX:-${PWD}}
 DEFAULTARCH=rv32imac
 DEFAULTABI=ilp32
 
