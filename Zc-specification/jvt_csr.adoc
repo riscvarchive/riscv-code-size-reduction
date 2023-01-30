@@ -16,7 +16,7 @@ Format (RV32)::
 ....
 {reg:[
     { bits:  6, name: 'mode',  attr: ['6'] },
-    { bits: 26, name: 'base[XLEN-1:6] (WARL)}',  attr: ['XLEN-6'] },
+    { bits: 26, name: 'base[XLEN-1:6] (WARL)',  attr: ['XLEN-6'] },
 ],config:{bits:32}}
 ....
 
