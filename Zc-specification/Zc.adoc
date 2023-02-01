@@ -1,5 +1,5 @@
 :sectnums:
-:version-label: v1.0.1
+:version-label: v1.0.2
 :lifecycle-state: frozen
 
 [#Zc]
@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.2      | Fix Architecture Review Committee feedback on instruction formats
 |v1.0.1      | Post public review fixes: Add instruction formats (issue 192). Clarify that Zcmt/Zcmp are for embedded CPUs (issue 190). Fix some typos.
 |v1.0.0-RC5.7| Add Zcb description and fix some typos. PUBLIC REVIEW REVISION.
 |v1.0.0-RC5.6| Remove Zcmpe which is _not_ frozen and is causing confusion
@@ -294,6 +295,8 @@ The Zcmt extension depends on the <<Zca>> and Zicsr extensions.
 [#Zc_formats]
 === Zc instruction formats
 
+Several instructions in this specification use the following new instruction formats.
+
 [%header,cols="2,3,2,1,1,1,1,1,1,1,1,1,1"]
 |=====================================================================
 | Format | instructions       | 15:10  | 9  | 8 | 7   | 6 | 5 | 4   | 3 | 2  | 1 | 0
@@ -301,7 +304,7 @@ The Zcmt extension depends on the <<Zca>> and Zicsr extensions.
 | CSB    | c.sb               | funct6 3+| rs1'    2+| uimm    3+| rs2'   2+| op
 | CLH    | c.lhu, c.lh        | funct6 3+| rs1'    | funct1 | uimm 3+| rd'  2+| op
 | CSH    | c.sh               | funct6 3+| rs1'    | funct1 | uimm 3+| rs2' 2+| op
-| CSZN   | c.[sz]ext.*, c.not | funct6 3+| rd'/rs1' 5+| funct5            2+| op
+| CU     | c.[sz]ext.*, c.not | funct6 3+| rd'/rs1' 5+| funct5            2+| op
 | CMMV   | cm.mvsa01 cm.mva01s| funct6 3+| r1s'     2+| funct2 3+| r2s'   2+| op
 | CMJT   | cm.jt cm.jalt      | funct6 8+| index                          2+| op
 | CMPP   | cm.push*, cm.pop*  | funct6 2+| funct2 4+| urlist   2+| spimm  2+| op
