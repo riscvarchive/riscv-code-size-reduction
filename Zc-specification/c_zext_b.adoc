@@ -35,7 +35,7 @@ None
 32-bit equivalent::
 [source,sail]
 --
-andi rsd, rsd, 0xff
+andi rd'/rs1', rd'/rs1', 0xff
 --
 
 [NOTE]
