@@ -13,7 +13,17 @@ This repository uses submodules for Newlib, GCC and Binutils.
 
 There is a script provided which will build all of the required elements for the toolchain, along with standard libraries
 
-    $ sh gcc.sh
+    $ ./gcc.sh
+
+This script uses the following default paths:
+
+* `INSTALLPREFIX`: prefix/
+* `BUILDPREFIX`: build/
+* `SRCPREFIX`: .
+
+These paths can be overridden as follows:
+
+    $ INSTALLPREFIX=/usr/local ./gcc.sh
 
 ## Install
 
