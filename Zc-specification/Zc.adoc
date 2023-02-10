@@ -1,5 +1,5 @@
 :sectnums:
-:version-label: v1.0.2
+:version-label: v1.0.3
 :lifecycle-state: frozen
 
 [#Zc]
@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.3      | Add definition of Zce
 |v1.0.2      | Fix Architecture Review Committee feedback on instruction formats
 |v1.0.1      | Post public review fixes: Add instruction formats (issue 192). Clarify that Zcmt/Zcmp are for embedded CPUs (issue 190). Fix some typos.
 |v1.0.0-RC5.7| Add Zcb description and fix some typos. PUBLIC REVIEW REVISION.
@@ -83,6 +84,19 @@ Zcm* all reuse the encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 |cm.jt          |        |        |        |        |        |yes     
 |cm.jalt        |        |        |        |        |        |yes     
 |====================================================================================
+
+[#Zce]
+=== Zce
+
+The Zce extension is intended to be used for microcontrollers, and includes all relevant Zc extensions.
+
+* Specifying Zce without F includes Zca, Zcb, Zcmp, Zcmt
+* Specifying Zce with F includes Zca, Zcb, Zcmp, Zcmt _and_ Zcf
+
+Therefore common ISA strings can be updated as follows to include the relevant Zc extensions, for example:
+
+* RV32IMC becomes RV32IM_Zce
+* RV32IMCF becomes RV32IMF_Zce
 
 [#Zca]
 === Zca
