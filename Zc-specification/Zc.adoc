@@ -1,5 +1,5 @@
 :sectnums:
-:version-label: v1.0.3
+:version-label: v1.0.3-1
 :lifecycle-state: frozen
 
 [#Zc]
@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.3-1    | Replace statement about non-idempotent memory handler completing the sequence (non-normative)
 |v1.0.3      | Add definition of Zce
 |v1.0.2      | Fix Architecture Review Committee feedback on instruction formats
 |v1.0.1      | Post public review fixes: Add instruction formats (issue 192). Clarify that Zcmt/Zcmp are for embedded CPUs (issue 190). Fix some typos.
