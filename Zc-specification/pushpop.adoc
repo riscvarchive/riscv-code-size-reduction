@@ -250,8 +250,8 @@ An implementation may have a requirement to issue a PUSH/POP instruction to non-
 If the core implementation does not support PUSH/POP to non-idempotent memories, the core may use an idempotency PMA to detect it and take a 
 load (POP/POPRET) or store (PUSH) access fault exception in order to avoid unpredictable results.
 
-If the core implementation does support PUSH/POP to non-idempotent memory, then it may not be possible to re-execute the sequence after a fault. 
-In this case the fault handler should complete the sequence in software. In this case xTVAL must be written with the bad address to allow the handler to complete the sequence.
+Software should only use these instructions on non-idempotent memory regions when software can tolerate the required memory accesses
+being issued repeatedly in the case that they cause exceptions.
 
 <<<
 
