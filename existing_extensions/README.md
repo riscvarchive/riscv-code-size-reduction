@@ -10,6 +10,7 @@ This page lists known existing RISCV ISA extensions for code-size reduction
    * Download "ISA -> AndeStar V5 Instruction Extension Specification 1.2	2019-07-22" from the link above
 * [Alibaba/T-head](https://github.com/isrc-cas/c910-llvm), and [Chinese presentation](http://crva.ict.ac.cn/crvs2020/index/slides/2-8.pdf)
    * these seem to be aimed at performance and code size, but information is limited
+* WCH [QingKeV2](http://www.wch-ic.com/downloads/QingKeV2_Processor_Manual_PDF.html) and [GinqKeV4](http://www.wch-ic.com/downloads/QingKeV4_Processor_Manual_PDF.html)
 
 There are probably several others, please let me know
 
