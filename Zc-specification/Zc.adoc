@@ -1,6 +1,8 @@
 :sectnums:
 :version-label: v1.0.3-1
 :lifecycle-state: frozen
+:sail-doc: Zc-specification/sail_zc_doc.json
+:source-highlighter: rouge
 
 [#Zc]
 == Zc* {version-label}

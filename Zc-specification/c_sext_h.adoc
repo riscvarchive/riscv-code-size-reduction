@@ -11,14 +11,7 @@ c.sext.h _rd'/rs1'_
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
-{reg:[
-    { bits:  2, name: 0x1, attr: ['C1'] },
-    { bits:  3, name: 0x3, attr: ['C.SEXT.H'] },
-    { bits:  2, name: 0x3, attr: ['FUNCT2'] },
-    { bits:  3, name: 'rd\'/rs1\'', attr: ['SRCDST'] },
-    { bits:  3, name: 0x7 },
-    { bits:  3, name: 0x4, attr: ['FUNCT3'] },
-],config:{bits:16}}
+include::sailwavedrom:encdec_compressed[left-clause="C_SEXT_H(_)",right,type=mapping,raw]
 ....
 
 Description::
@@ -40,10 +33,8 @@ Zbb is also required.
   The SAIL module variable for _rd'/rs1'_ is called _rsdc_.
 
 Operation::
-[source,sail]
---
-X(rsdc) = EXTS(X(rsdc)[15..0]);
---
++
+sail::execute[clause="C_SEXT_H(_)",part=body,dedent]
 
 include::Zcb_footer.adoc[]
 

@@ -11,15 +11,7 @@ c.sh _rs2'_, _uimm_(_rs1'_)
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
-{reg:[
-    { bits:  2, name: 0x0, attr: ['C0'] },
-    { bits:  3, name: 'rs2\'' },
-    { bits:  1, name: 'uimm[1]' },
-    { bits:  1, name: '0' },
-    { bits:  3, name: 'rs1\'' },
-    { bits:  3, name: 0x3 },
-    { bits:  3, name: 0x4, attr: ['FUNCT3'] },
-],config:{bits:16}}
+include::sailwavedrom:encdec_compressed[left-clause="C_SH(_, _, _)",right,type=mapping,raw]
 ....
 
 include::c_lhsh_imm_offset.adoc[]
@@ -37,12 +29,8 @@ None
 <<insns-sh>>
 
 Operation::
-[source,sail]
---
-//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
-
-mem[X(rs1c)+EXTZ(uimm)][15..0] = X(rs2c)
---
++
+sail::execute[clause="C_SH(_, _, _)",part=body,dedent]
 
 include::Zcb_footer.adoc[]
 

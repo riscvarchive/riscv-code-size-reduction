@@ -11,15 +11,7 @@ c.lhu _rd'_, _uimm_(_rs1'_)
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
-{reg:[
-    { bits:  2, name: 0x0, attr: ['C0'] },
-    { bits:  3, name: 'rd\'' },
-    { bits:  1, name: 'uimm[1]' },
-    { bits:  1, name: 0x0 },
-    { bits:  3, name: 'rs1\'' },
-    { bits:  3, name: 0x1 },
-    { bits:  3, name: 0x4, attr: ['FUNCT3'] },
-],config:{bits:16}}
+include::sailwavedrom:encdec_compressed[left-clause="C_LHU(_, _, _)",right,type=mapping,raw]
 ....
 
 include::c_lhsh_imm_offset.adoc[]
@@ -37,12 +29,8 @@ None
 <<insns-lhu>>
 
 Operation::
-[source,sail]
---
-//This is not SAIL, it's pseudo-code. The SAIL hasn't been written yet.
-
-X(rdc) = EXTZ(load_mem[X(rs1c)+EXTZ(uimm)][15..0]);
---
++
+sail::execute[clause="C_LHU(_, _, _)",part=body,dedent]
 
 include::Zcb_footer.adoc[]
 
