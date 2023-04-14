@@ -11,13 +11,7 @@ cm.pop  _{reg_list}, stack_abj_
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
-{reg:[
-    { bits:  2, name: 0x2,             attr: ['C2'] },
-    { bits:  2, name: 'spimm\[5:4\]',  attr: [] },
-    { bits:  4, name: 'rlist',         attr: [] },
-    { bits:  5, name: 0x1a,            attr: [] },
-    { bits:  3, name: 0x5,             attr: ['FUNCT3'] },
-],config:{bits:16}}
+include::sailwavedrom:encdec_compressed[left-clause="CM_POP(_, _)",right,type=mapping,raw]
 ....
 
 [NOTE]
