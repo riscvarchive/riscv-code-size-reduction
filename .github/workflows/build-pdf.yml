@@ -78,7 +78,6 @@ jobs:
         name: ${{ env.CURRENT_DATE }}
         body: |
           This release was created by: ${{ github.event.sender.login }}
-          Release Notes: ${{ github.event.inputs.release_notes }}
         files: |
           ${{ github.workspace }}/*.pdf
       env:
