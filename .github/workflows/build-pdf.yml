@@ -31,6 +31,8 @@ jobs:
     # Checkout the repository
     - name: Checkout repository
       uses: actions/checkout@v3
+      with:
+        ref: ${{ github.event.inputs.target_branch }}
 
     # Pull the latest RISC-V Docs container image
     # https://github.com/riscv/riscv-docs-base-container-image
