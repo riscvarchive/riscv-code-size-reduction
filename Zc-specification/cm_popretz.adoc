@@ -11,7 +11,13 @@ cm.popretz _{reg_list}, stack_adj_
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
-include::sailwavedrom:encdec_compressed[left-clause="CM_POPRETZ(_, _)",right,type=mapping,raw]
+{reg:[
+    { bits:  2, name: 0x2,             attr: ['C2'] },
+    { bits:  2, name: 'spimm\[5:4\]',  attr: [] },
+    { bits:  4, name: 'rlist',         attr: [] },
+    { bits:  5, name: 0x1c,            attr: [] },
+    { bits:  3, name: 0x5,             attr: ['FUNCT3'] },
+],config:{bits:16}}
 ....
 
 [NOTE]

@@ -11,7 +11,14 @@ cm.mvsa01 _r1s'_, _r2s'_
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
-include::sailwavedrom:encdec_compressed[left-clause="CM_MVSA01(_, _)",right,type=mapping,raw]
+{reg:[
+    { bits:  2, name: 0x2,      attr: ['C2'] },
+    { bits:  3, name: 'r2s\'',  attr: [] },
+    { bits:  2, name: 0x1,      attr: [] },
+    { bits:  3, name: 'r1s\'',  attr: [] },
+    { bits:  3, name: 0x3,      attr: [] },
+    { bits:  3, name: 0x5,      attr: ['FUNCT3'] },
+],config:{bits:16}}
 ....
 
 [NOTE]

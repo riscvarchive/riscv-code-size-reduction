@@ -14,7 +14,6 @@ build:
     --require=asciidoctor-bibtex \
     --require=asciidoctor-diagram \
     --require=asciidoctor-mathematical \
-    --require=asciidoctor-sail \
     --out-file=$(PDF_RESULT) \
     $(HEADER_SOURCE)
 
