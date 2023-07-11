@@ -11,7 +11,14 @@ c.mul _rsd'_, _rs2'_
 Encoding (RV32, RV64)::
 [wavedrom, , svg]
 ....
-include::sailwavedrom:encdec_compressed[left-clause="C_MUL(_)",right,type=mapping,raw]
+{reg:[
+    { bits:  2, name: 0x1, attr: ['C1'] },
+    { bits:  3, name: 'rs2\'', attr: ['SRC2']  },
+    { bits:  2, name: 0x2, attr: ['FUNCT2'] },
+    { bits:  3, name: 'rd\'/rs1\'', attr: ['SRCDST'] },
+    { bits:  3, name: 0x7 },
+    { bits:  3, name: 0x4, attr: ['FUNCT3'] },
+],config:{bits:16}}
 ....
 
 Description::
@@ -31,8 +38,11 @@ M or Zmmul must be configured.
   The SAIL module variable for _rd'/rs1'_ is called _rsdc_, and for _rs2'_ is called _rs2c_.
 
 Operation::
-+
-sail::execute[clause="C_MUL(_)",part=body,dedent]
+[source,sail]
+--
+let result_wide = to_bits(2 * sizeof(xlen), signed(X(rsdc)) * signed(X(rs2c)));
+X(rsdc) = result_wide[(sizeof(xlen) - 1) .. 0];
+--
 
 include::Zcb_footer.adoc[]
 
