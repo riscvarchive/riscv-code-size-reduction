@@ -1,6 +1,6 @@
 :sectnums:
-:version-label: v1.0.3-1
-:lifecycle-state: frozen
+:version-label: v1.0.4
+:lifecycle-state: ratified
 
 [#Zc]
 == Zc* {version-label}
@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.4      | Resolve https://github.com/riscv/riscv-code-size-reduction/issues/221 - Zcf doesn't exist on RV64 as it contains no instructions
 |v1.0.3-1    | Replace statement about non-idempotent memory handler completing the sequence (non-normative)
 |v1.0.3      | Add definition of Zce
 |v1.0.2      | Fix Architecture Review Committee feedback on instruction formats
@@ -52,10 +53,10 @@ Zcm* all reuse the encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 7+|*The Zca extension is added as way to refer to instructions in the C extension that do not include the floating-point loads and stores*
 |C excl. c.f*   |yes     |        |        |        |        |         
 7+|*The Zcf extension is added as a way to refer to compressed single-precision floating-point load/stores*
-|c.flw          |        |yes     |        |        |        |       
-|c.flwsp        |        |yes     |        |        |        |       
-|c.fsw          |        |yes     |        |        |        |       
-|c.fswsp        |        |yes     |        |        |        |       
+|c.flw          |        |rv32    |        |        |        |
+|c.flwsp        |        |rv32    |        |        |        |
+|c.fsw          |        |rv32    |        |        |        |
+|c.fswsp        |        |rv32    |        |        |        |
 7+|*The Zcd extension is added as a way to refer to compressed double-precision floating-point load/stores*
 |c.fld          |        |        |yes     |        |        |       
 |c.fldsp        |        |        |yes     |        |        |       
@@ -91,8 +92,10 @@ Zcm* all reuse the encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 
 The Zce extension is intended to be used for microcontrollers, and includes all relevant Zc extensions.
 
-* Specifying Zce without F includes Zca, Zcb, Zcmp, Zcmt
-* Specifying Zce with F includes Zca, Zcb, Zcmp, Zcmt _and_ Zcf
+* Specifying Zce on RV32 without F includes Zca, Zcb, Zcmp, Zcmt
+* Specifying Zce on RV32 with F includes Zca, Zcb, Zcmp, Zcmt _and_ Zcf
+* Specifying Zce on RV64 always includes Zca, Zcb, Zcmp, Zcmt
+** Zcf doesn't exist for RV64
 
 Therefore common ISA strings can be updated as follows to include the relevant Zc extensions, for example:
 
