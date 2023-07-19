@@ -11,7 +11,8 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
-|v1.0.4-1    | Added rule that Zcf imply F and Zcd imply D - discuss in https://github.com/riscv/riscv-code-size-reduction/issues/221
+|v1.0.4-1    | Added rule that Zcf implies F and Zcd implies D - discussed in https://github.com/riscv/riscv-code-size-reduction/issues/221
+
 |v1.0.4      | Resolve https://github.com/riscv/riscv-code-size-reduction/issues/221 - Zcf doesn't exist on RV64 as it contains no instructions
 |v1.0.3-1    | Replace statement about non-idempotent memory handler completing the sequence (non-normative)
 |v1.0.3      | Add definition of Zce
