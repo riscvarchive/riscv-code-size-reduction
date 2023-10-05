@@ -1,5 +1,5 @@
 :sectnums:
-:version-label: v1.0.4-1
+:version-label: v1.0.4-2
 :lifecycle-state: ratified
 
 [#Zc]
@@ -11,6 +11,7 @@
 [width="100%",options=header]
 |====================================================================================
 |Version  | change
+|v1.0.4-2    | Added rule that C implies Zca, Zcf, Zcd - discussed in https://github.com/riscv/riscv-isa-manual/issues/1132
 |v1.0.4-1    | Added rule that Zcf implies F and Zcd implies D - discussed in https://github.com/riscv/riscv-code-size-reduction/issues/221
 
 |v1.0.4      | Resolve https://github.com/riscv/riscv-code-size-reduction/issues/221 - Zcf doesn't exist on RV64 as it contains no instructions
@@ -42,7 +43,7 @@
 
 === Zc* Overview
 
-This document is in the Frozen state. Change is extremely unlikely. A high threshold will be used, and a change will only occur because of some truly critical issue being identified during the public review cycle. Any other desired or needed changes can be the subject of a follow-on new extension. See https://riscv.org/spec-state
+This document is in the ratified state. No changes are allowed. Any desired or needed changes can be the subject of a follow-on new extension. Ratified extensions are never revised.
 
 Zc* is a group of extensions which define subsets of the existing C extension (Zca, Zcd, Zcf) and new extensions which only contain 16-bit encodings.
 
@@ -88,6 +89,21 @@ Zcm* all reuse the encodings for _c.fld_, _c.fsd_, _c.fldsp_, _c.fsdsp_.
 |cm.jt          |        |        |        |        |        |yes     
 |cm.jalt        |        |        |        |        |        |yes     
 |====================================================================================
+
+[#C]
+=== C
+
+The C extension is the superset of the following extensions:
+
+* Zca
+* Zcf if F is specified (RV32 only)
+* Zcd if D is specified
+
+As C defines the same instructions as Zca, Zcf and Zcd, the rule is that:
+
+* C always implies Zca
+* C+F implies Zcf (RV32 only)
+* C+D implies Zcd
 
 [#Zce]
 === Zce
