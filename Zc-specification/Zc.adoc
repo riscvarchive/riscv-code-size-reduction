@@ -124,7 +124,7 @@ Therefore common ISA strings can be updated as follows to include the relevant Z
 [#misaC]
 === MISA.C
 
-If all the instructions from the C extension are present, and the MISA CSR, has been implemented, then MISA.C is set. This happens if the following extensions are selected:
+MISA.C is set if the following extensions are selected:
 
 * Zca and not F
 * Zca, Zcf and F is specified (RV32 only)
@@ -132,10 +132,6 @@ If all the instructions from the C extension are present, and the MISA CSR, has 
 ** this configuration excludes Zcmp, Zcmt
 * Zca, Zcd if D is specified (RV64 only)
 ** this configuration excludes Zcmp, Zcmt
-
-Therefore MISA.C can be set without directly specifying the C extension.
-
-Specifying Zce sets MISA.C if D is not implemented. If D _is_ implemented then Zce does _not_ set MISA.C as it cannot include Zcd because some of the encodings have been repurposed by Zcmp and Zcmt.
 
 [#Zca]
 === Zca
