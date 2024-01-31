@@ -7,6 +7,7 @@ build:
 
 	@echo "Building asciidoc"
 	asciidoctor-pdf \
+    -a compress \
     --attribute=mathematical-format=svg \
     --attribute=pdf-fontsdir=docs-resources/fonts \
     --attribute=pdf-style=docs-resources/themes/riscv-pdf.yml \
