@@ -1,3 +1,5 @@
+**This repository is archived.  The ratified specification has been merged into the riscv-isa-manual repository as part of the Unprivileged Specification**
+
 Welcome to the RISC-V Code Size Reduction Group
 ------------------------------------------------
 
